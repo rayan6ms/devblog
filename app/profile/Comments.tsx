@@ -23,7 +23,7 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
     className="group w-64 mb-2 mx-2 flex flex-col justify-between items-start p-2 bg-lessDarkBg rounded-xl shadow-md"
   >
     <div className="flex select-none w-64 h-22 mb-3">
-      <Image src='https://oxentesensei.com.br/wp-content/uploads/2022/01/Rocket-Raccoon-capa.jpg' width={40} height={40} alt="User" className="rounded-full w-[28px] h-[28px] mr-2 object-cover" />
+      <Image src='https://wallpapercave.com/wp/wp2163723.jpg' width={40} height={40} alt="User" className="rounded-full w-[28px] h-[28px] mr-2 object-cover" />
       <p
         className="line-clamp-6 text-sm text-zinc-200"
         title={comment.content}

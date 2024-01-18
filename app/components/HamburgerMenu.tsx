@@ -6,7 +6,7 @@ interface HamburgerMenuProps {
   fromScrollBar?: boolean;
 }
 
-export default function HamburgerMenu({ isMenuOpen, setIsMenuOpen, handleButtonClick, fromScrollBar }: HamburgerMenuProps) {
+export default function HamburgerMenu({ isMenuOpen, setIsMenuOpen, fromScrollBar }: HamburgerMenuProps) {
   return (
     <button
       onClick={() => setIsMenuOpen(!isMenuOpen)}

@@ -122,7 +122,7 @@ const posts = [
     description: "Mergulhe na história de Drax, o Destruidor, um guerreiro em busca de vingança e membro dos Guardiões da Galáxia."
   },
   {
-    image: "https://oxentesensei.com.br/wp-content/uploads/2022/01/Rocket-Raccoon-capa.jpg",
+    image: "https://wallpapercave.com/wp/wp2163723.jpg",
     mainTag: "robôs",
     tags: ["Guardiões", "Metálico", "Tecnologia"],
     title: "Rocket: O Guaxinim Genial",
@@ -266,7 +266,7 @@ const user = {
   name: 'John Doe',
   role: 'owner',
   description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, diam sit amet sodales fermentum, odio nisl dasdas sadasdasd sdsds dssdsdsdsds sdsds sdsdsdsd sdsdsds sdsdsd sdsd dsdsd ultricies nunc',
-  profilePicture: 'https://oxentesensei.com.br/wp-content/uploads/2022/01/Rocket-Raccoon-capa.jpg',
+  profilePicture: 'https://wallpapercave.com/wp/wp2163723.jpg',
   socialLinks: {
     linkedin: 'https://linkedin.com/in/username',
     github: 'https://github.com/username',
