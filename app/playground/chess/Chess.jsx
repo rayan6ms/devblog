@@ -4,7 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import CapturedPieces from './CapturedPieces';
 import ChessActions from './ChessActions';
 import { useEffect, useState } from 'react';
-import { initGame, makeMove, getSquareColor, getPossibleMoves } from './chess';
+import { initGame, makeMove, getSquareColor, getPossibleMoves } from './chess-logic';
 
 const stockfish = new Worker('/stockfish.js');
 

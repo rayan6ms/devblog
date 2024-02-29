@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 export default function Header() {
   const activeUser = 'me';
   const pathname = usePathname()
-  const showHeader = pathname === '/login' || pathname === '/register';
+  const showHeader = pathname === '/login' || pathname === '/register' || pathname === '/not-found';
   
   return showHeader ? <></> : (
     <header className="bg-darkBg py-6 md:p-7">

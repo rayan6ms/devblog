@@ -7,7 +7,10 @@ declare global {
   };
 }
 
-const MONGODB_URI = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASSWORD}@${process.env.DB_CLUSTER}.teh3uei.mongodb.net/`
+const username = encodeURIComponent(`${process.env.DB_NAME}`);
+const password = encodeURIComponent(`${process.env.DB_PASSWORD}`);
+
+const MONGODB_URI = `mongodb+srv://${username}:${password}@${process.env.DB_CLUSTER}.teh3uei.mongodb.net/`
 
 if (!MONGODB_URI || MONGODB_URI.length === 0) {
   throw new Error("Please add your MongoDB URI to .env.local");

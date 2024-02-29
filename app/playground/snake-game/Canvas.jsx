@@ -137,7 +137,7 @@ function Canvas({snake, apple, direction, boardSize,
             }
           }
         }
-      }
+    }
     
       function getColorScheme(key, colorObject) {
         for (let i = 0; i < Object.keys(colorObject).length; i++) {

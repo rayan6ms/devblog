@@ -88,7 +88,7 @@ export default function NavBar() {
     );
   });
 
-  const showHeader = pathname === '/login' || pathname === '/register';
+  const showHeader = pathname === '/login' || pathname === '/register' || pathname === '/not-found';
   
   return showHeader ? <></> : (
     <>

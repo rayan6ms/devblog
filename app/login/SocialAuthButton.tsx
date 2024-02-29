@@ -6,13 +6,14 @@ type SocialAuthButtonProps = {
   icon: IconDefinition;
   bgColor: string;
   hoverBgColor: string;
-  handleAuth: (provider: string) => void;
+  // handleAuth: (provider: string) => void;
 };
 
-export default function SocialAuthButton({ provider, icon, bgColor, hoverBgColor, handleAuth }: SocialAuthButtonProps) {
+export default function SocialAuthButton({ provider, icon, bgColor, hoverBgColor } //, handleAuth }
+: SocialAuthButtonProps) {
   return (
     <button 
-      onClick={() => handleAuth(provider)}
+      // onClick={() => handleAuth(provider)}
       className={`flex items-center justify-center w-full p-2 rounded-md shadow-md mb-2 ${bgColor} ${hoverBgColor} text-white transition-colors duration-300`}
     >
       <FontAwesomeIcon icon={icon} />

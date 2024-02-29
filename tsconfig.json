@@ -23,6 +23,6 @@
       "@/*": ["./app/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/playground/snake-game/SnakeGame.jsx", "app/playground/snake-game/Apple.jsx", "app/playground/snake-game/Board.jsx", "app/playground/snake-game/Snake.jsx", "app/playground/chess/Square.jsx", "app/playground/chess/ChessBoard.jsx", "app/playground/chess/Chess.jsx", "app/playground/chess/chess.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/playground/snake-game/SnakeGame.jsx", "app/playground/snake-game/Apple.jsx", "app/playground/snake-game/Board.jsx", "app/playground/snake-game/Snake.jsx", "app/playground/chess/Square.jsx", "app/playground/chess/ChessBoard.jsx", "app/playground/chess/Chess.jsx", "app/playground/chess/chess-logic.js"],
   "exclude": ["node_modules"]
 }
