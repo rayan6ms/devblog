@@ -57,6 +57,10 @@ export default function Page() {
   }, []);
 
   const formattedDate = (date: string) => format(parseISO(date), 'dd MMM yyyy', { locale: ptBR });
+  const fullFormattedDate = (date: string) => {
+    const s = format(parseISO(date), 'EEEE, dd MMMM yyyy', { locale: ptBR })
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  };
 
   const handleNavigationClick = (type: 'author' | 'tag', value: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,45 +73,45 @@ export default function Page() {
   };
 
   return (
-    <>  
-      <div className="w-full flex flex-wrap justify-center gap-4 mb-6">
-          <Accordion panels={panels} />
-        <div className="xxl:w-[90%] flex flex-wrap justify-center gap-5 px-2">
-          {trendingPosts.map((post, index) => (
-            <div key={index} className="w-[320px] xs:w-[430px] sm:w-[500px] md:w-[350px] lg:w-[360px] bg-greyBg border border-t-0 border-zinc-700/30 rounded-lg overflow-hidden shadow-lg">
-              <Link href={`/post/${slugify(post.title, { lower: true, strict: true })}`}>
-                <div className="w-full h-[200px] relative">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    layout="fill"
-                    objectFit="cover"
-                    className="hover:scale-110 transition-transform duration-500 rounded-t-lg"
-                  />
-                </div>
-              </Link>
-              <div className="flex flex-col p-4 h-52">
-                <h3 className="text-wheat text-xl font-somerton line-clamp-2 uppercase">{post.title}</h3>
-                <p className="text-zinc-400 text-sm font-europa mt-2 line-clamp-3">{post.description}</p>
-                <div className="flex items-center justify-between my-2">
-                  <button
-                    onClick={(e) => handleNavigationClick('author', post.mainTag, e)} className="hover:text-purpleContrast transition-colors uppercase font-bold text-sm text-zinc-300"
-                  >
-                    {post.mainTag}
-                  </button>
-                  <span className="flex items-center gap-1 text-sm text-zinc-400">
-                    <FontAwesomeIcon icon={faEye} /> <span>{post.views.toLocaleString()}</span>
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-zinc-400 text-sm">
-                  <button
-                    onClick={(e) => handleNavigationClick('author', post.author, e)} className="hover:text-purpleContrast transition-colors"
-                  >
-                    {post.author}
-                  </button>
-                  <span className="capitalize">{formattedDate(post.date)}</span>
-                </div>
+    <>
+      <Accordion panels={panels} />
+      <div className="w-full flex flex-col items-center my-6">
+        <h2 className="text-xl font-somerton uppercase text-wheat self-start ml-2">Top 30 Posts</h2>
+        <div className="flex flex-wrap justify-center gap-2 mt-4">
+          {trendingPosts.slice(0, 30).map((post, index) => (
+            <div key={index} className="w-1/5 flex bg-greyBg border border-zinc-700/30 rounded-l-2xl rounded-r-md overflow-hidden shadow-lg">
+              <span className="absolute top-0 left-0 bg-purpleContrast text-wheat text-lg font-bold px-3 py-1 rounded-br-lg">{index + 1}</span>
+              <div className="w-24 h-full relative">
+                <Image src={post.image} alt={post.title} layout="fill" objectFit="cover" />
               </div>
+              <div className="px-4 py-2 flex flex-col justify-between">
+                <h3 className="text-wheat text-md font-somerton line-clamp-1 uppercase">{post.title}</h3>
+                <p className="text-xs text-zinc-400">{post.author}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <h2 className="text-xl font-somerton uppercase text-wheat self-start ml-2 mt-10">Trending Posts</h2>
+        <div className="flex flex-col items-center mt-4 w-full px-2">
+          {trendingPosts.map((post, index) => (
+            <div key={index} className="w-[50%] bg-greyBg border border-zinc-700/30 rounded-md overflow-hidden shadow-lg my-2">
+              <Link className="flex" href={`/post/${slugify(post.title, { lower: true, strict: true })}`}>
+                  <div className="w-32 h-32 relative">
+                    <Image src={post.image} alt={post.title} layout="fill" objectFit="cover" className="rounded-l-lg" />
+                  </div>
+                  <div className="flex-grow p-4">
+                    <h3 className="text-wheat text-lg font-somerton uppercase">{post.title}</h3>
+                    <p className="text-zinc-400 text-sm">{post.description}</p>
+                    <div className="mt-2 flex justify-between text-zinc-300 text-xs">
+                      <span>{post.author}</span>
+                      <span>
+                        <FontAwesomeIcon icon={faEye} /> {post.views.toLocaleString()} views
+                      </span>
+                      <time dateTime={post.date}>{formattedDate(post.date)}</time>
+                    </div>
+                  </div>
+              </Link>
             </div>
           ))}
         </div>

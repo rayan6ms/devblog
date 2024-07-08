@@ -19,18 +19,29 @@ export default function Main({posts}: MainProps) {
       >
         <div className="flex flex-col md:flex-row xxl:flex-col gap-6">
           {posts.recent.slice(0, 2).map((post: IPost, index: number) => (
-              <RecentItem key={index} post={post} />
+              <RecentItem
+                key={index}
+                post={post}
+              />
             ))}
         </div>
         <div
           className="flex flex-col gap-8 md:flex-row"
         >
           {posts.recent.slice(2, 3).map((post: IPost, index: number) => (
-            <RecentItem key={index + 1} post={post} isBig={ true } />
+            <RecentItem
+              key={index + 1}
+              post={post}
+              isBig={ true }
+            />
           ))}
           <div className="flex flex-col divide-y divide-gray-500">
             {posts.recommended.slice(0, 5).map((post: IPost, index: number) => (
-              <RecommendedItem key={index} post={post} addSeparation={ index > 0 } />
+              <RecommendedItem
+                key={index}
+                post={post}
+                addSeparation={ index > 0 }
+              />
             ))}
           </div>
         </div>

@@ -25,8 +25,10 @@ export default function RecentItem({post, isBig}: RecentItemProps) {
   let formattedAuthor = author.length > 20 ? `${author.slice(0, 20)}...` : author;
   formattedAuthor = formattedAuthor.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
 
-  const fullFormattedDate = (date: string) => format(parseISO(date), 'EEEE, dd MMMM yyyy', { locale: ptBR });
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const fullFormattedDate = (date: string) => {
+    const s = format(parseISO(date), 'EEEE, dd MMMM yyyy', { locale: ptBR })
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  };
 
   const formattedViews = (num: number) => num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
   const router = useRouter();
@@ -104,7 +106,7 @@ export default function RecentItem({post, isBig}: RecentItemProps) {
         >
           { formattedAuthor }
         </button>
-        <time title={capitalize(fullFormattedDate(date))} dateTime={ date } >{ formattedDate }</time>
+        <time title={fullFormattedDate(date)} dateTime={ date } >{ formattedDate }</time>
         <p className="flex items-center gap-1">
           <FontAwesomeIcon icon={ faEye } /> <span>{ formattedViews(views) }</span>
         </p>

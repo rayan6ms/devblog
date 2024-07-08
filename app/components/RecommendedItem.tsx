@@ -36,7 +36,8 @@ export default function RecommendedItem({post, addSeparation}: RecommendedItemPr
         md:w-[360px]
         lg:w-[420px]
         xxl:w-[320px]
-        box-content ${addSeparation && 'mt-5 pt-4'}`
+        box-content ${addSeparation && 'mt-5 pt-4'}
+        xxl:last-of-type:flex md:last-of-type:hidden`
       }
     >
       <div className="flex flex-col justify-center w-4/5 h-full pr-4">

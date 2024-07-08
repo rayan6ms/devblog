@@ -25,7 +25,7 @@ function handleRouteButtonClick(e: React.MouseEvent<HTMLButtonElement, MouseEven
 const SliderItem = ({ item }: { item: IPost }) => (
   <Link
     href={`/post/${slugify(item.title, { lower: true, strict: true })}`}
-    className="group w-56 mx-2 bg-lessDarkBg rounded-xl shadow-md"
+    className="group w-56 mb-2 mx-2 bg-lessDarkBg rounded-xl shadow-md"
   >
     <div className="w-56 h-32 mb-2.5 relative">
       <div className="w-full h-full overflow-hidden rounded-md">

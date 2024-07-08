@@ -23,7 +23,7 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-greyBg border-t border-zinc-700/50 xs:p-6 mt-10 pb-6">
+    <footer className="bg-greyBg border-t border-zinc-700/50 xs:p-6 mt-10 py-6">
       <div className="flex justify-center">
         <div className="flex justify-between items-end w-full xl:w-[90%]">
           <div className="flex flex-1 flex-col md:flex-row justify-between items-center">
@@ -46,7 +46,7 @@ export default function Footer() {
                 Contact
               </Link>
             </div>
-            <div className="flex-1 place-content-center lg:place-content-start grid grid-cols-2 xxs:grid-rows-2 lg:grid-cols-2 3xl:self-end gap-4 mt-6 md:mt-0 [text-shadow:_0_2px_4px_var(--tw-shadow-color)] shadow-zinc-600">
+            <div className="flex-1 place-content-center lg:place-content-start grid grid-cols-2 md:grid-rows-2 md:grid-cols-none lg:grid-cols-2 3xl:self-end gap-2.5 lg:gap-4 mt-6 md:mt-0 [text-shadow:_0_1px_4px_var(--tw-shadow-color)] shadow-zinc-600">
               {socialLinks.map(link => {
                 const social = link.href.split('/')[2].split('.')[0].toLowerCase();
                 const username = link.href.split('/').pop()?.replace('@', '');

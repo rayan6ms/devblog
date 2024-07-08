@@ -20,7 +20,7 @@ type CommentsProps = {
 const CommentItem = ({ comment }: { comment: Comment }) => (
   <Link
     href={`/post/${slugify(comment.postTitle, { lower: true, strict: true })}`}
-    className="group w-64 mb-2 mx-2 flex flex-col justify-between items-start p-2 bg-lessDarkBg rounded-xl shadow-md"
+    className="group w-64 mb-3 mx-2 flex flex-col justify-between items-start p-2 bg-lessDarkBg rounded-xl shadow-md"
   >
     <div className="flex select-none w-64 h-22 mb-3">
       <Image src='https://wallpapercave.com/wp/wp2163723.jpg' width={40} height={40} alt="User" className="rounded-full w-[28px] h-[28px] mr-2 object-cover" />
