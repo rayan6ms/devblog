@@ -63,7 +63,7 @@ export default function NavBar() {
     {'recent': '/recent'},
     {'trending': '/trending'},
     {'tags': '/tag'},
-    {'videos': '/videos'},
+    {'about': '/about'},
     {'playground': '/playground'},
   ];
 

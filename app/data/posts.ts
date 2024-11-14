@@ -110,7 +110,7 @@ const posts = [
     description: "Descubra mais sobre Gamora, a assassina adotada por Thanos e membro-chave dos Guardiões da Galáxia."
   },
   {
-    image: "https://hitsite.com.br/wp-content/uploads/2023/01/Drax-de-Dave-Bautista.jpg",
+    image: "https://www.wallpaperflare.com/static/41/645/302/avengers-infinity-war-dave-bautista-drax-4k-wallpaper.jpg",
     mainTag: "monstros",
     tags: ["Força", "Guardiões", "Sensível"],
     title: "Drax: O Destruidor",
@@ -193,6 +193,246 @@ const posts = [
     percentRead: 8,
     description: "Mire no mundo de Clint Barton, o Gavião Arqueiro, cuja precisão e lealdade o tornaram uma parte indispensável dos Vingadores."
   },
+  {
+    image: "https://static.wikia.nocookie.net/versus-compendium/images/d/dc/BP.png/revision/latest?cb=20181009193143",
+    mainTag: "heróis",
+    tags: ["Marvel", "Wakanda", "Tecnologia"],
+    title: "Black Panther: O Rei de Wakanda",
+    author: "Chadwick Boseman",
+    date: "2023-07-06",
+    views: 710,
+    hasStartedReading: true,
+    percentRead: 35,
+    description: "Explore o legado do rei T'Challa, o Pantera Negra, e a sua luta para proteger o reino tecnológico de Wakanda."
+  },
+  {
+    image: "https://media.newyorker.com/photos/593581e785bd115baccba6d2/master/pass/Lane-Ten-Things-about-Wonder-Woman.jpg",
+    mainTag: "heróis",
+    tags: ["DC", "Amazona", "Mulheres Fortes"],
+    title: "Wonder Woman: A Guerreira Amazona",
+    author: "Gal Gadot",
+    date: "2023-07-07",
+    views: 800,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Descubra a poderosa história de Diana Prince, a Mulher Maravilha, enquanto ela luta por justiça e igualdade como uma das maiores heroínas do mundo."
+  },
+  {
+    image: "https://gamehall.com.br/wp-content/uploads/2022/07/spider-man-pc-780x470.webp",
+    mainTag: "heróis",
+    tags: ["Marvel", "Adolescente", "Nova York"],
+    title: "Spider-Man: O Amigo da Vizinhança",
+    author: "Tom Holland",
+    date: "2023-07-08",
+    views: 920,
+    hasStartedReading: true,
+    percentRead: 45,
+    description: "Siga Peter Parker enquanto ele equilibra a vida de um estudante comum com a responsabilidade de ser o Homem-Aranha, o herói de Nova York."
+  },
+  {
+    image: "https://cdn.marvel.com/content/1x/captainmarvel_lob_mas_mob_03_0.jpg",
+    mainTag: "heróis",
+    tags: ["Marvel", "Poder Cósmico", "Kree"],
+    title: "Captain Marvel: A Heroína Cósmica",
+    author: "Brie Larson",
+    date: "2023-07-09",
+    views: 610,
+    hasStartedReading: true,
+    percentRead: 22,
+    description: "Conheça Carol Danvers, também conhecida como Capitã Marvel, a heroína mais poderosa do universo Marvel, com habilidades cósmicas que desafiam os limites da imaginação."
+  },
+  {
+    image: "https://www.geo.tv/assets/uploads/updates/2024-08-09/558383_2876258_updates.jpg",
+    mainTag: "vilões",
+    tags: ["Marvel", "Titã Louco", "Infinito"],
+    title: "Thanos: O Titã Louco",
+    author: "Josh Brolin",
+    date: "2023-07-10",
+    views: 990,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Reviva a saga do Titã Louco, Thanos, em sua busca pelas Joias do Infinito para impor sua visão de equilíbrio ao universo, tornando-se um dos vilões mais formidáveis da Marvel."
+  },
+  {
+    image: "https://miro.medium.com/v2/resize:fit:1400/1*9XQlc5ayl-KL7l4Ox7aSrg.jpeg",
+    mainTag: "anti-heróis",
+    tags: ["Marvel", "Magia", "Multiverso"],
+    title: "Scarlet Witch: A Feiticeira do Caos",
+    author: "Elizabeth Olsen",
+    date: "2023-07-11",
+    views: 850,
+    hasStartedReading: true,
+    percentRead: 30,
+    description: "Entre no mundo caótico de Wanda Maximoff, também conhecida como Feiticeira Escarlate, cujo poder de manipular a realidade a tornou uma figura complexa entre heroína e vilã."
+  },
+  {
+    image: "https://myfamilycinema.com/wp-content/uploads/2022/06/loki.jpg",
+    mainTag: "vilões",
+    tags: ["Marvel", "Trickster", "Deuses"],
+    title: "Loki: O Deus da Trapaça",
+    author: "Tom Hiddleston",
+    date: "2023-07-12",
+    views: 1100,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Siga o Deus da Trapaça, Loki, em suas intrigas e manipulações no universo Marvel, sempre oscilando entre ser herói e vilão."
+  },
+  {
+    image: "https://static.itapemafm.com.br/s3fs-public/styles/itapema_blog_post_header/public/2020-06/henry%20cavill%20superman.jpg?c6c9L4CmsU1W5vv1Uxr1IRL33YNObrTs&itok=NNCHm8MU",
+    mainTag: "heróis",
+    tags: ["DC", "Krypton", "Poderes"],
+    title: "Superman: O Último Filho de Krypton",
+    author: "Henry Cavill",
+    date: "2023-07-13",
+    views: 900,
+    hasStartedReading: true,
+    percentRead: 55,
+    description: "Acompanhe Clark Kent, o Superman, enquanto ele protege a Terra com seus incríveis poderes, equilibrando sua identidade humana e kryptoniana."
+  },
+  {
+    image: "https://uploads.jovemnerd.com.br/wp-content/uploads/2023/10/venom_hqs_para_conhecer__1a0lr23.jpg?ims=1210x544/filters:quality(75)",
+    mainTag: "anti-heróis",
+    tags: ["Marvel", "Simbiote", "Veneno"],
+    title: "Venom: O Anti-Herói Letal",
+    author: "Tom Hardy",
+    date: "2023-07-14",
+    views: 780,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Explore a conexão entre Eddie Brock e o simbionte alienígena Venom, que juntos formam um dos anti-heróis mais letalmente carismáticos do universo Marvel."
+  },
+  {
+    image: "https://s2-techtudo.glbimg.com/7JZ5j1VD4yJt1LVWLuE7IPeow4E=/1200x/smart/filters:cover():strip_icc()/i.s3.glbimg.com/v1/AUTH_08fbf48bc0524877943fe86e43087e7a/internal_photos/bs/2023/t/m/QGZAUMTRiMoy4EdY1AOg/the-flash.jpg",
+    mainTag: "heróis",
+    tags: ["DC", "Velocidade", "Força da Aceleração"],
+    title: "Flash: O Homem Mais Rápido do Mundo",
+    author: "Grant Gustin",
+    date: "2023-07-15",
+    views: 680,
+    hasStartedReading: true,
+    percentRead: 40,
+    description: "Corra com Barry Allen, o Flash, o homem mais rápido do mundo, enquanto ele protege Central City e explora os mistérios da Força da Aceleração."
+  },
+  {
+    image: "https://lojalimitededition.vteximg.com.br/arquivos/ids/430973-468-675/image-b34a988914e042b68c965316038557cb.jpg?v=638330709190230000",
+    mainTag: "heróis",
+    tags: ["Dark Horse", "lendas"],
+    title: "Hellboy fighting mythical creatures",
+    author: "Mike Mignola",
+    date: "2023-09-25",
+    views: 160,
+    hasStartedReading: true,
+    percentRead: 40,
+    description: "Explore o mundo sombrio de Hellboy enquanto ele confronta criaturas míticas e desvendam segredos ocultos."
+  },
+  {
+    image: "https://i.pinimg.com/564x/9b/b4/55/9bb4555c9fb02a5b659726f7533fbf91.jpg",
+    mainTag: "heróis",
+    tags: ["Marvel", "sangue"],
+    title: "Moon Knight stalking the night",
+    author: "Doug Moench",
+    date: "2023-09-26",
+    views: 185,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Acompanhe o Justiceiro da noite, Moon Knight, enquanto ele combate o crime e enfrenta seus demônios internos."
+  },
+  {
+    image: "https://static.wikia.nocookie.net/arrow/images/7/76/John_Constantine.png/revision/latest?cb=20210930204848&path-prefix=pt-br",
+    mainTag: "vilões",
+    tags: ["DC", "mágica"],
+    title: "Constantine dealing with dark forces",
+    author: "Alan Moore",
+    date: "2023-09-27",
+    views: 210,
+    hasStartedReading: true,
+    percentRead: 65,
+    description: "Aventure-se no mundo de John Constantine, onde magia e manipulação o colocam contra forças sobrenaturais."
+  },
+  {
+    image: "https://uploads.jovemnerd.com.br/wp-content/uploads/2017/10/optimus.jpg?ims=1210x544/filters:quality(75)",
+    mainTag: "heróis",
+    tags: ["IDW", "robot"],
+    title: "Transformers battling Decepticons",
+    author: "Bob Budiansky",
+    date: "2023-09-28",
+    views: 170,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Entre na guerra entre Autobots e Decepticons, onde robôs se transformam em máquinas de combate em uma luta épica."
+  },
+  {
+    image: "https://static.wikia.nocookie.net/marveldatabase/images/b/b5/Carnage_Vol_3_1_Textless.png/revision/latest/scale-to-width-down/614?cb=20220224044537",
+    mainTag: "vilões",
+    tags: ["Marvel", "maldição"],
+    title: "Carnage unleashing chaos",
+    author: "David Michelinie",
+    date: "2023-09-30",
+    views: 240,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Sinta a fúria de Carnage, o simbiótico que não conhece limites e está determinado a espalhar o caos."
+  },
+  {
+    image: "https://media.gq.com/photos/66049ca2d6bafed5ec9b791f/4:3/w_2328,h_1746,c_limit/AAM0370_comp_Tk2_v001_r709.117420_C.jpg",
+    mainTag: "heróis",
+    tags: ["Marvel", "X-Men"],
+    title: "Cyclops leading the X-Men",
+    author: "Stan Lee",
+    date: "2023-10-01",
+    views: 190,
+    hasStartedReading: true,
+    percentRead: 50,
+    description: "Siga Ciclope enquanto ele lidera os X-Men na luta pela igualdade entre humanos e mutantes."
+  },
+  {
+    image: "https://static1.moviewebimages.com/wordpress/wp-content/uploads/2022/12/x-men-halle-berry-storm.jpeg",
+    mainTag: "heróis",
+    tags: ["Marvel", "X-Men"],
+    title: "Storm controlling the weather",
+    author: "Len Wein",
+    date: "2023-10-02",
+    views: 175,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Experimente o poder de Tempestade, uma das mutantes mais poderosas, enquanto ela manipula o clima com maestria."
+  },
+  {
+    image: "https://i.insider.com/66bdd07b5da406397bf61f18?width=700",
+    mainTag: "heróis",
+    tags: ["Marvel", "Defensores"],
+    title: "Daredevil fighting crime in Hell's Kitchen",
+    author: "Frank Miller",
+    date: "2023-10-03",
+    views: 210,
+    hasStartedReading: true,
+    percentRead: 60,
+    description: "Acompanhe o Demolidor enquanto ele protege Hell's Kitchen, usando seus sentidos aguçados e habilidades de combate."
+  },
+  {
+    image: "https://cinebuzz.com.br/media/uploads/magneto.jpg",
+    mainTag: "vilões",
+    tags: ["Marvel", "X-Men"],
+    title: "Magneto's plan for mutant supremacy",
+    author: "Stan Lee",
+    date: "2023-10-06",
+    views: 250,
+    hasStartedReading: false,
+    percentRead: 0,
+    description: "Mergulhe na mente de Magneto, o Mestre do Magnetismo, enquanto ele busca garantir um futuro para os mutantes."
+  },
+  {
+    image: "https://www.kametoys.cl/wp-content/uploads/2019/01/marvel-ant-man-sixth-scale-figure-hot-toys-903697-20.jpg",
+    mainTag: "heróis",
+    tags: ["Marvel", "Avengers"],
+    title: "Ant-Man shrinking into action",
+    author: "Stan Lee",
+    date: "2023-10-09",
+    views: 150,
+    hasStartedReading: true,
+    percentRead: 30,
+    description: "Descubra as aventuras de Ant-Man, o herói que pode encolher e se comunicar com formigas, enquanto ele luta ao lado dos Vingadores e enfrenta desafios em miniatura."
+  }
 ];
 
 const comments = [
@@ -310,6 +550,26 @@ export interface IUser {
   };
 };
 
+export async function getSearchSuggestions(query: string) {
+  const lowerQuery = query.toLowerCase();
+  return posts.filter((post) => 
+    post.title.toLowerCase().includes(lowerQuery) ||
+    post.author.toLowerCase().includes(lowerQuery) ||
+    post.mainTag.toLowerCase().includes(lowerQuery) ||
+    post.description.toLowerCase().includes(lowerQuery)
+  ).slice(0, 5);  // Retornamos no máximo 5 sugestões
+}
+
+export async function getPostsByQuery(query: string) {
+  const lowerQuery = query.toLowerCase();
+  return posts.filter((post) => 
+    post.title.toLowerCase().includes(lowerQuery) ||
+    post.author.toLowerCase().includes(lowerQuery) ||
+    post.mainTag.toLowerCase().includes(lowerQuery) ||
+    post.description.toLowerCase().includes(lowerQuery)
+  );
+}
+
 export async function getComments() {
   return comments;
 }
@@ -318,8 +578,25 @@ export async function getUser() {
   return user;
 }
 
-export async function getRecentPosts() {
-  return posts.sort(() => Math.random() - 0.5);
+export async function getRandomPosts() {
+  const shuffledPosts = [...posts];
+  for (let i = shuffledPosts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledPosts[i], shuffledPosts[j]] = [shuffledPosts[j], shuffledPosts[i]];
+  }
+  return shuffledPosts;
+}
+
+export async function getRecentPosts(page: number, limit: number) {
+  const start = (page - 1) * limit;
+  const end = start + limit;
+
+  const paginatedPosts = posts.slice(start, end);
+
+  return {
+    posts: paginatedPosts,
+    total: posts.length,
+  };
 }
 
 export async function getTrendingPosts() {

@@ -59,7 +59,7 @@ export default function Accordion({ panels }: AccordionProps) {
       if (!intervalRef.current) {
         intervalRef.current = setInterval(() => {
           setActivePanel(prev => (prev + 1) % resizedPanels.length);
-        }, 6000);
+        }, 7000);
       }
     };
   

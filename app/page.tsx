@@ -3,10 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import Main from '@/components/Main';
+import SkeletonMain from './components/SkeletonMain';
 import FirstSection from '@/components/FirstSection';
+import SkeletonFirstSection from './components/SkeletonFirstSection';
 import SecondSection from '@/components/SecondSection';
+import SkeletonSecondSection from './components/SkeletonSecondSection';
 import Footer from '@/components/Footer';
-import { IPost, getRecentPosts, getTrendingPosts, getRecommendedPosts } from './data/posts';
+import { IPost, getRandomPosts, getTrendingPosts, getRecommendedPosts } from './data/posts';
 
 export default function Home() {
   const [recentPosts, setRecentPosts] = useState<IPost[]>([]);
@@ -26,7 +29,7 @@ export default function Home() {
       setRecommendedPosts(JSON.parse(storedRecommendedPosts));
     }
 
-    Promise.all([getRecentPosts(), getTrendingPosts(), getRecommendedPosts()]).then(([recent, trending, recommended]) => {
+    Promise.all([getRandomPosts(), getRandomPosts(), getRandomPosts()]).then(([recent, trending, recommended]) => {
       setRecentPosts(recent);
       setTrendingPosts(trending);
       setRecommendedPosts(recommended);
@@ -40,7 +43,15 @@ export default function Home() {
     });
   }, []);
 
-  return loading ? <div>Loading...</div> : (
+  return loading ? 
+  (
+    <>
+      <SkeletonMain />
+      <SkeletonFirstSection />
+      <SkeletonSecondSection />
+      <Footer />
+    </>
+  ) : (
     <>
       <Main posts={ {recent: recentPosts, recommended: recommendedPosts} } />
       <FirstSection posts={ trendingPosts } />

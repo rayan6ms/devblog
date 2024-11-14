@@ -6,7 +6,7 @@ interface SelectedTagsProps {
 
 export default function SelectedTags({ tags, onRemoveTag, onReset }: SelectedTagsProps) {
   return (
-    <div className="bg-greyBg rounded-lg px-4 py-3.5 h-16 flex space-x-2 border border-zinc-700/50 shadow-md shadow-zinc-900">
+    <div className="flex flex-wrap gap-2 max-w-full md:max-w-none bg-greyBg rounded-lg px-4 py-3.5 min-h-[4rem] space-x-2 border border-zinc-700/50 shadow-md shadow-zinc-900">
       {tags.map((tag, index) => (
         <span
           className="bg-lessDarkBg rounded-lg hover:bg-purpleContrast/75 px-3 py-1 border border-zinc-800"
