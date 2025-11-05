@@ -62,7 +62,7 @@ const posts = [
     description: "Revisite o universo gótico de Batman na clássica série animada de 1996, onde cada sombra conta uma história."
   },
   {
-    image: "https://www.coliseugeek.com.br/wp-content/uploads/2023/01/5144d-clickwallpapers-deadpool-marvel-wallpaper-img_6-scaled-1.jpg",
+    image: "https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2023/11/deadpool-3-ryan-reynolds.jpg?w=1200&h=900&crop=1",
     mainTag: "anti-heróis",
     tags: ["Deadpool", "Marvel", "Comédia"],
     title: "Deadpool smirk face",
@@ -194,7 +194,7 @@ const posts = [
     description: "Mire no mundo de Clint Barton, o Gavião Arqueiro, cuja precisão e lealdade o tornaram uma parte indispensável dos Vingadores."
   },
   {
-    image: "https://static.wikia.nocookie.net/versus-compendium/images/d/dc/BP.png/revision/latest?cb=20181009193143",
+    image: "https://i0.wp.com/cinegrandiose.com/wp-content/uploads/Black-Panther-2.png?fit=960%2C540&ssl=1",
     mainTag: "heróis",
     tags: ["Marvel", "Wakanda", "Tecnologia"],
     title: "Black Panther: O Rei de Wakanda",
@@ -455,7 +455,7 @@ const comments = [
   {
     content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, diam sit amet sodales fermentum, odio nisl ultricies nunc',
     postTitle: 'Lorem ipsum dolorsdsds sdsds sdsdsds sdsdsdsdsd sdsdsdsd sit amet',
-    postImage: 'https://www.coliseugeek.com.br/wp-content/uploads/2023/01/5144d-clickwallpapers-deadpool-marvel-wallpaper-img_6-scaled-1.jpg',
+    postImage: 'https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2023/11/deadpool-3-ryan-reynolds.jpg?w=1200&h=900&crop=1',
     postedAt: '2 hours ago',
     edited: false,
     editedAt: '',
@@ -471,7 +471,7 @@ const comments = [
   {
     content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, diam sit amet sodales fermentum, odio nisl ultricies nunc',
     postTitle: 'Lorem ipsum dolor sit amet',
-    postImage: 'https://www.coliseugeek.com.br/wp-content/uploads/2023/01/5144d-clickwallpapers-deadpool-marvel-wallpaper-img_6-scaled-1.jpg',
+    postImage: 'https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2023/11/deadpool-3-ryan-reynolds.jpg?w=1200&h=900&crop=1',
     postedAt: '2 hours ago',
     edited: false,
     editedAt: '',
@@ -557,7 +557,7 @@ export async function getSearchSuggestions(query: string) {
     post.author.toLowerCase().includes(lowerQuery) ||
     post.mainTag.toLowerCase().includes(lowerQuery) ||
     post.description.toLowerCase().includes(lowerQuery)
-  ).slice(0, 5);  // Retornamos no máximo 5 sugestões
+  ).slice(0, 5);
 }
 
 export async function getPostsByQuery(query: string) {
@@ -568,6 +568,28 @@ export async function getPostsByQuery(query: string) {
     post.mainTag.toLowerCase().includes(lowerQuery) ||
     post.description.toLowerCase().includes(lowerQuery)
   );
+}
+
+export async function getPostsByQueryPaginated(
+  query: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<GetRecentPostsResponse> {
+  const lowerQuery = query.toLowerCase().trim();
+  const filtered = posts.filter((post) =>
+    post.title.toLowerCase().includes(lowerQuery) ||
+    post.author.toLowerCase().includes(lowerQuery) ||
+    post.mainTag.toLowerCase().includes(lowerQuery) ||
+    post.description.toLowerCase().includes(lowerQuery)
+  );
+
+  const start = (page - 1) * limit;
+  const end = start + limit;
+
+  return {
+    posts: filtered.slice(start, end),
+    total: filtered.length,
+  };
 }
 
 export async function getComments() {
@@ -587,16 +609,16 @@ export async function getRandomPosts() {
   return shuffledPosts;
 }
 
-export async function getRecentPosts(page: number, limit: number) {
+export type GetRecentPostsResponse = { posts: IPost[]; total: number };
+
+export async function getRecentPosts(
+  page: number = 1,
+  limit: number = 10
+): Promise<GetRecentPostsResponse> {
   const start = (page - 1) * limit;
   const end = start + limit;
-
   const paginatedPosts = posts.slice(start, end);
-
-  return {
-    posts: paginatedPosts,
-    total: posts.length,
-  };
+  return { posts: paginatedPosts, total: posts.length };
 }
 
 export async function getTrendingPosts() {

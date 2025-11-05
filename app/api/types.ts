@@ -1,24 +1,27 @@
-import { Document, Schema } from 'mongoose';
+import type { Types } from "mongoose";
 
-export interface IPost extends Document {
+export type PostStatus = "draft" | "pending_review" | "published";
+
+export interface PostDTO {
   title: string;
+  slug: string;
   content: string;
-  author: Schema.Types.ObjectId;
+  author: Types.ObjectId;
   mainTag: string;
   tags: string[];
   description?: string;
   views: number;
-  viewedBy: Schema.Types.ObjectId[];
+  viewedBy: Types.ObjectId[];
   bookmarks: number;
   edited: boolean;
-  editedBy?: Schema.Types.ObjectId;
+  editedBy?: Types.ObjectId;
   postedAt: Date;
   lastEditedAt?: Date;
-  comments: Schema.Types.ObjectId[];
-  status: 'draft' | 'pending_review' | 'published';
+  comments: Types.ObjectId[];
+  status: PostStatus;
 }
 
-export interface IUser extends Document {
+export interface UserDTO {
   username: string;
   slug: string;
   profilePic?: string;
@@ -29,34 +32,33 @@ export interface IUser extends Document {
     youtube?: string;
     github?: string;
   };
-  role: 'member' | 'vip' | 'admin' | 'volunteer';
-  bookmarks: Schema.Types.ObjectId[];
-  viewedPosts: Schema.Types.ObjectId[];
-  comments: Schema.Types.ObjectId[];
-  createdPosts: Schema.Types.ObjectId[];
-  editedPosts: Schema.Types.ObjectId[];
-  pendingEditRequests: Schema.Types.ObjectId[];
-  approvedEditRequests: Schema.Types.ObjectId[];
+  role: "member" | "vip" | "admin" | "volunteer" | "writer" | "owner";
+  bookmarks: Types.ObjectId[];
+  viewedPosts: Types.ObjectId[];
+  comments: Types.ObjectId[];
+  createdPosts: Types.ObjectId[];
+  editedPosts: Types.ObjectId[];
+  pendingEditRequests: Types.ObjectId[];
+  approvedEditRequests: Types.ObjectId[];
 }
 
-export interface IComment extends Document {
+export interface CommentDTO {
   text: string;
-  author: Schema.Types.ObjectId;
+  author: Types.ObjectId;
+  post: Types.ObjectId;
   postedAt: Date;
   upvotes: number;
   downvotes: number;
 }
 
-export interface IProgress extends Document {
-  user: Schema.Types.ObjectId;
-  post: Schema.Types.ObjectId;
+export interface ProgressDTO {
+  user: Types.ObjectId;
+  post: Types.ObjectId;
   percentageRead: number;
 }
 
-export interface IFeedback extends Document {
-  userId: Schema.Types.ObjectId;
-  postId: Schema.Types.ObjectId;
-  wantMore: boolean;
-  wantLess: boolean;
-  timestamp: Date;
+export interface FeedbackDTO {
+  userId: Types.ObjectId;
+  postId: Types.ObjectId;
+  score: -1 | 0 | 1;
 }

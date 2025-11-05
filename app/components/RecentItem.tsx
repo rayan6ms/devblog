@@ -1,6 +1,7 @@
 'use client'
 
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -39,11 +40,64 @@ export default function RecentItem({post, isBig}: RecentItemProps) {
     router.push(path)
   }
 
+  const [averageColor, setAverageColor] = useState<string | null>(null);
+
+  function rgbToHex(r: number, g: number, b: number) {
+    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+  }
+
+  useEffect(() => {
+    const proxiedImageUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(image)}`;
+  
+    fetch(proxiedImageUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const imgURL = URL.createObjectURL(blob);
+        const img = new window.Image();
+        img.src = imgURL;
+  
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+  
+          if (!ctx) return;
+  
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  
+          let r = 0, g = 0, b = 0, count = 0;
+  
+          for (let i = 0; i < imageData.length; i += 4) {
+            r += imageData[i];
+            g += imageData[i + 1];
+            b += imageData[i + 2];
+            count++;
+          }
+  
+          r = Math.floor(r / count);
+          g = Math.floor(g / count);
+          b = Math.floor(b / count);
+  
+          setAverageColor(rgbToHex(r, g, b));
+        };
+      })
+      .catch(error => console.error("Erro ao carregar a imagem:", error));
+  }, [image]);  
+
   return (
     <Link href={`/post/${slugify(title, { lower: true, strict: true })}`} 
-      className={`group flex flex-col w-[360px] sm:w-[460px] md:w-[360px] lg:w-[420px] h-fit
+      className={`group flex flex-col w-[360px] sm:w-[460px] md:w-[360px] lg:w-[420px] rounded-lg h-fit  bg-[${averageColor}]/70
         ${isBig ? 'xxl:w-[600px] xxl:max-h-[720px] md:max-h-[600px] lg:max-h-[550px]' : 'lg:max-h-[425px] xxl:w-[320px] xxl:max-h-[360px]'}`
       }
+      // use averageColor as background only when hover
+      // style={{
+      //   backgroundColor: averageColor,
+      // }}
+      onMouseEnter={() => setAverageColor(null)}
+      onMouseLeave={() => setAverageColor(averageColor)}
     >
       <div
         className={`w-full rounded-lg relative ${isBig ? 'md:h-[340px] lg:h-[380px] xxl:h-[550px]' : 'lg:h-[270px] xxl:h-[210px]'}`}
@@ -54,8 +108,8 @@ export default function RecentItem({post, isBig}: RecentItemProps) {
             alt={ title }
             width={ 300 }
             height={ 210 }
-            className="rounded-lg shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
-            w-full h-full"
+            className={`rounded-lg shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
+            w-full h-full`}
           />
           {hasStartedReading && (
             <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">

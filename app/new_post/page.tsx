@@ -8,20 +8,19 @@ import { getAllMainTags } from '@/data/posts';
 const allowedRoles = ['volunteer', 'writer', 'admin', 'owner'];
 const role = 'admin';
 
-export default function page() {
-  if (!role || !allowedRoles.includes(role)) return null;
+export default function Page() {
+  if (!role || !allowedRoles.includes(role)) return <p className="p-6">You don’t have permission to create posts.</p>;
 
   const [mainTags, setMainTags] = useState<string[]>([]);
   useEffect(() => {
     const fetchMainTags = async () => {
-      const tags = getAllMainTags();
+      const tags = await getAllMainTags();
       setMainTags(tags);
     };
-
     fetchMainTags();
   }, []);
 
-  if (!mainTags.length) return (<p>Loading...</p>);
+  if (!mainTags.length) return (<p className="p-6">Loading…</p>);
 
   return (
     <>

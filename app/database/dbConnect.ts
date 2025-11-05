@@ -1,63 +1,23 @@
-import _mongoose, { connect } from "mongoose";
+import mongoose from "mongoose";
 
 declare global {
-  var mongoose: {
-    promise: ReturnType<typeof connect> | null;
-    conn: typeof _mongoose | null;
-  };
+  var _mongooseConn: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } | undefined;
 }
 
-const username = encodeURIComponent(`${process.env.DB_NAME}`);
-const password = encodeURIComponent(`${process.env.DB_PASSWORD}`);
+const MONGODB_URI = process.env.MONGODB_URI!;
+if (!MONGODB_URI) throw new Error("Missing MONGODB_URI");
 
-const MONGODB_URI = `mongodb+srv://${username}:${password}@${process.env.DB_CLUSTER}.teh3uei.mongodb.net/`
+export default async function dbConnect() {
+  if (!global._mongooseConn) global._mongooseConn = { conn: null, promise: null };
 
-if (!MONGODB_URI || MONGODB_URI.length === 0) {
-  throw new Error("Please add your MongoDB URI to .env.local");
-}
+  if (global._mongooseConn.conn) return global._mongooseConn.conn;
 
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections from growing exponentially
- * during API Route usage.
- */
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-async function dbConnect() {
-  if (cached.conn) {
-    console.log("🚀 Using cached connection");
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    const opts = {
+  if (!global._mongooseConn.promise) {
+    global._mongooseConn.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
-    };
-
-    cached.promise = connect(MONGODB_URI!, opts)
-      .then((mongoose) => {
-        console.log("✅ New connection established");
-        return mongoose;
-      })
-      .catch((error) => {
-        console.log(MONGODB_URI);
-        console.error("❌ Connection to database failed");
-        throw error;
-      });
+    }).then((m) => m);
   }
 
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
-
-  return cached.conn;
+  global._mongooseConn.conn = await global._mongooseConn.promise;
+  return global._mongooseConn.conn;
 }
-
-export default dbConnect;

@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getTrendingPosts } from '@/api/utils';
+import dbConnect from "@/database/dbConnect";
+import Post from "@/../models/Post";
 
-export async function GET(request: NextRequest) {
-  const trendingPosts = await getTrendingPosts();
-  return NextResponse.json(trendingPosts);
+export async function GET() {
+  await dbConnect();
+  const weekAgo = new Date(Date.now() - 7*24*60*60*1000);
+  const posts = await Post.find({ status: "published", createdAt: { $gte: weekAgo } })
+    .sort({ views: -1, bookmarks: -1 })
+    .limit(10)
+    .lean();
+  return Response.json(posts);
 }

@@ -9,30 +9,30 @@ import {
 } from '@/api/utils';
 
 export async function GET(request: NextRequest) {
-  // Usa um middleware que anexe o userId ao objeto de request se o usuário estiver logado
+  // Use a middleware to attach the userId to the request object if the user is logged in
   const userId: mongoose.Types.ObjectId | null = (request as any).userId || null;
 
   let mixedRecommendations: mongoose.Document[] = [];
 
   if (userId) {
-    // Obter posts de cada categoria de recomendação para usuários logados
+    // Get posts from each category of recommendation for logged-in users
     const feedbackRecommendations = await getRecommendationsBasedOnFeedback(userId);
     const tagRecommendations = await getRecommendationsFromTags(userId);
     const userSimilarityRecommendations = await getRecommendationsFromSimilarUsers(userId);
 
-    // Selecionar subconjuntos de posts de cada categoria
+    // Select subsets of posts from each category
     const selectedFeedbackPosts = getRandomSubarray(feedbackRecommendations, 4);
     const selectedTagPosts = getRandomSubarray(tagRecommendations, 4);
     const selectedUserSimilarityPosts = getRandomSubarray(userSimilarityRecommendations, 2);
 
-    // Misturar todos os posts selecionados
+    // Mix all selected posts
     mixedRecommendations = shuffleArray([...selectedFeedbackPosts, ...selectedTagPosts, ...selectedUserSimilarityPosts]);
   } else {
-    // Para usuários não logados, mostrar posts em tendência ou recentes
+    // For non-logged-in users, show trending or recent posts
     const trendingPosts = await getTrendingPosts();
     const recentPosts = await getRecentPosts();
 
-    // Misturar posts em tendência e recentes
+    // Mix trending and recent posts
     mixedRecommendations = shuffleArray([...trendingPosts, ...recentPosts]);
   }
 

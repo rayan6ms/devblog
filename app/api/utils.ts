@@ -80,14 +80,14 @@ export async function getUserFavoriteTags(userId: mongoose.Types.ObjectId): Prom
 
 export async function getRecommendationsFromSimilarUsers(userId: mongoose.Types.ObjectId): Promise<mongoose.Document[]> {
   await dbConnect();
-  // Primeiro, encontre usuários semelhantes
+  // First, find similar users
   const similarUserIds = await findSimilarUsers(userId);
-  // Depois, encontre os posts que usuários semelhantes viram, mas o usuário atual não
+  // Then, find posts viewed by similar users and not by the current user
   const viewedPostsIds = await getPostsViewedByUser(userId);
   
   const recommendations = await Post.find({
-    _id: { $nin: viewedPostsIds }, // Posts que o usuário atual não viu
-    viewedBy: { $in: similarUserIds } // Vistos por usuários semelhantes
+    _id: { $nin: viewedPostsIds },
+    viewedBy: { $in: similarUserIds }
   }).limit(10);
 
   return recommendations;
@@ -96,14 +96,12 @@ export async function getRecommendationsFromSimilarUsers(userId: mongoose.Types.
 
 async function findSimilarUsers(userId: mongoose.Types.ObjectId): Promise<mongoose.Types.ObjectId[]> {
   await dbConnect();
-  // Obtém os posts visualizados e bookmarked pelo usuário
   const user = await User.findById(userId).exec();
   if (!user) {
-    // O usuário não foi encontrado, então retorne um array vazio ou lance um erro
     return [];
   }
 
-  // Busca por usuários que têm postagens em comum nos campos viewedPosts ou bookmarks
+  // Find users with common posts in viewedPosts or bookmarks fields
   const usersWithCommonPosts = await User.find({
     $or: [
       { viewedPosts: { $in: user.viewedPosts } },
@@ -119,19 +117,16 @@ async function getPostsViewedByUser(userId: mongoose.Types.ObjectId): Promise<mo
   await dbConnect();
   const user = await User.findById(userId).exec();
   if (!user) {
-    // O usuário não foi encontrado, então retorne um array vazio ou lance um erro
     return [];
   }
 
-  // Retorna os IDs dos posts que o usuário visualizou
   return user.viewedPosts;
 }
 
 export async function getRecommendationsFromTags(userId: mongoose.Types.ObjectId): Promise<mongoose.Document[]> {
   await dbConnect();
-  // Encontre as tags favoritas do usuário
   const favoriteTags = await getUserFavoriteTags(userId);
-  // Encontre os posts que o usuário ainda não viu, mas que contêm suas tags favoritas
+  // Find posts that the user has not yet viewed, but that contain their favorite tags
   const viewedPostsIds = await getPostsViewedByUser(userId);
   
   const tagRecommendations = await Post.find({
