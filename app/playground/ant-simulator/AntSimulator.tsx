@@ -1,5 +1,3 @@
 export default function AntSimulator() {
-  return (
-    <div>AntSimulator</div>
-  )
+	return <div>AntSimulator</div>;
 }

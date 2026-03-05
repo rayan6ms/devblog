@@ -1,4 +1,3 @@
-
 // import SearchBar from './SearchBar';
 // import HamburgerMenu from './HamburgerMenu';
 
@@ -10,6 +9,6 @@
 
 // export default function ScrolledNavBar({mappedLinks, isMenuOpen, setIsMenuOpen, handleButtonClick }: NavBarProps) {
 //   return (
-    
+
 //   )
 // }

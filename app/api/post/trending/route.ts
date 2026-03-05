@@ -1,12 +1,11 @@
-import dbConnect from "@/database/dbConnect";
-import Post from "@/../models/Post";
+import prisma from "@/database/prisma";
 
 export async function GET() {
-  await dbConnect();
-  const weekAgo = new Date(Date.now() - 7*24*60*60*1000);
-  const posts = await Post.find({ status: "published", createdAt: { $gte: weekAgo } })
-    .sort({ views: -1, bookmarks: -1 })
-    .limit(10)
-    .lean();
-  return Response.json(posts);
+	const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+	const posts = await prisma.post.findMany({
+		where: { status: "published", createdAt: { gte: weekAgo } },
+		orderBy: [{ views: "desc" }, { bookmarks: "desc" }],
+		take: 10,
+	});
+	return Response.json(posts);
 }

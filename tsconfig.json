@@ -1,28 +1,42 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./app/*"]
-    }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/playground/snake-game/SnakeGame.jsx", "app/playground/snake-game/Apple.jsx", "app/playground/snake-game/Board.jsx", "app/playground/snake-game/Snake.jsx", "app/playground/chess/Square.jsx", "app/playground/chess/ChessBoard.jsx", "app/playground/chess/Chess.jsx", "app/playground/chess/chess-logic.js"],
-  "exclude": ["node_modules"]
+	"compilerOptions": {
+		"target": "ES2020",
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"allowJs": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"incremental": true,
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
+		"paths": {
+			"@/*": ["./app/*"]
+		}
+	},
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts",
+		"app/playground/snake-game/SnakeGame.jsx",
+		"app/playground/snake-game/Apple.jsx",
+		"app/playground/snake-game/Board.jsx",
+		"app/playground/snake-game/Snake.jsx",
+		"app/playground/chess/Square.jsx",
+		"app/playground/chess/ChessBoard.jsx",
+		"app/playground/chess/Chess.jsx",
+		"app/playground/chess/chess-logic.js",
+		".next/dev/types/**/*.ts"
+	],
+	"exclude": ["node_modules", ".next", "dist", "out", "coverage"]
 }
