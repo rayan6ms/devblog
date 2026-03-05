@@ -41,12 +41,13 @@ export default function RecommendedItem({
         md:w-[360px]
         lg:w-[420px]
         xxl:w-[320px]
-        box-content ${addSeparation && "mt-5 pt-4"}
+        box-content ${addSeparation && "mt-5"}
         xxl:last-of-type:flex md:last-of-type:hidden`}
 		>
 			<div className="flex flex-col justify-center w-4/5 h-full pr-4">
 				<div className="flex justify-between items-center">
 					<button
+						type="button"
 						onClick={(e) => handleRouteButtonClick(e, `/tag?selected=${tagId}`)}
 						className="text-xs tracking-[.06em] leading-5 w-fit font-sans text-zinc-400 hover:text-purpleContrast uppercase transition-all ease-in-out duration-300"
 					>

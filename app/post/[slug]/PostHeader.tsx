@@ -2,6 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import Image from "next/image";
 import Link from "next/link";
 import { FaBookmark, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
@@ -36,11 +37,13 @@ export default function PostHeader({ tags }: { tags: string[] }) {
 					<Link
 						href={`/profile/${slugify(author, { lower: true, strict: true })}`}
 					>
-						<img
+						<Image
 							className="w-[52px] h-[52px] object-cover rounded-full"
 							src="https://i.etsystatic.com/19286482/r/il/96c0fd/2980731281/il_1080xN.2980731281_j8z4.jpg"
 							alt={`Avatar de ${author}`}
 							title={`Avatar de ${author}`}
+							width={52}
+							height={52}
 						/>
 					</Link>
 					<div className="flex-col">

@@ -30,14 +30,17 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 	const containerRef = useRef<HTMLFormElement>(null);
 	const router = useRouter();
 
-	const goToResults = (q: string) => {
-		const queryString = encodeURIComponent(q.trim());
-		if (!queryString) return;
-		setSuggestions([]);
-		setActiveIndex(-1);
-		setIsSearchOpen(false);
-		router.push(`/search?q=${queryString}&page=1`);
-	};
+	const goToResults = useCallback(
+		(q: string) => {
+			const queryString = encodeURIComponent(q.trim());
+			if (!queryString) return;
+			setSuggestions([]);
+			setActiveIndex(-1);
+			setIsSearchOpen(false);
+			router.push(`/search?q=${queryString}&page=1`);
+		},
+		[router],
+	);
 
 	const toggleOpen = useCallback(() => {
 		// - closed  > open + focus
@@ -45,6 +48,7 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 		// - open + empty > close
 		setIsSearchOpen((prev) => {
 			if (!prev) {
+				setShouldRound(false);
 				requestAnimationFrame(() => searchInput.current?.focus());
 				return true;
 			} else {
@@ -56,15 +60,22 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 			}
 			return prev;
 		});
-	}, [query]);
+	}, [goToResults, query]);
 
 	useEffect(() => {
-		isSearchOpen
-			? setShouldRound(false)
-			: setTimeout(() => setShouldRound(true), 460);
-		if (isSearchOpen && searchInput.current) {
-			setTimeout(() => searchInput.current!.focus(), 500);
+		let roundTimeout: number | undefined;
+		let focusTimeout: number | undefined;
+
+		if (!isSearchOpen) {
+			roundTimeout = window.setTimeout(() => setShouldRound(true), 460);
+		} else if (searchInput.current) {
+			focusTimeout = window.setTimeout(() => searchInput.current?.focus(), 500);
 		}
+
+		return () => {
+			if (roundTimeout) window.clearTimeout(roundTimeout);
+			if (focusTimeout) window.clearTimeout(focusTimeout);
+		};
 	}, [isSearchOpen]);
 
 	useEffect(() => {
@@ -130,12 +141,6 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 			ref={containerRef}
 			onSubmit={handleSearch}
 			className="relative flex justify-end w-64 sm:w-80"
-			onBlur={(e) => {
-				if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-					setSuggestions([]);
-					setActiveIndex(-1);
-				}
-			}}
 		>
 			<input
 				ref={searchInput}
@@ -168,25 +173,24 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 			{suggestions.length > 0 && (
 				<ul
 					className="absolute mt-9 bg-greyBg border border-gray-700 rounded-lg w-full z-10 overflow-hidden"
-					role="listbox"
 					aria-label="Search suggestions"
 				>
 					{suggestions.map((suggestion, index) => {
 						const isActive = index === activeIndex;
 						return (
-							<li
-								key={suggestion.title + index}
-								role="option"
-								aria-selected={isActive}
-								onMouseDown={(e) => {
-									e.preventDefault();
-									setQuery(suggestion.title);
-									goToResults(suggestion.title);
-								}}
-								className={`cursor-pointer p-2 leading-7 line-clamp-1 text-lightBg
+							<li key={suggestion.title}>
+								<button
+									type="button"
+									onMouseDown={(e) => {
+										e.preventDefault();
+										setQuery(suggestion.title);
+										goToResults(suggestion.title);
+									}}
+									className={`w-full cursor-pointer p-2 text-left leading-7 line-clamp-1 text-lightBg
                 ${isActive ? "bg-purpleContrast/40" : "hover:bg-lessDarkBg"} `}
-							>
-								{suggestion.title}
+								>
+									{suggestion.title}
+								</button>
 							</li>
 						);
 					})}

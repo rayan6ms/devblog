@@ -36,21 +36,22 @@ const SliderItem = ({ item }: { item: IPost }) => {
 			className="group w-56 mb-2 mx-2 bg-lessDarkBg rounded-xl shadow-md"
 		>
 			<div className="w-56 h-32 mb-2.5 relative">
-				<div className="w-full h-full overflow-hidden rounded-md">
+				<div className="w-full h-full overflow-hidden rounded-md relative">
 					<Image
-						width={224}
-						height={128}
 						src={item.image}
 						alt={item.title}
+						fill
 						className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-1000"
+						sizes="224px"
 					/>
-					<button
-						onClick={onTagClick}
-						className="absolute -bottom-2.5 right-1/2 translate-x-1/2 w-fit text-xs capitalize text-zinc-300 bg-zinc-600 rounded-full px-2 py-0.5 hover:bg-purpleContrast transition-all ease-in-out duration-300"
-					>
-						{item.mainTag}
-					</button>
 				</div>
+				<button
+					type="button"
+					onClick={onTagClick}
+					className="absolute -bottom-2.5 right-1/2 translate-x-1/2 w-fit text-xs capitalize text-zinc-300 bg-zinc-600 rounded-full px-2 py-0.5 hover:bg-purpleContrast transition-all ease-in-out duration-300"
+				>
+					{item.mainTag}
+				</button>
 			</div>
 
 			<div className="p-2 capitalize">

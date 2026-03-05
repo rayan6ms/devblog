@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import Comment from "./Comment";
 import LoginModal from "./LoginModal";
@@ -34,6 +35,13 @@ const comments = [
 			"https://revolucaonerd.com/wordpress/wp-content/files/revolucaonerd.com/2023/04/batman-animacao-1024x683.webp",
 	},
 ];
+
+type CommentReportPayload = {
+	commentId: number;
+	reason: string;
+	details?: string;
+	dateISO: string;
+};
 
 export default function CommentSection() {
 	const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -106,12 +114,7 @@ export default function CommentSection() {
 		setIsReportOpen(true);
 	};
 
-	const handleSubmitReport = (payload: {
-		commentId: number;
-		reason: string;
-		details?: string;
-		dateISO: string;
-	}) => {
+	const handleSubmitReport = (payload: CommentReportPayload) => {
 		const key = "reportedCommentIds";
 		const keyData = localStorage.getItem(key);
 		const reportedSet = new Set<number>(keyData ? JSON.parse(keyData) : []);
@@ -119,7 +122,7 @@ export default function CommentSection() {
 
 		const reportsKey = "commentReports";
 		const existing = localStorage.getItem(reportsKey);
-		const list = existing ? (JSON.parse(existing) as any[]) : [];
+		const list: CommentReportPayload[] = existing ? JSON.parse(existing) : [];
 		list.push(payload);
 		localStorage.setItem(reportsKey, JSON.stringify(list));
 
@@ -132,11 +135,13 @@ export default function CommentSection() {
 			<h1 className="text-xl font-bold">Comment Section</h1>
 
 			<div className="flex mt-5 mb-12">
-				<img
+				<Image
 					className="w-12 h-12 object-cover rounded-full mr-4"
 					src={userAvatar}
 					alt={`Avatar de ${user}`}
 					title={`Avatar de ${user}`}
+					width={48}
+					height={48}
 				/>
 				<div className="flex flex-col w-full h-full bg-greyBg/90 border border-zinc-700/50 shadow-md shadow-zinc-900 rounded-lg">
 					<textarea
@@ -151,6 +156,7 @@ export default function CommentSection() {
 					/>
 					<div className="flex justify-end p-1">
 						<button
+							type="button"
 							onClick={handleComment}
 							className="bg-purpleContrast/80 hover:bg-purpleContrast rounded-lg p-1 px-1.5 mr-0.5 text-sm text-gray-200"
 						>

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const P5Background = dynamic(() => import("@/P5Background"), { ssr: false });
 
@@ -11,22 +11,17 @@ export default function NotFound() {
 	const router = useRouter();
 	const pathname = usePathname();
 
-	const [backgroundMounted, setBackgroundMounted] = useState(false);
-
 	useEffect(() => {
 		if (pathname !== "/not-found") {
-			router.push("/not-found");
+			router.replace("/not-found");
 		}
-		if (!backgroundMounted) setBackgroundMounted(true);
-	}, [router, pathname, backgroundMounted]);
+	}, [router, pathname]);
 
 	return (
 		<>
-			{backgroundMounted && (
-				<div className="fixed top-0 left-0 w-full h-full z-0">
-					<P5Background />
-				</div>
-			)}
+			<div className="fixed top-0 left-0 w-full h-full z-0">
+				<P5Background />
+			</div>
 			<div className="relative flex flex-col items-center justify-center min-h-screen z-10">
 				<div className="relative mb-6 flex flex-col items-center">
 					<h1 className="text-7xl md:text-9xl font-bold text-purpleContrast [text-shadow:_0_2px_4px_var(--tw-shadow-color)] shadow-zinc-400/60">

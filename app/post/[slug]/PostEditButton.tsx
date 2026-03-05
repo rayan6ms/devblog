@@ -19,7 +19,6 @@ export default function PostEditButton({
 	authorName: string;
 }) {
 	const router = useRouter();
-	const [user, setUser] = useState<IUser | null>(null);
 	const [allowed, setAllowed] = useState(false);
 
 	useEffect(() => {
@@ -31,7 +30,6 @@ export default function PostEditButton({
 			if (local) {
 				try {
 					const u = JSON.parse(local) as IUser;
-					setUser(u);
 					setAllowed(
 						canEditByRole(u.role) ||
 							(u.name || "").trim().toLowerCase() ===
@@ -41,7 +39,6 @@ export default function PostEditButton({
 				} catch {}
 			}
 			const u = await getUser();
-			setUser(u);
 			setAllowed(
 				canEditByRole(u.role) ||
 					(u.name || "").trim().toLowerCase() ===
@@ -54,6 +51,7 @@ export default function PostEditButton({
 
 	return (
 		<button
+			type="button"
 			aria-label="Edit post"
 			title="Edit post"
 			onClick={() => router.push(`/post/${slug}/edit`)}

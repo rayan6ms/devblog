@@ -148,8 +148,9 @@ export default function LoginForm() {
 						)}
 					</button>
 					<span className="text-sm font-europa mt-2 text-zinc-300 p-2">
-						Don't have an account?
+						Don&apos;t have an account?
 						<button
+							type="button"
 							className="ml-1 underline hover:text-purpleContrast transition-all ease-in-out duration-200"
 							onClick={() => router.push("/register")}
 						>

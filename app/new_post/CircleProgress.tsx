@@ -15,7 +15,13 @@ const CircleProgress: React.FC<CircleProgressProps> = ({
 	const dash = Math.max(0, Math.min(1, progress)) * circumference;
 
 	return (
-		<svg width={size} height={size} className="mt-1 mr-0.5">
+		<svg
+			width={size}
+			height={size}
+			className="mt-1 mr-0.5"
+			role="img"
+			aria-label={`${Math.round(progress * 100)}% progress, ${remaining} minutes remaining`}
+		>
 			<circle
 				r={radius}
 				cx={size / 2}

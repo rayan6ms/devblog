@@ -3,12 +3,13 @@ export default function SkeletonSecondSection() {
 
 	return (
 		<section className="w-full justify-center grid grid-flow-row md:grid-flow-col gap-8 mt-14">
-			{sections.map((section, index) => (
+			{sections.map((section) => (
 				<div
-					key={index}
+					key={section}
 					className={`flex gap-3 flex-col items-center gap-y-5 border-gray-700/60 md:border rounded-md p-4 lg:p-8 xxl:last:flex md:last:hidden animate-pulse`}
 				>
-					<h2 className="text-2xl font-bold text-center bg-gray-300 h-8 w-40 rounded-md"></h2>
+					<h2 className="sr-only">{section}</h2>
+					<div className="text-2xl font-bold text-center bg-gray-300 h-8 w-40 rounded-md"></div>
 					<div className="w-[360px] h-[270px] bg-gray-300 rounded-lg"></div>
 					<div className="flex flex-col gap-3 w-full">
 						<div className="w-[360px] h-[100px] bg-gray-300 rounded-lg"></div>

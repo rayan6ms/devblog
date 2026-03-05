@@ -1,6 +1,6 @@
 export type PostStatus = "draft" | "pending_review" | "published";
 
-export interface PostDTO {
+export interface IPost {
 	title: string;
 	slug: string;
 	content: string;
@@ -9,17 +9,15 @@ export interface PostDTO {
 	tags: string[];
 	description?: string;
 	views: number;
-	viewedBy: string[];
 	bookmarks: number;
 	edited: boolean;
 	editedBy?: string;
 	postedAt: Date;
 	lastEditedAt?: Date;
-	comments: string[];
 	status: PostStatus;
 }
 
-export interface UserDTO {
+export interface IUser {
 	username: string;
 	slug: string;
 	profilePic?: string;
@@ -31,16 +29,9 @@ export interface UserDTO {
 		github?: string;
 	};
 	role: "member" | "vip" | "admin" | "volunteer" | "writer" | "owner";
-	bookmarks: string[];
-	viewedPosts: string[];
-	comments: string[];
-	createdPosts: string[];
-	editedPosts: string[];
-	pendingEditRequests: string[];
-	approvedEditRequests: string[];
 }
 
-export interface CommentDTO {
+export interface IComment {
 	text: string;
 	author: string;
 	post: string;
@@ -49,14 +40,20 @@ export interface CommentDTO {
 	downvotes: number;
 }
 
-export interface ProgressDTO {
+export interface IProgress {
 	user: string;
 	post: string;
 	percentageRead: number;
 }
 
-export interface FeedbackDTO {
+export interface IFeedback {
 	userId: string;
 	postId: string;
 	score: number;
 }
+
+export type PostDTO = IPost;
+export type UserDTO = IUser;
+export type CommentDTO = IComment;
+export type ProgressDTO = IProgress;
+export type FeedbackDTO = IFeedback;

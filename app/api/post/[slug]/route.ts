@@ -2,10 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getPostBySlug } from "@/api/utils";
 
 export async function GET(
-	request: NextRequest,
-	{ params }: { params: { slug: string } },
+	_request: NextRequest,
+	context: RouteContext<"/api/post/[slug]">,
 ): Promise<NextResponse> {
-	const { slug } = params;
+	const { slug } = await context.params;
 
 	try {
 		const post = await getPostBySlug(slug);
@@ -13,7 +13,7 @@ export async function GET(
 			return NextResponse.json({ error: "Post not found" }, { status: 404 });
 		}
 		return NextResponse.json(post);
-	} catch (error: any) {
+	} catch {
 		return NextResponse.json(
 			{ error: { message: "Unable to connect" } },
 			{ status: 500 },

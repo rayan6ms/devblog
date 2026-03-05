@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import { getAllMainTags } from "@/data/posts";
@@ -22,10 +22,11 @@ type StoredPost = {
 	slug: string;
 };
 
-export default function EditPostPage() {
-	const params = useParams<{ id: string }>();
-	const router = useRouter();
-	const slug = params.id;
+type EditPostPageProps = PageProps<"/post/[slug]/edit">;
+
+export default function EditPostPage(_props: EditPostPageProps) {
+	const params = useParams<{ slug: string }>();
+	const slug = params.slug;
 
 	const [mainTags, setMainTags] = useState<string[]>([]);
 	const [initial, setInitial] = useState<StoredPost | null>(null);

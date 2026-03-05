@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const MainTagInput = ({
 	tags,
@@ -30,13 +30,14 @@ const MainTagInput = ({
 			{filter && (
 				<div className="absolute w-full bg-zinc-500 shadow-md max-h-40 overflow-auto">
 					{filteredTags.map((tag) => (
-						<div
+						<button
 							key={tag}
+							type="button"
 							className="p-2 hover:bg-zinc-600 cursor-pointer"
 							onClick={() => onTagSelect(tag)}
 						>
 							{tag}
-						</div>
+						</button>
 					))}
 				</div>
 			)}

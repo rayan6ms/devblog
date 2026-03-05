@@ -29,7 +29,7 @@ export default function Header({
 	onEdit?: () => void;
 }) {
 	const role = (user.role || "member").toLowerCase();
-	const { color, icon: RoleIcon } = roleStyles[role] || roleStyles["member"];
+	const { color, icon: RoleIcon } = roleStyles[role] || roleStyles.member;
 
 	return (
 		<div className="h-fit pb-2 relative bg-gradient-to-r from-purpleContrast/80 to-purple-600/70 rounded-t-xl sm:rounded-t-2xl p-5 flex flex-col xxl:flex-row items-center">
@@ -59,7 +59,7 @@ export default function Header({
 								{user.name}
 							</h2>
 							<div
-								className={`flex items-center w-fit ${color} text-white py-1 px-2.5 rounded-full text-sm outline -outline-offset-2 outline-zinc-300/${role === "volunteer" || "owner" ? "10" : "20"}`}
+								className={`flex items-center w-fit ${color} text-white py-1 px-2.5 rounded-full text-sm outline -outline-offset-2 outline-zinc-300/${role === "volunteer" || role === "owner" ? "10" : "20"}`}
 							>
 								<RoleIcon className="text-xs mr-1.5" />
 								<span
@@ -79,6 +79,7 @@ export default function Header({
 				</div>
 			</div>
 			<button
+				type="button"
 				onClick={onEdit}
 				className="border border-zinc-500/30 absolute right-6 md:right-5 top-7 md:top-4 xxl:top-2 bg-zinc-700/50 hover:bg-zinc-700/75 transition-all duration-300 rounded-md px-1.5"
 			>

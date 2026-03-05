@@ -13,7 +13,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 			);
 		}
 		return NextResponse.json(progress);
-	} catch (error) {
+	} catch (_error) {
 		return NextResponse.json(
 			{ error: { message: "Unable to connect" } },
 			{ status: 500 },

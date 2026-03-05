@@ -41,13 +41,14 @@ export default function SectionCard({
 			<RecentItem post={posts.recent[index]} />
 			{posts.recommended.slice(0, 2).map((post: IPost, index: number) => (
 				<TrendingItem
-					key={index}
+					key={post.title}
 					post={post}
 					section
 					addSeparation={index > 0}
 				/>
 			))}
 			<button
+				type="button"
 				onClick={(e) => handleRouteButtonClick(e, section.path)}
 				className="w-full flex items-center gap-2 hover:gap-0 self-start transition-all hover:text-purpleContrast group"
 			>

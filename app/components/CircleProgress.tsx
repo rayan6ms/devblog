@@ -20,7 +20,12 @@ export default function CircleProgress({
 	const y = radius + normalizedRadius * Math.sin(angle);
 
 	return (
-		<svg height={radius * 2} width={radius * 2}>
+		<svg
+			height={radius * 2}
+			width={radius * 2}
+			role="img"
+			aria-label={`${progress}% complete`}
+		>
 			<ProgressRing
 				radius={radius}
 				stroke={stroke}

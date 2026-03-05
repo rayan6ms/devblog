@@ -16,6 +16,7 @@ export default function SocialAuthButton({
 }: SocialAuthButtonProps) {
 	return (
 		<button
+			type="button"
 			onClick={() => signIn(provider)}
 			className={`flex items-center justify-center w-full p-2 rounded-md shadow-md mb-2 ${bgColor} ${hoverBgColor} text-white transition-colors duration-300`}
 		>

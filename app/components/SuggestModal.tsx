@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SuggestModalProps = {
 	isOpen: boolean;
@@ -12,11 +12,32 @@ const MAX_TITLE = 80;
 const MAX_DETAILS = 600;
 const MIN_TITLE = 5;
 
+type StoredSuggestion = {
+	id: string;
+	title: string;
+	details: string;
+	authorId: string;
+	createdAt: string;
+	status: "pending";
+};
+
 export default function SuggestModal({
 	isOpen,
 	onClose,
 	authorId = "me",
 }: SuggestModalProps) {
+	if (!isOpen) return null;
+
+	return <SuggestModalBody authorId={authorId} onClose={onClose} />;
+}
+
+function SuggestModalBody({
+	onClose,
+	authorId,
+}: {
+	onClose: () => void;
+	authorId: string;
+}) {
 	const [title, setTitle] = useState("");
 	const [details, setDetails] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -24,22 +45,12 @@ export default function SuggestModal({
 	const [submitted, setSubmitted] = useState(false);
 
 	useEffect(() => {
-		if (!isOpen) return;
-		setTitle("");
-		setDetails("");
-		setErrors({});
-		setSaving(false);
-		setSubmitted(false);
-	}, [isOpen]);
-
-	useEffect(() => {
-		if (!isOpen) return;
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [isOpen, onClose]);
+	}, [onClose]);
 
 	const dirty = useMemo(
 		() => title.trim().length > 0 || details.trim().length > 0,
@@ -69,7 +80,7 @@ export default function SuggestModal({
 		};
 		try {
 			const raw = localStorage.getItem("postSuggestions");
-			const arr = raw ? (JSON.parse(raw) as any[]) : [];
+			const arr: StoredSuggestion[] = raw ? JSON.parse(raw) : [];
 			arr.unshift(suggestion);
 			localStorage.setItem("postSuggestions", JSON.stringify(arr));
 		} catch {
@@ -88,24 +99,21 @@ export default function SuggestModal({
 		}, 900);
 	}
 
-	if (!isOpen) return null;
-
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center p-4"
-			role="dialog"
-			aria-modal="true"
-			onMouseDown={(e) => {
-				if (e.currentTarget === e.target) onClose();
-			}}
-		>
-			<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+			<button
+				type="button"
+				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+				aria-label="Close suggest post modal"
+				onClick={onClose}
+			/>
 			<div className="relative w-full max-w-xl bg-greyBg rounded-2xl border border-zinc-700/50 shadow-2xl">
 				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
 					<h3 className="text-lg font-semibold text-zinc-100">
 						Suggest a post
 					</h3>
 					<button
+						type="button"
 						className="text-zinc-300 hover:text-white"
 						onClick={onClose}
 						aria-label="Close"
@@ -116,8 +124,14 @@ export default function SuggestModal({
 
 				<div className="px-5 py-5 space-y-4">
 					<div>
-						<label className="block text-sm text-zinc-300 mb-1">Title</label>
+						<label
+							htmlFor="suggest-post-title"
+							className="block text-sm text-zinc-300 mb-1"
+						>
+							Title
+						</label>
 						<input
+							id="suggest-post-title"
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
 							maxLength={MAX_TITLE}
@@ -135,10 +149,14 @@ export default function SuggestModal({
 					</div>
 
 					<div>
-						<label className="block text-sm text-zinc-300 mb-1">
+						<label
+							htmlFor="suggest-post-details"
+							className="block text-sm text-zinc-300 mb-1"
+						>
 							What’s the idea?
 						</label>
 						<textarea
+							id="suggest-post-details"
 							value={details}
 							onChange={(e) => setDetails(e.target.value)}
 							maxLength={MAX_DETAILS}
@@ -164,6 +182,7 @@ export default function SuggestModal({
 
 				<div className="px-5 pb-5 flex items-center justify-end gap-3">
 					<button
+						type="button"
 						className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
 						onClick={onClose}
 						disabled={saving}
@@ -171,6 +190,7 @@ export default function SuggestModal({
 						Cancel
 					</button>
 					<button
+						type="button"
 						className="px-4 py-2 rounded-md bg-purpleContrast hover:bg-purple-500 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
 						onClick={handleSubmit}
 						disabled={saving || !dirty}

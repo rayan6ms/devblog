@@ -2,10 +2,11 @@ import prisma from "@/database/prisma";
 
 export async function GET(
 	_: Request,
-	{ params }: { params: { slug: string } },
+	context: RouteContext<"/api/post/[slug]">,
 ) {
+	const { slug } = await context.params;
 	const post = await prisma.post.findFirst({
-		where: { slug: params.slug, status: "published" },
+		where: { slug, status: "published" },
 		include: {
 			author: {
 				select: {

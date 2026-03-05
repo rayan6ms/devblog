@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
 import {
@@ -21,80 +21,77 @@ const otherTags = getAllOtherTags();
 const allTags = [...mainTags, ...otherTags];
 const sortedAllTags = allTags.sort((a, b) => a.localeCompare(b));
 
-export default function TagsPage() {
+function isValidTag(tag: string) {
+	return sortedAllTags.some(
+		(validTag) =>
+			validTag.localeCompare(tag, undefined, { sensitivity: "base" }) === 0,
+	);
+}
+
+function arraysAreEqual(a: string[], b: string[]): boolean {
+	return a.length === b.length && a.every((val, index) => val === b[index]);
+}
+
+function TagsPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const pathname = usePathname();
-
 	const [posts, setPosts] = useState<IPost[]>([]);
 	const selected = searchParams.get("selected");
 	const previousTagsArrayRef = useRef<string[]>([]);
+	const selectedTags = useMemo(() => {
+		const selectedParam = searchParams.get("selected");
+		if (!selectedParam) return [];
 
-	const [selectedTags, setSelectedTags] = useState<string[]>(() => {
-		const queryTags = searchParams.get("selected");
-		return queryTags
-			? queryTags
-					.split(",")
-					.map((tag) => slugify(tag, { lower: true, strict: true }))
-			: [];
-	});
-
-	const isValidTag = (tag: string) => {
-		return sortedAllTags.some(
-			(validTag) =>
-				validTag.localeCompare(tag, undefined, { sensitivity: "base" }) === 0,
-		);
-	};
-
-	function arraysAreEqual(a: string[], b: string[]): boolean {
-		return a.length === b.length && a.every((val, index) => val === b[index]);
-	}
-
-	useEffect(() => {
-		const url = `${pathname}?${searchParams}`;
-		const queryTags =
-			new URLSearchParams(url.split("?")[1]).get("selected")?.split(",") || [];
-		const newTags = queryTags.filter((tag) => isValidTag(tag));
-
-		if (!arraysAreEqual(newTags, selectedTags)) {
-			setSelectedTags(newTags);
-		}
-	}, [searchParams, selectedTags]);
+		return selectedParam
+			.split(",")
+			.map((tag) => slugify(tag, { lower: true, strict: true }))
+			.filter((tag) => isValidTag(tag));
+	}, [searchParams]);
 
 	const handleSelectTag = (tag: string) => {
-		if (!selectedTags.includes(tag)) {
-			const newSelectedTags = [...selectedTags, tag];
+		const nextTag = slugify(tag, { lower: true, strict: true });
+
+		if (!selectedTags.includes(nextTag)) {
+			const newSelectedTags = [...selectedTags, nextTag];
 			if (newSelectedTags.length > 5) newSelectedTags.shift();
-			setSelectedTags(newSelectedTags);
-			router.push(
-				`/tag?selected=${newSelectedTags.map((t) => slugify(t, { lower: true, strict: true })).join(",")}`,
-			);
+			router.push(`/tag?selected=${newSelectedTags.join(",")}`);
 		}
 	};
 
 	const handleRemoveTag = (tagToRemove: string) => {
 		const newSelectedTags = selectedTags.filter((tag) => tag !== tagToRemove);
-		setSelectedTags(newSelectedTags);
 		router.push(
 			newSelectedTags.length > 0
-				? `/tag?selected=${newSelectedTags.map((t) => slugify(t, { lower: true, strict: true })).join(",")}`
+				? `/tag?selected=${newSelectedTags.join(",")}`
 				: "/tag",
 		);
 	};
 
-	const tagsArray = selected ? selected.split(",") : [];
-
 	useEffect(() => {
+		let active = true;
+		const tagsArray = selected ? selected.split(",").filter(isValidTag) : [];
+
 		if (arraysAreEqual(tagsArray, previousTagsArrayRef.current)) return;
 		previousTagsArrayRef.current = tagsArray;
-		const fetchPosts = async () => {
-			const filteredPosts = await getFilteredPosts(tagsArray);
-			setPosts(filteredPosts);
-		};
 
-		if (tagsArray.length > 0) fetchPosts();
-		else setPosts([]);
-	}, [tagsArray]);
+		async function fetchPosts() {
+			const filteredPosts = await getFilteredPosts(tagsArray);
+			if (!active) return;
+			setPosts(filteredPosts);
+		}
+
+		if (tagsArray.length > 0) {
+			void fetchPosts();
+		} else {
+			Promise.resolve().then(() => {
+				if (active) setPosts([]);
+			});
+		}
+
+		return () => {
+			active = false;
+		};
+	}, [selected]);
 
 	return (
 		<>
@@ -127,10 +124,7 @@ export default function TagsPage() {
 							<SelectedTags
 								tags={selectedTags}
 								onRemoveTag={handleRemoveTag}
-								onReset={() => {
-									setSelectedTags([]);
-									router.push(`/tag`);
-								}}
+								onReset={() => router.push("/tag")}
 							/>
 							<div className="p-2 bg-lessDarkBg flex flex-wrap gap-4 overflow-y-auto">
 								{posts.map((post) => (
@@ -151,6 +145,7 @@ export default function TagsPage() {
 										</div>
 										<h2 className="text-lg text-zinc-200 mb-1">{post.title}</h2>
 										<button
+											type="button"
 											className="inline-block px-2 py-1 mr-1.5 mt-1 uppercase text-[11px] tracking-[.06em] leading-5 w-fit font-sans bg-gray-800  hover:bg-gray-700 hover:text-purpleContrast rounded-lg text-zinc-400"
 											onClick={(e) => {
 												e.preventDefault();
@@ -163,11 +158,12 @@ export default function TagsPage() {
 										{post.tags.map((tag) => (
 											<button
 												key={tag}
+												type="button"
 												className="inline-block px-2 py-1 mr-1.5 mt-2 uppercase text-[11px] tracking-[.06em] leading-5 w-fit font-sans bg-gray-800  hover:bg-gray-700 hover:text-purpleContrast rounded-lg text-zinc-400"
 												onClick={(e) => {
 													e.preventDefault();
 													e.stopPropagation();
-													handleSelectTag(post.mainTag);
+													handleSelectTag(tag);
 												}}
 											>
 												{tag}
@@ -182,5 +178,20 @@ export default function TagsPage() {
 			</div>
 			<Footer />
 		</>
+	);
+}
+
+export default function TagsPage() {
+	return (
+		<Suspense
+			fallback={
+				<>
+					<div className="bg-darkBg min-h-screen" />
+					<Footer />
+				</>
+			}
+		>
+			<TagsPageContent />
+		</Suspense>
 	);
 }

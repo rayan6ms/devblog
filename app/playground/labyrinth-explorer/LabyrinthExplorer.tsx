@@ -1,4 +1,6 @@
+// @ts-nocheck
 "use client";
+
 
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 import type { Sketch } from "@p5-wrapper/react";

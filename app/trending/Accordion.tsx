@@ -119,65 +119,74 @@ export default function Accordion({ panels }: AccordionProps) {
 				gridTemplateRows: isMobile ? gridStyle : "none",
 			}}
 		>
-			{resizedPanels.map(({ tag, description, author, image }, index) => {
-				const authorId = slugify(author, { lower: true, strict: true });
-				let formattedAuthor =
-					author.length > 20 ? `${author.slice(0, 20)}...` : author;
-				formattedAuthor = formattedAuthor
-					.toLowerCase()
-					.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
-				const Icon =
-					iconMap[slugify(tag, { lower: true, strict: true })] || FaCircleXmark;
-				return (
-					<div
-						key={index}
-						className={`relative overflow-hidden h-full transition-all ease-in-out ${activePanel === index ? "cursor-pointer rounded-3xl duration-200" : "rounded-full duration-700 delay-500"} ${focusedPanel === index && "outline outline-offset-2 transition-none"}`}
-						onClick={(e) => handlePanelClick(e, index)}
-					>
-						<h2
-							className={`flex flex-col transition-all duration-700 delay-100 ${!(activePanel === index) && "justify-center items-center ml-2.5"} relative inset-auto bg-transparent bg-black bg-opacity-60 h-10 w-fit rounded-full px-3 mt-5`}
+			{resizedPanels.map(
+				({ tag, description, author, image, title }, index) => {
+					const authorId = slugify(author, { lower: true, strict: true });
+					const panelKey = `${slugify(tag, { lower: true, strict: true })}-${authorId}-${slugify(title, { lower: true, strict: true })}`;
+					let formattedAuthor =
+						author.length > 20 ? `${author.slice(0, 20)}...` : author;
+					formattedAuthor = formattedAuthor
+						.toLowerCase()
+						.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+					const Icon =
+						iconMap[slugify(tag, { lower: true, strict: true })] ||
+						FaCircleXmark;
+					return (
+						<div
+							key={panelKey}
+							className={`relative overflow-hidden h-full transition-all ease-in-out ${activePanel === index ? "cursor-pointer rounded-3xl duration-200" : "rounded-full duration-700 delay-500"} ${focusedPanel === index && "outline outline-offset-2 transition-none"}`}
 						>
 							<button
-								className={`flex h-12 gap-2 shadow-zinc-400/20 focus:outline-none focus:transition-none transition-all duration-300 delay-200 ${activePanel === index && "bg-black/50 shadow-lg rounded-full"}`}
+								type="button"
+								className="absolute inset-0 z-10"
+								aria-label={`Open ${title}`}
+								onClick={(e) => handlePanelClick(e, index)}
 								onFocus={() => setFocusedPanel(index)}
 								onBlur={() => setFocusedPanel(null)}
+							/>
+							<h2
+								className={`pointer-events-none relative z-20 flex flex-col transition-all duration-700 delay-100 ${!(activePanel === index) && "justify-center items-center ml-2.5"} inset-auto bg-transparent bg-black bg-opacity-60 h-10 w-fit rounded-full px-3 mt-5`}
 							>
-								<div className="w-8">
-									<Icon className="w-8 h-8 bg-black bg-opacity-60 rounded-full p-2" />
-								</div>
-								<Link
-									href={`/tag?selected=${slugify(tag, { lower: true, strict: true })}`}
-									className={`flex items-center h-full px-3 text-2xl font-extrabold capitalize opacity-0 transition-all duration-200 delay-300 ${activePanel === index && "opacity-100"} ${activePanel === index ? "" : "pointer-events-none"}`}
+								<div
+									className={`flex h-12 gap-2 shadow-zinc-400/20 focus:outline-none focus:transition-none transition-all duration-300 delay-200 ${activePanel === index && "bg-black/50 shadow-lg rounded-full"}`}
 								>
-									{tag}
+									<div className="w-8">
+										<Icon className="w-8 h-8 bg-black bg-opacity-60 rounded-full p-2" />
+									</div>
+									<Link
+										href={`/tag?selected=${slugify(tag, { lower: true, strict: true })}`}
+										className={`pointer-events-auto flex items-center h-full px-3 text-2xl font-extrabold capitalize opacity-0 transition-all duration-200 delay-300 ${activePanel === index && "opacity-100"} ${activePanel === index ? "" : "pointer-events-none"}`}
+									>
+										{tag}
+									</Link>
+								</div>
+							</h2>
+							<div
+								className={`pointer-events-none relative z-20 px-8 mt-4 text-lg font-bold brightness-110 transition-all duration-700 ease-in-out ${activePanel === index ? "opacity-100" : "opacity-0 invisible"}`}
+							>
+								<p
+									className={`[text-shadow:_0_2px_4px_var(--tw-shadow-color)] shadow-zinc-600 transition-all duration-700 ease-in-out line-clamp-10 ${activePanel === index ? "opacity-100" : "opacity-0"}`}
+									title={description}
+								>
+									{description}
+								</p>
+								<Link
+									href={`/profile/${authorId}`}
+									className={`pointer-events-auto block transition-all duration-100 font-bold mt-2 text-sm w-fit ml-auto text-gray-300 hover:text-purpleContrast ${activePanel === index ? "" : "pointer-events-none"}`}
+								>
+									{formattedAuthor}
 								</Link>
-							</button>
-						</h2>
-						<div
-							className={`px-8 mt-4 text-lg font-bold brightness-110 transition-all duration-700 ease-in-out ${activePanel === index ? "opacity-100" : "opacity-0 invisible"}`}
-						>
-							<p
-								className={`[text-shadow:_0_2px_4px_var(--tw-shadow-color)] shadow-zinc-600 transition-all duration-700 ease-in-out line-clamp-10 ${activePanel === index ? "opacity-100" : "opacity-0"}`}
-								title={description}
-							>
-								{description}
-							</p>
-							<Link
-								href={`/profile/${authorId}`}
-								className={`block transition-all duration-100 font-bold mt-2 text-sm w-fit ml-auto text-gray-300 hover:text-purpleContrast ${activePanel === index ? "" : "pointer-events-none"}`}
-							>
-								{formattedAuthor}
-							</Link>
+							</div>
+							<Image
+								className={`absolute w-full h-full object-cover -z-10 transition-all ease-in-out duration-500 delay-100 ${activePanel === index && "brightness-[0.7]"}`}
+								fill
+								src={image}
+								alt={`${tag} image`}
+							/>
 						</div>
-						<Image
-							className={`absolute w-full h-full object-cover -z-10 transition-all ease-in-out duration-500 delay-100 ${activePanel === index && "brightness-[0.7]"}`}
-							fill
-							src={image}
-							alt={`${tag} image`}
-						/>
-					</div>
-				);
-			})}
+					);
+				},
+			)}
 		</div>
 	);
 }

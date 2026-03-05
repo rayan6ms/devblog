@@ -183,7 +183,7 @@ const posts = [
 	},
 	{
 		image:
-			"https://www.playstationlifestyle.net/wp-content/uploads/sites/9/2022/09/new-iron-man-game-by-ea.jpg?w=640",
+			"https://uploads.jovemnerd.com.br/wp-content/uploads/2018/02/capitao-america-novo-escudo-vingadores-guerra-infinita.png",
 		mainTag: "bilionários",
 		tags: ["Vingadores", "Tecnologia", "Homem de Ferro"],
 		title: "Tony Stark: O Homem de Ferro",
@@ -323,7 +323,7 @@ const posts = [
 	},
 	{
 		image:
-			"https://static.itapemafm.com.br/s3fs-public/styles/itapema_blog_post_header/public/2020-06/henry%20cavill%20superman.jpg?c6c9L4CmsU1W5vv1Uxr1IRL33YNObrTs&itok=NNCHm8MU",
+			"https://s2-techtudo.glbimg.com/7JZ5j1VD4yJt1LVWLuE7IPeow4E=/1200x/smart/filters:cover():strip_icc()/i.s3.glbimg.com/v1/AUTH_08fbf48bc0524877943fe86e43087e7a/internal_photos/bs/2023/t/m/QGZAUMTRiMoy4EdY1AOg/the-flash.jpg",
 		mainTag: "heróis",
 		tags: ["DC", "Krypton", "Poderes"],
 		title: "Superman: O Último Filho de Krypton",
@@ -379,7 +379,7 @@ const posts = [
 	},
 	{
 		image:
-			"https://i.pinimg.com/564x/9b/b4/55/9bb4555c9fb02a5b659726f7533fbf91.jpg",
+			"https://lojalimitededition.vteximg.com.br/arquivos/ids/430973-468-675/image-b34a988914e042b68c965316038557cb.jpg?v=638330709190230000",
 		mainTag: "heróis",
 		tags: ["Marvel", "sangue"],
 		title: "Moon Knight stalking the night",
@@ -741,8 +741,10 @@ export const getAllMainTags = () => {
 
 export const getAllOtherTags = (): string[] => {
 	const otherTagsSet = new Set();
-	posts.forEach((post) =>
-		post.tags.forEach((tag) => otherTagsSet.add(tag.toLowerCase())),
-	);
+	posts.forEach((post) => {
+		post.tags.forEach((tag) => {
+			otherTagsSet.add(tag.toLowerCase());
+		});
+	});
 	return Array.from(otherTagsSet) as string[];
 };

@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 interface HamburgerMenuProps {
 	isMenuOpen: boolean;
 	setIsMenuOpen: (isMenuOpen: boolean) => void;
@@ -13,12 +11,16 @@ export default function HamburgerMenu({
 }: HamburgerMenuProps) {
 	return (
 		<button
+			type="button"
 			onClick={() => setIsMenuOpen(!isMenuOpen)}
 			className={`w-fit h-fit block ${!isMenuOpen && !fromScrollBar ? "md:hidden" : "lg:hidden"} bg-transparent`}
+			aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
 		>
 			<svg
 				className="w-10 h-10 fill-wheat hover:fill-purpleContrast transition-color ease-in-out duration-200"
 				viewBox="0 0 100 100"
+				aria-hidden="true"
+				focusable="false"
 			>
 				<rect
 					className={`transition-transform duration-300 ${isMenuOpen && "translate-y-0 translate-x-[39px] rotate-45"}`}

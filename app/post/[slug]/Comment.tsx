@@ -2,6 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import Image from "next/image";
 import Link from "next/link";
 import { FaChevronDown, FaChevronUp, FaFlag } from "react-icons/fa6";
 import slugify from "slugify";
@@ -53,15 +54,18 @@ export default function Comment({
 				<Link
 					href={`/profile/${slugify(author, { lower: true, strict: true })}`}
 				>
-					<img
+					<Image
 						className="w-10 h-10 object-cover rounded-full"
 						src={avatar}
 						alt={`Avatar de ${author}`}
 						title={`Avatar de ${author}`}
+						width={40}
+						height={40}
 					/>
 				</Link>
 				<div className="flex flex-col items-center mt-2">
 					<button
+						type="button"
 						onClick={() => onVote(id, "up")}
 						className={`text-gray-300 ${userVotes[id] === "up" && "text-purpleContrast"} hover:text-purpleContrast transition-all`}
 					>
@@ -69,6 +73,7 @@ export default function Comment({
 					</button>
 					<span>{votes[id]}</span>
 					<button
+						type="button"
 						onClick={() => onVote(id, "down")}
 						className={`text-gray-300 ${userVotes[id] === "down" && "text-purpleContrast"} hover:text-purpleContrast transition-all`}
 					>
@@ -95,6 +100,7 @@ export default function Comment({
 					</div>
 
 					<button
+						type="button"
 						onClick={() => onFlag(id)}
 						className="hover:text-purpleContrast transition-all ease-in-out"
 						aria-label="Reportar comentário"

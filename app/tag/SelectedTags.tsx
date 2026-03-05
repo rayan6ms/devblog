@@ -11,13 +11,14 @@ export default function SelectedTags({
 }: SelectedTagsProps) {
 	return (
 		<div className="flex flex-wrap gap-2 max-w-full md:max-w-none bg-greyBg rounded-lg px-4 py-3.5 min-h-[4rem] space-x-2 border border-zinc-700/50 shadow-md shadow-zinc-900">
-			{tags.map((tag, index) => (
+			{tags.map((tag) => (
 				<span
 					className="bg-lessDarkBg rounded-lg hover:bg-purpleContrast/75 px-3 py-1 border border-zinc-800"
-					key={index}
+					key={tag}
 				>
 					{tag}
 					<button
+						type="button"
 						className="ml-1 text-wheat hover:text-lessDarkBg"
 						onClick={() => onRemoveTag(tag)}
 					>
@@ -29,6 +30,7 @@ export default function SelectedTags({
 			))}
 			{tags.length > 0 && (
 				<button
+					type="button"
 					className="bg-zinc-600/80 hover:bg-zinc-500/90 px-4 rounded-full text-zinc text-xs font-bold uppercase border border-zinc-500/40"
 					onClick={onReset}
 				>

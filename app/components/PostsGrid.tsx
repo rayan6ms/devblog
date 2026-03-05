@@ -30,15 +30,23 @@ function highlight(text: string, term?: string) {
 	const re = new RegExp(`(${tokens.join("|")})`, "ig");
 
 	const parts = text.split(re);
-	return parts.map((part, i) =>
-		re.test(part) ? (
-			<mark key={i} className="bg-purple-600/40 text-inherit rounded-sm px-0.5">
+	let offset = 0;
+
+	return parts.map((part) => {
+		const key = `${offset}-${part}`;
+		offset += part.length;
+
+		return re.test(part) ? (
+			<mark
+				key={key}
+				className="bg-purple-600/40 text-inherit rounded-sm px-0.5"
+			>
 				{part}
 			</mark>
 		) : (
-			<React.Fragment key={i}>{part}</React.Fragment>
-		),
-	);
+			<React.Fragment key={key}>{part}</React.Fragment>
+		);
+	});
 }
 
 export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
@@ -72,13 +80,13 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 			</h2>
 
 			<div className="col-start-1 row-start-2 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-1">
-				{posts.map((post, index) => (
+				{posts.map((post) => (
 					<Link
-						key={index}
+						key={slugify(post.title, { lower: true, strict: true })}
 						className="bg-greyBg border border-t-0 border-zinc-700/30 rounded-lg overflow-hidden shadow-lg group"
 						href={`/post/${slugify(post.title, { lower: true, strict: true })}`}
 					>
-						<div className="w-full h-[200px] relative">
+						<div className="w-full h-[200px] relative overflow-hidden rounded-t-lg">
 							<Image
 								src={post.image}
 								alt={post.title}
@@ -99,6 +107,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 
 							<div className="flex items-center justify-between my-2">
 								<button
+									type="button"
 									onClick={(e) => pushTo("tag", post.mainTag, e)}
 									className="hover:text-purpleContrast transition-colors uppercase font-bold text-sm text-zinc-300"
 								>
@@ -111,6 +120,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 
 							<div className="flex items-center justify-between text-zinc-400 text-sm">
 								<button
+									type="button"
 									onClick={(e) => pushTo("author", post.author, e)}
 									className="hover:text-purpleContrast transition-colors"
 								>

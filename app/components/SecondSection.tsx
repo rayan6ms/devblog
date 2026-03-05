@@ -35,8 +35,8 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 		<section className="w-full justify-center grid grid-flow-row md:grid-flow-col gap-8 mt-14">
 			{sections.map((section, index) => (
 				<div
-					key={index}
-					className={`flex gap-3 flex-col items-center gap-y-5 border-gray-700/60 md:border rounded-md p-4 lg:p-8 xxl:last:flex md:last:hidden`}
+					key={section.path}
+					className={`flex gap-3 flex-col items-center gap-y-5 bg-lessDarkBg border-gray-700/60 md:border rounded-md p-4 lg:p-8 xxl:last:flex md:last:hidden`}
 				>
 					<h2 className="text-2xl font-bold text-center text-wheat">
 						{section.title}
@@ -44,13 +44,14 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 					<RecentItem post={posts.recent[index]} />
 					{posts.recommended.slice(0, 2).map((post: IPost, index: number) => (
 						<TrendingItem
-							key={index}
+							key={post.title}
 							post={post}
 							section
 							addSeparation={index > 0}
 						/>
 					))}
 					<button
+						type="button"
 						onClick={(e) => handleRouteButtonClick(e, section.path)}
 						className="w-full flex items-center gap-2 hover:gap-0 self-start transition-all hover:text-purpleContrast group mt-5"
 					>

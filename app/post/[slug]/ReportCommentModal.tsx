@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type ReportPayload = {
 	commentId: number;
@@ -34,18 +34,28 @@ export default function ReportCommentModal({
 	comment,
 	onSubmit,
 }: Props) {
+	if (!isOpen || !comment) return null;
+
+	return (
+		<ReportCommentModalBody
+			comment={comment}
+			onClose={onClose}
+			onSubmit={onSubmit}
+		/>
+	);
+}
+
+function ReportCommentModalBody({
+	onClose,
+	comment,
+	onSubmit,
+}: Omit<Props, "isOpen"> & {
+	comment: NonNullable<Props["comment"]>;
+}) {
 	const [reason, setReason] = useState<string>("");
 	const [details, setDetails] = useState("");
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		if (!isOpen) return;
-		setReason("");
-		setDetails("");
-		setSaving(false);
-		setError(null);
-	}, [isOpen, comment?.id]);
 
 	const valid = useMemo(() => {
 		if (!reason) return false;
@@ -75,24 +85,21 @@ export default function ReportCommentModal({
 		onClose();
 	}
 
-	if (!isOpen || !comment) return null;
-
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center p-4"
-			role="dialog"
-			aria-modal="true"
-			onMouseDown={(e) => {
-				if (e.currentTarget === e.target) onClose();
-			}}
-		>
-			<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+			<button
+				type="button"
+				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+				aria-label="Close report comment modal"
+				onClick={onClose}
+			/>
 			<div className="relative w-full max-w-lg bg-greyBg rounded-2xl border border-zinc-700/50 shadow-2xl">
 				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
 					<h3 className="text-lg font-semibold text-zinc-100">
 						Report comment
 					</h3>
 					<button
+						type="button"
 						className="text-zinc-300 hover:text-white"
 						onClick={onClose}
 						aria-label="Close"
@@ -116,8 +123,14 @@ export default function ReportCommentModal({
 					</div>
 
 					<div>
-						<label className="block text-sm text-zinc-300 mb-1">Reason</label>
+						<label
+							htmlFor="report-comment-reason"
+							className="block text-sm text-zinc-300 mb-1"
+						>
+							Reason
+						</label>
 						<select
+							id="report-comment-reason"
 							value={reason}
 							onChange={(e) => setReason(e.target.value)}
 							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
@@ -134,13 +147,17 @@ export default function ReportCommentModal({
 					</div>
 
 					<div>
-						<label className="block text-sm text-zinc-300 mb-1">
+						<label
+							htmlFor="report-comment-details"
+							className="block text-sm text-zinc-300 mb-1"
+						>
 							Details{" "}
 							{reason === "Other"
 								? `(min ${MIN_DETAILS_IF_OTHER} chars)`
 								: "(optional)"}
 						</label>
 						<textarea
+							id="report-comment-details"
 							value={details}
 							onChange={(e) => setDetails(e.target.value)}
 							maxLength={MAX_DETAILS}
@@ -163,6 +180,7 @@ export default function ReportCommentModal({
 
 				<div className="px-5 pb-5 flex justify-end gap-3">
 					<button
+						type="button"
 						className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
 						onClick={onClose}
 						disabled={saving}
@@ -170,6 +188,7 @@ export default function ReportCommentModal({
 						Cancel
 					</button>
 					<button
+						type="button"
 						className="px-4 py-2 rounded-md bg-purpleContrast hover:bg-purple-500 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
 						onClick={handleSubmit}
 						disabled={saving || !valid}

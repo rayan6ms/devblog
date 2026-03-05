@@ -15,7 +15,7 @@ type TrendingItemProps = {
 
 export default function TrendingItem({
 	post,
-	section,
+	section: _section,
 	addSeparation,
 }: TrendingItemProps) {
 	const { image, mainTag, title } = post;
@@ -41,7 +41,7 @@ export default function TrendingItem({
         md:w-[320px] md:h-[120px]
         lg:w-[380px] lg:h-[150px]
         xxl:w-[300px] xxl:h-[100px]
-        box-content ${addSeparation && "mt-5 pt-4"}`}
+        box-content ${addSeparation && "mt-5"}`}
 		>
 			<div
 				className="flex relative
@@ -54,14 +54,15 @@ export default function TrendingItem({
 				<Image
 					src={image}
 					alt={title}
-					width={105}
-					height={105}
+					fill
 					className="w-full h-full rounded-lg object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out"
+					sizes="(max-width: 640px) 180px, (max-width: 1024px) 150px, 105px"
 				/>
 			</div>
 			<div className="flex flex-col justify-center w-fit h-full">
 				<div className="flex justify-between">
 					<button
+						type="button"
 						onClick={(e) => handleRouteButtonClick(e, `/tag?selected=${tagId}`)}
 						className="text-sm tracking-[.06em] leading-5 w-fit font-sans text-zinc-400 hover:text-purpleContrast uppercase transition-all ease-in-out duration-300"
 					>

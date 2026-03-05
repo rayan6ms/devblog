@@ -16,7 +16,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="pt-br">
+		<html lang="pt-BR">
 			<head>
 				<link
 					href="https://fonts.cdnfonts.com/css/somerton-dense"
@@ -27,7 +27,7 @@ export default function RootLayout({
 					rel="stylesheet"
 				/>
 			</head>
-			<body className={`${inter.className} bg-none bg-lessDarkBg bg-no-repeat`}>
+			<body className={inter.className}>
 				<Header />
 				<NavBar />
 				{children}

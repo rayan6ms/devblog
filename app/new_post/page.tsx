@@ -9,17 +9,23 @@ const allowedRoles = ["volunteer", "writer", "admin", "owner"];
 const role = "admin";
 
 export default function Page() {
-	if (!role || !allowedRoles.includes(role))
-		return <p className="p-6">You don’t have permission to create posts.</p>;
-
 	const [mainTags, setMainTags] = useState<string[]>([]);
+	const hasPermission = Boolean(role && allowedRoles.includes(role));
+
 	useEffect(() => {
+		if (!hasPermission) return;
+
 		const fetchMainTags = async () => {
 			const tags = await getAllMainTags();
 			setMainTags(tags);
 		};
+
 		fetchMainTags();
-	}, []);
+	}, [hasPermission]);
+
+	if (!hasPermission) {
+		return <p className="p-6">You don’t have permission to create posts.</p>;
+	}
 
 	if (!mainTags.length) return <p className="p-6">Loading…</p>;
 

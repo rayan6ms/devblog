@@ -1,4 +1,9 @@
 export default function SkeletonMain() {
+	const skeletonItems = Array.from(
+		{ length: 5 },
+		(_, index) => `skeleton-recommended-${index + 1}`,
+	);
+
 	return (
 		<>
 			<main className="mt-10 mx-auto flex-col flex-wrap items-center md:items-start md:flex-row flex md:justify-center gap-6">
@@ -9,9 +14,9 @@ export default function SkeletonMain() {
 				<div className="flex flex-col gap-8 md:flex-row">
 					<div className="w-[600px] h-[550px] bg-gray-300 rounded-lg animate-pulse"></div>
 					<div className="flex flex-col divide-y divide-gray-500">
-						{Array.from({ length: 5 }).map((_, index) => (
+						{skeletonItems.map((itemKey) => (
 							<div
-								key={index}
+								key={itemKey}
 								className="w-[360px] h-[100px] bg-gray-300 rounded-lg animate-pulse my-2"
 							></div>
 						))}

@@ -15,6 +15,22 @@ export default function InfiniteScroller({
 	const [isHovering, setIsHovering] = useState(false);
 
 	useEffect(() => {
+		const scroller = scrollerRef.current;
+		if (!scroller) return;
+
+		const handleMouseEnter = () => setIsHovering(true);
+		const handleMouseLeave = () => setIsHovering(false);
+
+		scroller.addEventListener("mouseenter", handleMouseEnter);
+		scroller.addEventListener("mouseleave", handleMouseLeave);
+
+		return () => {
+			scroller.removeEventListener("mouseenter", handleMouseEnter);
+			scroller.removeEventListener("mouseleave", handleMouseLeave);
+		};
+	}, []);
+
+	useEffect(() => {
 		let animationFrameId: number;
 
 		const scrollInfinite = () => {
@@ -49,26 +65,26 @@ export default function InfiniteScroller({
 		<div
 			ref={scrollerRef}
 			className="overflow-x-hidden whitespace-nowrap shadow-inner shadow-darkBg rounded-2xl"
-			onMouseEnter={() => setIsHovering(true)}
-			onMouseLeave={() => setIsHovering(false)}
 		>
-			{tags.map((tag, index) => (
-				<span
-					key={index}
+			{tags.map((tag) => (
+				<button
+					key={`${tag}-primary`}
+					type="button"
 					className="cursor-pointer inline-block px-4 uppercase hover:text-purpleContrast text-[13px] tracking-[.06em] leading-5 w-fit p-1 m-2 font-sans bg-gray-800 rounded-lg text-zinc-400 hover:bg-gray-700"
-					onClick={() => onSelectTag && onSelectTag(tag)}
+					onClick={() => onSelectTag?.(tag)}
 				>
 					{tag}
-				</span>
+				</button>
 			))}
-			{tags.map((tag, index) => (
-				<span
-					key={`duplicate-${index}`}
+			{tags.map((tag) => (
+				<button
+					key={`${tag}-duplicate`}
+					type="button"
 					className="cursor-pointer inline-block px-4 uppercase hover:text-purpleContrast text-[13px] tracking-[.06em] leading-5 w-fit p-1 m-2 font-sans bg-gray-800 rounded-lg text-zinc-400 hover:bg-gray-700"
-					onClick={() => onSelectTag && onSelectTag(tag)}
+					onClick={() => onSelectTag?.(tag)}
 				>
 					{tag}
-				</span>
+				</button>
 			))}
 		</div>
 	);

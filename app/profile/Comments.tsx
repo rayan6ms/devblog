@@ -40,13 +40,15 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
 			>
 				{comment.postTitle}
 			</p>
-			<Image
-				src={comment.postImage}
-				width={32}
-				height={32}
-				alt={comment.postTitle}
-				className="rounded-md w-[52px] h-full object-cover"
-			/>
+			<div className="relative h-[32px] w-[52px] overflow-hidden rounded-md">
+				<Image
+					src={comment.postImage}
+					fill
+					alt={comment.postTitle}
+					className="object-cover"
+					sizes="52px"
+				/>
+			</div>
 		</div>
 	</Link>
 );
@@ -59,8 +61,11 @@ export default function Comments({ comments }: CommentsProps) {
 				<FaComment />
 			</div>
 			<div className="flex overflow-x-auto px-2 md:px-0">
-				{comments.map((comment, index) => (
-					<CommentItem key={index} comment={comment} />
+				{comments.map((comment) => (
+					<CommentItem
+						key={`${comment.postTitle}-${comment.postedAt}`}
+						comment={comment}
+					/>
 				))}
 			</div>
 		</div>

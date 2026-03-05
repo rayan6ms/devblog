@@ -2,10 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getUserBySlug } from "@/api/utils";
 
 export async function GET(
-	request: NextRequest,
-	{ params }: { params: { slug: string } },
+	_request: NextRequest,
+	context: RouteContext<"/api/user/[slug]">,
 ): Promise<NextResponse> {
-	const { slug } = params;
+	const { slug } = await context.params;
 
 	try {
 		const user = await getUserBySlug(slug);
@@ -13,7 +13,7 @@ export async function GET(
 			return NextResponse.json({ error: "User not found" }, { status: 404 });
 		}
 		return NextResponse.json(user);
-	} catch (error) {
+	} catch {
 		return NextResponse.json(
 			{ error: { message: "Unable to connect" } },
 			{ status: 500 },

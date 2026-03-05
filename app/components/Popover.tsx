@@ -108,6 +108,7 @@ export default function Popover({
 	return (
 		<div className="relative" ref={ref}>
 			<button
+				type="button"
 				onClick={handleMenuClick}
 				className={`xxl:opacity-0 rounded-full px-[14px] py-1 group-hover:opacity-100 focus:opacity-100 hover:bg-${hoverBg} drop-shadow-lg transition-all duration-300 ease-in-out z-10 text-wheat`}
 			>
@@ -130,11 +131,12 @@ export default function Popover({
 					aria-orientation="vertical"
 					aria-labelledby="options-menu"
 				>
-					{buttonProperties.map((button, index) => {
+					{buttonProperties.map((button) => {
 						const Icon = button.icon;
 						return (
 							<button
-								key={index}
+								key={button.text}
+								type="button"
 								className="w-full px-4 py-2 text-sm text-start text-wheat hover:bg-[#34373d] hover:text-purpleContrast"
 								role="menuitem"
 								onClick={button.onClick}

@@ -78,8 +78,8 @@ export default function SocialLinks({ links }: SocialLinksProps) {
 
 	return (
 		<div className="xs:flex grid grid-cols-2 md:items-center justify-center md:w-auto w-full bg-zinc-800/60 p-1 rounded-xl border border-zinc-500/30 shadow-md">
-			{active.map((link, index) => (
-				<SocialLinkItem key={index} link={link} />
+			{active.map((link) => (
+				<SocialLinkItem key={link.provider} link={link} />
 			))}
 		</div>
 	);

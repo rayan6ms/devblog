@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import PostsGrid from "@/components/PostsGrid";
 import type { IPost } from "@/data/posts";
 import { getRecentPosts } from "@/data/posts";
 import Skeleton from "../components/PostGridSkeleton";
 
-export default function Page() {
+function RecentPageContent() {
 	const [recentPosts, setRecentPosts] = useState<IPost[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [totalPages, setTotalPages] = useState(0);
@@ -80,6 +80,7 @@ export default function Page() {
 						{totalPages > 1 && (
 							<div className="flex justify-center mt-6 space-x-1">
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(1)}
 									disabled={currentPage === 1}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -87,6 +88,7 @@ export default function Page() {
 									First
 								</button>
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(currentPage - 1)}
 									disabled={currentPage === 1}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -99,6 +101,7 @@ export default function Page() {
 									return (
 										<button
 											key={page}
+											type="button"
 											onClick={() => handleRealignPageChange(page)}
 											className={`px-4 py-2 rounded-lg ${
 												page === currentPage
@@ -112,6 +115,7 @@ export default function Page() {
 								})}
 
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(currentPage + 1)}
 									disabled={currentPage === totalPages}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -119,6 +123,7 @@ export default function Page() {
 									Next
 								</button>
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(totalPages)}
 									disabled={currentPage === totalPages}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -132,5 +137,20 @@ export default function Page() {
 			</div>
 			<Footer />
 		</>
+	);
+}
+
+export default function Page() {
+	return (
+		<Suspense
+			fallback={
+				<>
+					<Skeleton />
+					<Footer />
+				</>
+			}
+		>
+			<RecentPageContent />
+		</Suspense>
 	);
 }

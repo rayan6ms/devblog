@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React from "react";
 import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import slugify from "slugify";
 import { z } from "zod";
@@ -31,7 +30,7 @@ const postSchema = z.object({
 		.min(1, "At least one tag is required")
 		.max(MAX_TAGS, `Max ${MAX_TAGS} tags`),
 	description: z.string().max(220, "Max 220 characters").optional(),
-	status: z.enum(["draft", "pending_review", "published"]).default("draft"),
+	status: z.enum(["draft", "pending_review", "published"]),
 	images: z.array(z.string()).optional(),
 });
 type PostFormData = z.infer<typeof postSchema>;
@@ -87,10 +86,9 @@ export default function Form({
 			.replace(/[#*_>`~\-![\]()]/g, " ")
 			.replace(/\s+/g, " ")
 			.trim();
-		const description =
-			data.description && data.description.trim().length
-				? data.description.trim()
-				: plain.slice(0, 180);
+		const description = data.description?.trim().length
+			? data.description.trim()
+			: plain.slice(0, 180);
 
 		const now = new Date().toISOString();
 		const newSlug = slugify(data.title, { lower: true, strict: true });
@@ -112,10 +110,12 @@ export default function Form({
 		};
 
 		const existingRaw = localStorage.getItem("posts");
-		const existing = existingRaw ? JSON.parse(existingRaw) : [];
+		const existing: Array<typeof post> = existingRaw
+			? JSON.parse(existingRaw)
+			: [];
 
 		if (mode === "edit") {
-			const idx = existing.findIndex((p: any) => p.slug === existingSlug);
+			const idx = existing.findIndex((p) => p.slug === existingSlug);
 			if (idx >= 0) {
 				existing[idx] = { ...existing[idx], ...post };
 			} else {
@@ -186,11 +186,11 @@ export default function Form({
 					<p className="text-red-500">{errors.mainTag.message}</p>
 				)}
 
-				<label className="block">
+				<div className="block">
 					<span className="text-zinc-200">Tags:</span>
 					<TagsInput onChange={handleTagsChange} maxTags={MAX_TAGS} />
 					{errors.tags && <p className="text-red-500">{errors.tags.message}</p>}
-				</label>
+				</div>
 
 				<label className="block">
 					<span className="text-zinc-200">Short description (optional):</span>

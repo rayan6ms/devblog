@@ -14,7 +14,7 @@ module.exports = {
 			},
 			colors: {
 				darkBg: "#14171A",
-				lessDarkBg: "rgba(20, 23, 26, 0.99)",
+				lessDarkBg: "#1B1E23",
 				greyBg: "#22252C",
 				wheat: "#EDE7DA",
 				purpleContrast: "#674FF8",

@@ -94,7 +94,7 @@ export default function Page() {
 					<div className="flex flex-wrap justify-center gap-2 mt-4">
 						{trendingPosts.slice(0, 24).map((post, index) => (
 							<Link
-								key={index}
+								key={`${post.title}-${post.author}-${post.date}`}
 								className="md:w-[380px] w-[97%] flex relative bg-greyBg border border-zinc-700/30 rounded-l-2xl rounded-r-md overflow-hidden shadow-lg cursor-pointer group"
 								href={`/post/${slugify(post.title, { lower: true, strict: true })}`}
 							>
@@ -102,13 +102,13 @@ export default function Page() {
 									<span className="absolute -top-2 -left-2.5 w-6 h-6 bg-greyBg rounded-br-full" />
 									{index + 1}
 								</span>
-								<div className="w-36 min-w-24 h-20 relative">
+								<div className="w-36 min-w-24 h-20 relative overflow-hidden">
 									<Image
 										src={post.image}
 										alt={post.title}
-										layout="fill"
-										objectFit="cover"
-										className="w-24 min-w-24 group-hover:scale-110 transition-transform duration-500"
+										fill
+										className="object-cover group-hover:scale-110 transition-transform duration-500"
+										sizes="144px"
 									/>
 								</div>
 								<div className="px-4 py-2.5 w-full flex flex-col justify-between">
@@ -125,22 +125,22 @@ export default function Page() {
 						Trending Posts
 					</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-1 gap-x-4 justify-center mt-4 w-full px-2">
-						{trendingPosts.map((post, index) => (
+						{trendingPosts.map((post) => (
 							<div
-								key={index}
+								key={`${post.title}-${post.author}-${post.date}-card`}
 								className="w-full h-[140px] bg-greyBg border border-zinc-700/30 rounded-md overflow-hidden shadow-lg cursor-pointer my-2"
 							>
 								<Link
 									className="flex group"
 									href={`/post/${slugify(post.title, { lower: true, strict: true })}`}
 								>
-									<div className="w-40 h-[140px] relative">
+									<div className="w-40 h-[140px] relative overflow-hidden rounded-l-lg">
 										<Image
 											src={post.image}
 											alt={post.title}
-											layout="fill"
-											objectFit="cover"
-											className="group-hover:scale-110 transition-transform duration-500 rounded-l-lg"
+											fill
+											className="object-cover group-hover:scale-110 transition-transform duration-500 rounded-l-lg"
+											sizes="160px"
 										/>
 									</div>
 									<div className="flex-grow p-4 pt-3 w-full">
@@ -152,6 +152,7 @@ export default function Page() {
 										</p>
 										<div className="mt-2 flex justify-between text-zinc-300 text-xs">
 											<button
+												type="button"
 												onClick={(e) =>
 													handleNavigationClick("author", post.author, e)
 												}

@@ -68,10 +68,6 @@ export default function RegisterForm() {
 		}
 	};
 
-	const handleSocialAuth = async (provider: string) => {
-		// Implementar lógica de autenticação social
-	};
-
 	return (
 		<>
 			<P5Background />
@@ -164,6 +160,7 @@ export default function RegisterForm() {
 
 				<div className="w-full flex flex-col items-center justify-center mt-12">
 					<button
+						type="submit"
 						className={`flex justify-center items-center self-center p-4 px-5 border-2 border-zinc-600/70 text-zinc-400 rounded-xl transition-all ease-in-out duration-200 ${email && password && confirmPassword ? "cursor-pointer bg-purpleContrast hover:bg-purpleContrast/75" : "cursor-not-allowed"}`}
 						disabled={!(email && password) || isLoading}
 						onClick={() => setIsLoading(true)}
@@ -181,6 +178,7 @@ export default function RegisterForm() {
 					<span className="text-sm font-europa mt-2 text-zinc-300 p-2">
 						Already have an account?
 						<button
+							type="button"
 							className="ml-1 underline hover:text-purpleContrast transition-all ease-in-out duration-200"
 							onClick={() => router.push("/login")}
 						>

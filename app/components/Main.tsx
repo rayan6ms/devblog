@@ -15,18 +15,18 @@ export default function Main({ posts }: MainProps) {
 		<>
 			<main className="mt-10 mx-auto flex-col flex-wrap items-center md:items-start md:flex-row flex md:justify-center gap-6">
 				<div className="flex flex-col md:flex-row xxl:flex-col gap-6">
-					{posts.recent.slice(0, 2).map((post: IPost, index: number) => (
-						<RecentItem key={index} post={post} />
+					{posts.recent.slice(0, 2).map((post: IPost) => (
+						<RecentItem key={post.title} post={post} />
 					))}
 				</div>
 				<div className="flex flex-col gap-8 md:flex-row">
-					{posts.recent.slice(2, 3).map((post: IPost, index: number) => (
-						<RecentItem key={index + 1} post={post} isBig={true} />
+					{posts.recent.slice(2, 3).map((post: IPost) => (
+						<RecentItem key={post.title} post={post} isBig={true} />
 					))}
-					<div className="flex flex-col divide-y divide-gray-500">
+					<div className="flex flex-col divide-y divide-gray-500 [&>*]:pb-5 [&>*:last-child]:pb-0">
 						{posts.recommended.slice(0, 5).map((post: IPost, index: number) => (
 							<RecommendedItem
-								key={index}
+								key={post.title}
 								post={post}
 								addSeparation={index > 0}
 							/>

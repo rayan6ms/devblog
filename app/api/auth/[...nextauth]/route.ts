@@ -79,5 +79,7 @@ export const authConfig = {
 	},
 } satisfies NextAuthConfig;
 
-const handler = NextAuth(authConfig);
-export { handler as GET, handler as POST };
+export const {
+	handlers: { GET, POST },
+	auth,
+} = NextAuth(authConfig);

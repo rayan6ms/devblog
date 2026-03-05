@@ -43,11 +43,15 @@ const TagsInput = ({
 		<div className="flex flex-wrap gap-2 bg-zinc-500/40 p-2.5 mt-1 w-full rounded-md border border-gray-300/20 shadow-sm">
 			{tags.map((tag, index) => (
 				<div
-					key={index}
+					key={tag}
 					className="flex items-center bg-gray-600 border border-gray-500/80 rounded px-2"
 				>
 					{tag}
-					<button onClick={() => removeTag(index)} className="ml-2 text-white">
+					<button
+						type="button"
+						onClick={() => removeTag(index)}
+						className="ml-2 text-white"
+					>
 						&times;
 					</button>
 				</div>

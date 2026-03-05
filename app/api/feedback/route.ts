@@ -7,7 +7,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 	try {
 		const feedback = await createFeedback(data);
 		return NextResponse.json(feedback);
-	} catch (error) {
+	} catch (_error) {
 		return NextResponse.json(
 			{ error: { message: "Unable to connect" } },
 			{ status: 500 },

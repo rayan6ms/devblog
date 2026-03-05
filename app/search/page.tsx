@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import PostsGrid from "@/components/PostsGrid";
 import type { IPost } from "@/data/posts";
 import { getPostsByQueryPaginated } from "@/data/posts";
 import Skeleton from "../components/PostGridSkeleton";
 
-export default function SearchPage() {
+function SearchPageContent() {
 	const [posts, setPosts] = useState<IPost[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [totalPages, setTotalPages] = useState(0);
@@ -98,6 +98,7 @@ export default function SearchPage() {
 								<div className="col-start-1 row-start-2 px-2 py-8 text-zinc-300">
 									No results found.{" "}
 									<button
+										type="button"
 										className="text-purpleContrast underline underline-offset-4"
 										onClick={() => router.push("/recent")}
 									>
@@ -112,6 +113,7 @@ export default function SearchPage() {
 						{posts.length > 0 && totalPages > 1 && (
 							<div className="flex justify-center mt-6 space-x-1">
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(1)}
 									disabled={currentPage === 1}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -119,6 +121,7 @@ export default function SearchPage() {
 									First
 								</button>
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(currentPage - 1)}
 									disabled={currentPage === 1}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -131,6 +134,7 @@ export default function SearchPage() {
 									return (
 										<button
 											key={page}
+											type="button"
 											onClick={() => handleRealignPageChange(page)}
 											className={`px-4 py-2 rounded-lg ${
 												page === currentPage
@@ -144,6 +148,7 @@ export default function SearchPage() {
 								})}
 
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(currentPage + 1)}
 									disabled={currentPage === totalPages}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -151,6 +156,7 @@ export default function SearchPage() {
 									Next
 								</button>
 								<button
+									type="button"
 									onClick={() => handleRealignPageChange(totalPages)}
 									disabled={currentPage === totalPages}
 									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
@@ -164,5 +170,20 @@ export default function SearchPage() {
 			</div>
 			<Footer />
 		</>
+	);
+}
+
+export default function SearchPage() {
+	return (
+		<Suspense
+			fallback={
+				<>
+					<Skeleton />
+					<Footer />
+				</>
+			}
+		>
+			<SearchPageContent />
+		</Suspense>
 	);
 }

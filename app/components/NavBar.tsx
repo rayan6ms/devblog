@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 import { FaLightbulb, FaPlus, FaRightToBracket, FaUser } from "react-icons/fa6";
 import HamburgerMenu from "./HamburgerMenu";
 import Icons from "./Icons";
@@ -103,21 +103,21 @@ export default function NavBar() {
 		{ playground: "/playground" },
 	];
 
-	const mappedLinks: JSX.Element[] = navLinks.map((linkObj: NavLink, index) => {
+	const mappedLinks: ReactElement[] = navLinks.map((linkObj: NavLink) => {
 		const link: string = Object.keys(linkObj)[0];
 		const route: string = linkObj[link];
 		return (
 			<li
-				key={index}
+				key={link}
 				className={`w-fit py-2 px-2 mx-2 border-b-2 ${pathname === route ? "border-purpleContrast" : "border-transparent"} hover:border-purpleContrast transition-all duration-500 ease-in-out`}
 			>
-				<a
-					href={`${route}`}
+				<Link
+					href={route}
 					tabIndex={isScrolled ? 0 : -1}
 					className="text-wheat font-sans font-bold uppercase hover:text-purpleContrast hover:duration-200 transition-all ease-in"
 				>
 					{link}
-				</a>
+				</Link>
 			</li>
 		);
 	});
@@ -133,9 +133,9 @@ export default function NavBar() {
 				{isMenuOpen && (
 					<div className="fixed top-0 left-0 w-full h-full bg-darkBg z-50">
 						<div className="w-3/4 mx-auto flex items-center justify-between">
-							<a href="/">
+							<Link href="/">
 								<h1 className="text-5xl font-somerton px-2 py-8">DEVBLoG</h1>
-							</a>
+							</Link>
 							<HamburgerMenu
 								isMenuOpen={isMenuOpen}
 								setIsMenuOpen={setIsMenuOpen}
@@ -154,11 +154,11 @@ export default function NavBar() {
 				className={`${!isScrolled && "-translate-y-full"} transition-transform duration-300 ease-in-out shadow-lg w-full h-20 fixed top-0 z-40`}
 			>
 				<nav className="flex justify-center items-center w-full h-20 bg-greyBg">
-					<a href="/" tabIndex={isScrolled ? 0 : -1}>
+					<Link href="/" tabIndex={isScrolled ? 0 : -1}>
 						<h1 className="hidden xxl:block text-5xl font-somerton ml-2 mr-56">
 							DEVBLoG
 						</h1>
-					</a>
+					</Link>
 
 					<ul className="hidden lg:flex space-x-4">{mappedLinks}</ul>
 
@@ -185,7 +185,7 @@ export default function NavBar() {
 							</Link>
 
 							{isAuthed ? (
-								WRITER_ROLES.includes(role) ? (
+								canWrite ? (
 									<Link
 										href="/new_post"
 										tabIndex={isScrolled ? 0 : -1}

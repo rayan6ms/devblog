@@ -15,7 +15,9 @@ import Header from "../Header";
 import ProfileEditModal from "../ProfileEditModal";
 import Slider from "../Slider";
 
-export default function Profile({ params }: { params: { id: string } }) {
+type ProfilePageProps = PageProps<"/profile/[id]">;
+
+export default function Profile(_props: ProfilePageProps) {
 	const [postsData, setPostsData] = useState<IPost[]>([]);
 	const [comments, setComments] = useState<IComment[]>([]);
 	const [user, setUser] = useState<IUser>({} as IUser);

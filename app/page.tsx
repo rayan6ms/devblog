@@ -8,12 +8,7 @@ import SecondSection from "@/components/SecondSection";
 import SkeletonFirstSection from "./components/SkeletonFirstSection";
 import SkeletonMain from "./components/SkeletonMain";
 import SkeletonSecondSection from "./components/SkeletonSecondSection";
-import {
-	getRandomPosts,
-	getRecommendedPosts,
-	getTrendingPosts,
-	type IPost,
-} from "./data/posts";
+import { getRandomPosts, type IPost } from "./data/posts";
 
 export default function Home() {
 	const [recentPosts, setRecentPosts] = useState<IPost[]>([]);
@@ -22,31 +17,47 @@ export default function Home() {
 	const [loading, setLoading] = useState<boolean>(true);
 
 	useEffect(() => {
-		// Pega os posts do local storage se existirem
-		const storedRecentPosts = localStorage.getItem("recentPosts");
-		const storedTrendingPosts = localStorage.getItem("trendingPosts");
-		const storedRecommendedPosts = localStorage.getItem("recommendedPosts");
+		let active = true;
 
-		if (storedRecentPosts && storedTrendingPosts && storedRecommendedPosts) {
-			setRecentPosts(JSON.parse(storedRecentPosts));
-			setTrendingPosts(JSON.parse(storedTrendingPosts));
-			setRecommendedPosts(JSON.parse(storedRecommendedPosts));
+		async function loadPosts() {
+			const storedRecentPosts = localStorage.getItem("recentPosts");
+			const storedTrendingPosts = localStorage.getItem("trendingPosts");
+			const storedRecommendedPosts = localStorage.getItem("recommendedPosts");
+
+			if (storedRecentPosts && storedTrendingPosts && storedRecommendedPosts) {
+				await Promise.resolve();
+				if (!active) return;
+				setRecentPosts(JSON.parse(storedRecentPosts));
+				setTrendingPosts(JSON.parse(storedTrendingPosts));
+				setRecommendedPosts(JSON.parse(storedRecommendedPosts));
+				setLoading(false);
+			}
+
+			const [recent, trending, recommended] = await Promise.all([
+				getRandomPosts(),
+				getRandomPosts(),
+				getRandomPosts(),
+			]);
+
+			if (!active) return;
+
+			setRecentPosts(recent);
+			setTrendingPosts(trending);
+			setRecommendedPosts(recommended);
+
+			// Atualiza os posts no local storage
+			localStorage.setItem("recentPosts", JSON.stringify(recent));
+			localStorage.setItem("trendingPosts", JSON.stringify(trending));
+			localStorage.setItem("recommendedPosts", JSON.stringify(recommended));
+
+			setLoading(false);
 		}
 
-		Promise.all([getRandomPosts(), getRandomPosts(), getRandomPosts()]).then(
-			([recent, trending, recommended]) => {
-				setRecentPosts(recent);
-				setTrendingPosts(trending);
-				setRecommendedPosts(recommended);
+		void loadPosts();
 
-				// Atualiza os posts no local storage
-				localStorage.setItem("recentPosts", JSON.stringify(recent));
-				localStorage.setItem("trendingPosts", JSON.stringify(trending));
-				localStorage.setItem("recommendedPosts", JSON.stringify(recommended));
-
-				setLoading(false);
-			},
-		);
+		return () => {
+			active = false;
+		};
 	}, []);
 
 	return loading ? (

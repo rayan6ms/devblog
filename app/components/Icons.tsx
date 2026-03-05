@@ -13,11 +13,12 @@ export default function Icons({ className }: IconsProps) {
 
 	return (
 		<div className={`space-x-4 ${className}`}>
-			{socialMediaIcons.map(({ Icon, link }, index) => (
+			{socialMediaIcons.map(({ Icon, link }) => (
 				<a
-					key={index}
+					key={link}
 					href={link}
 					target="_blank"
+					rel="noreferrer"
 					className="flex border-2 border-wheat rounded-full p-3 group antialiased"
 				>
 					<Icon

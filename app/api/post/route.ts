@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
 import slugify from "slugify";
 import prisma from "@/database/prisma";
-import { authConfig } from "../auth/[...nextauth]/route";
+import { auth } from "../auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
-	const session = await getServerSession(authConfig);
+	const session = await auth();
 	if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
 	const body = await req.json();

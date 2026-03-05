@@ -41,8 +41,8 @@ export default function Page() {
 							<span className="text-purpleContrast">Zod</span>, and{" "}
 							<span className="text-purpleContrast">react-icons</span>, this was
 							my first time using some of these technologies. It was a
-							challenging but rewarding experience, and I hope I've done a great
-							job!
+							challenging but rewarding experience, and I hope I&apos;ve done a
+							great job!
 						</p>
 					</div>
 

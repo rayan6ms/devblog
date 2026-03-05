@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { IconType } from "react-icons";
 import { FaGithub, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa6";
@@ -29,12 +30,14 @@ export default function PostFooter() {
 	return (
 		<section className="flex border-t-2 border-slate-700 my-11 pt-6">
 			<Link href={`/profile/${slugify(author, { lower: true, strict: true })}`}>
-				<img
+				<Image
 					className="min-w-[64px] min-h-[64px] max-w-[64px] max-h-[64px]
             sm:min-w-[86px] sm:min-h-[86px] sm:max-w-[86px] sm:max-h-[86px] object-cover rounded-full"
 					src="https://i.etsystatic.com/19286482/r/il/96c0fd/2980731281/il_1080xN.2980731281_j8z4.jpg"
 					alt={`Avatar de ${author}`}
 					title={`Avatar de ${author}`}
+					width={86}
+					height={86}
 				/>
 			</Link>
 			<div className="mt-1 ml-5 sm:ml-7">
@@ -58,9 +61,9 @@ export default function PostFooter() {
 						Posts do autor
 					</Link>
 					<div className="flex gap-4 mt-3 sm:mt-0 sm:ml-3">
-						{authorSocials.map(({ link, icon: Icon }, index) => (
+						{authorSocials.map(({ link, icon: Icon }) => (
 							<a
-								key={index}
+								key={link}
 								href={link}
 								target="_blank"
 								className="rounded-full group antialiased"
