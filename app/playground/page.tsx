@@ -204,7 +204,7 @@ const GameCard: React.FC<{
 			onPointerLeave={handlePointerLeave}
 			onClick={() => onClick(game)}
 		>
-			<div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-700 opacity-40 blur-lg will-change-transform" />
+			<div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-blue-700/30 via-purple-600/25 to-indigo-700/30 blur-md will-change-transform" />
 
 			<div
 				ref={innerRef}
@@ -341,10 +341,12 @@ const Playground: React.FC = () => {
 				<div className="w-1/2 rounded-full border my-6 border-zinc-300/75" />
 
 				<section className="w-full px-4 md:px-8">
-					<h2 className="text-wheat text-lg font-semibold tracking-wider uppercase mt-4 mb-3">
-						Playable
-					</h2>
-					<div className="w-1/5 rounded-full border my-3 border-zinc-300/75" />
+					<div className="ml-5">
+						<h2 className="text-wheat text-lg font-semibold tracking-wider uppercase mt-4 mb-2">
+							Playable
+						</h2>
+						<div className="w-30 rounded-full border border-zinc-300/75 mb-3" />
+					</div>
 					<div className="flex flex-wrap">
 						{playable.map((game) => (
 							<GameCard key={game.name} game={game} onClick={openGame} />
@@ -354,10 +356,12 @@ const Playground: React.FC = () => {
 
 				{watchOnly.length > 0 && (
 					<section className="w-full px-4 md:px-8 mt-2 mb-10">
-						<h2 className="text-wheat text-lg font-semibold tracking-wider uppercase mt-4 mb-3">
-							Watch-Only
-						</h2>
-						<div className="w-1/5 rounded-full border my-3 border-zinc-300/75" />
+						<div className="ml-5">
+							<h2 className="text-wheat text-lg font-semibold tracking-wider uppercase mt-4 mb-2">
+								Watch-Only
+							</h2>
+							<div className="w-38 rounded-full border border-zinc-300/75 mb-3" />
+						</div>
 						<div className="flex flex-wrap">
 							{watchOnly.map((game) => (
 								<GameCard key={game.name} game={game} onClick={openGame} />
