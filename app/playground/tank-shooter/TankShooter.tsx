@@ -572,7 +572,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		14739, 16000, 17337, 18754, 20256, 21849, 23536,
 	];
 	const LEVEL_CAP = 45;
-	const xpToLevel = (lvl) =>
+	const xpToLevel = (lvl: number) =>
 		Math.floor(XP_TOTALS[lvl] * XP_REQUIRED_MULT);
 	const TOTAL_TO_MAX = xpToLevel(LEVEL_CAP - 1);
 
@@ -645,20 +645,20 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const BULLET_DMG = [7, 10, 13, 16, 19, 22, 25, 28];
 	const RELOAD_SEC = [0.6, 0.56, 0.52, 0.48, 0.44, 0.4, 0.36, 0.32];
 
-	const TEAMS = [
+	const TEAMS: Array<{ name: TeamName; color: number[]; key: string }> = [
 		{ name: "blue", color: [61, 184, 220], key: "tl" },
 		{ name: "purple", color: [195, 148, 234], key: "tr" },
 		{ name: "green", color: [61, 217, 139], key: "bl" },
 		{ name: "red", color: [229, 113, 120], key: "br" },
 	];
-	const TEAM_TANK_COLORS = {
+	const TEAM_TANK_COLORS: Record<TeamName, number[]> = {
 		blue: [0, 178, 225],
 		purple: [191, 127, 245],
 		green: [0, 225, 110],
 		red: [241, 78, 84],
 	};
 
-	const TEAM_TANK_COLORS_STROKE = {
+	const TEAM_TANK_COLORS_STROKE: Record<TeamName, number[]> = {
 		blue: [
 			Math.floor(TEAM_TANK_COLORS.blue[0] * COLORS.playerBodyBorderMul),
 			Math.floor(TEAM_TANK_COLORS.blue[1] * COLORS.playerBodyBorderMul),
@@ -681,8 +681,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		],
 	};
 
-	const _flashCache = { body: {}, barrel: null };
-	function getBodyFlash(team) {
+	const _flashCache: { body: Partial<Record<TeamName, number[]>>; barrel: number[] | null } = {
+		body: {},
+		barrel: null,
+	};
+	function getBodyFlash(team: TeamName) {
 		let v = _flashCache.body[team];
 		if (!v) {
 			v = lighten(TEAM_TANK_COLORS[team], 0.35);
@@ -690,7 +693,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 		return v;
 	}
-	function getBarrelFlash() {
+	function getBarrelFlash(): number[] {
 		if (!_flashCache.barrel) {
 			_flashCache.barrel = lighten(COLORS.playerBarrel, 0.35);
 		}
@@ -699,36 +702,207 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	let _spawnerAccum = 0;
 
-	let TEAM_PROTECTORS = [];
-	let TEAM_LIMIT_R = [];
-	let protectorLocks = [];
+	let TEAM_PROTECTORS: ShapeEntity[][] = [];
+	let TEAM_LIMIT_R: number[] = [];
+	let protectorLocks: Array<
+		Record<string, { chosenIds: number[]; until: number }>
+	> = [];
 	const PROTECTOR_STICKY_SEC = 4.0;
 	let nextTankId = 1;
 
-	class Pool {
-		constructor() {
-			this.free = [];
-		}
-		acquire(newObj) {
+	type Point = {
+		x: number;
+		y: number;
+	};
+
+	type TeamName = "blue" | "purple" | "green" | "red";
+
+	type Rect = Point & {
+		w: number;
+		h: number;
+	};
+
+	type DeathInfo = {
+		killer: string;
+		score: number;
+		level: number;
+		time: number;
+	};
+
+	type SpawnerPlayerRef = Point & {
+		r: number;
+		dead?: boolean;
+		getRadiusScaled?: () => number;
+		[key: string]: any;
+	};
+
+	type TankStats = {
+		regen: number;
+		maxHP: number;
+		bodyDmg: number;
+		bulletSpd: number;
+		penetration: number;
+		bulletDmg: number;
+		reload: number;
+		moveSpd: number;
+		[key: string]: number;
+	};
+
+	type TankEntity = {
+		x: number;
+		y: number;
+		r: number;
+		vx: number;
+		vy: number;
+		lastHit: number;
+		hitTimer: number;
+		reloadTimer: number;
+		recoilX: number;
+		recoilY: number;
+		level: number;
+		xp: number;
+		statPoints: number;
+		stats: TankStats;
+		hp: number;
+		_hpInit: boolean;
+		hpVis: number;
+		barrelKick: number;
+		barrelAng: number;
+		teamIdx: number;
+		isDead: boolean;
+		lifeStartTime: number;
+		lastDamagedBy: string | null;
+		deathInfo: DeathInfo | null;
+		invincible: boolean;
+		[key: string]: any;
+	};
+
+	type ShapeEntity = {
+		id: number;
+		type: string;
+		sides: number;
+		active: number;
+		col: number[];
+		colBorder: number[];
+		colInner: number[];
+		r: number;
+		cx: number;
+		cy: number;
+		theta: number;
+		orbitSpd: number;
+		orbitR: number;
+		rot: number;
+		rotSpd: number;
+		kx: number;
+		ky: number;
+		kvx: number;
+		kvy: number;
+		hp: number;
+		maxHp: number;
+		body: number;
+		xp: number;
+		lastHit: number;
+		hitTimer: number;
+		hitTimer2: number;
+		dying: boolean;
+		deathTimer: number;
+		dead: boolean;
+		hpVis: number;
+		x: number;
+		y: number;
+		[key: string]: any;
+	};
+
+	type BulletEntity = {
+		_bi: number;
+		[key: string]: any;
+	};
+
+	type ShapeOptions = {
+		col?: number[];
+		r?: number;
+		forceNoShiny?: boolean;
+		invincible?: boolean;
+		ai?: string;
+		seekSpd?: number;
+		aiAccel?: number;
+		friction?: number;
+		teamIdx?: number;
+		baseCenter?: Point;
+		homeTheta?: number;
+		homeR?: number;
+		limitR?: number;
+		idleOmega?: number;
+		isCrasher?: boolean;
+		rvo?: boolean;
+		[key: string]: any;
+	};
+
+	type DrawTextOptions = {
+		size?: number;
+		bold?: boolean;
+		alignX?: string;
+		alignY?: string;
+	};
+
+	type BotTargetInfo = {
+		type: "tank" | "shape" | "none";
+		target: TankEntity | ShapeEntity | null;
+	};
+
+	type RespawnRequest = {
+		group: number;
+		[key: string]: any;
+	};
+
+	type SpawnerConfig = {
+		world: { w: number; h: number };
+		gridSize: number;
+		polygonWeights?: number[];
+		maxHexagons?: number;
+		minDistFromPlayer?: number;
+		crasherEqualsNest?: boolean;
+		maxPlacementAttempts?: number;
+		rng?: () => number;
+		factory: {
+			createPolygon: (kind: number, p: Point, fromNest?: boolean) => unknown;
+			createNestPolygon: (kind: number, p: Point) => unknown;
+			createCrasher: (p: Point, elite: boolean) => unknown;
+			createEnemy: (request: RespawnRequest, p: Point) => unknown;
+		};
+		getPlayer?: () => SpawnerPlayerRef | null;
+		budgets?: {
+			rates?: Partial<Record<"polygons" | "nest" | "crashers" | "respawns", number>>;
+			caps?: Partial<Record<"polygons" | "nest" | "crashers" | "respawns", number>>;
+		};
+		crasherCooldownSec?: number;
+		nestPentCooldownSec?: number;
+		desiredPentFrac?: number;
+	};
+
+	class Pool<T = any> {
+		free: T[] = [];
+
+		acquire(newObj: () => T) {
 			return this.free.pop() || newObj();
 		}
-		release(obj) {
+		release(obj: T) {
 			this.free.push(obj);
 		}
 	}
 
-	function randf(a, b, rf = Math.random) {
+	function randf(a: number, b: number, rf: () => number = Math.random) {
 		return a + (b - a) * rf();
 	}
-	function randInt(a, b, rf = Math.random) {
+	function randInt(a: number, b: number, rf: () => number = Math.random) {
 		return Math.floor(randf(a, b + 1, rf));
 	}
-	function distance(ax, ay, bx, by) {
+	function distance(ax: number, ay: number, bx: number, by: number) {
 		const dx = ax - bx,
 			dy = ay - by;
 		return Math.hypot(dx, dy);
 	}
-	function withinRect(p, rect) {
+	function withinRect(p: Point, rect: Rect) {
 		return (
 			p.x >= rect.x &&
 			p.x <= rect.x + rect.w &&
@@ -738,7 +912,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	class Spawner {
-		constructor(cfg) {
+		[key: string]: any;
+
+		constructor(cfg: SpawnerConfig) {
 			this.w = cfg.world.w;
 			this.h = cfg.world.h;
 			this.grid = cfg.gridSize;
@@ -828,11 +1004,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			this._stamp = (this._stamp | 0) + 1;
 			this._recountT = 0;
 		}
-		enqueueRespawn(q) {
+		enqueueRespawn(q: RespawnRequest) {
 			this.respawnQueue.push(q);
 		}
 
-		update(dt) {
+		update(dt: number) {
 			this._stamp = (this._stamp | 0) + 1;
 			this.budget.polygons = Math.min(
 				this.cap.polygons,
@@ -927,25 +1103,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			this.prevInCrasher = !!inCZ;
 		}
 
-		onShapeDied(sh) {
+		onShapeDied(sh: ShapeEntity) {
 			if (sh.isCrasher) {
 				this.crasherCount = Math.max(0, this.crasherCount - 1);
-				console.log("[SPAWNER onShapeDied]", {
-					id: sh.id,
-					type: sh.type,
-					inNest: withinRect({ x: sh.x, y: sh.y }, this.nestBox),
-				});
 				return;
 			}
 			const inNest = withinRect({ x: sh.x, y: sh.y }, this.nestBox);
 			if (sh.type === "hex") {
 				this.nestCount = Math.max(0, this.nestCount - 1);
 				this.hexagonCount = Math.max(0, this.hexagonCount - 1);
-				console.log("[SPAWNER onShapeDied]", {
-					id: sh.id,
-					type: sh.type,
-					inNest: withinRect({ x: sh.x, y: sh.y }, this.nestBox),
-				});
 				return;
 			}
 			if (sh.type === "pent") {
@@ -957,31 +1123,16 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						(this.polyCounts.pent || 0) - 1,
 					);
 				}
-				console.log("[SPAWNER onShapeDied]", {
-					id: sh.id,
-					type: sh.type,
-					inNest: withinRect({ x: sh.x, y: sh.y }, this.nestBox),
-				});
 				return;
 			}
 			if (sh.type === "sqr") {
 				this.polygonCount = Math.max(0, this.polygonCount - 1);
 				this.polyCounts.sqr = Math.max(0, (this.polyCounts.sqr || 0) - 1);
-				console.log("[SPAWNER onShapeDied]", {
-					id: sh.id,
-					type: sh.type,
-					inNest: withinRect({ x: sh.x, y: sh.y }, this.nestBox),
-				});
 				return;
 			}
 			if (sh.type === "tri") {
 				this.polygonCount = Math.max(0, this.polygonCount - 1);
 				this.polyCounts.tri = Math.max(0, (this.polyCounts.tri || 0) - 1);
-				console.log("[SPAWNER onShapeDied]", {
-					id: sh.id,
-					type: sh.type,
-					inNest: withinRect({ x: sh.x, y: sh.y }, this.nestBox),
-				});
 				return;
 			}
 		}
@@ -1051,7 +1202,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			return 2;
 		}
 
-		_randomInRect(rect) {
+		_randomInRect(rect: Rect) {
 			if (!this._p1) this._p1 = { x: 0, y: 0 };
 			this._p1.x = randf(
 				rect.x + this.margin,
@@ -1072,7 +1223,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			return this._p2;
 		}
 
-		_placeOk(p, minSep) {
+		_placeOk(p: Point, minSep: number) {
 			const idx = neighborIndices(p.x, p.y);
 			for (let n = 0; n < idx.length; n++) {
 				const s = shapes[idx[n]];
@@ -1147,14 +1298,6 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				this.polygonPool.acquire(() => ({}));
 				this.factory.createPolygon(t, p, false);
 				this.polyCounts[kind] = (this.polyCounts[kind] || 0) + 1;
-				console.log("[SPAWNER spawn]", {
-					kind: "polygon" | "nest" | "crasher",
-					count: {
-						polygon: this.polygonCount,
-						nest: this.nestCount,
-						crashers: this.crasherCount,
-					},
-				});
 				return true;
 			}
 			return false;
@@ -1204,20 +1347,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				this.factory.createNestPolygon(kind, p);
 				if (isHex) this.hexagonCount++;
 				else this.nestPentCooldown = this.nestPentCooldownSec;
-				console.log("[SPAWNER spawn]", {
-					kind: "polygon" | "nest" | "crasher",
-					count: {
-						polygon: this.polygonCount,
-						nest: this.nestCount,
-						crashers: this.crasherCount,
-					},
-				});
 				return true;
 			}
 			return false;
 		}
 
-		_spawnCrasher(anchor) {
+		_spawnCrasher(anchor: TankEntity | null) {
 			let attempts = 0;
 			const cz = this.crasherZone,
 				nz = this.nestBox;
@@ -1280,20 +1415,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				}
 				this.crasherPool.acquire(() => ({}));
 				this.factory.createCrasher(p, elite);
-				console.log("[SPAWNER spawn]", {
-					kind: "polygon" | "nest" | "crasher",
-					count: {
-						polygon: this.polygonCount,
-						nest: this.nestCount,
-						crashers: this.crasherCount,
-					},
-				});
 				return true;
 			}
 			return false;
 		}
 
-		_spawnEnemy(q) {
+		_spawnEnemy(q: RespawnRequest) {
 			let attempts = 0;
 			while (attempts++ < this.maxPlacementAttempts) {
 				const p = this._randomInWorld();
@@ -1316,8 +1443,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	let spawner = null;
-	let tanks = [];
+	let spawner: Spawner | null = null;
+	let tanks: TankEntity[] = [];
 	const TEAM_BASE_SIZE = 2000;
 	let fpsAccum = 0,
 		fpsFrames = 0,
@@ -1441,28 +1568,6 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawEventMessages(dt: number) {
-		for (let i = eventMessages.length - 1; i >= 0; i--) {
-			eventMessages[i].ttl -= dt;
-			if (eventMessages[i].ttl <= 0) eventMessages.splice(i, 1);
-		}
-		const startX = UI.margin + 6;
-		const startY = 56;
-		let y = startY;
-		const line = 16;
-		for (let i = 0; i < eventMessages.length; i++) {
-			drawOutlinedText(
-				eventMessages[i].text,
-				startX,
-				y,
-				LEFT,
-				BASELINE,
-				14,
-			);
-			y += line;
-		}
-	}
-
 	let eventBanner: null | { text: string; ttl: number } = null;
 	function pushEventMessage(txt: string, ttl = 2.6) {
 		eventBanner = { text: txt, ttl };
@@ -1499,7 +1604,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const CENTER_RING_R = 820;
 	const CENTER_CORE_R = 380;
 
-	function moveLevelFactor(level) {
+	function moveLevelFactor(level: number) {
 		return 1 - (0.3 * (level - 1)) / (LEVEL_CAP - 1);
 	}
 
@@ -1549,10 +1654,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return cur + (target - cur) * alpha;
 	}
 
-	let player,
-		cam,
-		bullets = [],
-		shapes = [];
+	let player: TankEntity,
+		cam: any,
+		bullets: BulletEntity[] = [],
+		shapes: ShapeEntity[] = [];
 
 	const DEBUG = true;
 	const DEBUG_NO_BOTS = true;
@@ -1565,24 +1670,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		logSpawn(sh: any) {
 			this.spawned++;
 			this.aliveSet.add(sh.id);
-			console.log("[SPAWN]", {
-				id: sh.id,
-				type: sh.type,
-				x: Math.round(sh.x),
-				y: Math.round(sh.y),
-				hp: sh.hp,
-			});
 		},
 		logKill(sh: any, reason: string) {
 			this.killed++;
 			this.aliveSet.delete(sh.id);
-			console.log("[KILL]", {
-				id: sh.id,
-				type: sh.type,
-				reason,
-				x: Math.round(sh.x),
-				y: Math.round(sh.y),
-			});
 		},
 		logDisappear(shId: number, reason: string) {
 			if (this.aliveSet.has(shId)) {
@@ -1596,12 +1687,6 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				this.lastReportT = nowT;
 				const current = this.aliveSet.size;
 				const diff = current - this.spawned;
-				console.log("[REPORT]", {
-					spawned: this.spawned,
-					killed: this.killed,
-					current,
-					diff,
-				});
 			}
 		},
 	};
@@ -1634,7 +1719,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	S_maxCX.fill(-1);
 	S_maxCY.fill(-1);
 
-	const shapeFree = [];
+	const shapeFree: number[] = [];
 
 	let B_CAP = 8192;
 	let B_owner = new Int32Array(B_CAP);
@@ -1650,30 +1735,30 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	let B_dying = new Uint8Array(B_CAP);
 	let B_team = new Int16Array(B_CAP);
 	let B_dieT = new Float32Array(B_CAP);
-	const bulletFree = [];
+	const bulletFree: number[] = [];
 	let nextBulletIdx = 0;
 
-	function ensureShapeCapacity(n) {
+	function ensureShapeCapacity(n: number) {
 		if (n <= S_CAP) return;
 		let cap = 1;
 		while (cap < n) cap <<= 1;
 
-		function gF32(a) {
+		function gF32(a: Float32Array) {
 			const b = new Float32Array(cap);
 			b.set(a);
 			return b;
 		}
-		function gU8(a) {
+		function gU8(a: Uint8Array) {
 			const b = new Uint8Array(cap);
 			b.set(a);
 			return b;
 		}
-		function gI16(a) {
+		function gI16(a: Int16Array) {
 			const b = new Int16Array(cap);
 			b.set(a);
 			return b;
 		}
-		function gI32(a) {
+		function gI32(a: Int32Array) {
 			const b = new Int32Array(cap);
 			b.set(a);
 			return b;
@@ -1719,7 +1804,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		S_CAP = cap;
 	}
 
-	function ensureBulletCapacity(n) {
+	function ensureBulletCapacity(n: number) {
 		if (n <= B_CAP) return;
 		let cap = 1;
 		while (cap < n) cap <<= 1;
@@ -1765,21 +1850,21 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		B_CAP = cap;
 	}
 
-	function allocShapeIndex() {
-		if (shapeFree.length) return shapeFree.pop();
+	function allocShapeIndex(): number {
+		if (shapeFree.length) return shapeFree.pop() as number;
 		const idx = shapes.length;
 		ensureShapeCapacity(idx + 1);
 		return idx;
 	}
 
-	function allocBulletIndex() {
-		if (bulletFree.length) return bulletFree.pop();
+	function allocBulletIndex(): number {
+		if (bulletFree.length) return bulletFree.pop() as number;
 		const idx = nextBulletIdx++;
 		ensureBulletCapacity(idx + 1);
 		return idx;
 	}
 
-	function shapeTypeCode(k) {
+	function shapeTypeCode(k: string) {
 		if (k === "sqr") return 1;
 		if (k === "tri") return 2;
 		if (k === "pent") return 3;
@@ -1788,8 +1873,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return 0;
 	}
 
-	let _gridTile;
-	let _gridPattern = null;
+	let _gridTile: HTMLCanvasElement | null = null;
+	let _gridPattern: CanvasPattern | null = null;
 
 	function _ensureGridTile() {
 		if (_gridTile) return;
@@ -1797,6 +1882,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		c.width = GRID_SPACING;
 		c.height = GRID_SPACING;
 		const g = c.getContext("2d");
+		if (!g) return;
 		g.clearRect(0, 0, c.width, c.height);
 		g.strokeStyle = `rgba(${COLORS.gridMinor},${COLORS.gridMinor},${COLORS.gridMinor},0.8)`;
 		g.lineWidth = 1;
@@ -1809,11 +1895,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		_gridTile = c;
 	}
 
-	const bulletPool = new Pool();
+	const bulletPool = new Pool<BulletEntity>();
 	const input = { ix: 0, iy: 0, firing: false };
 	let nextShapeId = 1;
 	let now = 0;
-	let dFrame = null;
+	let dFrame: any = null;
 	let hexRespawnCooldown = 0,
 		hexEverDied = false;
 	let hexAlive = 0;
@@ -1835,8 +1921,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const _cellStamp = new Int32Array(CELL_COUNT);
 	let _curStamp = 1;
 
-	const _neighborBuf = [];
-	let _visibleBuf = [];
+	const _neighborBuf: number[] = [];
+	let _visibleBuf: number[] = [];
 	let _visStamp = 0;
 
 	let _binSqr = new Int32Array(256);
@@ -1845,12 +1931,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	let _binDia = new Int32Array(256);
 	let _binHex = new Int32Array(256);
 
-	function _roundPow2(n) {
+	function _roundPow2(n: number) {
 		let x = 1;
 		while (x < n) x <<= 1;
 		return x;
 	}
-	function _ensureBinCapacity(n) {
+	function _ensureBinCapacity(n: number) {
 		if (_binSqr.length >= n) return;
 		const cap = _roundPow2(n);
 		_binSqr = new Int32Array(cap);
@@ -1860,7 +1946,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		_binHex = new Int32Array(cap);
 	}
 
-	function collectVisibleIndices(minX, minY, maxX, maxY) {
+	function collectVisibleIndices(minX: number, minY: number, maxX: number, maxY: number) {
 		_visibleBuf.length = 0;
 		_visStamp++;
 		const minCX = Math.max(0, (minX / COLL_CELL) | 0);
@@ -1886,7 +1972,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return _visibleBuf;
 	}
 
-	function neighborIndices(x, y) {
+	function neighborIndices(x: number, y: number) {
 		const cx = (x / COLL_CELL) | 0;
 		const cy = (y / COLL_CELL) | 0;
 		_neighborBuf.length = 0;
@@ -1909,12 +1995,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return _neighborBuf;
 	}
 
-	function cellIndexClamped(cx, cy) {
+	function cellIndexClamped(cx: number, cy: number) {
 		if (cx < 0 || cy < 0 || cx >= GRID_W || cy >= GRID_H) return -1;
 		return cx * GRID_H + cy;
 	}
 
-	function worldCellRange(x, y, r) {
+	function worldCellRange(x: number, y: number, r: number) {
 		const minCX = Math.max(0, ((x - r) / COLL_CELL) | 0);
 		const maxCX = Math.min(GRID_W - 1, ((x + r) / COLL_CELL) | 0);
 		const minCY = Math.max(0, ((y - r) / COLL_CELL) | 0);
@@ -1922,7 +2008,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return [minCX, minCY, maxCX, maxCY];
 	}
 
-	function ensureNodeCapacity(add) {
+	function ensureNodeCapacity(add: number) {
 		const need = nodeCount + add;
 		if (need <= nodeNext.length) return;
 		let cap = nodeNext.length;
@@ -1948,12 +2034,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return nodeCount++;
 	}
 
-	function freeNode(n) {
+	function freeNode(n: number) {
 		nodeNext[n] = freeNodeHead;
 		freeNodeHead = n;
 	}
 
-	function gridInsertRange(i, minCX, minCY, maxCX, maxCY) {
+	function gridInsertRange(i: number, minCX: number, minCY: number, maxCX: number, maxCY: number) {
 		const span = (maxCX - minCX + 1) * (maxCY - minCY + 1);
 		ensureNodeCapacity(span);
 		for (let cx = minCX; cx <= maxCX; cx++) {
@@ -1972,7 +2058,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		S_maxCY[i] = maxCY;
 	}
 
-	function gridRemoveRange(i, minCX, minCY, maxCX, maxCY) {
+	function gridRemoveRange(i: number, minCX: number, minCY: number, maxCX: number, maxCY: number) {
 		for (let cx = minCX; cx <= maxCX; cx++) {
 			for (let cy = minCY; cy <= maxCY; cy++) {
 				const ci = cx * GRID_H + cy;
@@ -1994,7 +2080,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		S_minCX[i] = S_minCY[i] = S_maxCX[i] = S_maxCY[i] = -1;
 	}
 
-	function gridMaybeUpdateShape(i) {
+	function gridMaybeUpdateShape(i: number) {
 		const s = shapes[i];
 		const x = s.x,
 			y = s.y,
@@ -2013,7 +2099,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		gridInsertRange(i, minCX, minCY, maxCX, maxCY);
 	}
 
-	function gridRemoveShape(i) {
+	function gridRemoveShape(i: number) {
 		const o0 = S_minCX[i];
 		if (o0 !== -1)
 			gridRemoveRange(i, o0, S_minCY[i], S_maxCX[i], S_maxCY[i]);
@@ -2037,7 +2123,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const _pairKeys = new Int32Array(PAIR_TABLE_SIZE);
 	const _pairVals = new Int32Array(PAIR_TABLE_SIZE);
 
-	function hash32(x) {
+	function hash32(x: number) {
 		x |= 0;
 		x ^= x >>> 16;
 		x = (x * 0x7feb352d) | 0;
@@ -2046,7 +2132,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		x ^= x >>> 16;
 		return x | 0;
 	}
-	function hashPair(k) {
+	function hashPair(k: number) {
 		const hi = (k / 4294967296) | 0;
 		const lo = k | 0;
 		let h = hash32(hi ^ lo);
@@ -2054,7 +2140,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return h;
 	}
 
-	function canPair(k) {
+	function canPair(k: number) {
 		const h = hashPair(k);
 		let idx = h & PAIR_TABLE_MASK;
 		for (let p = 0; p < 8; p++) {
@@ -2069,7 +2155,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return true;
 	}
 
-	function markPair(k) {
+	function markPair(k: number) {
 		const h = hashPair(k);
 		let idx = h & PAIR_TABLE_MASK;
 		for (let p = 0; p < 8; p++) {
@@ -2097,8 +2183,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		markPair(bulletPairKey(a, b));
 	}
 
-	const POLY_UNIT = {};
-	function unitPoly(sides) {
+	const POLY_UNIT: Record<number, Array<[number, number]>> = {};
+	function unitPoly(sides: number) {
 		let v = POLY_UNIT[sides];
 		if (v) return v;
 		v = [];
@@ -2122,14 +2208,18 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const SPIN_SPEED = 1.8;
 	const BULLET_DECEL_K = 0.0012;
 
-	let deathBtnRect = null;
+	let deathBtnRect: Rect | null = null;
 	let blockShootUntilRelease = false;
-	let liveCounts = {
+	let liveCounts: {
+		outer: Record<string, number>;
+		ring: Record<string, number>;
+		core: Record<string, number>;
+	} = {
 		outer: { sqr: 0, tri: 0, pent: 0 },
 		ring: { sqr: 0, tri: 0, pent: 0 },
 		core: { pent: 0 },
 	};
-	let _cursorState = null;
+	let _cursorState: string | null = null;
 	const _rvoTmp = [0, 0];
 
 	function setup() {
@@ -2247,7 +2337,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		player.name = "You";
 		player.uid = nextTankId++;
 		tanks = [player];
-		const _plRef = {
+		const _plRef: SpawnerPlayerRef = {
 			x: 0,
 			y: 0,
 			r: 0,
@@ -2276,15 +2366,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				return _plRef;
 			},
 			factory: {
-				createPolygon: (type, pos) => {
+				createPolygon: (type: number, pos: Point) => {
 					const k = type === 0 ? "sqr" : type === 1 ? "tri" : "pent";
 					addShape(k, pos.x, pos.y);
 				},
-				createNestPolygon: (type, pos) => {
+				createNestPolygon: (type: number, pos: Point) => {
 					const k = type === 3 ? "hex" : "pent";
 					addShape(k, pos.x, pos.y);
 				},
-				createCrasher: (pos, elite) => {
+				createCrasher: (pos: Point, elite: boolean) => {
 					const r = elite ? 24 : 18;
 					addShape("dia", pos.x, pos.y, {
 						ai: "seek",
@@ -2294,7 +2384,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						rvo: true,
 					});
 				},
-				createEnemy: (q, pos) => {
+				createEnemy: (_q: RespawnRequest, _pos: Point) => {
 					return true;
 				},
 			},
@@ -2315,7 +2405,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		_ensureBinCapacity(4096);
 		_visibleBuf = new Array(4096);
 		_visibleBuf.length = 0;
-		_gridPattern = drawingContext.createPattern(_gridTile, "repeat");
+		if (_gridTile) {
+			_gridPattern = drawingContext.createPattern(_gridTile, "repeat");
+		}
 	}
 
 	function windowResized() {
@@ -2398,7 +2490,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function stepPhysics(h) {
+	function stepPhysics(h: number) {
 		if (spawner) {
 			_spawnerAccum += h;
 			if (_spawnerAccum >= 0.05) {
@@ -2417,7 +2509,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		now += h;
 	}
 
-	function relaxOverlapSingle(sh, limit) {
+	function relaxOverlapSingle(sh: ShapeEntity, limit: number) {
 		const idx = neighborIndices(sh.x, sh.y);
 		let applied = 0;
 		for (let n = 0; n < idx.length && applied < limit; n++) {
@@ -2446,7 +2538,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function makePlayer() {
+	function makePlayer(): TankEntity {
 		return {
 			x: WORLD.w / 2,
 			y: WORLD.h / 2,
@@ -2498,7 +2590,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function getTeamBaseRect(idx) {
+	function getTeamBaseRect(idx: number): Rect {
 		const t = TEAMS[idx].key,
 			s = TEAM_BASE_SIZE;
 		if (t === "tl") return { x: 0, y: 0, w: s, h: s };
@@ -2507,7 +2599,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return { x: WORLD.w - s, y: WORLD.h - s, w: s, h: s };
 	}
 
-	function getTeamBaseCenter(idx) {
+	function getTeamBaseCenter(idx: number): Point {
 		const r = getTeamBaseRect(idx);
 		return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
 	}
@@ -2571,7 +2663,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		killer.xp = Math.max(0, (killer.xp | 0) + gained);
 	}
 
-	function onPlayerDeath(k) {
+	function onPlayerDeath(k: any) {
 		player.isDead = true;
 
 		let killerUid = 0;
@@ -2625,13 +2717,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		respawnTankCommon(bot);
 	}
 
-	function levelFromXP(xp) {
+	function levelFromXP(xp: number) {
 		let L = 1;
 		while (L < LEVEL_CAP && xp >= xpToLevel(L)) L++;
 		return L;
 	}
 
-	function computeRespawnLevel(level) {
+	function computeRespawnLevel(level: number) {
 		const loss =
 			level < LEVEL_LOSS_THRESHOLD
 				? LEVEL_LOSS_BELOW
@@ -2639,7 +2731,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return Math.max(1, (level | 0) - loss);
 	}
 
-	function calcStatPointsForLevel(level) {
+	function calcStatPointsForLevel(level: number) {
 		let pts = 0;
 		for (let L = 2; L <= level; L++) {
 			if (L <= 28) pts++;
@@ -2649,7 +2741,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return pts;
 	}
 
-	function respawnTankCommon(t) {
+	function respawnTankCommon(t: TankEntity) {
 		const newLevel = computeRespawnLevel(t.level | 0);
 		t.level = newLevel;
 		updateTankRadius(t);
@@ -2666,16 +2758,6 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		};
 		t.statPoints = calcStatPointsForLevel(newLevel);
 		spawnTankAtTeamBase(t);
-	}
-
-	function calcStatPointsForLevel(level) {
-		let pts = 0;
-		for (let L = 2; L <= level; L++) {
-			if (L <= 28) pts++;
-			else if (L === 30) pts++;
-			else if (L > 30 && (L - 30) % 3 === 0) pts++;
-		}
-		return pts;
 	}
 
 	const STAT_KEYS = [
@@ -2727,7 +2809,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		pushEventMessage(`+1 ${statLabel(key)} (${player.stats[key]}/7)`);
 	}
 
-	function derived(p) {
+	function derived(p: TankEntity) {
 		const baseHP = 50 + 2 * (p.level - 1);
 		const maxHP = baseHP + MAX_HP_BONUS[p.stats.maxHP];
 		const regenRate = REGEN_RATE[p.stats.regen];
@@ -2817,7 +2899,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			player.invincible = false;
 	}
 
-	function updatePlayer(dt) {
+	function updatePlayer(dt: number) {
 		if (player.isDead) {
 			const hpAnimSpd = 14;
 			player.hpVis +=
@@ -2992,7 +3074,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			onPlayerDeath(player.lastDamagedBy);
 	}
 
-	function rvoAdjust(sh, desx, desy) {
+	function rvoAdjust(sh: any, desx: number, desy: number) {
 		if (sh.ai === "protector") {
 			const eps = 120;
 			const len = Math.hypot(desx, desy) || 1;
@@ -3031,7 +3113,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return _rvoTmp;
 	}
 
-	function handleShooting(dt) {
+	function handleShooting(dt: number) {
 		if (player.isDead) return;
 		if (player.invincible && input.firing) player.invincible = false;
 		const d = dFrame;
@@ -3070,7 +3152,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				}
 			}
 
-			const b = bulletPool.acquire(() => ({}));
+			const b = bulletPool.acquire(() => ({ _bi: -1 }));
 			const bi = allocBulletIndex();
 
 			b._bi = bi;
@@ -3231,7 +3313,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function segmentCircleTOI(x0, y0, x1, y1, cx, cy, R) {
+	function segmentCircleTOI(
+		x0: number,
+		y0: number,
+		x1: number,
+		y1: number,
+		cx: number,
+		cy: number,
+		R: number,
+	) {
 		const dx = x1 - x0,
 			dy = y1 - y0;
 		const fx = x0 - cx,
@@ -3249,7 +3339,14 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return null;
 	}
 
-	function gridMarchSegment(x0, y0, x1, y1, cs, visit) {
+	function gridMarchSegment(
+		x0: number,
+		y0: number,
+		x1: number,
+		y1: number,
+		cs: number,
+		visit: (cx: number, cy: number) => void,
+	) {
 		let cx = (x0 / cs) | 0;
 		let cy = (y0 / cs) | 0;
 		const tx = x1 - x0,
@@ -3301,7 +3398,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		_gm_bestT = Infinity,
 		_gm_bestIdx = -1,
 		_gm_bi = 0;
-	function _gm_visit(gx, gy) {
+	function _gm_visit(gx: number, gy: number) {
 		for (let dx = -1; dx <= 1; dx++) {
 			for (let dy = -1; dy <= 1; dy++) {
 				const ci = cellIndexClamped(gx + dx, gy + dy);
@@ -3349,7 +3446,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function updateBullets(dt) {
+	function updateBullets(dt: number) {
 		const bulletBins = new Map<number, number[]>();
 		for (let j = 0; j < bullets.length; j++) {
 			const bi = bullets[j]._bi | 0;
@@ -3601,6 +3698,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					const hx = ox + (ex - ox) * bestTankT;
 					const hy = oy + (ey - oy) * bestTankT;
 					const tt = bestTank;
+					if (!tt) break;
 					const dx = hx - tt.x,
 						dy = hy - tt.y;
 					const dist = Math.hypot(dx, dy) || 1;
@@ -3704,7 +3802,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		bullets.length = n;
 	}
 
-	function addShape(kind, x, y, opts = {}) {
+	function addShape(
+		kind: keyof typeof SHAPES_DEF,
+		x: number,
+		y: number,
+		opts: ShapeOptions = {},
+	) {
 		const def = SHAPES_DEF[kind];
 		const sides =
 			kind === "tri"
@@ -3716,7 +3819,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						: kind === "hex"
 							? 6
 							: 4;
-		const sh = {
+		const sh: ShapeEntity = {
 			id: nextShapeId++,
 			type: kind,
 			sides,
@@ -3751,6 +3854,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			deathTimer: 0,
 			dead: false,
 			hpVis: def.hp,
+			x,
+			y,
 		};
 		if (!opts || !opts.forceNoShiny) {
 			if (
@@ -3869,7 +3974,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return sh;
 	}
 
-	function expelNearbyShapes(sh) {
+	function expelNearbyShapes(sh: ShapeEntity) {
 		for (const o of shapes) {
 			if (o === sh || o.dead || o.dying) continue;
 			const dx = o.x - sh.x,
@@ -3907,7 +4012,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const cx = WORLD.w / 2,
 			cy = WORLD.h / 2;
 
-		function inNoSpawn(x, y) {
+		function inNoSpawn(x: number, y: number) {
 			for (let i = 0; i < TEAMS.length; i++) {
 				const r = getTeamBaseRect(i),
 					p = BASE_NO_SPAWN_PAD;
@@ -3922,11 +4027,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			}
 			return false;
 		}
-		function ringDist(x, y) {
+		function ringDist(x: number, y: number) {
 			return dist(x, y, cx, cy);
 		}
 
-		function farFromNeighbors(x, y, minSep) {
+		function farFromNeighbors(x: number, y: number, minSep: number) {
 			for (const s of shapes) {
 				if (s.dead) continue;
 				const d = dist(x, y, s.cx, s.cy);
@@ -3935,7 +4040,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			return true;
 		}
 
-		function tryPlace(kind, region, optR, minSep = 0) {
+		function tryPlace(
+			kind: keyof typeof SHAPES_DEF,
+			region: string,
+			optR: number | null = null,
+			minSep = 0,
+		) {
 			let x,
 				y,
 				ok = false;
@@ -4064,7 +4174,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		};
 	}
 
-	function spawnTankAtTeamBase(t) {
+	function spawnTankAtTeamBase(t: TankEntity) {
 		const r = getTeamBaseRect(t.teamIdx);
 		const m = t.r + 40;
 		t.x = random(r.x + m, r.x + r.w - m);
@@ -4083,7 +4193,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		t.recoilY = 0;
 	}
 
-	function spendRandomStat(t) {
+	function spendRandomStat(t: TankEntity) {
 		while (t.statPoints > 0) {
 			const keys = [
 				"regen",
@@ -4115,7 +4225,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function makeBot(teamIdx) {
+	function makeBot(teamIdx: number) {
 		const t = makePlayer();
 		t.uid = nextTankId++;
 		t.isBot = true;
@@ -4127,10 +4237,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return t;
 	}
 
-	function angleTo(ax, ay, bx, by) {
+	function angleTo(ax: number, ay: number, bx: number, by: number) {
 		return Math.atan2(by - ay, bx - ax);
 	}
-	function len2(x, y) {
+	function len2(x: number, y: number) {
 		return x * x + y * y;
 	}
 
@@ -4153,7 +4263,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return a;
 	}
 
-	function chooseFarmTarget(bot) {
+	function chooseFarmTarget(bot: TankEntity) {
 		const ranges = [720, 1100, 1600, 2200];
 		for (let ri = 0; ri < ranges.length; ri++) {
 			const maxR2 = Math.min(
@@ -4186,7 +4296,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return null;
 	}
 
-	function chooseEnemyTarget(bot) {
+	function chooseEnemyTarget(bot: TankEntity) {
 		let best = null,
 			bestD2 = Infinity;
 		for (let i = 0; i < tanks.length; i++) {
@@ -4205,7 +4315,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return best;
 	}
 
-	function fireFromTank(t, dt) {
+	function fireFromTank(t: TankEntity, dt: number) {
 		if (t.isDead || (t.isBot && !t._fireCmd)) return;
 		const d = derived(t);
 		t.reloadTimer -= dt;
@@ -4245,7 +4355,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			}
 		}
 
-		const b = bulletPool.acquire(() => ({}));
+		const b = bulletPool.acquire(() => ({ _bi: -1 }));
 		const bi = allocBulletIndex();
 		b._bi = bi;
 		b.x = bx;
@@ -4283,7 +4393,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		t.reloadTimer = d.reload;
 	}
 
-	function updateTankPhysicsCore(t, dt, ix, iy) {
+	function updateTankPhysicsCore(t: TankEntity, dt: number, ix: number, iy: number) {
 		const d = derived(t);
 
 		if (t.invincible && (ix !== 0 || iy !== 0 || t._fireCmd)) {
@@ -4339,7 +4449,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		if (t.hitTimer > 0) t.hitTimer -= dt;
 	}
 
-	function tankVsShapesAndLeveling(t) {
+	function tankVsShapesAndLeveling(t: TankEntity) {
 		const d = derived(t);
 
 		const idx = neighborIndices(t.x, t.y);
@@ -4429,7 +4539,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawTank(t) {
+	function drawTank(t: TankEntity) {
 		const d = derived(t);
 		const ang = t.barrelAng || 0;
 		const barrelLen = t.r * 1.7,
@@ -4493,7 +4603,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function botChooseTargets(bot: any) {
+	function botChooseTargets(bot: TankEntity): BotTargetInfo {
 		const enemy = chooseEnemyTarget(bot);
 		if (enemy) return { type: "tank", target: enemy };
 		const farm = chooseFarmTarget(bot);
@@ -4610,7 +4720,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	const bots = [];
+	const bots: TankEntity[] = [];
 	function updateBots(dt: number) {
 		for (let i = 0; i < tanks.length; i++) {
 			const t = tanks[i];
@@ -4744,7 +4854,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		let x,
 			y,
 			t = 0;
-		function farFromHex(xx, yy) {
+		function farFromHex(xx: number, yy: number) {
 			for (const s of shapes)
 				if (!s.dead && s.type === "hex")
 					if (dist(xx, yy, s.x, s.y) < 3.2 * SHAPES_DEF.hex.r)
@@ -4761,7 +4871,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		hexRespawnCooldown = 30.0;
 	}
 
-	function killShape(sh, awardTo = null) {
+	function killShape(sh: ShapeEntity, awardTo: TankEntity | null = null) {
 		shapeClaims.delete(sh.id);
 		if (DEBUG) debugShapes.logKill(sh, "killShape()");
 		if (spawner && spawner.onShapeDied) spawner.onShapeDied(sh);
@@ -4785,7 +4895,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function regionFor(x, y) {
+	function regionFor(x: number, y: number) {
 		const cx = WORLD.w / 2,
 			cy = WORLD.h / 2;
 		const d = dist(x, y, cx, cy);
@@ -4793,14 +4903,14 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		if (d <= CENTER_RING_R) return "ring";
 		return "outer";
 	}
-	function shouldCount(kind, region) {
+	function shouldCount(kind: string, region: string) {
 		if (kind === "pent") return true;
 		if (kind === "sqr" || kind === "tri")
 			return region === "ring" || region === "outer";
 		return false;
 	}
 
-	function getTankByUid(uid) {
+	function getTankByUid(uid: number): TankEntity | null {
 		for (const t of tanks) {
 			if (t && t.uid === uid) return t;
 		}
@@ -4841,7 +4951,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				continue;
 			}
 
-			const used = {};
+			const used: Record<number, number> = {};
 			for (const k in locks) {
 				const e = locks[k];
 				const a = e.chosenIds || [];
@@ -4879,7 +4989,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					c2 = sh.id;
 				}
 			}
-			const chosen = [];
+			const chosen: number[] = [];
 			if (c0 > 0) chosen.push(c0);
 			if (c1 > 0) chosen.push(c1);
 			if (c2 > 0) chosen.push(c2);
@@ -4891,7 +5001,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function assignedTargetForProtector(sh) {
+	function assignedTargetForProtector(sh: ShapeEntity) {
 		const locks = protectorLocks[sh.teamIdx] || {};
 		for (const key of Object.keys(locks)) {
 			const entry = locks[key];
@@ -4904,7 +5014,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return null;
 	}
 
-	function updateShapes(dt) {
+	function updateShapes(dt: number) {
 		tickSpawnGrace(dt);
 		hexRespawnCooldown = Math.max(0, hexRespawnCooldown - dt);
 		tryRespawnHexIfNeeded();
@@ -5064,7 +5174,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						const curSpd = Math.hypot(pvx, pvy);
 						const tankMaxV = tDer.maxSpeed;
 						const fr = sh.frFactor || DECAY_SHAPE_VEL;
-						const kFor = (s) =>
+						const kFor = (s: number) =>
 							s >= 800
 								? sh.aiK1000 || 0.2
 								: s >= 500
@@ -5322,7 +5432,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawBullets(minX, minY, maxX, maxY) {
+	function drawBullets(minX: number, minY: number, maxX: number, maxY: number) {
 		for (let j = 0; j < bullets.length; j++) {
 			const i = bullets[j]._bi | 0;
 			if (B_dead[i]) continue;
@@ -5361,7 +5471,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawWorld(minX, minY, maxX, maxY) {
+	function drawWorld(minX: number, minY: number, maxX: number, maxY: number) {
 		const x0 = Math.max(0, minX | 0);
 		const y0 = Math.max(0, minY | 0);
 		const x1 = Math.min(WORLD.w, maxX | 0);
@@ -5373,9 +5483,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		ctx.save();
 		ctx.fillStyle = WORLD_FILL_CSS;
 		ctx.fillRect(x0 - 2, y0 - 2, x1 - x0 + 4, y1 - y0 + 4);
-		if (!_gridPattern)
+		if (!_gridPattern && _gridTile) {
 			_gridPattern = ctx.createPattern(_gridTile, "repeat");
-		ctx.fillStyle = _gridPattern;
+		}
+		ctx.fillStyle = _gridPattern ?? WORLD_FILL_CSS;
 		ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 		ctx.restore();
 
@@ -5395,7 +5506,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawShapes(minX, minY, maxX, maxY) {
+	function drawShapes(minX: number, minY: number, maxX: number, maxY: number) {
 		const vis = collectVisibleIndices(minX, minY, maxX, maxY);
 		_ensureBinCapacity(vis.length);
 
@@ -5423,7 +5534,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			else if (sh.type === "hex") _binHex[nH++] = i;
 		}
 
-		function drawOne(sh) {
+		function drawOne(sh: ShapeEntity) {
 			const baseCol = sh.col;
 			const darkerBase = sh.colBorder;
 
@@ -5529,13 +5640,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	function drawShapeFilledWithCenter(
-		x,
-		y,
-		sides,
-		r,
-		baseCol,
-		kind,
-		innerCol,
+		x: number,
+		y: number,
+		sides: number,
+		r: number,
+		baseCol: number[],
+		kind: string,
+		innerCol?: number[],
 	) {
 		if (kind === "dia") {
 			noStroke();
@@ -5570,7 +5681,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawShapePath(x, y, sides, r, rounded = false) {
+	function drawShapePath(x: number, y: number, sides: number, r: number, rounded = false) {
 		if (sides === 4 && rounded) {
 			rectMode(CENTER);
 			rect(x, y, r * 2, r * 2, 2);
@@ -5589,7 +5700,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		pop();
 	}
 
-	function drawRhombus(x, y, r, ratio) {
+	function drawRhombus(x: number, y: number, r: number, ratio: number) {
 		const rx = r * ratio,
 			ry = r;
 		beginShape();
@@ -5600,7 +5711,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		endShape(CLOSE);
 	}
 
-	function lighten(c, amt) {
+	function lighten(c: number[], amt: number): number[] {
 		return [
 			c[0] + (255 - c[0]) * amt,
 			c[1] + (255 - c[1]) * amt,
@@ -5633,7 +5744,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		pop();
 	}
 
-	function drawTextWithOutline(label, x, y, opts = {}) {
+	function drawTextWithOutline(
+		label: string,
+		x: number,
+		y: number,
+		opts: DrawTextOptions = {},
+	) {
 		const {
 			size = 16,
 			bold = true,
@@ -5858,17 +5974,17 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	function drawBar(
-		x,
-		y,
-		w,
-		h,
-		pct,
-		fillColor,
-		label,
+		x: number,
+		y: number,
+		w: number,
+		h: number,
+		pct: number,
+		fillColor: number[],
+		label: string,
 		thickText = false,
 		border = false,
-		bgColor = null,
-		padOverride = null,
+		bgColor: number[] | null = null,
+		padOverride: number | null = null,
 		outerR = UI.barOuterR,
 		innerR = UI.barInnerR,
 		textOutline = false,
@@ -6122,7 +6238,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			}
 			return;
 		}
-		const map = {
+		const map: Record<string, keyof TankStats> = {
 			"1": "regen",
 			"2": "maxHP",
 			"3": "bodyDmg",
@@ -6218,7 +6334,9 @@ export default function GameSketch() {
 			if (!hostRef.current) return;
 			const phaserModule = await import("phaser");
 			if (cancelled || !hostRef.current) return;
-			const PhaserLib = (phaserModule.default ?? phaserModule) as any;
+			const PhaserLib = ("default" in phaserModule
+				? phaserModule.default
+				: phaserModule) as any;
 			cleanup = mountGame(hostRef.current, PhaserLib);
 		})();
 
