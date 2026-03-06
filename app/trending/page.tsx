@@ -1,181 +1,389 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
-import { getRandomPosts, type IPost } from "@/data/posts";
+import { getAllPosts, type IPost } from "@/data/posts";
 import Skeleton from "./Skeleton";
 
 const Accordion = dynamic(() => import("@/trending/Accordion"), { ssr: false });
 
-type TrendingPost = {
-	image: string;
-	mainTag: string;
-	title: string;
-	author: string;
-	date: string;
-	views: number;
-	description: string;
-};
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+	month: "short",
+	day: "numeric",
+	year: "numeric",
+});
 
-type Panel = {
-	tag: string;
-	description: string;
-	author: string;
-	title: string;
-	image: string;
-};
+function formatViews(views: number) {
+	return views >= 1000 ? `${(views / 1000).toFixed(1)}k` : `${views}`;
+}
 
-export default function Page() {
+function normalizeTag(tag: string) {
+	return slugify(tag, { lower: true, strict: true });
+}
+
+function sortByTrending(posts: IPost[]) {
+	return [...posts].sort((a, b) => b.views - a.views || b.date.localeCompare(a.date));
+}
+
+function TopicPill({
+	label,
+	count,
+}: {
+	label: string;
+	count: number;
+}) {
+	return (
+		<Link
+			href={`/tag?selected=${normalizeTag(label)}`}
+			className="flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-greyBg/80 px-4 py-3 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
+		>
+			<span>{label}</span>
+			<span className="rounded-full bg-darkBg px-2 py-1 text-xs text-zinc-500">
+				{count}
+			</span>
+		</Link>
+	);
+}
+
+function RankedPostRow({
+	post,
+	index,
+}: {
+	post: IPost;
+	index: number;
+}) {
+	const postHref = `/post/${normalizeTag(post.title)}`;
+
+	return (
+		<article className="grid gap-4 rounded-[24px] border border-zinc-700/50 bg-greyBg/85 p-4 shadow-lg shadow-zinc-950/10 sm:grid-cols-[auto_112px_1fr] sm:items-center">
+			<div className="flex items-center gap-3">
+				<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-purpleContrast/40 bg-purpleContrast/15 text-sm font-semibold text-wheat">
+					{index + 1}
+				</span>
+				<div className="sm:hidden">
+					<Link
+						href={`/tag?selected=${normalizeTag(post.mainTag)}`}
+						className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
+					>
+						{post.mainTag}
+					</Link>
+				</div>
+			</div>
+
+			<Link
+				href={postHref}
+				className="relative block aspect-[7/5] overflow-hidden rounded-2xl"
+			>
+				<Image
+					fill
+					src={post.image}
+					alt={post.title}
+					className="object-cover transition-transform duration-700 hover:scale-105"
+					sizes="112px"
+				/>
+			</Link>
+
+			<div className="min-w-0">
+				<div className="hidden sm:flex sm:items-center sm:justify-between sm:gap-3">
+					<Link
+						href={`/tag?selected=${normalizeTag(post.mainTag)}`}
+						className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
+					>
+						{post.mainTag}
+					</Link>
+					<span className="flex items-center gap-1 text-sm text-zinc-400">
+						<FaEye />
+						{formatViews(post.views)}
+					</span>
+				</div>
+
+				<Link href={postHref} className="mt-2 block">
+					<h3 className="line-clamp-2 text-lg font-semibold text-wheat transition-colors hover:text-zinc-100">
+						{post.title}
+					</h3>
+				</Link>
+
+				<p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">
+					{post.description}
+				</p>
+
+				<div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+					<Link
+						href={`/profile/${normalizeTag(post.author)}`}
+						className="transition-colors hover:text-wheat"
+					>
+						{post.author}
+					</Link>
+					<span className="h-1 w-1 rounded-full bg-zinc-700" />
+					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
+					<span className="flex items-center gap-1 sm:hidden">
+						<FaEye />
+						{formatViews(post.views)}
+					</span>
+				</div>
+			</div>
+		</article>
+	);
+}
+
+function SpotlightPostCard({ post }: { post: IPost }) {
+	const postHref = `/post/${normalizeTag(post.title)}`;
+
+	return (
+		<article className="overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20">
+			<Link href={postHref} className="relative block aspect-[16/10] overflow-hidden">
+				<Image
+					fill
+					src={post.image}
+					alt={post.title}
+					className="object-cover transition-transform duration-700 hover:scale-105"
+					sizes="(max-width: 1024px) 100vw, 50vw"
+				/>
+			</Link>
+			<div className="p-5">
+				<div className="flex items-center justify-between gap-3">
+					<Link
+						href={`/tag?selected=${normalizeTag(post.mainTag)}`}
+						className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
+					>
+						{post.mainTag}
+					</Link>
+					<span className="flex items-center gap-1 text-sm text-zinc-400">
+						<FaEye />
+						{formatViews(post.views)}
+					</span>
+				</div>
+				<Link href={postHref} className="mt-3 block">
+					<h3 className="line-clamp-2 text-xl font-semibold text-wheat transition-colors hover:text-zinc-100">
+						{post.title}
+					</h3>
+				</Link>
+				<p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-400">
+					{post.description}
+				</p>
+				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+					<Link
+						href={`/profile/${normalizeTag(post.author)}`}
+						className="transition-colors hover:text-wheat"
+					>
+						{post.author}
+					</Link>
+					<span className="h-1 w-1 rounded-full bg-zinc-700" />
+					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
+				</div>
+			</div>
+		</article>
+	);
+}
+
+export default function TrendingPage() {
 	const [loading, setLoading] = useState(true);
-	const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
-	const [panels, setPanels] = useState<Panel[]>([]);
-	const router = useRouter();
+	const [posts, setPosts] = useState<IPost[]>([]);
 
 	useEffect(() => {
-		async function fetchTrendingPosts() {
-			const posts = await getRandomPosts();
-			const newPanels = posts.map((post: IPost) => ({
-				tag: post.mainTag,
-				description: post.description,
-				author: post.author,
-				title: post.title,
-				image: post.image,
-			}));
+		let active = true;
 
-			setTrendingPosts(posts);
-			setPanels(newPanels);
+		async function loadPosts() {
+			const allPosts = await getAllPosts();
+
+			if (!active) {
+				return;
+			}
+
+			setPosts(sortByTrending(allPosts));
 			setLoading(false);
 		}
 
-		fetchTrendingPosts();
+		void loadPosts();
+
+		return () => {
+			active = false;
+		};
 	}, []);
 
-	const formattedDate = (date: string) =>
-		format(parseISO(date), "dd MMM yyyy", { locale: ptBR });
-	const fullFormattedDate = (date: string) => {
-		const s = format(parseISO(date), "EEEE, dd MMMM yyyy", { locale: ptBR });
-		return s.charAt(0).toUpperCase() + s.slice(1);
-	};
+	const accordionPosts = useMemo(() => posts.slice(0, 8), [posts]);
+	const rankedPosts = useMemo(() => posts.slice(0, 12), [posts]);
+	const spotlightPosts = useMemo(() => posts.slice(12, 18), [posts]);
+	const totalViews = useMemo(
+		() => posts.reduce((sum, post) => sum + post.views, 0),
+		[posts],
+	);
+	const topTopics = useMemo(() => {
+		const counts = new Map<string, number>();
 
-	const handleNavigationClick = (
-		type: "author" | "tag",
-		value: string,
-		e: React.MouseEvent,
-	) => {
-		e.preventDefault();
+		posts.forEach((post) => {
+			counts.set(post.mainTag, (counts.get(post.mainTag) ?? 0) + 1);
+		});
 
-		const url =
-			type === "author"
-				? `/profile/${slugify(value, { lower: true, strict: true })}`
-				: `/tag?selected=${slugify(value, { lower: true, strict: true })}`;
-
-		router.push(url);
-	};
+		return [...counts.entries()]
+			.map(([label, count]) => ({ count, label }))
+			.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+			.slice(0, 8);
+	}, [posts]);
+	const leadingPost = posts[0];
 
 	return loading ? (
 		<Skeleton />
 	) : (
 		<>
-			<Accordion panels={panels} />
-			<div className="w-full flex flex-col items-center my-6">
-				<div className="w-full max-w-[1200px] px-2">
-					<h2 className="text-2xl font-somerton uppercase text-wheat self-start ml-2">
-						Top 24 Posts
-					</h2>
-					<div className="flex flex-wrap justify-center gap-2 mt-4">
-						{trendingPosts.slice(0, 24).map((post, index) => (
-							<Link
-								key={`${post.title}-${post.author}-${post.date}`}
-								className="md:w-[380px] w-[97%] flex relative bg-greyBg border border-zinc-700/30 rounded-l-2xl rounded-r-md overflow-hidden shadow-lg cursor-pointer group"
-								href={`/post/${slugify(post.title, { lower: true, strict: true })}`}
-							>
-								<span className="absolute bottom-0 right-0 flex justify-center bg-purpleContrast text-wheat text-lg font-bold px-3 w-10 py-1 rounded-tl-sm rounded-br-lg">
-									<span className="absolute -top-2 -left-2.5 w-6 h-6 bg-greyBg rounded-br-full" />
-									{index + 1}
-								</span>
-								<div className="w-36 min-w-24 h-20 relative overflow-hidden">
-									<Image
-										src={post.image}
-										alt={post.title}
-										fill
-										className="object-cover group-hover:scale-110 transition-transform duration-500"
-										sizes="144px"
-									/>
+			<div className="min-h-screen bg-darkBg text-gray">
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 pt-8 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
+						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
+							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+								<div className="max-w-3xl">
+									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+										Trending now
+									</p>
+									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+										What readers are paying attention to
+									</h1>
+									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+										The accordion stays as the page signature, but the rest of
+										the page now supports it: ranked posts, visible topic signals,
+										and clearer reasons for why a post is near the top.
+									</p>
 								</div>
-								<div className="px-4 py-2.5 w-full flex flex-col justify-between">
-									<h3 className="text-wheat text-[17px] font-somerton line-clamp-1 uppercase">
-										{post.title}
-									</h3>
-									<p className="text-sm text-zinc-300/90">{post.author}</p>
-								</div>
-							</Link>
-						))}
-					</div>
 
-					<h2 className="text-2xl font-somerton uppercase text-wheat self-start ml-2 mt-10">
-						Trending Posts
-					</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-1 gap-x-4 justify-center mt-4 w-full px-2">
-						{trendingPosts.map((post) => (
-							<div
-								key={`${post.title}-${post.author}-${post.date}-card`}
-								className="w-full h-[140px] bg-greyBg border border-zinc-700/30 rounded-md overflow-hidden shadow-lg cursor-pointer my-2"
-							>
-								<Link
-									className="flex group"
-									href={`/post/${slugify(post.title, { lower: true, strict: true })}`}
-								>
-									<div className="w-40 h-[140px] relative overflow-hidden rounded-l-lg">
-										<Image
-											src={post.image}
-											alt={post.title}
-											fill
-											className="object-cover group-hover:scale-110 transition-transform duration-500 rounded-l-lg"
-											sizes="160px"
-										/>
-									</div>
-									<div className="flex-grow p-4 pt-3 w-full">
-										<h3 className="text-wheat text-lg font-somerton uppercase line-clamp-1">
-											{post.title}
-										</h3>
-										<p className="text-zinc-400 text-sm line-clamp-3">
-											{post.description}
+								<div className="grid gap-3 sm:grid-cols-3">
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											Tracked posts
 										</p>
-										<div className="mt-2 flex justify-between text-zinc-300 text-xs">
-											<button
-												type="button"
-												onClick={(e) =>
-													handleNavigationClick("author", post.author, e)
-												}
-												className="transition-all duration-100 hover:text-purpleContrast"
-											>
-												{post.author}
-											</button>
-											<span>
-												<FaEye /> {post.views.toLocaleString()} views
-											</span>
-											<time
-												dateTime={post.date}
-												title={fullFormattedDate(post.date)}
-											>
-												{formattedDate(post.date)}
-											</time>
-										</div>
+										<p className="mt-2 text-3xl font-semibold text-wheat">
+											{posts.length}
+										</p>
 									</div>
-								</Link>
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											Top post
+										</p>
+										<p className="mt-2 text-3xl font-semibold text-wheat">
+											{leadingPost ? formatViews(leadingPost.views) : "0"}
+										</p>
+									</div>
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											Total views
+										</p>
+										<p className="mt-2 text-3xl font-semibold text-wheat">
+											{formatViews(totalViews)}
+										</p>
+									</div>
+								</div>
 							</div>
-						))}
+						</div>
+
+						<div className="px-4 py-5 sm:px-6">
+							<Accordion posts={accordionPosts} />
+						</div>
 					</div>
-				</div>
+				</section>
+
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+						<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
+							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+								Trend signals
+							</p>
+							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+								Topic radar
+							</h2>
+							<p className="mt-2 text-sm leading-6 text-zinc-400">
+								Main topics with the strongest presence in the current trending
+								stack. Use them to branch into the archive without losing the
+								context of what is hot right now.
+							</p>
+
+							<div className="mt-6 space-y-3">
+								{topTopics.map((topic) => (
+									<TopicPill
+										key={topic.label}
+										label={topic.label}
+										count={topic.count}
+									/>
+								))}
+							</div>
+
+							{leadingPost && (
+								<div className="mt-6 rounded-2xl border border-zinc-700/50 bg-greyBg/75 p-4">
+									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+										Leading post
+									</p>
+									<Link
+										href={`/post/${normalizeTag(leadingPost.title)}`}
+										className="mt-3 block text-lg font-semibold text-wheat transition-colors hover:text-zinc-100"
+									>
+										{leadingPost.title}
+									</Link>
+									<div className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
+										<span>{leadingPost.author}</span>
+										<span className="h-1 w-1 rounded-full bg-zinc-700" />
+										<span>{formatViews(leadingPost.views)} views</span>
+									</div>
+								</div>
+							)}
+						</aside>
+
+						<div className="space-y-6">
+							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
+								<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+									<div>
+										<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+											Ranking
+										</p>
+										<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+											Top posts by momentum
+										</h2>
+										<p className="mt-2 text-sm leading-6 text-zinc-400">
+											The most-read posts right now, ordered by views so the list
+											actually reflects a trend instead of a random sample.
+										</p>
+									</div>
+								</div>
+
+								<div className="mt-6 grid gap-4">
+									{rankedPosts.map((post, index) => (
+										<RankedPostRow
+											key={`${post.title}-${post.author}-${index}`}
+											post={post}
+											index={index}
+										/>
+									))}
+								</div>
+							</section>
+
+							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
+								<div>
+									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+										More to watch
+									</p>
+									<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+										Rising posts
+									</h2>
+									<p className="mt-2 text-sm leading-6 text-zinc-400">
+										Posts just below the top tier that still deserve a clear,
+										readable presentation instead of another dense list.
+									</p>
+								</div>
+
+								<div className="mt-6 grid gap-4 lg:grid-cols-2">
+									{spotlightPosts.map((post) => (
+										<SpotlightPostCard
+											key={`${post.title}-${post.author}-spotlight`}
+											post={post}
+										/>
+									))}
+								</div>
+							</section>
+						</div>
+					</div>
+				</section>
 			</div>
 			<Footer />
 		</>

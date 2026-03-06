@@ -53,3 +53,24 @@ body {
 .animate-slide-down {
 	animation: slide-down 1s ease-out forwards;
 }
+
+@keyframes tag-marquee {
+	from {
+		transform: translate3d(0, 0, 0);
+	}
+
+	to {
+		transform: translate3d(-50%, 0, 0);
+	}
+}
+
+.animate-tag-marquee {
+	animation: tag-marquee var(--marquee-duration, 28s) linear infinite;
+	will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-tag-marquee {
+		animation-play-state: paused;
+	}
+}

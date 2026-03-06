@@ -2,191 +2,215 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import type { IconType } from "react-icons";
-import {
-	FaBolt,
-	FaCircleXmark,
-	FaGhost,
-	FaMasksTheater,
-} from "react-icons/fa6";
+import { useEffect, useMemo, useState } from "react";
+import { FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-
-type Panel = {
-	tag: string;
-	description: string;
-	author: string;
-	title: string;
-	image: string;
-};
+import type { IPost } from "@/data/posts";
 
 type AccordionProps = {
-	panels: Panel[];
+	posts: IPost[];
 };
 
-type IconMap = Record<string, IconType>;
+function normalizeValue(value: string) {
+	return slugify(value, { lower: true, strict: true });
+}
 
-const iconMap: IconMap = {
-	viloes: FaGhost,
-	herois: FaBolt,
-	"anti-herois": FaMasksTheater,
-};
+function formatViews(views: number) {
+	return views >= 1000 ? `${(views / 1000).toFixed(1)}k` : `${views}`;
+}
 
-export default function Accordion({ panels }: AccordionProps) {
+export default function Accordion({ posts }: AccordionProps) {
 	const [activePanel, setActivePanel] = useState(0);
-	const [userSelected, setUserSelected] = useState(false);
-	const [focusedPanel, setFocusedPanel] = useState<number | null>(null);
-	const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-	const intervalRef = useRef<NodeJS.Timeout | null>(null);
-	const router = useRouter();
-	const resizedPanels = panels.slice(0, windowWidth < 1200 ? 5 : 8);
-
-	const handlePanelClick = (
-		e: React.MouseEvent<HTMLElement>,
-		index: number,
-	) => {
-		if (e.target instanceof HTMLElement && e.target.tagName === "A") return;
-		setActivePanel(index);
-		setUserSelected(true);
-
-		if (intervalRef.current) {
-			clearInterval(intervalRef.current);
-			intervalRef.current = null;
-		}
-
-		if (activePanel === index) {
-			router.push(
-				`/post/${slugify(resizedPanels[index].title, { lower: true, strict: true })}`,
-			);
-		}
-	};
+	const [windowWidth, setWindowWidth] = useState(0);
+	const [isPaused, setIsPaused] = useState(false);
+	const isMobile = windowWidth > 0 && windowWidth < 960;
 
 	useEffect(() => {
-		const startAutoMove = () => {
-			if (!intervalRef.current) {
-				intervalRef.current = setInterval(() => {
-					setActivePanel((prev) => (prev + 1) % resizedPanels.length);
-				}, 7000);
-			}
-		};
-
-		startAutoMove();
-
-		let autoMoveTimeout: NodeJS.Timeout | null = null;
-
-		if (userSelected) {
-			if (intervalRef.current) {
-				clearInterval(intervalRef.current);
-				intervalRef.current = null;
-			}
-
-			autoMoveTimeout = setTimeout(() => {
-				setUserSelected(false);
-				startAutoMove();
-			}, 10000);
-		}
-
 		const handleResize = () => {
 			setWindowWidth(window.innerWidth);
 		};
 
+		handleResize();
 		window.addEventListener("resize", handleResize);
 
 		return () => {
-			if (intervalRef.current) {
-				clearInterval(intervalRef.current);
-				intervalRef.current = null;
-			}
-			if (autoMoveTimeout) {
-				clearTimeout(autoMoveTimeout);
-			}
 			window.removeEventListener("resize", handleResize);
 		};
-	}, [resizedPanels.length, userSelected]);
+	}, []);
 
-	const isMobile = windowWidth < 918;
+	const visiblePosts = useMemo(() => {
+		const maxPanels = windowWidth > 0 && windowWidth < 1280 ? 5 : 7;
+		return posts.slice(0, maxPanels);
+	}, [posts, windowWidth]);
 
-	const gridStyle = resizedPanels
-		.map((_p, i) => (i === activePanel ? "3fr" : "1fr"))
-		.join(" ");
+	useEffect(() => {
+		setActivePanel((current) =>
+			visiblePosts.length === 0 ? 0 : Math.min(current, visiblePosts.length - 1),
+		);
+	}, [visiblePosts.length]);
+
+	useEffect(() => {
+		if (visiblePosts.length <= 1 || isPaused) {
+			return;
+		}
+
+		const intervalId = window.setInterval(() => {
+			setActivePanel((current) => (current + 1) % visiblePosts.length);
+		}, 6000);
+
+		return () => {
+			window.clearInterval(intervalId);
+		};
+	}, [isPaused, visiblePosts.length]);
+
+	if (visiblePosts.length === 0) {
+		return null;
+	}
+
+	const trackStyle = isMobile
+		? {
+				gridTemplateRows: visiblePosts
+					.map((_, index) => (index === activePanel ? "3.4fr" : "1fr"))
+					.join(" "),
+			}
+		: {
+				gridTemplateColumns: visiblePosts
+					.map((_, index) => (index === activePanel ? "3.4fr" : "1fr"))
+					.join(" "),
+			};
 
 	return (
 		<div
-			className={`grid gap-4 lg:w-3/4 sm:w-2/3 px-2 xs:px-8 sm:px-0 max-w-5xl mx-auto py-4 ${isMobile ? "h-[700px]" : "h-[450px]"} transition-all duration-700`}
-			style={{
-				gridTemplateColumns: isMobile ? "none" : gridStyle,
-				gridTemplateRows: isMobile ? gridStyle : "none",
-			}}
+			className={`grid gap-4 transition-[grid-template-columns,grid-template-rows] duration-700 ${
+				isMobile ? "h-[720px]" : "h-[520px]"
+			}`}
+			style={trackStyle}
+			onMouseEnter={() => setIsPaused(true)}
+			onMouseLeave={() => setIsPaused(false)}
+			onFocusCapture={() => setIsPaused(true)}
+			onBlurCapture={() => setIsPaused(false)}
 		>
-			{resizedPanels.map(
-				({ tag, description, author, image, title }, index) => {
-					const authorId = slugify(author, { lower: true, strict: true });
-					const panelKey = `${slugify(tag, { lower: true, strict: true })}-${authorId}-${slugify(title, { lower: true, strict: true })}`;
-					let formattedAuthor =
-						author.length > 20 ? `${author.slice(0, 20)}...` : author;
-					formattedAuthor = formattedAuthor
-						.toLowerCase()
-						.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
-					const Icon =
-						iconMap[slugify(tag, { lower: true, strict: true })] ||
-						FaCircleXmark;
-					return (
+			{visiblePosts.map((post, index) => {
+				const isActive = activePanel === index;
+				const postHref = `/post/${normalizeValue(post.title)}`;
+
+				return (
+					<article
+						key={`${post.title}-${post.author}-${index}`}
+						className={`group relative overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg shadow-lg shadow-zinc-950/20 transition-all duration-500 ${
+							isActive ? "shadow-zinc-950/30" : "hover:border-zinc-500/60"
+						}`}
+					>
+						<Image
+							fill
+							src={post.image}
+							alt={post.title}
+							className={`object-cover transition-transform duration-700 ${
+								isActive ? "scale-100" : "scale-105"
+							}`}
+							sizes="(max-width: 960px) 100vw, 30vw"
+						/>
 						<div
-							key={panelKey}
-							className={`relative overflow-hidden h-full transition-all ease-in-out ${activePanel === index ? "cursor-pointer rounded-3xl duration-200" : "rounded-full duration-700 delay-500"} ${focusedPanel === index && "outline outline-offset-2 transition-none"}`}
-						>
+							className={`absolute inset-0 bg-gradient-to-t from-darkBg via-darkBg/55 to-darkBg/10 transition-opacity duration-500 ${
+								isActive ? "opacity-100" : "opacity-90"
+							}`}
+						/>
+
+						{!isActive && (
 							<button
 								type="button"
-								className="absolute inset-0 z-10"
-								aria-label={`Open ${title}`}
-								onClick={(e) => handlePanelClick(e, index)}
-								onFocus={() => setFocusedPanel(index)}
-								onBlur={() => setFocusedPanel(null)}
+								className="absolute inset-0 z-20"
+								aria-label={`Focus ${post.title}`}
+								onClick={() => setActivePanel(index)}
 							/>
-							<h2
-								className={`pointer-events-none relative z-20 flex flex-col transition-all duration-700 delay-100 ${!(activePanel === index) && "justify-center items-center ml-2.5"} inset-auto bg-transparent bg-black bg-opacity-60 h-10 w-fit rounded-full px-3 mt-5`}
-							>
-								<div
-									className={`flex h-12 gap-2 shadow-zinc-400/20 focus:outline-none focus:transition-none transition-all duration-300 delay-200 ${activePanel === index && "bg-black/50 shadow-lg rounded-full"}`}
-								>
-									<div className="w-8">
-										<Icon className="w-8 h-8 bg-black bg-opacity-60 rounded-full p-2" />
-									</div>
+						)}
+
+						<div className="relative z-10 flex h-full flex-col justify-between p-5">
+							<div className="flex items-start justify-between gap-3">
+								<div className="space-y-3">
+									<span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-purpleContrast/40 bg-purpleContrast/20 text-sm font-semibold text-wheat">
+										{index + 1}
+									</span>
 									<Link
-										href={`/tag?selected=${slugify(tag, { lower: true, strict: true })}`}
-										className={`pointer-events-auto flex items-center h-full px-3 text-2xl font-extrabold capitalize opacity-0 transition-all duration-200 delay-300 ${activePanel === index && "opacity-100"} ${activePanel === index ? "" : "pointer-events-none"}`}
+										href={`/tag?selected=${normalizeValue(post.mainTag)}`}
+										className={`inline-flex w-fit rounded-full border border-zinc-600/80 bg-black/35 px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-zinc-200 transition-all hover:border-zinc-400 hover:text-wheat ${
+											isActive ? "opacity-100" : "opacity-0 pointer-events-none"
+										}`}
 									>
-										{tag}
+										{post.mainTag}
 									</Link>
 								</div>
-							</h2>
+
+								<div
+									className={`text-right transition-opacity duration-300 ${
+										isActive ? "opacity-100" : "opacity-0"
+									}`}
+								>
+									<p className="text-xs uppercase tracking-[0.18em] text-zinc-400">
+										Views
+									</p>
+									<p className="mt-1 flex items-center justify-end gap-1 text-sm text-zinc-200">
+										<FaEye />
+										{formatViews(post.views)}
+									</p>
+								</div>
+							</div>
+
 							<div
-								className={`pointer-events-none relative z-20 px-8 mt-4 text-lg font-bold brightness-110 transition-all duration-700 ease-in-out ${activePanel === index ? "opacity-100" : "opacity-0 invisible"}`}
+								className={`transition-all duration-500 ${
+									isActive
+										? "translate-y-0 opacity-100"
+										: "translate-y-6 opacity-0 pointer-events-none"
+								}`}
 							>
-								<p
-									className={`[text-shadow:_0_2px_4px_var(--tw-shadow-color)] shadow-zinc-600 transition-all duration-700 ease-in-out line-clamp-10 ${activePanel === index ? "opacity-100" : "opacity-0"}`}
-									title={description}
-								>
-									{description}
+								<h2 className="max-w-xl text-2xl font-semibold leading-tight text-wheat sm:text-3xl">
+									{post.title}
+								</h2>
+								<p className="mt-3 max-w-2xl line-clamp-4 text-sm leading-7 text-zinc-300 sm:text-base">
+									{post.description}
 								</p>
+
+								<div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-zinc-400">
+									<Link
+										href={`/profile/${normalizeValue(post.author)}`}
+										className="transition-colors hover:text-wheat"
+									>
+										{post.author}
+									</Link>
+									<span className="h-1 w-1 rounded-full bg-zinc-700" />
+									<time dateTime={post.date}>
+										{new Intl.DateTimeFormat("en-US", {
+											month: "short",
+											day: "numeric",
+										}).format(new Date(post.date))}
+									</time>
+								</div>
+
 								<Link
-									href={`/profile/${authorId}`}
-									className={`pointer-events-auto block transition-all duration-100 font-bold mt-2 text-sm w-fit ml-auto text-gray-300 hover:text-purpleContrast ${activePanel === index ? "" : "pointer-events-none"}`}
+									href={postHref}
+									className="mt-6 inline-flex items-center gap-2 rounded-full border border-zinc-500/80 bg-black/35 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:border-zinc-300 hover:bg-black/45"
 								>
-									{formattedAuthor}
+									Read post
+									<FaArrowRight className="text-xs" />
 								</Link>
 							</div>
-							<Image
-								className={`absolute w-full h-full object-cover -z-10 transition-all ease-in-out duration-500 delay-100 ${activePanel === index && "brightness-[0.7]"}`}
-								fill
-								src={image}
-								alt={`${tag} image`}
-							/>
+
+							<div
+								className={`flex items-end justify-between transition-opacity duration-300 ${
+									isActive ? "opacity-0 pointer-events-none" : "opacity-100"
+								}`}
+							>
+								<div className="[writing-mode:vertical-rl] rotate-180 text-xs uppercase tracking-[0.22em] text-zinc-300">
+									{post.mainTag}
+								</div>
+								<p className="line-clamp-3 max-w-[14rem] text-right text-sm font-medium text-zinc-100">
+									{post.title}
+								</p>
+							</div>
 						</div>
-					);
-				},
-			)}
+					</article>
+				);
+			})}
 		</div>
 	);
 }

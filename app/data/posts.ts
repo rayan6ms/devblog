@@ -720,18 +720,23 @@ export async function getRecommendedPosts() {
 	return posts.sort((a, b) => a.views - b.views);
 }
 
+export async function getAllPosts(): Promise<IPost[]> {
+	return posts;
+}
+
 export const getFilteredPosts = async (
 	tagsArray: string[],
 ): Promise<IPost[]> => {
-	const slugifiedPosts = posts.map((post) => ({
-		...post,
-		tags: post.tags.map((tag) => slugify(tag, { lower: true, strict: true })),
-		mainTag: slugify(post.mainTag, { lower: true, strict: true }),
-	}));
+	return posts.filter((post) => {
+		const normalizedMainTag = slugify(post.mainTag, { lower: true, strict: true });
+		const normalizedTags = post.tags.map((tag) =>
+			slugify(tag, { lower: true, strict: true }),
+		);
 
-	return slugifiedPosts.filter((post) =>
-		tagsArray.some((tag) => post.tags.includes(tag) || post.mainTag === tag),
-	);
+		return tagsArray.some(
+			(tag) => normalizedMainTag === tag || normalizedTags.includes(tag),
+		);
+	});
 };
 
 export const getAllMainTags = () => {

@@ -3,75 +3,81 @@
 import Footer from "@/components/Footer";
 
 export default function SkeletonTrending() {
-	const skeletonPanels = Array.from(
-		{ length: 7 },
-		(_, index) => `panel-${index}`,
-	);
-	const skeletonPosts = Array.from(
-		{ length: 24 },
-		(_, index) => `post-${index}`,
-	);
-
 	return (
 		<>
-			<div
-				className={`gap-4 hidden md:grid lg:w-3/4 sm:w-2/3 px-2 xs:px-8 sm:px-0 max-w-3xl mx-auto py-4 h-[450px] transition-all duration-700`}
-				style={{
-					gridTemplateColumns: "repeat(7, 1fr)",
-				}}
-			>
-				{skeletonPanels.map((panelKey) => (
-					<div
-						key={panelKey}
-						className="relative h-full rounded-full bg-gray-300 animate-pulse"
-						style={{
-							gridColumn: "span 1",
-							gridRow: "auto",
-						}}
-					></div>
-				))}
-			</div>
+			<div className="min-h-screen bg-darkBg text-gray">
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 pt-8 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
+						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
+							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+								<div className="max-w-3xl space-y-3">
+									<div className="h-3 w-24 animate-pulse rounded-full bg-zinc-700/80" />
+									<div className="h-12 w-full max-w-xl animate-pulse rounded-2xl bg-zinc-700/80" />
+									<div className="h-4 w-full max-w-2xl animate-pulse rounded-full bg-zinc-700/70" />
+									<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
+								</div>
 
-			{/* horizontal */}
-			<div className="md:grid-cols-1 grid-cols-none grid gap-4 lg:w-3/4 sm:w-2/3 px-2 xs:px-8 sm:px-0 max-w-5xl mx-auto py-4 h-[500px] md:hidden">
-				{skeletonPanels.map((panelKey) => (
-					<div
-						key={`${panelKey}-mobile`}
-						className="relative h-full rounded-full bg-gray-300 animate-pulse"
-						style={{
-							gridColumn: "1 / -1",
-							gridRow: "span 1",
-						}}
-					></div>
-				))}
-			</div>
+								<div className="grid gap-3 sm:grid-cols-3">
+									{Array.from({ length: 3 }, (_, index) => (
+										<div
+											key={`stat-skeleton-${index}`}
+											className="h-28 w-full min-w-[160px] animate-pulse rounded-2xl bg-zinc-700/70"
+										/>
+									))}
+								</div>
+							</div>
+						</div>
 
-			<div className="w-full flex flex-col items-center my-6">
-				<div className="w-full max-w-[1200px] px-2">
-					<h2 className="bg-gray-300 h-8 w-40 rounded-lg mb-6 animate-pulse">
-						<span className="sr-only">Loading top posts</span>
-					</h2>
-					<div className="flex flex-wrap justify-center gap-3 mt-4">
-						{skeletonPosts.slice(0, 24).map((postKey) => (
-							<div
-								key={`${postKey}-top`}
-								className="md:w-[380px] w-[97%] h-[140px] bg-gray-300 rounded-2xl animate-pulse"
-							></div>
-						))}
+						<div className="px-4 py-5 sm:px-6">
+							<div className="grid h-[520px] gap-4 md:grid-cols-[3.4fr_1fr_1fr_1fr_1fr]">
+								{Array.from({ length: 5 }, (_, index) => (
+									<div
+										key={`accordion-skeleton-${index}`}
+										className="animate-pulse rounded-[28px] bg-zinc-700/70"
+									/>
+								))}
+							</div>
+						</div>
 					</div>
+				</section>
 
-					<h2 className="bg-gray-300 h-8 w-40 rounded-lg mt-10 mb-6 animate-pulse">
-						<span className="sr-only">Loading trending posts</span>
-					</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-1 gap-x-4 justify-center mt-4 w-full px-2">
-						{skeletonPosts.map((postKey) => (
-							<div
-								key={`${postKey}-trending`}
-								className="w-full h-[140px] bg-gray-300 rounded-2xl animate-pulse my-2"
-							></div>
-						))}
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+						<div className="h-[520px] animate-pulse rounded-[26px] bg-zinc-700/70" />
+						<div className="space-y-6">
+							<div className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5">
+								<div className="space-y-3">
+									<div className="h-3 w-20 animate-pulse rounded-full bg-zinc-700/80" />
+									<div className="h-10 w-64 animate-pulse rounded-2xl bg-zinc-700/80" />
+									<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
+								</div>
+								<div className="mt-6 grid gap-4">
+									{Array.from({ length: 6 }, (_, index) => (
+										<div
+											key={`ranked-skeleton-${index}`}
+											className="h-36 animate-pulse rounded-[24px] bg-zinc-700/70"
+										/>
+									))}
+								</div>
+							</div>
+
+							<div className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5">
+								<div className="space-y-3">
+									<div className="h-3 w-24 animate-pulse rounded-full bg-zinc-700/80" />
+									<div className="h-10 w-56 animate-pulse rounded-2xl bg-zinc-700/80" />
+								</div>
+								<div className="mt-6 grid gap-4 lg:grid-cols-2">
+									{Array.from({ length: 4 }, (_, index) => (
+										<div
+											key={`spotlight-skeleton-${index}`}
+											className="h-[360px] animate-pulse rounded-[26px] bg-zinc-700/70"
+										/>
+									))}
+								</div>
+							</div>
+						</div>
 					</div>
-				</div>
+				</section>
 			</div>
 			<Footer />
 		</>
