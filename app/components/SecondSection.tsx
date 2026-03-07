@@ -26,37 +26,59 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 	}
 
 	const sections = [
-		{ title: "Trending Posts", path: "/trending" },
-		{ title: "Recent Posts", path: "/recent" },
-		{ title: "Recommended Posts", path: "/recommended" },
+		{
+			title: "Trending Posts",
+			path: "/trending",
+			description: "See what is pulling the most attention right now.",
+		},
+		{
+			title: "Recent Posts",
+			path: "/recent",
+			description: "Jump into the archive from the newest entries first.",
+		},
+		{
+			title: "Recommended Posts",
+			path: "/recommended",
+			description: "Browse a smaller set of posts worth keeping in view.",
+		},
 	];
 
 	return (
-		<section className="w-full justify-center grid grid-flow-row md:grid-flow-col gap-8 mt-14">
+		<section className="grid w-full gap-8 xl:grid-cols-3">
 			{sections.map((section, index) => (
 				<div
 					key={section.path}
-					className={`flex gap-3 flex-col items-center gap-y-5 bg-lessDarkBg border-gray-700/60 md:border rounded-md p-4 lg:p-8 xxl:last:flex md:last:hidden`}
+					className="mx-auto flex h-full w-full max-w-[380px] flex-col items-stretch gap-5 rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-lg shadow-zinc-950/10 lg:p-8 xl:max-w-none"
 				>
-					<h2 className="text-2xl font-bold text-center text-wheat">
-						{section.title}
-					</h2>
-					<RecentItem post={posts.recent[index]} />
-					{posts.recommended.slice(0, 2).map((post: IPost, index: number) => (
-						<TrendingItem
-							key={post.title}
-							post={post}
-							section
-							addSeparation={index > 0}
-						/>
-					))}
+					<div className="w-full">
+						<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+							Explore
+						</p>
+						<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
+							{section.title}
+						</h2>
+						<p className="mt-2 text-sm leading-6 text-zinc-400">
+							{section.description}
+						</p>
+					</div>
+					<RecentItem post={posts.recent[index]} fluid />
+					<div className="flex flex-col gap-5">
+						{posts.recommended.slice(0, 2).map((post: IPost, postIndex: number) => (
+							<TrendingItem
+								key={post.title}
+								post={post}
+								section
+								addSeparation={postIndex > 0}
+							/>
+						))}
+					</div>
 					<button
 						type="button"
 						onClick={(e) => handleRouteButtonClick(e, section.path)}
-						className="w-full flex items-center gap-2 hover:gap-0 self-start transition-all hover:text-purpleContrast group mt-5"
+						className="group mt-auto flex w-full items-center gap-2 self-start rounded-full border border-zinc-700/60 bg-darkBg px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 					>
-						Mais destes
-						<FaArrowRight className="transition-transform delay-200 ease-in-out transform group-hover:translate-x-4 group-hover:opacity-100" />
+						View section
+						<FaArrowRight className="transition-transform delay-200 ease-in-out transform group-hover:translate-x-2" />
 					</button>
 				</div>
 			))}

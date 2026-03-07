@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -13,16 +12,16 @@ import {
 	FaGoogle,
 	FaSpinner,
 } from "react-icons/fa6";
+import P5Background from "@/P5Background";
 import SocialAuthButton from "../login/SocialAuthButton";
-
-const P5Background = dynamic(() => import("@/P5Background"), { ssr: false });
 
 export default function RegisterForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const [showPassword, setShowPassword] = useState<boolean>(false);
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [showPassword, setShowPassword] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState("");
 	const router = useRouter();
 
 	const socialAuthOptions = [
@@ -52,141 +51,146 @@ export default function RegisterForm() {
 		},
 	];
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+	function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
+		setError("");
 
 		if (password !== confirmPassword) {
-			alert("Passwords do not match!");
+			setError("Passwords do not match.");
 			return;
 		}
 
+		setIsLoading(true);
+
 		try {
-			// Implementar lógica de registro com email e senha
 			router.push("/login");
-		} catch (error) {
-			console.error(error);
+		} catch (submissionError) {
+			console.error(submissionError);
+		} finally {
+			setIsLoading(false);
 		}
-	};
+	}
 
 	return (
-		<>
-			<P5Background />
-			<form
-				onSubmit={handleSubmit}
-				className="absolute w-1/4 h-3/5 bg-darkBg/90 mb-32 rounded-3xl border border-zinc-600/60 shadow-md shadow-zinc-900 text-zinc-300 p-8 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-			>
-				<h1 className="text-2xl mb-6 text-center">Register</h1>
-
-				<div className="mb-4">
-					<label htmlFor="email" className="block mb-2">
-						Email:
-					</label>
-					<input
-						type="email"
-						id="email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="w-full p-2 rounded-md bg-lessDarkBg border border-zinc-500/60 text-zinc-300"
-						required
-					/>
-				</div>
-
-				<div className="mb-4">
-					<label htmlFor="password" className="block mb-2">
-						Password:
-					</label>
-					<div className="relative flex items-center border border-zinc-500/60 rounded-md bg-lessDarkBg">
-						<input
-							type={showPassword ? "text" : "password"}
-							id="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className="w-full p-2 pr-12 rounded-md bg-transparent text-zinc-400"
-							required
-						/>
-						{showPassword ? (
-							<FaEye
-								className="absolute right-3.5 cursor-pointer text-zinc-400 hover:text-zinc-300 transition-colors duration-200"
-								onClick={() => setShowPassword(!showPassword)}
-							/>
-						) : (
-							<FaEyeSlash
-								className="absolute right-3.5 cursor-pointer text-zinc-400 hover:text-zinc-300 transition-colors duration-200"
-								onClick={() => setShowPassword(!showPassword)}
-							/>
-						)}
+		<div className="relative min-h-screen overflow-hidden bg-darkBg text-gray">
+			<div className="absolute inset-0">
+				<P5Background />
+			</div>
+			<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,23,26,0.22),rgba(20,23,26,0.58))]" />
+			<div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
+				<form
+					onSubmit={handleSubmit}
+					className="w-full max-w-[420px] rounded-[28px] border border-zinc-200/15 bg-darkBg/58 p-6 shadow-2xl shadow-zinc-950/30 backdrop-blur-md sm:p-7"
+				>
+					<div className="mb-6 text-center">
+						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+							Create access
+						</p>
+						<h1 className="mt-3 text-3xl font-somerton uppercase text-wheat">
+							Register
+						</h1>
 					</div>
-				</div>
 
-				<div className="mb-6">
-					<label htmlFor="password" className="block mb-2">
-						Password:
-					</label>
-					<div className="relative flex items-center border border-zinc-500/60 rounded-md bg-lessDarkBg">
-						<input
-							type={showPassword ? "text" : "password"}
-							id="password"
-							value={confirmPassword}
-							onChange={(e) => setConfirmPassword(e.target.value)}
-							className="w-full p-2 pr-12 rounded-md bg-transparent text-zinc-400"
-							required
-						/>
-						{showPassword ? (
-							<FaEye
-								className="absolute right-3.5 cursor-pointer text-zinc-300 hover:text-zinc-300 transition-colors duration-200"
-								onClick={() => setShowPassword(!showPassword)}
+					<div className="space-y-4">
+						<div>
+							<label htmlFor="email" className="mb-2 block text-sm text-zinc-300">
+								Email
+							</label>
+							<input
+								type="email"
+								id="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								className="w-full rounded-xl border border-zinc-500/45 bg-darkBg/75 px-4 py-3 text-zinc-200 outline-none transition-colors focus:border-purpleContrast"
+								required
 							/>
-						) : (
-							<FaEyeSlash
-								className="absolute right-3.5 cursor-pointer text-zinc-300 hover:text-zinc-300 transition-colors duration-200"
-								onClick={() => setShowPassword(!showPassword)}
+						</div>
+
+						<div>
+							<label
+								htmlFor="password"
+								className="mb-2 block text-sm text-zinc-300"
+							>
+								Password
+							</label>
+							<div className="relative flex items-center rounded-xl border border-zinc-500/45 bg-darkBg/75">
+								<input
+									type={showPassword ? "text" : "password"}
+									id="password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									className="w-full bg-transparent px-4 py-3 pr-12 text-zinc-200 outline-none"
+									required
+								/>
+								<button
+									type="button"
+									onClick={() => setShowPassword((value) => !value)}
+									className="absolute right-3 text-zinc-400 transition-colors hover:text-zinc-200"
+									aria-label={showPassword ? "Hide password" : "Show password"}
+								>
+									{showPassword ? <FaEye /> : <FaEyeSlash />}
+								</button>
+							</div>
+						</div>
+
+						<div>
+							<label
+								htmlFor="confirm-password"
+								className="mb-2 block text-sm text-zinc-300"
+							>
+								Confirm password
+							</label>
+							<input
+								type={showPassword ? "text" : "password"}
+								id="confirm-password"
+								value={confirmPassword}
+								onChange={(e) => setConfirmPassword(e.target.value)}
+								className="w-full rounded-xl border border-zinc-500/45 bg-darkBg/75 px-4 py-3 text-zinc-200 outline-none transition-colors focus:border-purpleContrast"
+								required
 							/>
-						)}
+						</div>
 					</div>
-				</div>
 
-				<div className="flex space-x-2 my-4">
-					{socialAuthOptions.map((option) => (
-						<SocialAuthButton
-							key={option.provider}
-							provider={option.provider}
-							icon={option.icon}
-							bgColor={option.bgColor}
-							hoverBgColor={option.hoverBgColor}
-							// handleAuth={handleSocialAuth}
-						/>
-					))}
-				</div>
+					{error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
 
-				<div className="w-full flex flex-col items-center justify-center mt-12">
-					<button
-						type="submit"
-						className={`flex justify-center items-center self-center p-4 px-5 border-2 border-zinc-600/70 text-zinc-400 rounded-xl transition-all ease-in-out duration-200 ${email && password && confirmPassword ? "cursor-pointer bg-purpleContrast hover:bg-purpleContrast/75" : "cursor-not-allowed"}`}
-						disabled={!(email && password) || isLoading}
-						onClick={() => setIsLoading(true)}
-					>
-						{isLoading ? (
-							<FaSpinner
-								className={`text-2xl text-zinc-${email && password && confirmPassword ? "300" : "500"} animate-spin`}
+					<div className="mt-6 grid grid-cols-4 gap-3">
+						{socialAuthOptions.map((option) => (
+							<SocialAuthButton
+								key={option.provider}
+								provider={option.provider}
+								icon={option.icon}
+								bgColor={option.bgColor}
+								hoverBgColor={option.hoverBgColor}
 							/>
-						) : (
-							<FaArrowRight
-								className={`text-2xl text-zinc-${email && password && confirmPassword ? "300" : "500"}`}
-							/>
-						)}
-					</button>
-					<span className="text-sm font-europa mt-2 text-zinc-300 p-2">
-						Already have an account?
+						))}
+					</div>
+
+					<div className="mt-8 flex flex-col gap-4">
 						<button
-							type="button"
-							className="ml-1 underline hover:text-purpleContrast transition-all ease-in-out duration-200"
-							onClick={() => router.push("/login")}
+							type="submit"
+							className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-600/70 bg-purpleContrast px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-purpleContrast/85 disabled:cursor-not-allowed disabled:bg-zinc-700/70 disabled:text-zinc-400"
+							disabled={!(email && password && confirmPassword) || isLoading}
 						>
-							Login
+							{isLoading ? (
+								<FaSpinner className="animate-spin text-lg" />
+							) : (
+								<FaArrowRight className="text-lg" />
+							)}
+							Create account
 						</button>
-					</span>
-				</div>
-			</form>
-		</>
+						<p className="text-center text-sm text-zinc-300">
+							Already have an account?
+							<button
+								type="button"
+								className="ml-1 underline underline-offset-4 transition-colors hover:text-wheat"
+								onClick={() => router.push("/login")}
+							>
+								Login
+							</button>
+						</p>
+					</div>
+				</form>
+			</div>
+		</div>
 	);
 }

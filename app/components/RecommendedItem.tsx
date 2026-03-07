@@ -36,15 +36,14 @@ export default function RecommendedItem({
 		<Link
 			href={`/post/${postId}`}
 			className={`group flex
-        w-[360px] h-[100px]
+        h-[100px] w-full
         sm:w-[460px]
         md:w-[360px]
         lg:w-[420px]
         xxl:w-[320px]
-        box-content ${addSeparation && "mt-5"}
-        xxl:last-of-type:flex md:last-of-type:hidden`}
+        box-content ${addSeparation && "mt-5"}`}
 		>
-			<div className="flex flex-col justify-center w-4/5 h-full pr-4">
+			<div className="flex h-full min-w-0 flex-1 flex-col justify-center pr-4">
 				<div className="flex justify-between items-center">
 					<button
 						type="button"

@@ -13,20 +13,21 @@ type SocialLinksProps = {
 	links: Record<string, string>;
 };
 
-const SocialLinkItem = ({ link }: { link: SocialLink }) => {
+function SocialLinkItem({ link }: { link: SocialLink }) {
 	const Icon = link.icon;
+
 	return (
 		<a
 			href={link.url}
-			className={`${link.bgColor} ${link.hoverBgColor} flex items-center p-2 rounded-md m-1 transition-all duration-300`}
+			className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm text-zinc-100 transition-all duration-300 ${link.bgColor} ${link.hoverBgColor}`}
 			target="_blank"
 			rel="noopener noreferrer"
 		>
-			<Icon className="text-white" />
-			<span className="ml-2 text-zinc-200">{link.provider}</span>
+			<Icon className="text-base" />
+			<span>{link.provider}</span>
 		</a>
 	);
-};
+}
 
 function isValidHttpUrl(s?: string) {
 	if (!s) return false;
@@ -43,41 +44,41 @@ export default function SocialLinks({ links }: SocialLinksProps) {
 		{
 			provider: "LinkedIn",
 			icon: FaLinkedin,
-			bgColor: "bg-blue-500/75",
-			hoverBgColor: "hover:bg-blue-600/80 border border-blue-500/50",
+			bgColor: "bg-blue-500/15 border-blue-400/30",
+			hoverBgColor: "hover:bg-blue-500/25",
 			url: links.linkedin,
 		},
 		{
 			provider: "GitHub",
 			icon: FaGithub,
-			bgColor: "bg-gray-800",
-			hoverBgColor: "hover:bg-gray-900/70 border border-gray-600/50",
+			bgColor: "bg-zinc-800/80 border-zinc-600/40",
+			hoverBgColor: "hover:bg-zinc-700/80",
 			url: links.github,
 		},
 		{
 			provider: "YouTube",
 			icon: FaYoutube,
-			bgColor: "bg-red-600/80",
-			hoverBgColor: "hover:bg-red-700/80 border border-red-500/70",
+			bgColor: "bg-red-500/15 border-red-400/30",
+			hoverBgColor: "hover:bg-red-500/25",
 			url: links.youtube,
 		},
 		{
 			provider: "Twitter",
 			icon: FaTwitter,
-			bgColor: "bg-blue-500",
-			hoverBgColor: "hover:bg-blue-500/75 border border-blue-400/50",
+			bgColor: "bg-sky-500/15 border-sky-400/30",
+			hoverBgColor: "hover:bg-sky-500/25",
 			url: links.twitter,
 		},
 	];
 
-	const active = socialLinks.filter((l) => isValidHttpUrl(l.url));
+	const active = socialLinks.filter((link) => isValidHttpUrl(link.url));
 
 	if (active.length === 0) {
 		return null;
 	}
 
 	return (
-		<div className="xs:flex grid grid-cols-2 md:items-center justify-center md:w-auto w-full bg-zinc-800/60 p-1 rounded-xl border border-zinc-500/30 shadow-md">
+		<div className="grid gap-3 sm:grid-cols-2">
 			{active.map((link) => (
 				<SocialLinkItem key={link.provider} link={link} />
 			))}

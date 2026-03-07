@@ -16,51 +16,57 @@ type CommentsProps = {
 	comments: Comment[];
 };
 
-const CommentItem = ({ comment }: { comment: Comment }) => (
-	<Link
-		href={`/post/${slugify(comment.postTitle, { lower: true, strict: true })}`}
-		className="group w-64 mb-3 mx-2 flex flex-col justify-between items-start p-2 bg-lessDarkBg rounded-xl shadow-md"
-	>
-		<div className="flex select-none w-64 h-22 mb-3">
-			<Image
-				src="https://wallpapercave.com/wp/wp2163723.jpg"
-				width={40}
-				height={40}
-				alt="User"
-				className="rounded-full w-[28px] h-[28px] mr-2 object-cover"
-			/>
-			<p className="line-clamp-6 text-sm text-zinc-200" title={comment.content}>
-				{comment.content}
-			</p>
-		</div>
-		<div className="w-full flex items-center justify-between px-2">
-			<p
-				className="line-clamp-2 text-xs text-zinc-400"
-				title={comment.postTitle}
-			>
-				{comment.postTitle}
-			</p>
-			<div className="relative h-[32px] w-[52px] overflow-hidden rounded-md">
-				<Image
-					src={comment.postImage}
-					fill
-					alt={comment.postTitle}
-					className="object-cover"
-					sizes="52px"
-				/>
+function CommentItem({ comment }: { comment: Comment }) {
+	return (
+		<Link
+			href={`/post/${slugify(comment.postTitle, { lower: true, strict: true })}`}
+			className="group flex min-h-[220px] flex-col justify-between rounded-[24px] border border-zinc-700/50 bg-greyBg/65 p-4 shadow-lg shadow-zinc-950/10 transition-transform hover:-translate-y-1"
+		>
+			<div>
+				<p className="line-clamp-6 text-sm leading-7 text-zinc-200">
+					{comment.content}
+				</p>
 			</div>
-		</div>
-	</Link>
-);
+			<div className="mt-5 border-t border-zinc-700/50 pt-4">
+				<div className="flex items-center gap-3">
+					<div className="relative h-12 w-16 overflow-hidden rounded-xl">
+						<Image
+							src={comment.postImage}
+							fill
+							alt={comment.postTitle}
+							className="object-cover"
+							sizes="64px"
+						/>
+					</div>
+					<div className="min-w-0">
+						<p className="line-clamp-2 text-sm font-semibold text-zinc-100">
+							{comment.postTitle}
+						</p>
+						<p className="mt-1 text-xs text-zinc-400">
+							{comment.edited ? `Edited ${comment.editedAt}` : comment.postedAt}
+						</p>
+					</div>
+				</div>
+			</div>
+		</Link>
+	);
+}
 
 export default function Comments({ comments }: CommentsProps) {
 	return (
-		<div className="bg-darkBg p-5 rounded-lg shadow-md m-2 md:m-5">
-			<div className="flex items-center gap-2 mb-2 text-wheat">
-				<h3 className="font-europa text-xl">Comments</h3>
-				<FaComment />
+		<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 sm:p-6">
+			<div className="mb-5 flex items-center gap-3 text-wheat">
+				<div className="rounded-full border border-zinc-600/50 bg-greyBg/80 p-2">
+					<FaComment />
+				</div>
+				<div>
+					<h3 className="font-somerton text-2xl uppercase">Comments</h3>
+					<p className="text-sm text-zinc-400">
+						Recent activity across the archive
+					</p>
+				</div>
 			</div>
-			<div className="flex overflow-x-auto px-2 md:px-0">
+			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				{comments.map((comment) => (
 					<CommentItem
 						key={`${comment.postTitle}-${comment.postedAt}`}
@@ -68,6 +74,6 @@ export default function Comments({ comments }: CommentsProps) {
 					/>
 				))}
 			</div>
-		</div>
+		</section>
 	);
 }

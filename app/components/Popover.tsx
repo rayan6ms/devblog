@@ -21,6 +21,14 @@ export default function Popover({
 }: PopoverProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const ref = useRef<HTMLDivElement>(null);
+	const hoverClass =
+		hoverBg === "[#34373d]"
+			? "hover:bg-[#34373d]"
+			: hoverBg === "greyBg"
+				? "hover:bg-greyBg"
+				: "";
+	const baseBgClass =
+		hoverBg === "[#34373d]" ? "bg-[#34373d]/70" : "bg-greyBg/70";
 
 	function handleMenuClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
 		e.preventDefault();
@@ -110,7 +118,7 @@ export default function Popover({
 			<button
 				type="button"
 				onClick={handleMenuClick}
-				className={`xxl:opacity-0 rounded-full px-[14px] py-1 group-hover:opacity-100 focus:opacity-100 hover:bg-${hoverBg} drop-shadow-lg transition-all duration-300 ease-in-out z-10 text-wheat`}
+				className={`z-10 flex h-9 w-9 items-center justify-center rounded-full text-wheat shadow-lg shadow-zinc-950/20 transition-all duration-300 ease-in-out xxl:opacity-0 group-hover:opacity-100 focus:opacity-100 ${baseBgClass} ${hoverClass}`}
 			>
 				<FaEllipsisVertical
 					size={
@@ -137,11 +145,11 @@ export default function Popover({
 							<button
 								key={button.text}
 								type="button"
-								className="w-full px-4 py-2 text-sm text-start text-wheat hover:bg-[#34373d] hover:text-purpleContrast"
+								className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-wheat hover:bg-[#34373d] hover:text-purpleContrast"
 								role="menuitem"
 								onClick={button.onClick}
 							>
-								<Icon className="mr-2" />
+								<Icon className="shrink-0" />
 								{button.text}
 							</button>
 						);

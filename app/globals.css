@@ -8,6 +8,10 @@
 	color-scheme: dark;
 }
 
+html {
+	scroll-behavior: smooth;
+}
+
 body {
 	color: rgb(var(--foreground-rgb));
 	background: rgba(20, 23, 26, 0.80);
@@ -70,6 +74,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
 	.animate-tag-marquee {
 		animation-play-state: paused;
 	}

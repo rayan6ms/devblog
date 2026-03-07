@@ -5,8 +5,8 @@ export default function SkeletonFirstSection() {
 	);
 
 	return (
-		<section className="bg-greyBg">
-			<div className="flex md:justify-center items-center flex-wrap gap-6 md:gap-8 lg:gap-x-28 xxl:gap-x-8 mt-24 w-[360px] sm:w-[460px] md:w-full mx-auto h-fit md:h-[500px] xxl:h-[260px] py-14 md:px-8">
+		<section>
+			<div className="grid w-full justify-items-center gap-6 py-2 md:grid-cols-2 xl:gap-8 xxl:grid-cols-4 xxl:gap-6">
 				{skeletonItems.map((itemKey) => (
 					<div
 						key={itemKey}

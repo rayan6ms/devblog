@@ -15,7 +15,7 @@ type TrendingItemProps = {
 
 export default function TrendingItem({
 	post,
-	section: _section,
+	section = false,
 	addSeparation,
 }: TrendingItemProps) {
 	const { image, mainTag, title } = post;
@@ -37,19 +37,19 @@ export default function TrendingItem({
 		<Link
 			href={`/post/${postId}`}
 			className={`group flex gap-6
-        w-full h-[130px] sm:h-[180px]
-        md:w-[320px] md:h-[120px]
-        lg:w-[380px] lg:h-[150px]
-        xxl:w-[300px] xxl:h-[100px]
+        ${
+					section
+						? "w-full max-w-none items-start"
+						: "w-full h-[130px] sm:h-[180px] md:w-[320px] md:h-[120px] lg:w-[380px] lg:h-[150px] xxl:w-[300px] xxl:h-[100px]"
+				}
         box-content ${addSeparation && "mt-5"}`}
 		>
 			<div
-				className="flex relative
-        min-w-[130px] max-w-[130px] h-[130px]
-        sm:min-w-[180px] sm:max-w-[180px] sm:h-[180px]
-        md:min-w-[150px] md:max-w-[150px] md:h-[150px]
-        xxl:min-w-[105px] xxl:max-w-[105px] xxl:h-[105px]
-        overflow-hidden rounded-lg"
+				className={`relative flex overflow-hidden rounded-lg ${
+					section
+						? "h-[120px] min-w-[120px] max-w-[120px] sm:h-[132px] sm:min-w-[132px] sm:max-w-[132px]"
+						: "h-[130px] min-w-[130px] max-w-[130px] sm:h-[180px] sm:min-w-[180px] sm:max-w-[180px] md:h-[150px] md:min-w-[150px] md:max-w-[150px] xxl:h-[105px] xxl:min-w-[105px] xxl:max-w-[105px]"
+				}`}
 			>
 				<Image
 					src={image}
@@ -59,8 +59,8 @@ export default function TrendingItem({
 					sizes="(max-width: 640px) 180px, (max-width: 1024px) 150px, 105px"
 				/>
 			</div>
-			<div className="flex flex-col justify-center w-fit h-full">
-				<div className="flex justify-between">
+			<div className="flex h-full min-w-0 flex-1 flex-col justify-center">
+				<div className="flex items-start justify-between gap-3">
 					<button
 						type="button"
 						onClick={(e) => handleRouteButtonClick(e, `/tag?selected=${tagId}`)}
@@ -71,7 +71,7 @@ export default function TrendingItem({
 					<Popover iconSize="lg" hoverBg="[#34373d]" />
 				</div>
 				<h3
-					className="w-full max-h-[70px] text-lg font-sans font-semibold leading-6 line-clamp-3 text-ellipsis break-words hyphens-auto"
+					className="w-full max-h-[70px] break-words text-lg font-sans font-semibold leading-6 line-clamp-3 hyphens-auto"
 					title={title}
 				>
 					{title}

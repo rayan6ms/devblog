@@ -18,7 +18,7 @@ export default function SocialAuthButton({
 		<button
 			type="button"
 			onClick={() => signIn(provider)}
-			className={`flex items-center justify-center w-full p-2 rounded-md shadow-md mb-2 ${bgColor} ${hoverBgColor} text-white transition-colors duration-300`}
+			className={`flex h-12 w-full items-center justify-center rounded-2xl shadow-md ${bgColor} ${hoverBgColor} text-white transition-colors duration-300`}
 		>
 			<Icon />
 		</button>

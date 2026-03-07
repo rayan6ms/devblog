@@ -14,9 +14,16 @@ import Popover from "./Popover";
 interface RecentItemProps {
 	post: IPost;
 	isBig?: boolean;
+	fluid?: boolean;
+	compact?: boolean;
 }
 
-export default function RecentItem({ post, isBig }: RecentItemProps) {
+export default function RecentItem({
+	post,
+	isBig,
+	fluid = false,
+	compact = false,
+}: RecentItemProps) {
 	const {
 		image,
 		mainTag,
@@ -56,13 +63,37 @@ export default function RecentItem({ post, isBig }: RecentItemProps) {
 	return (
 		<Link
 			href={`/post/${slugify(title, { lower: true, strict: true })}`}
-			className={`group flex flex-col w-[360px] sm:w-[460px] md:w-[360px] lg:w-[420px] rounded-lg h-fit
-        ${isBig ? "xxl:w-[600px] xxl:max-h-[720px] md:max-h-[600px] lg:max-h-[550px]" : "lg:max-h-[425px] xxl:w-[320px] xxl:max-h-[360px]"}`}
+			className={`group flex h-fit flex-col ${compact ? "rounded-[24px]" : "rounded-lg"} ${
+				fluid
+					? "w-full max-w-none"
+					: "w-[360px] sm:w-[460px] md:w-[360px] lg:w-[420px]"
+			}
+        ${
+					isBig
+						? fluid
+							? "max-h-none"
+							: "xxl:w-[600px] xxl:max-h-[720px] md:max-h-[600px] lg:max-h-[550px]"
+						: fluid
+							? "max-h-none"
+							: "lg:max-h-[425px] xxl:w-[320px] xxl:max-h-[360px]"
+				}`}
 		>
 			<div
-				className={`w-full rounded-lg relative ${isBig ? "md:h-[340px] lg:h-[380px] xxl:h-[550px]" : "lg:h-[270px] xxl:h-[210px]"}`}
+				className={`relative w-full ${compact ? "rounded-[24px]" : "rounded-lg"} ${
+					isBig
+						? fluid
+							? "h-[320px] lg:h-[420px] xxl:h-[520px]"
+							: "h-[280px] sm:h-[340px] lg:h-[380px] xxl:h-[550px]"
+						: fluid
+							? compact
+								? "h-[220px] sm:h-[258px] lg:h-[236px]"
+								: "h-[240px] sm:h-[280px] lg:h-[260px]"
+							: "h-[220px] sm:h-[270px] xxl:h-[210px]"
+				}`}
 			>
-				<div className="w-full h-full overflow-hidden rounded-lg relative">
+				<div
+					className={`relative h-full w-full overflow-hidden ${compact ? "rounded-[24px]" : "rounded-lg"}`}
+				>
 					<Image
 						src={image}
 						alt={title}
@@ -117,17 +148,17 @@ export default function RecentItem({ post, isBig }: RecentItemProps) {
 					<Popover iconSize="lg" />
 				</div>
 			)}
-			<span className={`flex ${isBig && "mt-8"}`}>
+			<div className={`flex ${isBig ? "mt-8 items-start" : "items-start"}`}>
 				<p
-					className={`w-fit max-h-28 ${isBig ? "xxl:text-3xl text-2xl text-center" : "text-xl"} line-clamp-3 ${isBig ? "mx-auto pl-10 pr-2" : "mt-2"}`}
+					className={`max-h-28 ${isBig ? "w-full text-2xl text-center xxl:text-3xl" : "w-fit text-xl"} line-clamp-3 ${isBig ? "mx-auto pl-10 pr-2" : "mt-2"}`}
 					title={title}
 				>
 					{title}
 				</p>
 				{isBig && <Popover iconSize="xl" />}
-			</span>
+			</div>
 			<div
-				className={`pt-2 flex gap-4 text-zinc-400 text-sm font-europa ${isBig && "mx-auto mb-4"}`}
+				className={`flex gap-4 pt-2 text-sm text-zinc-400 font-europa ${isBig ? "mx-auto mb-4" : ""}`}
 			>
 				<button
 					type="button"
