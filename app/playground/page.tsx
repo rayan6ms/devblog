@@ -32,7 +32,7 @@ const games: Game[] = [
 		description: "Classic Snake Game",
 		img: "https://soundvenue.com/wp-content/uploads/2018/01/scarlett-johansson-3840x2160-black-widow-captain-america-civil-war-4k-755-2192x1233.jpg",
 		mode: "play",
-		importer: () => import("./snake-game/SnakeP5"),
+		importer: () => import("./snake-game/SnakePhaser"),
 	},
 	{
 		name: "AntSimulator",
