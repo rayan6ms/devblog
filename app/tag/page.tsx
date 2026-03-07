@@ -52,6 +52,16 @@ function matchesTagSearch(tag: TagOption, query: string) {
 	);
 }
 
+function buildTagOptions(tags: string[], tagCounts: Map<string, number>) {
+	return tags
+		.map((tag) => ({
+			count: tagCounts.get(normalizeTagValue(tag)) ?? 0,
+			name: tag,
+			slug: normalizeTagValue(tag),
+		}))
+		.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
 function TagPostCard({
 	post,
 	onSelectTag,
@@ -204,7 +214,7 @@ function TagsPageContent() {
 		return () => {
 			active = false;
 		};
-	}, [selectedTagsKey]);
+	}, [selectedTags, selectedTagsKey]);
 
 	const tagCounts = useMemo(() => {
 		const counts = new Map<string, number>();
@@ -222,17 +232,14 @@ function TagsPageContent() {
 		return counts;
 	}, [allPostsData]);
 
-	const buildTagOptions = (tags: string[]) =>
-		tags
-			.map((tag) => ({
-				count: tagCounts.get(normalizeTagValue(tag)) ?? 0,
-				name: tag,
-				slug: normalizeTagValue(tag),
-			}))
-			.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-
-	const allMainTagOptions = useMemo(() => buildTagOptions(mainTags), [tagCounts]);
-	const allOtherTagOptions = useMemo(() => buildTagOptions(otherTags), [tagCounts]);
+	const allMainTagOptions = useMemo(
+		() => buildTagOptions(mainTags, tagCounts),
+		[tagCounts],
+	);
+	const allOtherTagOptions = useMemo(
+		() => buildTagOptions(otherTags, tagCounts),
+		[tagCounts],
+	);
 	const normalizedTagQuery = normalizeTagValue(deferredTagQuery);
 	const mainTagOptions = useMemo(
 		() => allMainTagOptions.filter((tag) => matchesTagSearch(tag, normalizedTagQuery)),

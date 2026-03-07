@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import P5Background from "@/P5Background";
+import PhaserBackground from "@/PhaserBackground";
 
 type AuthShellProps = {
 	eyebrow: string;
@@ -23,7 +23,7 @@ export default function AuthShell({
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-darkBg text-gray">
 			<div className="absolute inset-0">
-				<P5Background />
+				<PhaserBackground />
 			</div>
 			<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(103,79,248,0.22),transparent_42%),linear-gradient(180deg,rgba(20,23,26,0.28),rgba(20,23,26,0.82))]" />
 			<div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1440px] items-center px-4 py-10 sm:px-6 lg:px-8">

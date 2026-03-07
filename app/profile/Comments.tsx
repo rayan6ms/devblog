@@ -67,9 +67,9 @@ export default function Comments({ comments }: CommentsProps) {
 				</div>
 			</div>
 			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{comments.map((comment) => (
+				{comments.map((comment, index) => (
 					<CommentItem
-						key={`${comment.postTitle}-${comment.postedAt}`}
+						key={`${comment.postTitle}-${comment.postedAt}-${comment.postImage}-${index}`}
 						comment={comment}
 					/>
 				))}

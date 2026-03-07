@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-const P5Background = dynamic(() => import("@/P5Background"), { ssr: false });
+const PhaserBackground = dynamic(() => import("@/PhaserBackground"), {
+	ssr: false,
+});
 
 export default function NotFound() {
 	const router = useRouter();
@@ -20,7 +22,7 @@ export default function NotFound() {
 	return (
 		<>
 			<div className="fixed top-0 left-0 w-full h-full z-0">
-				<P5Background />
+				<PhaserBackground />
 			</div>
 			<div className="relative flex flex-col items-center justify-center min-h-screen z-10">
 				<div className="relative mb-6 flex flex-col items-center">

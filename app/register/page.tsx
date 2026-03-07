@@ -12,7 +12,7 @@ import {
 	FaGoogle,
 	FaSpinner,
 } from "react-icons/fa6";
-import P5Background from "@/P5Background";
+import PhaserBackground from "@/PhaserBackground";
 import SocialAuthButton from "../login/SocialAuthButton";
 
 export default function RegisterForm() {
@@ -74,7 +74,7 @@ export default function RegisterForm() {
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-darkBg text-gray">
 			<div className="absolute inset-0">
-				<P5Background />
+				<PhaserBackground />
 			</div>
 			<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,23,26,0.22),rgba(20,23,26,0.58))]" />
 			<div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">

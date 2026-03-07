@@ -33,7 +33,7 @@ export default function Header({
 
 	return (
 		<div className="relative overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
-			<div className="absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.45),transparent_65%),linear-gradient(135deg,rgba(103,79,248,0.32),rgba(34,37,44,0.08))]" />
+			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.45),transparent_58%),linear-gradient(180deg,rgba(103,79,248,0.28),rgba(34,37,44,0.18)_40%,rgba(34,37,44,0.88)_100%)]" />
 			<div className="relative px-6 py-8 sm:px-8">
 				<button
 					type="button"

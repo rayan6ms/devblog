@@ -42,12 +42,10 @@ export default function Accordion({ posts }: AccordionProps) {
 		const maxPanels = windowWidth > 0 && windowWidth < 1280 ? 5 : 7;
 		return posts.slice(0, maxPanels);
 	}, [posts, windowWidth]);
-
-	useEffect(() => {
-		setActivePanel((current) =>
-			visiblePosts.length === 0 ? 0 : Math.min(current, visiblePosts.length - 1),
-		);
-	}, [visiblePosts.length]);
+	const currentPanel =
+		visiblePosts.length === 0
+			? 0
+			: Math.min(activePanel, visiblePosts.length - 1);
 
 	useEffect(() => {
 		if (visiblePosts.length <= 1 || isPaused) {
@@ -91,7 +89,7 @@ export default function Accordion({ posts }: AccordionProps) {
 			onBlurCapture={() => setIsPaused(false)}
 		>
 			{visiblePosts.map((post, index) => {
-				const isActive = activePanel === index;
+				const isActive = currentPanel === index;
 				const postHref = `/post/${normalizeValue(post.title)}`;
 
 				return (
