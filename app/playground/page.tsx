@@ -25,7 +25,7 @@ const games: Game[] = [
 		description: "Classic Chess Game",
 		img: "https://www.hollywoodreporter.com/wp-content/uploads/2021/07/MCDAVEN_EC081-H-2021.jpg?w=1296",
 		mode: "play",
-		importer: () => import("./chess/ChessP5"),
+		importer: () => import("./chess/ChessPhaser"),
 	},
 	{
 		name: "SnakeGame",
