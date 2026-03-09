@@ -1,4 +1,26 @@
-const fileSystem = {
+export type FileNode = {
+	type: "file";
+	permissions: string;
+	hidden: boolean;
+	size: number;
+	content: string;
+};
+
+export type DirectoryNode = {
+	type: "directory";
+	permissions: string;
+	hidden: boolean;
+	size: number;
+	contents: Record<string, FileSystemNode>;
+};
+
+export type FileSystemNode = FileNode | DirectoryNode;
+
+export type FileSystemTree = {
+	root: DirectoryNode;
+};
+
+const initialFileSystem: FileSystemTree = {
 	root: {
 		type: "directory",
 		permissions: "r--",
@@ -190,19 +212,21 @@ const fileSystem = {
 							Documents: {
 								type: "directory",
 								permissions: "rw-",
+								hidden: false,
+								size: 1,
 								contents: {
 									file1: {
 										type: "file",
 										permissions: "rw-",
 										hidden: false,
-										size: 1,
+										size: 13,
 										content: "Hello, world!",
 									},
 									file2: {
 										type: "file",
 										permissions: "rw-",
 										hidden: false,
-										size: 1,
+										size: 21,
 										content: "This is another file.",
 									},
 								},
@@ -260,28 +284,28 @@ const fileSystem = {
 								type: "file",
 								permissions: "rw-",
 								hidden: true,
-								size: 1024,
+								size: 33,
 								content: "export PATH=$PATH:/usr/local/bin",
 							},
 							".profile": {
 								type: "file",
 								permissions: "rw-",
 								hidden: true,
-								size: 512,
+								size: 27,
 								content: "# User specific environment",
 							},
 							".vimrc": {
 								type: "file",
 								permissions: "rw-",
 								hidden: true,
-								size: 256,
+								size: 9,
 								content: "syntax on",
 							},
 							".gitconfig": {
 								type: "file",
 								permissions: "rw-",
 								hidden: true,
-								size: 128,
+								size: 21,
 								content: "[user]\n\tname = Rayan",
 							},
 						},
@@ -320,4 +344,4 @@ const fileSystem = {
 	},
 };
 
-export default fileSystem;
+export default initialFileSystem;
