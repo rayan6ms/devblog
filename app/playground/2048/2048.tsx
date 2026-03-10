@@ -1,1110 +1,1409 @@
 "use client";
 
-import { NextReactP5Wrapper } from "@p5-wrapper/next";
-import type { Sketch } from "@p5-wrapper/react";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+type PhaserModule = typeof import("phaser");
+type PhaserGame = import("phaser").Game;
+type PhaserScene = import("phaser").Scene;
+type PhaserGraphics = import("phaser").GameObjects.Graphics;
+type PhaserText = import("phaser").GameObjects.Text;
+type PhaserContainer = import("phaser").GameObjects.Container;
+type CursorKeys = import("phaser").Types.Input.Keyboard.CursorKeys;
+type PhaserKey = import("phaser").Input.Keyboard.Key;
 
 type SpeedMode = "Slow" | "Normal" | "Fast";
+type Dir = 0 | 1 | 2 | 3;
+type Grid = number[][];
 
-export default function Game2048P5() {
-	const hostRef = useRef<HTMLDivElement | null>(null);
-	const p5ref = useRef<any>(null);
-	const [sketch, setSketch] = useState<Sketch | null>(null);
+type MoveTransition = {
+	fromRow: number;
+	fromCol: number;
+	toRow: number;
+	toCol: number;
+	exp: number;
+	merged: boolean;
+};
 
-	const [score, setScore] = useState(0);
-	const [best, setBest] = useState(0);
-	const [autoPlay, setAutoPlay] = useState(false);
-	const [speed, setSpeed] = useState<SpeedMode>("Normal");
+type SpawnTile = {
+	row: number;
+	col: number;
+	exp: number;
+};
 
-	useEffect(() => {
-		const onState = (
-			s: Partial<{
-				score: number;
-				best: number;
-				autoPlay: boolean;
-				speed: SpeedMode;
-			}>,
-		) => {
-			if (s.score !== undefined) setScore(s.score);
-			if (s.best !== undefined) setBest(s.best);
-			if (s.autoPlay !== undefined) setAutoPlay(s.autoPlay);
-			if (s.speed !== undefined) setSpeed(s.speed);
-		};
+type AnimationState = {
+	startedAt: number;
+	durationMs: number;
+	moves: MoveTransition[];
+	boardAfterSpawn: Grid;
+	spawnTile: SpawnTile | null;
+	mergeTargets: Array<{ row: number; col: number }>;
+};
 
-		setSketch(() => (p: any) => {
-			p5ref.current = p;
+type UndoSnapshot = {
+	grid: Grid;
+	score: number;
+	moves: number;
+	won: boolean;
+	over: boolean;
+	bannerText: string;
+	bannerUntil: number;
+};
 
-			type Dir = 0 | 1 | 2 | 3;
-			type Grid = number[][];
-			const N = 4;
-			const CHANCE_4 = 0.1;
+type RuntimeState = {
+	grid: Grid;
+	score: number;
+	best: number;
+	moves: number;
+	won: boolean;
+	over: boolean;
+	autoplay: boolean;
+	speed: SpeedMode;
+	animation: AnimationState | null;
+	undo: UndoSnapshot | null;
+	mergePulse: number[][];
+	bannerText: string;
+	bannerUntil: number;
+	nextAutoAt: number;
+};
 
-			const PALETTE = {
-				bg: "#0e0f11",
-				board: "#1a1c20",
-				gridHole: "#22252b",
-				cellInner: "#2a2e35",
-				overlay: "rgba(0,0,0,0.55)",
-				tileBorder: "#2f343c",
-				text: "#e5e7eb",
-			};
+type UiState = {
+	score: number;
+	best: number;
+	moves: number;
+	maxTile: number;
+	autoplay: boolean;
+	speed: SpeedMode;
+	status: "playing" | "won" | "over";
+	canUndo: boolean;
+};
 
-			let grid: Grid = empty();
-			let prevGrid: Grid = empty();
-			let afterGrid: Grid = empty();
+type Game2048Controls = {
+	newGame: () => void;
+	undo: () => void;
+	toggleAutoplay: () => void;
+	cycleSpeed: () => void;
+};
 
-			let _score = 0;
-			let _best = 0;
+type Bridge = {
+	controlsRef: React.MutableRefObject<Game2048Controls | null>;
+	onReady: () => void;
+	onUiState: (state: UiState) => void;
+};
 
-			let rngSeed = Math.floor(Math.random() * 2 ** 31);
+type TileView = {
+	container: PhaserContainer;
+	background: PhaserGraphics;
+	label: PhaserText;
+	cacheKey: string;
+};
 
-			let animating = false;
-			let animT = 0;
-			let animDur = 150;
-			let moveTransitions: {
-				r0: number;
-				c0: number;
-				r1: number;
-				c1: number;
-				e: number;
-				merged: boolean;
-			}[] = [];
-			let spawnPulse: { r: number; c: number; t: number } | null = null;
-			const mergePulse: number[][] = Array.from({ length: N }, () =>
-				Array.from({ length: N }, () => 0),
-			);
+type SearchEntry = {
+	depth: number;
+	isPlayer: boolean;
+	value: number;
+};
 
-			let auto = false;
-			let autoEveryMs = 70;
-			let lastAutoAt = 0;
+type SearchContext = {
+	deadline: number;
+	table: Map<number, SearchEntry>;
+};
 
-			let searchDeadline = 0;
+type KeyMap = {
+	W: PhaserKey;
+	A: PhaserKey;
+	S: PhaserKey;
+	D: PhaserKey;
+	R: PhaserKey;
+	Z: PhaserKey;
+	SPACE: PhaserKey;
+};
 
-			let speedMode: SpeedMode = "Normal";
+const BOARD_SIZE = 4;
+const SPAWN_FOUR_CHANCE = 0.1;
+const MAX_RENDER_TILES = 20;
+const STORAGE_KEY = "phaser-2048-best";
+const FONT_STACK = '"Azeret Mono", "JetBrains Mono", "SFMono-Regular", Consolas, monospace';
+const EMPTY_UI_STATE: UiState = {
+	score: 0,
+	best: 0,
+	moves: 0,
+	maxTile: 0,
+	autoplay: false,
+	speed: "Normal",
+	status: "playing",
+	canUndo: false,
+};
 
-			let CW = 0,
-				CH = 0;
+const SPEED_SETTINGS: Record<
+	SpeedMode,
+	{ animationMs: number; autoplayMs: number; searchBudgetMs: number }
+> = {
+	Slow: { animationMs: 220, autoplayMs: 210, searchBudgetMs: 28 },
+	Normal: { animationMs: 140, autoplayMs: 95, searchBudgetMs: 18 },
+	Fast: { animationMs: 90, autoplayMs: 38, searchBudgetMs: 9 },
+};
 
-			function empty(): Grid {
-				return Array.from({ length: N }, () =>
-					Array.from({ length: N }, () => 0),
-				);
-			}
-			function clone(g: Grid): Grid {
-				return g.map((r) => r.slice());
-			}
-			function valFromExp(e: number) {
-				return e === 0 ? 0 : 1 << e;
-			}
+const TILE_COLORS: Record<
+	number,
+	{ fill: number; stroke: number; sheen: number; text: string }
+> = {
+	2: { fill: 0x2a4365, stroke: 0x60a5fa, sheen: 0x93c5fd, text: "#eff6ff" },
+	4: { fill: 0x234e52, stroke: 0x2dd4bf, sheen: 0x99f6e4, text: "#ecfeff" },
+	8: { fill: 0x7c2d12, stroke: 0xfb923c, sheen: 0xfdba74, text: "#fff7ed" },
+	16: { fill: 0x9a3412, stroke: 0xf97316, sheen: 0xfdba74, text: "#fff7ed" },
+	32: { fill: 0x9f1239, stroke: 0xfb7185, sheen: 0xfda4af, text: "#fff1f2" },
+	64: { fill: 0xbe123c, stroke: 0xfb7185, sheen: 0xfda4af, text: "#fff1f2" },
+	128: { fill: 0x78350f, stroke: 0xfacc15, sheen: 0xfde68a, text: "#fefce8" },
+	256: { fill: 0x854d0e, stroke: 0xfacc15, sheen: 0xfde68a, text: "#fefce8" },
+	512: { fill: 0x365314, stroke: 0xa3e635, sheen: 0xd9f99d, text: "#f7fee7" },
+	1024: { fill: 0x14532d, stroke: 0x4ade80, sheen: 0x86efac, text: "#f0fdf4" },
+	2048: { fill: 0x4c1d95, stroke: 0xc084fc, sheen: 0xe9d5ff, text: "#faf5ff" },
+};
 
-			function rand() {
-				let x = rngSeed || 2463534242;
-				x ^= x << 13;
-				x ^= x >>> 17;
-				x ^= x << 5;
-				rngSeed = x;
-				return ((x >>> 0) % 1_000_000) / 1_000_000;
-			}
+const ZOBRIST = createZobristTable();
 
-			function addRandomTile(g: Grid, force?: { r: number; c: number }) {
-				const emp: { r: number; c: number }[] = [];
-				for (let r = 0; r < N; r++)
-					for (let c = 0; c < N; c++) if (g[r][c] === 0) emp.push({ r, c });
-				if (!emp.length) return null;
-				const s = force ?? emp[Math.floor(rand() * emp.length)];
-				g[s.r][s.c] = rand() < CHANCE_4 ? 2 : 1;
-				return s;
-			}
+function emptyGrid(): Grid {
+	return Array.from({ length: BOARD_SIZE }, () =>
+		Array.from({ length: BOARD_SIZE }, () => 0),
+	);
+}
 
-			function loadBest() {
-				try {
-					const b = localStorage.getItem("g2048_best");
-					if (b) _best = parseInt(b);
-				} catch {}
-			}
-			function saveBest() {
-				try {
-					_best = Math.max(_best, _score);
-					localStorage.setItem("g2048_best", String(_best));
-				} catch {}
-			}
+function cloneGrid(grid: Grid): Grid {
+	return grid.map((row) => row.slice());
+}
 
-			function startNewGame() {
-				grid = empty();
-				prevGrid = empty();
-				afterGrid = empty();
-				_score = 0;
-				saveBest();
-				moveTransitions = [];
-				spawnPulse = null;
-				addRandomTile(grid);
-				addRandomTile(grid);
-				onState({ score: _score, best: _best });
-			}
+function valueFromExp(exp: number): number {
+	return exp === 0 ? 0 : 2 ** exp;
+}
 
-			function setSpeed(mode: SpeedMode) {
-				speedMode = mode;
-				if (mode === "Slow") {
-					animDur = 260;
-					autoEveryMs = 160;
-				} else if (mode === "Normal") {
-					animDur = 150;
-					autoEveryMs = 70;
-				} else {
-					animDur = 95;
-					autoEveryMs = 32;
-				}
-				onState({ speed: speedMode });
-			}
+function maxExp(grid: Grid): number {
+	let best = 0;
+	for (const row of grid) {
+		for (const cell of row) {
+			if (cell > best) best = cell;
+		}
+	}
+	return best;
+}
 
-			function setAutoplay(v: boolean) {
-				auto = v;
-				onState({ autoPlay: auto });
-			}
+function maxTile(grid: Grid): number {
+	return valueFromExp(maxExp(grid));
+}
 
-			function rotateLeft(g: Grid): Grid {
-				const n = g.length,
-					r: Grid = empty();
-				for (let i = 0; i < n; i++)
-					for (let j = 0; j < n; j++) r[n - j - 1][i] = g[i][j];
-				return r;
-			}
+function getEmptyCells(grid: Grid): Array<{ row: number; col: number }> {
+	const cells: Array<{ row: number; col: number }> = [];
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			if (grid[row][col] === 0) cells.push({ row, col });
+		}
+	}
+	return cells;
+}
 
-			function applyMoveLeft(g: Grid) {
-				const out = clone(g);
-				const trans: {
-					r0: number;
-					c0: number;
-					r1: number;
-					c1: number;
-					e: number;
-					merged: boolean;
-				}[] = [];
-				let moved = false;
-				let gained = 0;
+function hasMovesAvailable(grid: Grid): boolean {
+	if (getEmptyCells(grid).length > 0) return true;
 
-				const merged: boolean[][] = Array.from({ length: N }, () =>
-					Array.from({ length: N }, () => false),
-				);
-
-				for (let r = 0; r < N; r++) {
-					let targetCol = 0;
-					let lastExp = 0;
-					for (let c = 0; c < N; c++) {
-						const e = out[r][c];
-						if (!e) continue;
-						out[r][c] = 0;
-						if (lastExp === e && targetCol > 0 && !merged[r][targetCol - 1]) {
-							out[r][targetCol - 1] = lastExp + 1;
-							merged[r][targetCol - 1] = true;
-							trans.push({
-								r0: r,
-								c0: c,
-								r1: r,
-								c1: targetCol - 1,
-								e,
-								merged: true,
-							});
-							gained += 1 << (lastExp + 1);
-							lastExp = 0;
-							moved = true;
-						} else {
-							lastExp = e;
-							out[r][targetCol] = e;
-							trans.push({
-								r0: r,
-								c0: c,
-								r1: r,
-								c1: targetCol,
-								e,
-								merged: false,
-							});
-							moved = moved || c !== targetCol;
-							targetCol++;
-						}
-					}
-				}
-				return { grid: out, moved, transitions: trans, gained };
-			}
-
-			function applyMove(g: Grid, dir: Dir) {
-				let tmp = clone(g);
-				for (let i = 0; i < dir; i++) tmp = rotateLeft(tmp);
-				const res = applyMoveLeft(tmp);
-				tmp = res.grid;
-				for (let i = 0; i < (4 - dir) % 4; i++) tmp = rotateLeft(tmp);
-				const transitions = res.transitions.map((t) =>
-					rotateTransition(t, (4 - dir) % 4),
-				);
-				return { grid: tmp, moved: res.moved, transitions, gained: res.gained };
-			}
-
-			function rotateTransition(
-				t: {
-					r0: number;
-					c0: number;
-					r1: number;
-					c1: number;
-					e: number;
-					merged: boolean;
-				},
-				rot: number,
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			const current = grid[row][col];
+			if (
+				(row + 1 < BOARD_SIZE && grid[row + 1][col] === current) ||
+				(col + 1 < BOARD_SIZE && grid[row][col + 1] === current)
 			) {
-				let { r0, c0, r1, c1 } = t;
-				for (let i = 0; i < rot; i++) {
-					const nr0 = N - c0 - 1,
-						nc0 = r0,
-						nr1 = N - c1 - 1,
-						nc1 = r1;
-					r0 = nr0;
-					c0 = nc0;
-					r1 = nr1;
-					c1 = nc1;
-				}
-				return { r0, c0, r1, c1, e: t.e, merged: t.merged };
-			}
-
-			function getEmpties(g: Grid) {
-				const a: { r: number; c: number }[] = [];
-				for (let r = 0; r < N; r++)
-					for (let c = 0; c < N; c++) if (g[r][c] === 0) a.push({ r, c });
-				return a;
-			}
-
-			function anyMovesAvailable(g: Grid) {
-				if (getEmpties(g).length) return true;
-				for (let r = 0; r < N; r++)
-					for (let c = 0; c < N; c++) {
-						const e = g[r][c];
-						if (
-							(r + 1 < N && g[r + 1][c] === e) ||
-							(c + 1 < N && g[r][c + 1] === e)
-						)
-							return true;
-					}
-				return false;
-			}
-
-			function legalMoves(g: Grid): Dir[] {
-				const ds: Dir[] = [];
-				for (const d of [0, 1, 2, 3] as Dir[]) {
-					if (applyMove(g, d).moved) ds.push(d);
-				}
-				return ds;
-			}
-
-			function simulateSpawn(g: Grid): Grid {
-				const ng = clone(g);
-				addRandomTile(ng);
-				return ng;
-			}
-
-			const zobrist: number[][][] = (() => {
-				let s = Math.floor(Math.random() * 2 ** 31);
-				const next = () => {
-					s ^= s << 13;
-					s ^= s >>> 17;
-					s ^= s << 5;
-					return s >>> 0;
-				};
-				const Z: number[][][] = [];
-				for (let r = 0; r < N; r++) {
-					Z[r] = [];
-					for (let c = 0; c < N; c++) {
-						Z[r][c] = [];
-						for (let e = 0; e <= 18; e++) Z[r][c][e] = next();
-					}
-				}
-				return Z;
-			})();
-
-			function hash(g: Grid) {
-				let h = 0 >>> 0;
-				for (let r = 0; r < N; r++)
-					for (let c = 0; c < N; c++) h ^= zobrist[r][c][g[r][c]];
-				return h >>> 0;
-			}
-
-			const ttable = new Map<string, number>();
-
-			const SNAKES: number[][][] = [
-				[
-					[6, 5, 4, 3],
-					[7, 8, 9, 2],
-					[12, 11, 10, 1],
-					[13, 14, 15, 0],
-				],
-				[
-					[3, 2, 1, 0],
-					[4, 9, 10, 15],
-					[5, 8, 11, 14],
-					[6, 7, 12, 13],
-				],
-				[
-					[0, 1, 2, 3],
-					[15, 10, 9, 4],
-					[14, 11, 8, 5],
-					[13, 12, 7, 6],
-				],
-				[
-					[13, 14, 15, 0],
-					[12, 11, 10, 1],
-					[7, 8, 9, 2],
-					[6, 5, 4, 3],
-				],
-			];
-
-			const GRAD_TL: number[][] = [
-				[16, 15, 14, 13],
-				[1, 2, 3, 12],
-				[0, 5, 4, 11],
-				[7, 8, 9, 10],
-			];
-
-			function manhattan(a: [number, number], b: [number, number]) {
-				return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
-			}
-
-			function evaluate(g: Grid) {
-				const n = g.length;
-
-				let empties = 0;
-				let maxE = 0,
-					maxPos: [number, number] = [0, 0];
-				for (let r = 0; r < n; r++)
-					for (let c = 0; c < n; c++) {
-						const e = g[r][c];
-						if (e === 0) {
-							empties++;
-							continue;
-						}
-						if (e > maxE) {
-							maxE = e;
-							maxPos = [r, c];
-						}
-					}
-
-				let smooth = 0;
-				for (let r = 0; r < n; r++)
-					for (let c = 0; c < n; c++) {
-						const e = g[r][c];
-						if (!e) continue;
-						if (r + 1 < n && g[r + 1][c] !== 0)
-							smooth -= Math.abs(e - g[r + 1][c]);
-						if (c + 1 < n && g[r][c + 1] !== 0)
-							smooth -= Math.abs(e - g[r][c + 1]);
-					}
-
-				let monoBest = -Infinity;
-				for (const SN of SNAKES) {
-					let s = 0;
-					for (let r = 0; r < n; r++)
-						for (let c = 0; c < n; c++) {
-							s += g[r][c] * SN[r][c];
-						}
-					if (s > monoBest) monoBest = s;
-				}
-
-				let mergePot = 0;
-				for (let r = 0; r < n; r++)
-					for (let c = 0; c < n; c++) {
-						const e = g[r][c];
-						if (!e) continue;
-						if (r + 1 < n && g[r + 1][c] === e) mergePot += 1 << e;
-						if (c + 1 < n && g[r][c + 1] === e) mergePot += 1 << e;
-					}
-
-				let islands = 0;
-				const seen = Array.from({ length: n }, () => Array(n).fill(false));
-				const inb = (r: number, c: number) =>
-					r >= 0 && c >= 0 && r < n && c < n;
-				for (let r = 0; r < n; r++)
-					for (let c = 0; c < n; c++) {
-						if (g[r][c] === 0 || seen[r][c]) continue;
-						islands++;
-						const q = [[r, c]];
-						seen[r][c] = true;
-						while (q.length) {
-							const [rr, cc] = q.pop()!;
-							const nb = [
-								[rr + 1, cc],
-								[rr - 1, cc],
-								[rr, cc + 1],
-								[rr, cc - 1],
-							];
-							for (const [nr, nc] of nb) {
-								if (inb(nr, nc) && g[nr][nc] !== 0 && !seen[nr][nc]) {
-									seen[nr][nc] = true;
-									q.push([nr, nc]);
-								}
-							}
-						}
-					}
-
-				const corners: [number, number][] = [
-					[0, 0],
-					[0, n - 1],
-					[n - 1, 0],
-					[n - 1, n - 1],
-				];
-				const maxInCorner = corners.some(([r, c]) => g[r][c] === maxE);
-				const cornerBonus = maxInCorner ? (1 << maxE) * 0.35 : 0;
-				const distTL = manhattan(maxPos, [0, 0]);
-				const cornerStick = -(distTL * (1 << Math.max(1, maxE - 3)) * 0.02);
-
-				const emptyW = empties >= 8 ? 900 : empties >= 4 ? 1100 : 1400;
-
-				const score =
-					emptyW * empties +
-					220 * monoBest +
-					45 * smooth +
-					0.35 * mergePot +
-					cornerBonus +
-					cornerStick -
-					260 * islands;
-
-				return score;
-			}
-
-			function policyDir(g: Grid): Dir | null {
-				const dirs = legalMoves(g);
-				if (!dirs.length) return null;
-
-				let best: { d: Dir; s: number } | null = null;
-				for (const d of dirs) {
-					const { grid: ng, moved, gained } = applyMove(g, d);
-					if (!moved) continue;
-
-					const empties = getEmpties(ng).length;
-					const maxE = Math.max(...ng.flat());
-					const inCorner =
-						ng[0][0] === maxE ||
-						ng[0][N - 1] === maxE ||
-						ng[N - 1][0] === maxE ||
-						ng[N - 1][N - 1] === maxE;
-
-					let monoBest = -Infinity;
-					for (const SN of SNAKES) {
-						let m = 0;
-						for (let r = 0; r < N; r++)
-							for (let c = 0; c < N; c++) m += ng[r][c] * SN[r][c];
-						if (m > monoBest) monoBest = m;
-					}
-
-					const s =
-						empties * 6 +
-						monoBest * 0.02 +
-						(inCorner ? 12 : 0) +
-						(gained > 0 ? 8 : 0);
-					if (!best || s > best.s) best = { d, s };
-				}
-				return best ? best.d : null;
-			}
-
-			function rolloutOnce(g0: Grid, maxPlies = 24): number {
-				let g = clone(g0);
-				let plies = 0;
-				while (plies < maxPlies && anyMovesAvailable(g)) {
-					const d = policyDir(g);
-					if (d == null) break;
-					const { grid: ng } = applyMove(g, d);
-					g = simulateSpawn(ng);
-					plies++;
-				}
-				return evaluate(g);
-			}
-
-			function monteCarloScoreAfterMove(
-				g: Grid,
-				d: Dir,
-				budgetMs: number,
-			): number {
-				const { grid: ng, moved } = applyMove(g, d);
-				if (!moved) return -1e9;
-				const start = p.millis();
-				let acc = 0,
-					n = 0;
-				while (n < 6) {
-					acc += rolloutOnce(simulateSpawn(ng));
-					n++;
-				}
-				while (p.millis() - start < budgetMs) {
-					acc += rolloutOnce(simulateSpawn(ng));
-					n++;
-				}
-				return acc / Math.max(1, n);
-			}
-
-			function orderMoves(g: Grid, moves: Dir[]): Dir[] {
-				const scored = moves.map((d) => {
-					const { grid: ng, moved, gained } = applyMove(g, d);
-					const e = moved ? evaluate(ng) + gained * 0.6 : -1e12;
-					return { d, s: e };
-				});
-				scored.sort((a, b) => b.s - a.s);
-				return scored.map((x) => x.d);
-			}
-
-			// Track search generation so we can keep a persistent ttable without manual clears
-			let TT_GEN = 1;
-			const ttableVal = new Map<
-				number,
-				{ gen: number; depth: number; val: number; isPlayer: boolean }
-			>();
-
-			function ttLookup(
-				h: number,
-				depth: number,
-				isPlayer: boolean,
-			): number | null {
-				const rec = ttableVal.get(h);
-				if (!rec) return null;
-				if (rec.gen !== TT_GEN) return null;
-				if (rec.isPlayer !== isPlayer) return null;
-				if (rec.depth >= depth) return rec.val;
-				return null;
-			}
-			function ttStore(
-				h: number,
-				depth: number,
-				isPlayer: boolean,
-				val: number,
-			) {
-				ttableVal.set(h, { gen: TT_GEN, depth, isPlayer, val });
-			}
-
-			function quiescenceBonus(prev: Grid, next: Grid, gained: number): number {
-				const e0 = getEmpties(prev).length;
-				const e1 = getEmpties(next).length;
-				let bonus = 0;
-				if (gained > 0) bonus += 1;
-				if (e1 > e0) bonus += 1;
-				return bonus;
-			}
-
-			function expectimax(
-				g: Grid,
-				depth: number,
-				isPlayer: boolean,
-				prob: number,
-			): number {
-				if (
-					p.millis() > searchDeadline ||
-					depth <= 0 ||
-					!anyMovesAvailable(g) ||
-					prob < 0.00005
-				) {
-					return evaluate(g);
-				}
-
-				const h = hash(g) ^ ((depth << 1) ^ (isPlayer ? 1 : 0));
-				const probe = ttLookup(h, depth, isPlayer);
-				if (probe !== null) return probe;
-
-				if (isPlayer) {
-					let best = -Infinity;
-					const moves = orderMoves(g, legalMoves(g));
-					if (!moves.length) return evaluate(g);
-
-					for (const d of moves) {
-						if (p.millis() > searchDeadline) break;
-						const res = applyMove(g, d);
-						if (!res.moved) continue;
-
-						const ext = quiescenceBonus(g, res.grid, res.gained);
-						const v = expectimax(res.grid, depth - 1 + ext, false, prob);
-						if (v > best) best = v;
-					}
-					const val = best === -Infinity ? evaluate(g) : best;
-					ttStore(h, depth, true, val);
-					return val;
-				} else {
-					const empties = getEmpties(g);
-					if (!empties.length) return evaluate(g);
-
-					let acc = 0,
-						norm = 0;
-
-					if (empties.length <= 6) {
-						const p2 = 0.9 / empties.length;
-						const p4 = 0.1 / empties.length;
-						for (const e of empties) {
-							if (p.millis() > searchDeadline) break;
-							const g2 = clone(g);
-							g2[e.r][e.c] = 1;
-							acc += p2 * expectimax(g2, depth - 1, true, prob * p2);
-							const g4 = clone(g);
-							g4[e.r][e.c] = 2;
-							acc += p4 * expectimax(g4, depth - 1, true, prob * p4);
-						}
-						norm = 1;
-					} else {
-						const frontier = empties.map((pos) => {
-							let near = 0;
-							const nb = [
-								[1, 0],
-								[-1, 0],
-								[0, 1],
-								[0, -1],
-							];
-							for (const [dr, dc] of nb) {
-								const rr = pos.r + dr,
-									cc = pos.c + dc;
-								if (rr >= 0 && cc >= 0 && rr < N && cc < N && g[rr][cc] !== 0)
-									near++;
-							}
-							return { pos, w: 1 + near };
-						});
-						const totalW = frontier.reduce((s, x) => s + x.w, 0);
-						const K = Math.min(8, frontier.length);
-						for (let i = 0; i < K; i++) {
-							if (p.millis() > searchDeadline) break;
-							let r = rand() * totalW,
-								pick = frontier[0];
-							for (const f of frontier) {
-								r -= f.w;
-								if (r <= 0) {
-									pick = f;
-									break;
-								}
-							}
-							const w = pick.w / totalW;
-							const p2 = 0.9,
-								p4 = 0.1;
-							const g2 = clone(g);
-							g2[pick.pos.r][pick.pos.c] = 1;
-							acc += w * p2 * expectimax(g2, depth - 1, true, prob * p2 * w);
-							const g4 = clone(g);
-							g4[pick.pos.r][pick.pos.c] = 2;
-							acc += w * p4 * expectimax(g4, depth - 1, true, prob * p4 * w);
-							norm += w;
-						}
-					}
-
-					const val = norm > 0 ? acc / norm : evaluate(g);
-					ttStore(h, depth, false, val);
-					return val;
-				}
-			}
-
-			function bestMoveBudget(g: Grid, maxMs: number): Dir | null {
-				const start = p.millis();
-				searchDeadline = start + Math.max(6, maxMs - 2);
-
-				const moves0 = legalMoves(g);
-				if (!moves0.length) return null;
-
-				const moves = orderMoves(g, moves0);
-
-				const empties = getEmpties(g).length;
-				const maxE = Math.max(...g.flat());
-				let baseDepth = empties >= 7 ? 4 : empties >= 4 ? 5 : 6;
-				if (maxE >= 11) baseDepth += 1;
-
-				let bestDir: Dir | null = moves[0] ?? null;
-				let pv: Dir[] = moves.slice();
-
-				TT_GEN++;
-
-				const emVals = new Map<Dir, number>();
-				for (const d of moves) emVals.set(d, -Infinity);
-
-				for (let dpth = baseDepth; dpth <= baseDepth + 2; dpth++) {
-					for (const d of pv) {
-						if (p.millis() > searchDeadline) break;
-						const { grid: ng, moved } = applyMove(g, d);
-						if (!moved) {
-							emVals.set(d, -1e12);
-							continue;
-						}
-						const v = expectimax(ng, dpth, false, 1);
-						emVals.set(d, v);
-					}
-					// update PV
-					pv = [...moves].sort((a, b) => emVals.get(b)! - emVals.get(a)!);
-					bestDir = pv[0] ?? bestDir;
-					if (p.millis() > searchDeadline) break;
-				}
-
-				return bestDir;
-			}
-
-			function shuffle<T>(arr: T[]) {
-				for (let i = arr.length - 1; i > 0; i--) {
-					const j = (Math.random() * (i + 1)) | 0;
-					[arr[i], arr[j]] = [arr[j], arr[i]];
-				}
-				return arr;
-			}
-
-			p.setup = () => {
-				p.createCanvas(10, 10);
-				p.frameRate(60);
-				(p as any).drawingContext.imageSmoothingEnabled = true;
-
-				loadBest();
-				setSpeed("Normal");
-				startNewGame();
-				fitCanvas();
-
-				(p as any).__controls = {
-					newGame: startNewGame,
-					toggleAuto: () => setAutoplay(!auto),
-					cycleSpeed: () =>
-						setSpeed(
-							speedMode === "Slow"
-								? "Normal"
-								: speedMode === "Normal"
-									? "Fast"
-									: "Slow",
-						),
-				};
-			};
-
-			p.windowResized = () => fitCanvas();
-			function fitCanvas() {
-				if (!hostRef.current) return;
-				const bb = hostRef.current.getBoundingClientRect();
-				CW = Math.max(1, Math.floor(bb.width));
-				CH = Math.max(1, Math.floor(bb.height));
-				p.resizeCanvas(CW, CH);
-			}
-
-			let keyLock = false;
-			p.keyPressed = () => {
-				if (keyLock) return;
-				keyLock = true;
-				const k = p.key;
-				if (k === "ArrowLeft" || k === "a" || k === "A") doMove(0);
-				else if (k === "ArrowUp" || k === "w" || k === "W") doMove(1);
-				else if (k === "ArrowRight" || k === "d" || k === "D") doMove(2);
-				else if (k === "ArrowDown" || k === "s" || k === "S") doMove(3);
-			};
-			p.keyReleased = () => {
-				keyLock = false;
-			};
-
-			let touchStart: { x: number; y: number } | null = null;
-			p.touchStarted = () => {
-				touchStart = { x: p.mouseX, y: p.mouseY };
-			};
-			p.touchEnded = () => {
-				if (!touchStart) return;
-				const dx = p.mouseX - touchStart.x,
-					dy = p.mouseY - touchStart.y;
-				const ax = Math.abs(dx),
-					ay = Math.abs(dy);
-				if (Math.max(ax, ay) > 20) {
-					if (ax > ay) doMove(dx < 0 ? 0 : 2);
-					else doMove(dy < 0 ? 1 : 3);
-				}
-				touchStart = null;
-			};
-
-			function doMove(dir: Dir) {
-				if (animating) return false;
-				prevGrid = clone(grid);
-				const { grid: next, moved, transitions, gained } = applyMove(grid, dir);
-				if (!moved) return false;
-				grid = next;
-				_score += gained;
-				saveBest();
-				onState({ score: _score, best: _best });
-
-				moveTransitions = transitions;
-				animating = true;
-				animT = 0;
-				afterGrid = clone(grid);
-				const spawnAt = addRandomTile(afterGrid);
-				spawnPulse = spawnAt ? { r: spawnAt.r, c: spawnAt.c, t: 0 } : null;
 				return true;
 			}
+		}
+	}
 
-			const tileColors: Record<number, string> = {
-				0: "#2b2f37",
-				2: "#475569",
-				4: "#6782a8",
-				8: "#a86b3f",
-				16: "#bf6a41",
-				32: "#cf5e48",
-				64: "#e04a37",
-				128: "#bfa34a",
-				256: "#cbb04b",
-				512: "#d5ba4c",
-				1024: "#dfc44d",
-				2048: "#e8cd4e",
-				4096: "#e0c04a",
-				8192: "#d6b446",
-			};
-			function tileColorFromVal(v: number) {
-				return tileColors[v] || "#1f232a";
+	return false;
+}
+
+function rotateLeft(grid: Grid): Grid {
+	const rotated = emptyGrid();
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			rotated[BOARD_SIZE - col - 1][row] = grid[row][col];
+		}
+	}
+	return rotated;
+}
+
+function rotateTransition(transition: MoveTransition, turns: number): MoveTransition {
+	let { fromRow, fromCol, toRow, toCol } = transition;
+	for (let turn = 0; turn < turns; turn += 1) {
+		const nextFromRow = BOARD_SIZE - fromCol - 1;
+		const nextFromCol = fromRow;
+		const nextToRow = BOARD_SIZE - toCol - 1;
+		const nextToCol = toRow;
+		fromRow = nextFromRow;
+		fromCol = nextFromCol;
+		toRow = nextToRow;
+		toCol = nextToCol;
+	}
+	return { ...transition, fromRow, fromCol, toRow, toCol };
+}
+
+function applyMoveLeft(grid: Grid): {
+	grid: Grid;
+	moved: boolean;
+	transitions: MoveTransition[];
+	gained: number;
+} {
+	const nextGrid = emptyGrid();
+	const transitions: MoveTransition[] = [];
+	let moved = false;
+	let gained = 0;
+
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		const tiles: Array<{ exp: number; fromCol: number }> = [];
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			const exp = grid[row][col];
+			if (exp > 0) tiles.push({ exp, fromCol: col });
+		}
+
+		let writeCol = 0;
+		for (let index = 0; index < tiles.length; index += 1) {
+			const current = tiles[index];
+			const next = tiles[index + 1];
+
+			if (next && next.exp === current.exp) {
+				const mergedExp = current.exp + 1;
+				nextGrid[row][writeCol] = mergedExp;
+				gained += valueFromExp(mergedExp);
+				moved =
+					moved || current.fromCol !== writeCol || next.fromCol !== writeCol;
+				transitions.push({
+					fromRow: row,
+					fromCol: current.fromCol,
+					toRow: row,
+					toCol: writeCol,
+					exp: current.exp,
+					merged: true,
+				});
+				transitions.push({
+					fromRow: row,
+					fromCol: next.fromCol,
+					toRow: row,
+					toCol: writeCol,
+					exp: next.exp,
+					merged: true,
+				});
+				writeCol += 1;
+				index += 1;
+				continue;
 			}
 
-			function layoutBoard() {
-				const pad = Math.floor(Math.min(CW, CH) * 0.04);
-				const size = Math.min(CW - pad * 2, CH - pad * 2);
-				const x = Math.floor((CW - size) / 2);
-				const y = Math.floor((CH - size) / 2);
-				return { x, y, size, pad };
-			}
+			nextGrid[row][writeCol] = current.exp;
+			moved = moved || current.fromCol !== writeCol;
+			transitions.push({
+				fromRow: row,
+				fromCol: current.fromCol,
+				toRow: row,
+				toCol: writeCol,
+				exp: current.exp,
+				merged: false,
+			});
+			writeCol += 1;
+		}
+	}
 
-			p.draw = () => {
-				p.background(PALETTE.bg);
+	return { grid: nextGrid, moved, transitions, gained };
+}
 
-				const { x, y, size } = layoutBoard();
-				drawBoard(x, y, size);
+function applyMove(grid: Grid, dir: Dir): {
+	grid: Grid;
+	moved: boolean;
+	transitions: MoveTransition[];
+	gained: number;
+} {
+	let rotated = cloneGrid(grid);
+	for (let turn = 0; turn < dir; turn += 1) {
+		rotated = rotateLeft(rotated);
+	}
 
-				const now = p.millis();
-				if (animating) {
-					animT += p.deltaTime;
-					if (spawnPulse) spawnPulse.t = Math.min(1, animT / animDur);
-					if (animT >= animDur) {
-						animating = false;
-						grid = clone(afterGrid);
-						prevGrid = clone(grid);
+	const moved = applyMoveLeft(rotated);
+	let restored = moved.grid;
+	for (let turn = 0; turn < (4 - dir) % 4; turn += 1) {
+		restored = rotateLeft(restored);
+	}
 
-						for (const m of moveTransitions) {
-							if (m.merged) mergePulse[m.r1][m.c1] = 1;
-						}
+	return {
+		grid: restored,
+		moved: moved.moved,
+		gained: moved.gained,
+		transitions: moved.transitions.map((transition) =>
+			rotateTransition(transition, (4 - dir) % 4),
+		),
+	};
+}
 
-						moveTransitions = [];
-					}
-				} else {
-					if (spawnPulse) {
-						spawnPulse.t += p.deltaTime / 220;
-						if (spawnPulse.t >= 1) spawnPulse = null;
-					}
-					if (
-						auto &&
-						now - lastAutoAt > autoEveryMs &&
-						anyMovesAvailable(grid)
-					) {
-						const dir = bestMoveBudget(
-							grid,
-							speedMode === "Fast" ? 12 : speedMode === "Normal" ? 18 : 26,
-						);
-						if (dir !== null) doMove(dir);
-						lastAutoAt = now;
-					}
+function addRandomTile(grid: Grid): SpawnTile | null {
+	const emptyCells = getEmptyCells(grid);
+	if (emptyCells.length === 0) return null;
+
+	const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+	const exp = Math.random() < SPAWN_FOUR_CHANCE ? 2 : 1;
+	grid[cell.row][cell.col] = exp;
+	return { row: cell.row, col: cell.col, exp };
+}
+
+function legalMoves(grid: Grid): Dir[] {
+	const moves: Dir[] = [];
+	for (const dir of [0, 1, 2, 3] as const) {
+		if (applyMove(grid, dir).moved) moves.push(dir);
+	}
+	return moves;
+}
+
+function createZobristTable(): number[][][] {
+	let seed = 0x9e3779b9;
+	const next = () => {
+		seed ^= seed << 13;
+		seed ^= seed >>> 17;
+		seed ^= seed << 5;
+		return seed >>> 0;
+	};
+
+	return Array.from({ length: BOARD_SIZE }, () =>
+		Array.from({ length: BOARD_SIZE }, () =>
+			Array.from({ length: 20 }, () => next()),
+		),
+	);
+}
+
+function hashGrid(grid: Grid): number {
+	let hash = 0;
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			hash ^= ZOBRIST[row][col][Math.min(ZOBRIST[row][col].length - 1, grid[row][col])];
+		}
+	}
+	return hash >>> 0;
+}
+
+function evaluateGrid(grid: Grid): number {
+	const emptyCells = getEmptyCells(grid).length;
+	const highestExp = maxExp(grid);
+
+	let smoothness = 0;
+	let mergePotential = 0;
+	let monotonicity = 0;
+
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			const current = grid[row][col];
+			if (current === 0) continue;
+
+			if (row + 1 < BOARD_SIZE && grid[row + 1][col] !== 0) {
+				smoothness -= Math.abs(current - grid[row + 1][col]);
+				if (grid[row + 1][col] === current) {
+					mergePotential += valueFromExp(current);
 				}
-				const decay = p.deltaTime / 220;
-				for (let r = 0; r < N; r++)
-					for (let c = 0; c < N; c++) {
-						if (mergePulse[r][c] > 0)
-							mergePulse[r][c] = Math.max(0, mergePulse[r][c] - decay);
-					}
+			}
+
+			if (col + 1 < BOARD_SIZE && grid[row][col + 1] !== 0) {
+				smoothness -= Math.abs(current - grid[row][col + 1]);
+				if (grid[row][col + 1] === current) {
+					mergePotential += valueFromExp(current);
+				}
+			}
+		}
+	}
+
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		let leftScore = 0;
+		let rightScore = 0;
+		for (let col = 0; col < BOARD_SIZE - 1; col += 1) {
+			const current = grid[row][col];
+			const next = grid[row][col + 1];
+			if (current > next) leftScore += current - next;
+			else rightScore += next - current;
+		}
+		monotonicity += Math.max(leftScore, rightScore);
+	}
+
+	for (let col = 0; col < BOARD_SIZE; col += 1) {
+		let upScore = 0;
+		let downScore = 0;
+		for (let row = 0; row < BOARD_SIZE - 1; row += 1) {
+			const current = grid[row][col];
+			const next = grid[row + 1][col];
+			if (current > next) upScore += current - next;
+			else downScore += next - current;
+		}
+		monotonicity += Math.max(upScore, downScore);
+	}
+
+	const corners = [
+		grid[0][0],
+		grid[0][BOARD_SIZE - 1],
+		grid[BOARD_SIZE - 1][0],
+		grid[BOARD_SIZE - 1][BOARD_SIZE - 1],
+	];
+	const cornerBonus = corners.includes(highestExp)
+		? valueFromExp(highestExp) * 0.45
+		: -valueFromExp(highestExp) * 0.15;
+
+	return (
+		emptyCells * 1600 +
+		monotonicity * 180 +
+		smoothness * 42 +
+		mergePotential * 0.65 +
+		cornerBonus
+	);
+}
+
+function orderMoves(grid: Grid, moves: Dir[]): Dir[] {
+	return [...moves]
+		.map((dir) => {
+			const result = applyMove(grid, dir);
+			return {
+				dir,
+				score: result.moved ? evaluateGrid(result.grid) + result.gained * 0.8 : -1e12,
 			};
+		})
+		.sort((left, right) => right.score - left.score)
+		.map((entry) => entry.dir);
+}
 
-			function drawBoard(x: number, y: number, size: number) {
-				const gap = Math.floor(size * 0.02);
-				const tile = Math.floor((size - gap * (N + 1)) / N);
-				const ctx = (p as any).drawingContext;
+function expectimax(
+	grid: Grid,
+	depth: number,
+	isPlayerTurn: boolean,
+	probability: number,
+	context: SearchContext,
+): number {
+	if (
+		depth <= 0 ||
+		probability < 0.00005 ||
+		!hasMovesAvailable(grid) ||
+		performance.now() >= context.deadline
+	) {
+		return evaluateGrid(grid);
+	}
 
-				p.noStroke();
-				p.fill(PALETTE.board);
-				ctx.shadowColor = "rgba(0,0,0,0.45)";
-				ctx.shadowBlur = 24;
-				p.rect(x, y, size, size, 18);
-				ctx.shadowBlur = 0;
+	const hash =
+		hashGrid(grid) ^
+		(depth << 1) ^
+		(isPlayerTurn ? 0x9e3779b9 : 0x85ebca6b);
+	const cached = context.table.get(hash);
+	if (
+		cached &&
+		cached.isPlayer === isPlayerTurn &&
+		cached.depth >= depth
+	) {
+		return cached.value;
+	}
 
-				for (let r = 0; r < N; r++)
-					for (let c = 0; c < N; c++) {
-						const cx = x + gap + c * (tile + gap),
-							cy = y + gap + r * (tile + gap);
-						p.noStroke();
-						p.fill(PALETTE.gridHole);
-						p.rect(cx, cy, tile, tile, 12);
-						p.noFill();
-						p.stroke(PALETTE.cellInner);
-						p.strokeWeight(Math.max(0.5, tile * 0.0125));
-						p.rect(cx + 1, cy + 1, tile - 2, tile - 2, 10);
-					}
+	if (isPlayerTurn) {
+		let best = -Infinity;
+		const moves = orderMoves(grid, legalMoves(grid));
+		for (const dir of moves) {
+			if (performance.now() >= context.deadline) break;
+			const result = applyMove(grid, dir);
+			if (!result.moved) continue;
+			const value = expectimax(
+				result.grid,
+				depth - 1,
+				false,
+				probability,
+				context,
+			);
+			if (value > best) best = value;
+		}
+		const resolved = best === -Infinity ? evaluateGrid(grid) : best;
+		context.table.set(hash, {
+			depth,
+			isPlayer: true,
+			value: resolved,
+		});
+		return resolved;
+	}
 
-				if (animating) {
-					const t = easeOutCubic(Math.min(1, animT / animDur));
-					const movingFrom: boolean[][] = [
-						[false, false, false, false],
-						[false, false, false, false],
-						[false, false, false, false],
-						[false, false, false, false],
-					];
-					for (const m of moveTransitions) movingFrom[m.r0][m.c0] = true;
+	const emptyCells = getEmptyCells(grid);
+	if (emptyCells.length === 0) return evaluateGrid(grid);
 
-					for (let r = 0; r < N; r++)
-						for (let c = 0; c < N; c++) {
-							if (!movingFrom[r][c] && prevGrid[r][c] !== 0) {
-								const e = prevGrid[r][c];
-								drawTile(
-									e,
-									x + gap + c * (tile + gap),
-									y + gap + r * (tile + gap),
-									tile,
-									1,
-								);
+	const candidates =
+		emptyCells.length <= 6
+			? emptyCells
+			: [...emptyCells]
+					.map((cell) => {
+						let occupiedNeighbors = 0;
+						for (const [rowDelta, colDelta] of [
+							[-1, 0],
+							[1, 0],
+							[0, -1],
+							[0, 1],
+						]) {
+							const row = cell.row + rowDelta;
+							const col = cell.col + colDelta;
+							if (
+								row >= 0 &&
+								row < BOARD_SIZE &&
+								col >= 0 &&
+								col < BOARD_SIZE &&
+								grid[row][col] !== 0
+							) {
+								occupiedNeighbors += 1;
 							}
 						}
-					for (const m of moveTransitions) {
-						const sx = x + gap + m.c0 * (tile + gap),
-							sy = y + gap + m.r0 * (tile + gap);
-						const ex = x + gap + m.c1 * (tile + gap),
-							ey = y + gap + m.r1 * (tile + gap);
-						drawTile(m.e, sx + (ex - sx) * t, sy + (ey - sy) * t, tile, 1);
-					}
-					if (spawnPulse) {
-						const spx = x + gap + spawnPulse.c * (tile + gap);
-						const spy = y + gap + spawnPulse.r * (tile + gap);
-						const s = 0.5 + 0.5 * t;
-						const e = afterGrid[spawnPulse.r][spawnPulse.c];
-						drawTile(e, spx, spy, tile, s);
-					}
-				} else {
-					for (let r = 0; r < N; r++)
-						for (let c = 0; c < N; c++) {
-							const e = grid[r][c];
-							if (!e) continue;
-							const pulse = mergePulse[r][c];
-							const s = pulse > 0 ? 1 + 0.12 * easeOutBack(pulse) : 1;
-							drawTile(
-								e,
-								x + gap + c * (tile + gap),
-								y + gap + r * (tile + gap),
-								tile,
-								s,
-							);
-						}
-				}
+						return { ...cell, occupiedNeighbors };
+					})
+					.sort(
+						(left, right) =>
+							right.occupiedNeighbors - left.occupiedNeighbors,
+					)
+					.slice(0, 6);
 
-				if (!anyMovesAvailable(grid)) {
-					p.fill(PALETTE.overlay);
-					p.rect(x, y, size, size, 18);
-					p.fill("#ffffff");
-					p.textAlign(p.CENTER, p.CENTER);
-					p.textStyle(p.BOLD);
-					p.textSize(Math.floor(size * 0.08));
-					p.text("Game Over", x + size / 2, y + size / 2 - 10);
-					p.textSize(Math.floor(size * 0.04));
-					p.text("Click on New Game", x + size / 2, y + size / 2 + 28);
-				}
+	let total = 0;
+	let weight = 0;
+
+	for (const cell of candidates) {
+		if (performance.now() >= context.deadline) break;
+
+		const twoGrid = cloneGrid(grid);
+		twoGrid[cell.row][cell.col] = 1;
+		total += 0.9 * expectimax(twoGrid, depth - 1, true, probability * 0.9, context);
+		weight += 0.9;
+
+		const fourGrid = cloneGrid(grid);
+		fourGrid[cell.row][cell.col] = 2;
+		total += 0.1 * expectimax(fourGrid, depth - 1, true, probability * 0.1, context);
+		weight += 0.1;
+	}
+
+	const resolved = weight > 0 ? total / weight : evaluateGrid(grid);
+	context.table.set(hash, {
+		depth,
+		isPlayer: false,
+		value: resolved,
+	});
+	return resolved;
+}
+
+function bestAutoplayMove(grid: Grid, budgetMs: number): Dir | null {
+	const moves = orderMoves(grid, legalMoves(grid));
+	if (moves.length === 0) return null;
+
+	const deadline = performance.now() + budgetMs;
+	const context: SearchContext = {
+		deadline,
+		table: new Map(),
+	};
+
+	let bestMove: Dir | null = moves[0] ?? null;
+	const empties = getEmptyCells(grid).length;
+	let depth = empties >= 7 ? 4 : empties >= 4 ? 5 : 6;
+
+	while (performance.now() < deadline - 1 && depth <= 8) {
+		let depthBestMove: Dir | null = bestMove;
+		let depthBestScore = -Infinity;
+		let completedDepth = true;
+
+		for (const dir of moves) {
+			if (performance.now() >= deadline) {
+				completedDepth = false;
+				break;
 			}
-
-			function easeOutCubic(t: number) {
-				return 1 - (1 - t) ** 3;
+			const result = applyMove(grid, dir);
+			if (!result.moved) continue;
+			const score =
+				expectimax(result.grid, depth - 1, false, 1, context) +
+				result.gained * 0.45;
+			if (score > depthBestScore) {
+				depthBestScore = score;
+				depthBestMove = dir;
 			}
-			function easeOutBack(t: number) {
-				const c1 = 1.70158,
-					c3 = c1 + 1;
-				return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
-			}
+		}
 
-			function drawTile(
-				exp: number,
-				x: number,
-				y: number,
-				size: number,
-				scale: number,
-			) {
-				const s = size * scale;
-				const dx = x + (size - s) / 2;
-				const dy = y + (size - s) / 2;
-				const val = valFromExp(exp);
-				const col = tileColorFromVal(val);
-				const ctx = (p as any).drawingContext;
+		if (completedDepth && depthBestMove !== null) {
+			bestMove = depthBestMove;
+		}
 
-				ctx.shadowColor = "rgba(0,0,0,0.16)";
-				ctx.shadowBlur = 18;
-				p.noStroke();
-				p.fill(col);
-				p.rect(dx, dy, s, s, 12);
-				ctx.shadowBlur = 0;
+		depth += 1;
+	}
 
-				p.noFill();
-				p.stroke(darkenOrLighten(col, 0.12));
-				p.strokeWeight(Math.max(0.5, size * 0.012));
-				p.rect(dx + 1, dy + 1, s - 2, s - 2, 10);
+	return bestMove;
+}
 
-				p.noStroke();
-				p.fill(255, 255, 255, 16);
-				p.rect(dx + s * 0.08, dy + s * 0.06, s * 0.84, s * 0.36, 10);
+function readBestScore(): number {
+	try {
+		const raw = window.localStorage.getItem(STORAGE_KEY);
+		if (!raw) return 0;
+		const parsed = Number.parseInt(raw, 10);
+		return Number.isFinite(parsed) ? parsed : 0;
+	} catch {
+		return 0;
+	}
+}
 
-				p.fill(val <= 4 ? "#e5e7eb" : "#f9f6f2");
-				p.textAlign(p.CENTER, p.CENTER);
-				const digits = String(val).length;
-				const f =
-					digits <= 2
-						? s * 0.42
-						: digits === 3
-							? s * 0.38
-							: digits === 4
-								? s * 0.32
-								: s * 0.28;
-				p.textSize(Math.floor(f));
-				p.textStyle(p.BOLD);
-				p.text(`${val}`, dx + s / 2, dy + s / 2);
-			}
+function persistBestScore(best: number): void {
+	try {
+		window.localStorage.setItem(STORAGE_KEY, String(best));
+	} catch {}
+}
 
-			function darkenOrLighten(hex: string, amt: number) {
-				const c = p.color(hex);
-				const r = p.red(c),
-					g = p.green(c),
-					b = p.blue(c);
-				const f = (v: number) => Math.max(0, Math.min(255, v + 255 * amt));
-				return p.color(f(r), f(g), f(b));
-			}
+function resolveHostSize(host: HTMLDivElement): { width: number; height: number } {
+	const bounds = host.getBoundingClientRect();
+	return {
+		width: Math.max(320, Math.floor(bounds.width)),
+		height: Math.max(420, Math.floor(bounds.height)),
+	};
+}
+
+function easeOutCubic(value: number): number {
+	return 1 - (1 - value) ** 3;
+}
+
+function easeOutBack(value: number): number {
+	const c1 = 1.70158;
+	const c3 = c1 + 1;
+	return 1 + c3 * (value - 1) ** 3 + c1 * (value - 1) ** 2;
+}
+
+function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge) {
+	let game: PhaserGame | null = null;
+	let observer: ResizeObserver | null = null;
+	let graphics: PhaserGraphics | null = null;
+	let statusText: PhaserText | null = null;
+	let hintText: PhaserText | null = null;
+	let bannerText: PhaserText | null = null;
+	let tileViews: TileView[] = [];
+	let sceneRef: PhaserScene | null = null;
+	let cursors: CursorKeys | null = null;
+	let keys: KeyMap | null = null;
+	let pointerStart: { x: number; y: number } | null = null;
+
+	const state: RuntimeState = {
+		grid: emptyGrid(),
+		score: 0,
+		best: 0,
+		moves: 0,
+		won: false,
+		over: false,
+		autoplay: false,
+		speed: "Normal",
+		animation: null,
+		undo: null,
+		mergePulse: Array.from({ length: BOARD_SIZE }, () =>
+			Array.from({ length: BOARD_SIZE }, () => 0),
+		),
+		bannerText: "",
+		bannerUntil: 0,
+		nextAutoAt: 0,
+	};
+
+	const syncUi = () => {
+		const displayGrid = state.animation?.boardAfterSpawn ?? state.grid;
+		bridge.onUiState({
+			score: state.score,
+			best: state.best,
+			moves: state.moves,
+			maxTile: maxTile(displayGrid),
+			autoplay: state.autoplay,
+			speed: state.speed,
+			status: state.over ? "over" : state.won ? "won" : "playing",
+			canUndo: Boolean(state.undo) && state.animation === null,
 		});
+	};
+
+	const updateBest = () => {
+		if (state.score <= state.best) return;
+		state.best = state.score;
+		persistBestScore(state.best);
+	};
+
+	const resetMergePulse = () => {
+		for (let row = 0; row < BOARD_SIZE; row += 1) {
+			for (let col = 0; col < BOARD_SIZE; col += 1) {
+				state.mergePulse[row][col] = 0;
+			}
+		}
+	};
+
+	const beginNewGame = () => {
+		state.grid = emptyGrid();
+		state.score = 0;
+		state.moves = 0;
+		state.won = false;
+		state.over = false;
+		state.animation = null;
+		state.undo = null;
+		state.bannerText = "";
+		state.bannerUntil = 0;
+		state.nextAutoAt = performance.now();
+		resetMergePulse();
+		addRandomTile(state.grid);
+		addRandomTile(state.grid);
+		syncUi();
+	};
+
+	const cycleSpeed = () => {
+		state.speed =
+			state.speed === "Slow"
+				? "Normal"
+				: state.speed === "Normal"
+					? "Fast"
+					: "Slow";
+		syncUi();
+	};
+
+	const toggleAutoplay = () => {
+		state.autoplay = !state.autoplay;
+		state.nextAutoAt = performance.now();
+		syncUi();
+	};
+
+	const undo = () => {
+		if (!state.undo || state.animation) return;
+		state.grid = cloneGrid(state.undo.grid);
+		state.score = state.undo.score;
+		state.moves = state.undo.moves;
+		state.won = state.undo.won;
+		state.over = state.undo.over;
+		state.bannerText = state.undo.bannerText;
+		state.bannerUntil = state.undo.bannerUntil;
+		state.undo = null;
+		resetMergePulse();
+		syncUi();
+	};
+
+	const finalizeAnimation = () => {
+		if (!state.animation) return;
+		for (const mergeTarget of state.animation.mergeTargets) {
+			state.mergePulse[mergeTarget.row][mergeTarget.col] = 1;
+		}
+		state.grid = cloneGrid(state.animation.boardAfterSpawn);
+		state.animation = null;
+		syncUi();
+	};
+
+	const performMove = (dir: Dir) => {
+		if (state.animation || state.over) return false;
+
+		const before = cloneGrid(state.grid);
+		const result = applyMove(state.grid, dir);
+		if (!result.moved) return false;
+
+		state.undo = {
+			grid: before,
+			score: state.score,
+			moves: state.moves,
+			won: state.won,
+			over: state.over,
+			bannerText: state.bannerText,
+			bannerUntil: state.bannerUntil,
+		};
+
+		const boardAfterSpawn = cloneGrid(result.grid);
+		const spawnTile = addRandomTile(boardAfterSpawn);
+
+		state.score += result.gained;
+		state.moves += 1;
+		updateBest();
+
+		if (!state.won && maxExp(boardAfterSpawn) >= 11) {
+			state.won = true;
+			state.bannerText = "2048 reached";
+			state.bannerUntil = performance.now() + 2200;
+		}
+
+		state.over = !hasMovesAvailable(boardAfterSpawn);
+		if (state.over) {
+			state.bannerText = "No more moves";
+			state.bannerUntil = performance.now() + 2400;
+		}
+
+		state.animation = {
+			startedAt: performance.now(),
+			durationMs: SPEED_SETTINGS[state.speed].animationMs,
+			moves: result.transitions,
+			boardAfterSpawn,
+			spawnTile,
+			mergeTargets: result.transitions
+				.filter((transition) => transition.merged)
+				.map((transition) => ({
+					row: transition.toRow,
+					col: transition.toCol,
+				})),
+		};
+
+		syncUi();
+		return true;
+	};
+
+	const createTileView = (scene: PhaserScene): TileView => {
+		const background = scene.add.graphics();
+		const label = scene.add.text(0, 0, "", {
+			fontFamily: FONT_STACK,
+			fontStyle: "700",
+			color: "#f8fafc",
+			align: "center",
+		});
+		label.setOrigin(0.5);
+		const container = scene.add.container(0, 0, [background, label]);
+		container.setDepth(20);
+		container.setVisible(false);
+		return { container, background, label, cacheKey: "" };
+	};
+
+	const updateTileView = (
+		view: TileView,
+		payload: {
+			x: number;
+			y: number;
+			size: number;
+			exp: number;
+			scale: number;
+			alpha: number;
+		},
+	) => {
+		const value = valueFromExp(payload.exp);
+		const colors =
+			TILE_COLORS[value] ??
+			({
+				fill: 0x111827,
+				stroke: 0xeab308,
+				sheen: 0xfef08a,
+				text: "#f8fafc",
+			} as const);
+		const digits = String(value).length;
+		const fontSize =
+			digits <= 2
+				? payload.size * 0.36
+				: digits === 3
+					? payload.size * 0.3
+					: digits === 4
+						? payload.size * 0.25
+						: payload.size * 0.21;
+		const cacheKey = `${payload.size}:${payload.exp}`;
+
+		if (view.cacheKey !== cacheKey) {
+			const radius = Math.max(14, Math.floor(payload.size * 0.18));
+			const inset = Math.max(3, Math.floor(payload.size * 0.06));
+			view.background.clear();
+			view.background.fillStyle(colors.fill, 1);
+			view.background.fillRoundedRect(0, 0, payload.size, payload.size, radius);
+			view.background.fillStyle(colors.sheen, 0.18);
+			view.background.fillRoundedRect(
+				inset,
+				inset,
+				payload.size - inset * 2,
+				Math.max(12, payload.size * 0.24),
+				Math.max(8, radius * 0.6),
+			);
+			view.background.lineStyle(
+				Math.max(2, payload.size * 0.04),
+				colors.stroke,
+				0.95,
+			);
+			view.background.strokeRoundedRect(
+				Math.max(1, inset * 0.4),
+				Math.max(1, inset * 0.4),
+				payload.size - Math.max(2, inset * 0.8),
+				payload.size - Math.max(2, inset * 0.8),
+				Math.max(10, radius * 0.9),
+			);
+			view.label.setPosition(payload.size / 2, payload.size / 2);
+			view.cacheKey = cacheKey;
+		}
+
+		view.label.setText(String(value));
+		view.label.setFontSize(`${fontSize}px`);
+		view.label.setColor(colors.text);
+		view.container.setPosition(payload.x, payload.y);
+		view.container.setScale(payload.scale);
+		view.container.setAlpha(payload.alpha);
+		view.container.setVisible(true);
+	};
+
+	const renderScene = () => {
+		if (!sceneRef || !graphics || !statusText || !hintText || !bannerText) return;
+
+		const width = sceneRef.scale.width;
+		const height = sceneRef.scale.height;
+		const outerPad = Math.max(18, Math.floor(Math.min(width, height) * 0.045));
+		const boardSize = Math.min(width - outerPad * 2, height - outerPad * 2);
+		const boardX = Math.floor((width - boardSize) / 2);
+		const boardY = Math.floor((height - boardSize) / 2);
+		const gap = Math.max(8, Math.floor(boardSize * 0.022));
+		const tileSize = Math.floor((boardSize - gap * (BOARD_SIZE + 1)) / BOARD_SIZE);
+
+		graphics.clear();
+		graphics.fillStyle(0x08101b, 1);
+		graphics.fillRect(0, 0, width, height);
+		graphics.fillStyle(0x0e1726, 1);
+		graphics.fillRoundedRect(
+			boardX - gap * 1.25,
+			boardY - gap * 1.25,
+			boardSize + gap * 2.5,
+			boardSize + gap * 2.5,
+			28,
+		);
+		graphics.lineStyle(2, 0x26364f, 0.95);
+		graphics.strokeRoundedRect(
+			boardX - gap * 1.25,
+			boardY - gap * 1.25,
+			boardSize + gap * 2.5,
+			boardSize + gap * 2.5,
+			28,
+		);
+
+		for (let row = 0; row < BOARD_SIZE; row += 1) {
+			for (let col = 0; col < BOARD_SIZE; col += 1) {
+				const cellX = boardX + gap + col * (tileSize + gap);
+				const cellY = boardY + gap + row * (tileSize + gap);
+				graphics.fillStyle(0x111b2d, 1);
+				graphics.fillRoundedRect(cellX, cellY, tileSize, tileSize, 18);
+				graphics.lineStyle(2, 0x1e2a40, 1);
+				graphics.strokeRoundedRect(cellX, cellY, tileSize, tileSize, 18);
+			}
+		}
+
+		const renders: Array<{
+			x: number;
+			y: number;
+			exp: number;
+			scale: number;
+			alpha: number;
+		}> = [];
+
+		const animation = state.animation;
+		if (animation) {
+			const rawProgress = Math.min(
+				1,
+				(performance.now() - animation.startedAt) / animation.durationMs,
+			);
+			const progress = easeOutCubic(rawProgress);
+			for (const move of animation.moves) {
+				const startX = boardX + gap + move.fromCol * (tileSize + gap);
+				const startY = boardY + gap + move.fromRow * (tileSize + gap);
+				const endX = boardX + gap + move.toCol * (tileSize + gap);
+				const endY = boardY + gap + move.toRow * (tileSize + gap);
+				renders.push({
+					x: startX + (endX - startX) * progress,
+					y: startY + (endY - startY) * progress,
+					exp: move.exp,
+					scale: 1,
+					alpha: 1,
+				});
+			}
+
+			if (animation.spawnTile && rawProgress > 0.62) {
+				const spawnProgress = Math.min(1, (rawProgress - 0.62) / 0.38);
+				renders.push({
+					x: boardX + gap + animation.spawnTile.col * (tileSize + gap),
+					y: boardY + gap + animation.spawnTile.row * (tileSize + gap),
+					exp: animation.spawnTile.exp,
+					scale: 0.52 + 0.48 * easeOutBack(spawnProgress),
+					alpha: 0.55 + 0.45 * spawnProgress,
+				});
+			}
+		} else {
+			for (let row = 0; row < BOARD_SIZE; row += 1) {
+				for (let col = 0; col < BOARD_SIZE; col += 1) {
+					const exp = state.grid[row][col];
+					if (exp === 0) continue;
+					const pulse = state.mergePulse[row][col];
+					renders.push({
+						x: boardX + gap + col * (tileSize + gap),
+						y: boardY + gap + row * (tileSize + gap),
+						exp,
+						scale: pulse > 0 ? 1 + 0.1 * easeOutBack(pulse) : 1,
+						alpha: 1,
+					});
+				}
+			}
+		}
+
+		for (let index = 0; index < tileViews.length; index += 1) {
+			const render = renders[index];
+			const tileView = tileViews[index];
+			if (!render) {
+				tileView.container.setVisible(false);
+				continue;
+			}
+			updateTileView(tileView, {
+				x: render.x,
+				y: render.y,
+				size: tileSize,
+				exp: render.exp,
+				scale: render.scale,
+				alpha: render.alpha,
+			});
+		}
+
+		statusText.setVisible(false);
+		hintText.setVisible(false);
+		bannerText.setVisible(false);
+
+		if (state.over && !state.animation) {
+			graphics.fillStyle(0x020617, 0.66);
+			graphics.fillRoundedRect(boardX, boardY, boardSize, boardSize, 24);
+			statusText
+				.setText("Game Over")
+				.setFontSize(`${Math.max(28, boardSize * 0.085)}px`)
+				.setPosition(width / 2, height / 2 - 12)
+				.setVisible(true);
+			hintText
+				.setText("Press R or use New Game to restart")
+				.setFontSize(`${Math.max(14, boardSize * 0.032)}px`)
+				.setPosition(width / 2, height / 2 + 30)
+				.setVisible(true);
+		} else if (state.won && !state.over && !state.animation && state.bannerUntil > performance.now()) {
+			statusText
+				.setText("2048 reached")
+				.setFontSize(`${Math.max(20, boardSize * 0.05)}px`)
+				.setPosition(width / 2, boardY - gap * 1.8)
+				.setVisible(true);
+		}
+
+		if (state.bannerUntil > performance.now()) {
+			const alpha = Math.min(1, (state.bannerUntil - performance.now()) / 400);
+			bannerText
+				.setText(state.bannerText)
+				.setAlpha(alpha)
+				.setPosition(width / 2, height - Math.max(18, outerPad * 0.9))
+				.setVisible(Boolean(state.bannerText));
+		}
+	};
+
+	const handleDirectionalInput = () => {
+		if (!sceneRef || !cursors || !keys) return;
+		if (state.animation) return;
+
+		if (
+			PhaserLib.Input.Keyboard.JustDown(cursors.left) ||
+			PhaserLib.Input.Keyboard.JustDown(keys.A)
+		) {
+			performMove(0);
+		} else if (
+			PhaserLib.Input.Keyboard.JustDown(cursors.up) ||
+			PhaserLib.Input.Keyboard.JustDown(keys.W)
+		) {
+			performMove(1);
+		} else if (
+			PhaserLib.Input.Keyboard.JustDown(cursors.right) ||
+			PhaserLib.Input.Keyboard.JustDown(keys.D)
+		) {
+			performMove(2);
+		} else if (
+			PhaserLib.Input.Keyboard.JustDown(cursors.down) ||
+			PhaserLib.Input.Keyboard.JustDown(keys.S)
+		) {
+			performMove(3);
+		}
+
+		if (PhaserLib.Input.Keyboard.JustDown(keys.R)) {
+			beginNewGame();
+		}
+		if (PhaserLib.Input.Keyboard.JustDown(keys.Z)) {
+			undo();
+		}
+		if (PhaserLib.Input.Keyboard.JustDown(keys.SPACE)) {
+			toggleAutoplay();
+		}
+	};
+
+	const updateScene = () => {
+		handleDirectionalInput();
+
+		if (state.animation) {
+			if (
+				performance.now() - state.animation.startedAt >=
+				state.animation.durationMs
+			) {
+				finalizeAnimation();
+			}
+		} else if (state.autoplay && !state.over && performance.now() >= state.nextAutoAt) {
+			const dir = bestAutoplayMove(
+				state.grid,
+				SPEED_SETTINGS[state.speed].searchBudgetMs,
+			);
+			if (dir !== null) performMove(dir);
+			state.nextAutoAt = performance.now() + SPEED_SETTINGS[state.speed].autoplayMs;
+		}
+
+		for (let row = 0; row < BOARD_SIZE; row += 1) {
+			for (let col = 0; col < BOARD_SIZE; col += 1) {
+				if (state.mergePulse[row][col] > 0) {
+					state.mergePulse[row][col] = Math.max(0, state.mergePulse[row][col] - 0.08);
+				}
+			}
+		}
+
+		renderScene();
+	};
+
+	bridge.controlsRef.current = {
+		newGame: beginNewGame,
+		undo,
+		toggleAutoplay,
+		cycleSpeed,
+	};
+
+	class Game2048Scene extends PhaserLib.Scene {
+		constructor() {
+			super("game-2048-phaser");
+		}
+
+		create() {
+			sceneRef = this;
+			graphics = this.add.graphics();
+			graphics.setDepth(0);
+
+			statusText = this.add.text(0, 0, "", {
+				fontFamily: FONT_STACK,
+				fontStyle: "700",
+				color: "#f8fafc",
+				align: "center",
+			});
+			statusText.setOrigin(0.5).setDepth(30).setStroke("#020617", 6);
+
+			hintText = this.add.text(0, 0, "", {
+				fontFamily: FONT_STACK,
+				color: "#cbd5e1",
+				align: "center",
+			});
+			hintText.setOrigin(0.5).setDepth(30).setStroke("#020617", 4);
+
+			bannerText = this.add.text(0, 0, "", {
+				fontFamily: FONT_STACK,
+				fontStyle: "700",
+				color: "#fde68a",
+				align: "center",
+			});
+			bannerText.setOrigin(0.5).setDepth(30).setStroke("#020617", 4);
+
+			tileViews = Array.from({ length: MAX_RENDER_TILES }, () => createTileView(this));
+
+			const keyboard = this.input.keyboard;
+			if (keyboard) {
+				cursors = keyboard.createCursorKeys();
+				keys = keyboard.addKeys("W,A,S,D,R,Z,SPACE") as KeyMap;
+			}
+
+			this.input.on(
+				"pointerdown",
+				(pointer: { x: number; y: number }) => {
+					pointerStart = { x: pointer.x, y: pointer.y };
+				},
+				this,
+			);
+
+			this.input.on(
+				"pointerup",
+				(pointer: { x: number; y: number }) => {
+					if (!pointerStart || state.animation) return;
+					const deltaX = pointer.x - pointerStart.x;
+					const deltaY = pointer.y - pointerStart.y;
+					const absX = Math.abs(deltaX);
+					const absY = Math.abs(deltaY);
+					pointerStart = null;
+
+					if (Math.max(absX, absY) < 22) return;
+					if (absX > absY) {
+						performMove(deltaX < 0 ? 0 : 2);
+					} else {
+						performMove(deltaY < 0 ? 1 : 3);
+					}
+				},
+				this,
+			);
+
+			this.scale.on("resize", () => {
+				renderScene();
+			});
+
+			state.best = readBestScore();
+			beginNewGame();
+			renderScene();
+			bridge.onReady();
+		}
+
+		update() {
+			updateScene();
+		}
+	}
+
+	host.innerHTML = "";
+	const initialSize = resolveHostSize(host);
+
+	game = new PhaserLib.Game({
+		type: PhaserLib.CANVAS,
+		parent: host,
+		width: initialSize.width,
+		height: initialSize.height,
+		scene: new Game2048Scene() as PhaserScene,
+		banner: false,
+		disableContextMenu: true,
+		audio: { noAudio: true },
+		transparent: false,
+		antialias: true,
+		pixelArt: false,
+		backgroundColor: "#08101b",
+	});
+
+	observer = new ResizeObserver(() => {
+		if (!game) return;
+		const size = resolveHostSize(host);
+		game.scale.resize(size.width, size.height);
+	});
+	observer.observe(host);
+
+	return () => {
+		bridge.controlsRef.current = null;
+		observer?.disconnect();
+		observer = null;
+		if (game) {
+			game.destroy(true);
+			game = null;
+		}
+		graphics = null;
+		statusText = null;
+		hintText = null;
+		bannerText = null;
+		tileViews = [];
+		sceneRef = null;
+		cursors = null;
+		keys = null;
+		pointerStart = null;
+	};
+}
+
+export default function Game2048({ className = "" }: { className?: string }) {
+	const hostRef = useRef<HTMLDivElement | null>(null);
+	const controlsRef = useRef<Game2048Controls | null>(null);
+	const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+	const [uiState, setUiState] = useState<UiState>(EMPTY_UI_STATE);
+
+	useEffect(() => {
+		const host = hostRef.current;
+		if (!host) return;
+
+		let cancelled = false;
+		let cleanup: (() => void) | undefined;
+
+		setStatus("loading");
+
+		void (async () => {
+			try {
+				const phaserModule = await import("phaser");
+				const PhaserLib = ("default" in phaserModule
+					? phaserModule.default
+					: phaserModule) as PhaserModule;
+
+				if (cancelled || !hostRef.current) return;
+
+				cleanup = mount2048(hostRef.current, PhaserLib, {
+					controlsRef,
+					onReady: () => {
+						if (!cancelled) setStatus("ready");
+					},
+					onUiState: (nextState) => {
+						if (!cancelled) setUiState(nextState);
+					},
+				});
+			} catch (error) {
+				console.error("Unable to initialize 2048:", error);
+				if (!cancelled) setStatus("error");
+			}
+		})();
 
 		return () => {
-			p5ref.current = null;
+			cancelled = true;
+			cleanup?.();
 		};
 	}, []);
 
-	const callControls = (fn: (controls: any) => void) => {
-		const controls = (p5ref.current as any)?.__controls;
-		if (controls) fn(controls);
-	};
-
 	return (
 		<div
-			className="w-full h-full flex flex-col gap-3"
-			style={{ minHeight: 520 }}
+			className={`flex h-full min-h-[620px] w-full flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ${className}`}
 		>
-			<div className="flex items-center gap-2 p-3 rounded-xl border border-zinc-700/50 bg-zinc-900/50 backdrop-blur-sm">
-				<button
-					onClick={() => callControls((api) => api.newGame())}
-					className="px-4 py-2 rounded-lg bg-zinc-200 hover:bg-zinc-300/80 text-zinc-900 font-semibold"
-				>
-					New Game
-				</button>
-
-				<button
-					onClick={() => callControls((api) => api.toggleAuto())}
-					className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 border border-zinc-700/20"
-				>
-					Autoplay: <b>{autoPlay ? "ON" : "OFF"}</b>
-				</button>
-
-				<button
-					onClick={() => callControls((api) => api.cycleSpeed())}
-					className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 border border-zinc-700/20"
-				>
-					Speed: <b>{speed}</b>
-				</button>
-
-				<div className="ml-auto flex gap-2">
-					<div className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700/20 text-center text-sm">
-						<div className="opacity-60 text-[11px] leading-none">SCORE</div>
-						<div className="font-bold text-base">{score}</div>
+			<div className="border-b border-[#233247] bg-[#07111d]/92 backdrop-blur">
+				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
+					<div className="mr-auto min-w-48">
+						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
+							2048
+						</div>
+						<div className="font-mono text-xs text-slate-400">
+							Arrow keys or swipe to play. Space toggles autoplay, Z undoes.
+						</div>
 					</div>
-					<div className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700/20 text-center text-sm">
-						<div className="opacity-60 text-[11px] leading-none">BEST</div>
-						<div className="font-bold text-base">{best}</div>
+					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Score {uiState.score}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Best {uiState.best}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Moves {uiState.moves}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Max {uiState.maxTile || 2}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							{status === "loading"
+								? "Loading"
+								: status === "error"
+									? "Error"
+									: uiState.status === "over"
+										? "Game Over"
+										: uiState.status === "won"
+											? "Won"
+											: "Ready"}
+						</div>
 					</div>
 				</div>
+
+				<div className="flex flex-wrap gap-2 px-4 pb-4 sm:px-5">
+					<button
+						type="button"
+						onClick={() => controlsRef.current?.newGame()}
+						className="rounded-full bg-slate-100 px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-white"
+					>
+						New Game
+					</button>
+					<button
+						type="button"
+						onClick={() => controlsRef.current?.undo()}
+						disabled={!uiState.canUndo}
+						className="rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a] disabled:cursor-not-allowed disabled:opacity-45"
+					>
+						Undo
+					</button>
+					<button
+						type="button"
+						onClick={() => controlsRef.current?.toggleAutoplay()}
+						className="rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+					>
+						Autoplay {uiState.autoplay ? "On" : "Off"}
+					</button>
+					<button
+						type="button"
+						onClick={() => controlsRef.current?.cycleSpeed()}
+						className="rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+					>
+						Speed {uiState.speed}
+					</button>
+				</div>
 			</div>
-			<div
-				ref={hostRef}
-				className="relative flex-1 rounded-xl overflow-hidden border border-zinc-700/50"
-			>
-				{sketch && <NextReactP5Wrapper sketch={sketch} />}
+
+			<div className="relative min-h-0 flex-1">
+				<div ref={hostRef} className="absolute inset-0" />
+
+				{status === "loading" && (
+					<div className="absolute inset-0 grid place-items-center bg-[#050810]/70 font-mono text-sm text-slate-300">
+						Booting Phaser scene...
+					</div>
+				)}
+
+				{status === "error" && (
+					<div className="absolute inset-0 grid place-items-center bg-[#050810]/85 px-6 text-center font-mono text-sm text-rose-300">
+						Unable to load the 2048 scene.
+					</div>
+				)}
 			</div>
 		</div>
 	);

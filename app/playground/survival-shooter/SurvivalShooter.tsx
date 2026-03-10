@@ -17,18 +17,42 @@ const ABILITY_LABELS = {
 	critChance: "Crit Chance",
 	critDamage: "Crit Damage",
 	dodge: "Dodge",
+	growth: "Growth",
+	force: "Force",
+	reach: "Reach",
 	ricochet: "Ricochet",
 	poisonTrail: "Poison Trail",
+	holyWater: "Holy Water",
 	orbitals: "Orbitals",
 	aura: "Shock Aura",
 	magnet: "Magnet",
 	shrapnel: "Shrapnel",
 	novaBurst: "Nova Burst",
+	chainLightning: "Chain Lightning",
+	spiralShots: "Spiral Shots",
+	bubbleShield: "Bubble Shield",
 	thorns: "Thorns",
 } as const;
 
 type AbilityKey = keyof typeof ABILITY_LABELS;
-type XpShape = "triangle" | "square" | "pentagon" | "hexagon" | "octagon" | "decagon";
+type XpShape =
+	| "triangle"
+	| "square"
+	| "kite"
+	| "roundedTriangle"
+	| "pentagon"
+	| "hexagon"
+	| "quatrefoil"
+	| "star4"
+	| "star5"
+	| "hexagram"
+	| "star6"
+	| "octagram"
+	| "octagon"
+	| "decagon";
+type EnemyShape = "circle" | XpShape;
+type EnemyKind = "normal" | "swift" | "tank" | "rare" | "boss";
+type XpRewardTier = "normal" | "rare" | "boss";
 
 type Player = {
 	x: number;
@@ -55,7 +79,11 @@ type Enemy = {
 	flashTimer: number;
 	auraTickTimer: number;
 	trailTickTimer: number;
+	waterTickTimer: number;
 	orbitalHitTimer: number;
+	damage: number;
+	shape: EnemyShape;
+	kind: EnemyKind;
 };
 
 type Bullet = {
@@ -79,6 +107,8 @@ type XpOrb = {
 	color: number;
 	shape: XpShape;
 	spin: number;
+	tier: XpRewardTier;
+	grantsPerk: boolean;
 };
 
 type SceneryBlob = {
@@ -90,6 +120,16 @@ type SceneryBlob = {
 };
 
 type TrailCloud = {
+	x: number;
+	y: number;
+	radius: number;
+	ttl: number;
+	maxTtl: number;
+	damage: number;
+	spin: number;
+};
+
+type WaterPool = {
 	x: number;
 	y: number;
 	radius: number;
@@ -138,6 +178,7 @@ type GameState = {
 	bullets: Bullet[];
 	xpOrbs: XpOrb[];
 	trailClouds: TrailCloud[];
+	waterPools: WaterPool[];
 	particles: Particle[];
 	damageTexts: DamageText[];
 	abilities: Record<AbilityKey, number>;
@@ -150,6 +191,11 @@ type GameState = {
 	spawnTimer: number;
 	trailSpawnTimer: number;
 	novaTimer: number;
+	spiralTimer: number;
+	waterTimer: number;
+	shieldTimer: number;
+	shieldCooldownTimer: number;
+	nextBossSpawnTime: number;
 	phase: "start" | "playing" | "paused" | "gameOver";
 	overdriveUntil: number;
 	overdriveCooldownUntil: number;
@@ -179,8 +225,12 @@ type KeyMap = {
 const TAU = Math.PI * 2;
 const WORLD_WIDTH_MULTIPLIER = 12;
 const ENEMY_GRID_CELL_SIZE = 72;
+const XP_GRID_CELL_SIZE = 120;
+const MAX_PARTICLES = 320;
+const MAX_DAMAGE_TEXTS = 80;
+const XP_MERGE_THRESHOLD = 220;
 
-const XP_SHAPE_SIDES: Record<XpShape, number> = {
+const REGULAR_XP_SHAPE_SIDES: Partial<Record<XpShape, number>> = {
 	triangle: 3,
 	square: 4,
 	pentagon: 5,
@@ -190,18 +240,96 @@ const XP_SHAPE_SIDES: Record<XpShape, number> = {
 };
 
 const XP_SHAPE_COLORS: Record<XpShape, number> = {
-	triangle: 0x7dd3a7,
+	triangle: 0xfb7185,
 	square: 0xfde68a,
-	pentagon: 0xfb7185,
+	kite: 0xf59e0b,
+	roundedTriangle: 0xfb7185,
+	pentagon: 0x7dd3a7,
 	hexagon: 0xc084fc,
+	quatrefoil: 0xa3e635,
+	star4: 0x2dd4bf,
+	star5: 0x67e8f9,
+	hexagram: 0x60a5fa,
+	star6: 0x818cf8,
+	octagram: 0xe879f9,
 	octagon: 0x67e8f9,
 	decagon: 0x93c5fd,
 };
+
+const XP_SHAPE_ORDER: XpShape[] = [
+	"triangle",
+	"square",
+	"kite",
+	"roundedTriangle",
+	"pentagon",
+	"hexagon",
+	"quatrefoil",
+	"star4",
+	"star5",
+	"hexagram",
+	"star6",
+	"octagram",
+	"octagon",
+	"decagon",
+];
+
+const SWIFT_ENEMY_SHAPES: XpShape[] = [
+	"triangle",
+	"kite",
+	"roundedTriangle",
+];
+
+const TANK_ENEMY_SHAPES: XpShape[] = [
+	"square",
+	"pentagon",
+	"hexagon",
+	"quatrefoil",
+	"hexagram",
+	"octagon",
+	"decagon",
+];
+
+const RARE_ENEMY_SHAPES: XpShape[] = [
+	"kite",
+	"roundedTriangle",
+	"quatrefoil",
+	"star5",
+	"hexagram",
+	"star6",
+	"octagram",
+	"decagon",
+];
+
+const BOSS_ENEMY_SHAPES: XpShape[] = [
+	"square",
+	"pentagon",
+	"hexagon",
+	"quatrefoil",
+	"hexagram",
+	"star6",
+	"octagram",
+	"octagon",
+	"decagon",
+];
+
+const SMALL_FACE_SHAPES = new Set<XpShape>([
+	"triangle",
+	"kite",
+	"roundedTriangle",
+	"star4",
+	"star5",
+	"hexagram",
+	"star6",
+	"octagram",
+]);
 
 const BASIC_ABILITIES: AbilityKey[] = [
 	"quickShot",
 	"multiShot",
 	"pierce",
+	"growth",
+	"force",
+	"reach",
 	"critChance",
 	"critDamage",
 	"magnet",
@@ -211,16 +339,34 @@ const MIDGAME_ABILITIES: AbilityKey[] = [
 	...BASIC_ABILITIES,
 	"ricochet",
 	"poisonTrail",
+	"holyWater",
 	"orbitals",
 	"aura",
 	"shrapnel",
 	"novaBurst",
+	"chainLightning",
+	"spiralShots",
 ];
 
-const LATEGAME_ABILITIES: AbilityKey[] = [...MIDGAME_ABILITIES, "dodge", "thorns"];
+const LATEGAME_ABILITIES: AbilityKey[] = [...MIDGAME_ABILITIES, "dodge", "bubbleShield", "thorns"];
+const STARTING_PERK_ABILITIES: AbilityKey[] = [
+	"pierce",
+	"multiShot",
+	"quickShot",
+	"ricochet",
+	"poisonTrail",
+	"orbitals",
+	"aura",
+	"shrapnel",
+	"novaBurst",
+	"chainLightning",
+	"spiralShots",
+];
 
 const ENEMY_NORMAL_COLORS = [0xfb7185, 0xf97316, 0xef4444, 0xdc2626];
 const ENEMY_ELITE_COLORS = [0xff8f66, 0xff6b6b, 0xfb7185, 0xf43f5e];
+const ENEMY_RARE_COLORS = [0x0f766e, 0x1d4ed8, 0x7c3aed, 0xbe185d];
+const ENEMY_BOSS_COLORS = [0xf97316, 0xec4899, 0x8b5cf6, 0x0ea5e9];
 
 function clamp(value: number, min: number, max: number) {
 	if (max < min) return min;
@@ -290,11 +436,19 @@ function getArenaLayout(width: number, height: number): ArenaLayout {
 }
 
 function getXpShape(level: number): XpShape {
-	if (level < 4) return "triangle";
-	if (level < 8) return "square";
-	if (level < 13) return "pentagon";
-	if (level < 18) return "hexagon";
-	if (level < 24) return "octagon";
+	if (level < 3) return "triangle";
+	if (level < 5) return "square";
+	if (level < 7) return "kite";
+	if (level < 9) return "roundedTriangle";
+	if (level < 11) return "pentagon";
+	if (level < 13) return "hexagon";
+	if (level < 15) return "quatrefoil";
+	if (level < 17) return "star4";
+	if (level < 19) return "star5";
+	if (level < 21) return "hexagram";
+	if (level < 23) return "star6";
+	if (level < 25) return "octagram";
+	if (level < 28) return "octagon";
 	return "decagon";
 }
 
@@ -304,15 +458,85 @@ function getXpValue(level: number, elite: boolean) {
 		shape === "triangle"
 			? 7
 			: shape === "square"
-				? 10
-				: shape === "pentagon"
+				? 9
+				: shape === "kite"
+					? 11
+					: shape === "roundedTriangle"
+						? 12
+						: shape === "pentagon"
 					? 14
 					: shape === "hexagon"
-						? 18
+						? 17
+						: shape === "quatrefoil"
+							? 18
+							: shape === "star4"
+								? 20
+								: shape === "star5"
+									? 22
+									: shape === "hexagram"
+										? 24
+										: shape === "star6"
+											? 26
+											: shape === "octagram"
+												? 29
 						: shape === "octagon"
-							? 25
-							: 34;
+							? 31
+							: 35;
 	return elite ? Math.round(base * 1.8) : base;
+}
+
+function getAbilityLevelTotal(state: GameState) {
+	return (Object.values(state.abilities) as number[]).reduce((sum, value) => sum + value, 0);
+}
+
+function getTraitLevelTotal(state: GameState) {
+	return (
+		state.abilities.critChance +
+		state.abilities.critDamage +
+		state.abilities.dodge +
+		state.abilities.growth +
+		state.abilities.force +
+		state.abilities.reach +
+		state.abilities.magnet
+	);
+}
+
+function getPerkLevelTotal(state: GameState) {
+	return getAbilityLevelTotal(state) - getTraitLevelTotal(state);
+}
+
+function getUnlockedEnemyShapes(state: GameState) {
+	const shapeCount = clamp(
+		4 + Math.floor(state.level / 2) + Math.floor(state.timeSurvived / 70),
+		4,
+		XP_SHAPE_ORDER.length,
+	);
+	return XP_SHAPE_ORDER.slice(0, shapeCount);
+}
+
+function getEnemyPressure(state: GameState) {
+	return (
+		0.55 +
+		state.level * 0.72 +
+		state.timeSurvived / 42 +
+		getAbilityLevelTotal(state) * 0.54 +
+		(state.player.damage - 1) * 0.9
+	);
+}
+
+function getPlayerPowerScore(state: GameState) {
+	return (
+		1 +
+		state.level * 0.92 +
+		(state.player.damage - 1) * 1.45 +
+		getAbilityLevelTotal(state) * 0.68 +
+		getPerkLevelTotal(state) * 0.28 +
+		state.timeSurvived / 55
+	);
+}
+
+function getXpGainMultiplier(state: GameState) {
+	return 1 + state.abilities.growth * 0.08;
 }
 
 function getShotCooldownSeconds(state: GameState) {
@@ -344,31 +568,59 @@ function getDodgeChance(state: GameState) {
 	return clamp(state.abilities.dodge * 0.045, 0, 0.3);
 }
 
+function getForceMultiplier(state: GameState) {
+	return 1 + state.abilities.force * 0.13;
+}
+
+function getReachMultiplier(state: GameState) {
+	return 1 + state.abilities.reach * 0.12;
+}
+
 function getRicochetCount(state: GameState) {
 	return clamp(state.abilities.ricochet, 0, 5);
 }
 
 function getMagnetRadius(state: GameState) {
-	return 150 + state.abilities.magnet * 36;
+	return Math.round((150 + state.abilities.magnet * 36) * (1 + state.abilities.reach * 0.06));
 }
 
 function getPoisonTrailStats(state: GameState) {
 	const level = state.abilities.poisonTrail;
 	if (level <= 0) return null;
+	const forceMultiplier = getForceMultiplier(state);
+	const reachMultiplier = getReachMultiplier(state);
 	return {
-		radius: 18 + level * 6,
-		damage: 1 + level,
+		radius: (18 + level * 6) * reachMultiplier,
+		damage: (1 + level) * forceMultiplier,
 		duration: 1.5 + level * 0.35,
 		spawnInterval: clamp(0.28 - level * 0.025, 0.12, 0.28),
+	};
+}
+
+function getHolyWaterStats(state: GameState) {
+	const level = state.abilities.holyWater;
+	if (level <= 0) return null;
+	const forceMultiplier = getForceMultiplier(state);
+	const reachMultiplier = getReachMultiplier(state);
+	return {
+		pools: clamp(1 + Math.floor((level - 1) / 2), 1, 3),
+		radius: (24 + level * 6) * reachMultiplier,
+		damage: (1.4 + level * 1.15) * forceMultiplier,
+		duration: 3 + level * 0.4,
+		cooldown: clamp(7.2 - level * 0.5, 3.4, 7.2),
+		scatter: (54 + level * 14) * reachMultiplier,
+		tickInterval: 0.32,
 	};
 }
 
 function getAuraStats(state: GameState) {
 	const level = state.abilities.aura;
 	if (level <= 0) return null;
+	const forceMultiplier = getForceMultiplier(state);
+	const reachMultiplier = getReachMultiplier(state);
 	return {
-		radius: 48 + level * 14,
-		damage: 1 + level * 1.25,
+		radius: (48 + level * 14) * reachMultiplier,
+		damage: (1 + level * 1.25) * forceMultiplier,
 		tickInterval: clamp(0.55 - level * 0.04, 0.22, 0.55),
 	};
 }
@@ -376,10 +628,12 @@ function getAuraStats(state: GameState) {
 function getOrbitalStats(state: GameState) {
 	const level = state.abilities.orbitals;
 	if (level <= 0) return null;
+	const forceMultiplier = getForceMultiplier(state);
+	const reachMultiplier = getReachMultiplier(state);
 	return {
 		diamonds: clamp(level, 1, 5),
-		radius: 44 + level * 8,
-		damage: 2 + level * 1.5,
+		radius: (44 + level * 8) * reachMultiplier,
+		damage: (2 + level * 1.5) * forceMultiplier,
 		rotationSpeed: 1.6 + level * 0.35,
 		hitCooldown: clamp(0.28 - level * 0.02, 0.12, 0.28),
 	};
@@ -388,9 +642,11 @@ function getOrbitalStats(state: GameState) {
 function getShrapnelStats(state: GameState) {
 	const level = state.abilities.shrapnel;
 	if (level <= 0) return null;
+	const forceMultiplier = getForceMultiplier(state);
+	const reachMultiplier = getReachMultiplier(state);
 	return {
-		radius: 38 + level * 16,
-		damage: 1 + level * 1.3,
+		radius: (38 + level * 16) * reachMultiplier,
+		damage: (1 + level * 1.3) * forceMultiplier,
 	};
 }
 
@@ -399,18 +655,57 @@ function getNovaBurstStats(state: GameState) {
 	if (level <= 0) return null;
 	return {
 		projectiles: 5 + level * 2,
-		damage: Math.max(1, Math.round(state.player.damage * (0.5 + level * 0.18))),
+		damage: Math.max(
+			1,
+			Math.round(state.player.damage * getForceMultiplier(state) * (0.5 + level * 0.18)),
+		),
 		cooldown: clamp(4.6 - level * 0.38, 1.8, 4.6),
 		life: 0.8 + level * 0.06,
+	};
+}
+
+function getChainLightningStats(state: GameState) {
+	const level = state.abilities.chainLightning;
+	if (level <= 0) return null;
+	return {
+		chains: clamp(1 + Math.floor(level / 2), 1, 4),
+		range: (120 + level * 24) * getReachMultiplier(state),
+		damageMultiplier: 0.45 + level * 0.1,
+	};
+}
+
+function getSpiralShotsStats(state: GameState) {
+	const level = state.abilities.spiralShots;
+	if (level <= 0) return null;
+	return {
+		pairs: clamp(1 + Math.floor(level / 2), 1, 3),
+		damage: Math.max(
+			1,
+			Math.round(state.player.damage * getForceMultiplier(state) * (0.68 + level * 0.18)),
+		),
+		cooldown: clamp(2.9 - level * 0.24, 1.15, 2.9),
+		life: 1.05 + level * 0.08,
+		speed: 360 + level * 26,
+	};
+}
+
+function getBubbleShieldStats(state: GameState) {
+	const level = state.abilities.bubbleShield;
+	if (level <= 0) return null;
+	return {
+		duration: 1.35 + level * 0.18,
+		cooldown: clamp(11 - level * 1.1, 5.6, 11),
 	};
 }
 
 function getThornsStats(state: GameState) {
 	const level = state.abilities.thorns;
 	if (level <= 0) return null;
+	const forceMultiplier = getForceMultiplier(state);
+	const reachMultiplier = getReachMultiplier(state);
 	return {
-		radius: 54 + level * 12,
-		damage: 2 + level * 1.4,
+		radius: (54 + level * 12) * reachMultiplier,
+		damage: (2 + level * 1.4) * forceMultiplier,
 	};
 }
 
@@ -420,6 +715,11 @@ function getNextOverdriveKillRequirement(state: GameState) {
 
 function getOverdriveCooldownDuration(state: GameState) {
 	return clamp(15 + state.timeSurvived * 0.03, 15, 26);
+}
+
+function getEnemyPolygonShape(shape: EnemyShape): XpShape | null {
+	if (shape === "circle") return null;
+	return shape;
 }
 
 function getXpBarMetrics(layout: ArenaLayout) {
@@ -507,6 +807,7 @@ function mountSurvivalShooter(
 			bullets: [],
 			xpOrbs: [],
 			trailClouds: [],
+			waterPools: [],
 			particles: [],
 			damageTexts: [],
 			abilities: {
@@ -516,24 +817,36 @@ function mountSurvivalShooter(
 				critChance: 0,
 				critDamage: 0,
 				dodge: 0,
+				growth: 0,
+				force: 0,
+				reach: 0,
 				ricochet: 0,
 				poisonTrail: 0,
+				holyWater: 0,
 				orbitals: 0,
 				aura: 0,
 				magnet: 0,
 				shrapnel: 0,
 				novaBurst: 0,
+				chainLightning: 0,
+				spiralShots: 0,
+				bubbleShield: 0,
 				thorns: 0,
 			},
 			level: 1,
 			xp: 0,
-			nextLevelXp: 90,
+			nextLevelXp: 78,
 			kills: 0,
 			totalDamage: 0,
 			timeSurvived: 0,
 			spawnTimer: 1.05,
 			trailSpawnTimer: 0,
 			novaTimer: 2.2,
+			spiralTimer: 1.8,
+			waterTimer: 2.4,
+			shieldTimer: 0,
+			shieldCooldownTimer: 2,
+			nextBossSpawnTime: 52,
 			phase: "start",
 			overdriveUntil: 0,
 			overdriveCooldownUntil: 0,
@@ -555,6 +868,10 @@ function mountSurvivalShooter(
 	};
 
 	let state = createState(1, 1);
+	let xpOrbIndicesForRender: number[] = [];
+	let xpOrbIndicesForUpdate: number[] = [];
+	let cullingFrameId = 0;
+	let xpOrbCullingFrame = -1;
 
 	const createTextStyle = (size: number, align: "left" | "right" | "center") => ({
 		fontFamily: '"IBM Plex Mono", "Fira Code", ui-monospace, monospace',
@@ -624,6 +941,103 @@ function mountSurvivalShooter(
 		}
 	};
 
+	const buildXpOrbGrid = () => {
+		const grid = new Map<string, number[]>();
+		for (let index = 0; index < state.xpOrbs.length; index += 1) {
+			const orb = state.xpOrbs[index];
+			const cellX = Math.floor(orb.x / XP_GRID_CELL_SIZE);
+			const cellY = Math.floor(orb.y / XP_GRID_CELL_SIZE);
+			const key = `${cellX}:${cellY}`;
+			const bucket = grid.get(key);
+			if (bucket) bucket.push(index);
+			else grid.set(key, [index]);
+		}
+		return grid;
+	};
+
+	const collectXpOrbIndicesInRect = (
+		grid: Map<string, number[]>,
+		minX: number,
+		maxX: number,
+		minY: number,
+		maxY: number,
+		buffer: Set<number>,
+	) => {
+		const startCellX = Math.floor(minX / XP_GRID_CELL_SIZE);
+		const endCellX = Math.floor(maxX / XP_GRID_CELL_SIZE);
+		const startCellY = Math.floor(minY / XP_GRID_CELL_SIZE);
+		const endCellY = Math.floor(maxY / XP_GRID_CELL_SIZE);
+		for (let cellY = startCellY; cellY <= endCellY; cellY += 1) {
+			for (let cellX = startCellX; cellX <= endCellX; cellX += 1) {
+				const bucket = grid.get(`${cellX}:${cellY}`);
+				if (!bucket) continue;
+				for (const orbIndex of bucket) {
+					buffer.add(orbIndex);
+				}
+			}
+		}
+	};
+
+	const rebuildXpOrbCulling = (scene: PhaserScene) => {
+		const layout = getLayout(scene);
+		const magnetRadius = getMagnetRadius(state);
+		const grid = buildXpOrbGrid();
+		const renderSet = new Set<number>();
+		const updateSet = new Set<number>();
+		collectXpOrbIndicesInRect(
+			grid,
+			state.cameraX - 60,
+			state.cameraX + layout.fieldWidth + 60,
+			-60,
+			state.worldHeight + 60,
+			renderSet,
+		);
+		collectXpOrbIndicesInRect(
+			grid,
+			state.cameraX - layout.fieldWidth * 0.4,
+			state.cameraX + layout.fieldWidth * 1.4,
+			-80,
+			state.worldHeight + 80,
+			updateSet,
+		);
+		collectXpOrbIndicesInRect(
+			grid,
+			state.player.x - magnetRadius - 40,
+			state.player.x + magnetRadius + 40,
+			state.player.y - magnetRadius - 40,
+			state.player.y + magnetRadius + 40,
+			updateSet,
+		);
+		xpOrbIndicesForRender = Array.from(renderSet).sort((a, b) => a - b);
+		xpOrbIndicesForUpdate = Array.from(updateSet).sort((a, b) => a - b);
+		xpOrbCullingFrame = cullingFrameId;
+	};
+
+	const condenseXpOrbs = () => {
+		if (state.xpOrbs.length < XP_MERGE_THRESHOLD) return;
+		const buckets = new Map<string, XpOrb>();
+		for (const orb of state.xpOrbs) {
+			const cellX = Math.floor(orb.x / XP_GRID_CELL_SIZE);
+			const cellY = Math.floor(orb.y / XP_GRID_CELL_SIZE);
+			const key = `${cellX}:${cellY}:${orb.shape}:${orb.tier}:${orb.grantsPerk ? 1 : 0}`;
+			const existing = buckets.get(key);
+			if (!existing) {
+				buckets.set(key, { ...orb });
+				continue;
+			}
+			if (existing.grantsPerk || orb.grantsPerk) {
+				buckets.set(key, orb.grantsPerk ? { ...orb } : existing);
+				continue;
+			}
+			const combinedValue = existing.value + orb.value;
+			existing.x = (existing.x * existing.value + orb.x * orb.value) / combinedValue;
+			existing.y = (existing.y * existing.value + orb.y * orb.value) / combinedValue;
+			existing.value = combinedValue;
+			existing.radius = Math.min(14, Math.max(existing.radius, orb.radius) + 0.18);
+		}
+		state.xpOrbs = Array.from(buckets.values());
+	};
+
 	const pushBanner = (message: string, duration = 2.4) => {
 		state.bannerText = message;
 		state.bannerTimer = duration;
@@ -670,7 +1084,17 @@ function mountSurvivalShooter(
 	const upgradeAbility = () => {
 		const ability = chooseAbilityToUpgrade();
 		state.abilities[ability] += 1;
-		pushBanner(`${ABILITY_LABELS[ability]} Lv.${state.abilities[ability]}`, 2.6);
+		const label = `${ABILITY_LABELS[ability]} Lv.${state.abilities[ability]}`;
+		pushBanner(label, 2.6);
+		return label;
+	};
+
+	const grantStartingPerk = () => {
+		const perk =
+			PhaserLib.Utils.Array.GetRandom(STARTING_PERK_ABILITIES) ??
+			STARTING_PERK_ABILITIES[0];
+		state.abilities[perk] += 1;
+		pushBanner(`${ABILITY_LABELS[perk]} Lv.${state.abilities[perk]}`, 2.8);
 	};
 
 	const clearDamageTexts = () => {
@@ -733,6 +1157,11 @@ function mountSurvivalShooter(
 			cloud.radius *= ratio;
 		}
 
+		for (const pool of state.waterPools) {
+			pool.y = clamp(pool.y * ratio, -80, state.worldHeight + 80);
+			pool.radius *= ratio;
+		}
+
 		for (const particle of state.particles) {
 			particle.y = clamp(particle.y * ratio, -120, state.worldHeight + 120);
 		}
@@ -750,6 +1179,8 @@ function mountSurvivalShooter(
 			blob.y = clamp(blob.y * ratio, 0, state.worldHeight);
 			blob.radius *= ratio;
 		}
+		cullingFrameId += 1;
+		xpOrbCullingFrame = -1;
 		syncCamera(scene);
 	};
 
@@ -757,7 +1188,11 @@ function mountSurvivalShooter(
 		clearDamageTexts();
 		nextEnemyId = 1;
 		state = createState(scene.scale.width, scene.scale.height);
-		upgradeAbility();
+		xpOrbIndicesForRender = [];
+		xpOrbIndicesForUpdate = [];
+		xpOrbCullingFrame = -1;
+		cullingFrameId = 0;
+		grantStartingPerk();
 		state.player.shotTimer = 0.15;
 		restartRequested = false;
 		syncCamera(scene);
@@ -811,6 +1246,10 @@ function mountSurvivalShooter(
 			maxTtl: ttl,
 			velocityY,
 		});
+		if (state.damageTexts.length > MAX_DAMAGE_TEXTS) {
+			const removed = state.damageTexts.shift();
+			removed?.label.destroy();
+		}
 	};
 
 	const emitParticles = (
@@ -858,6 +1297,9 @@ function mountSurvivalShooter(
 				shrink,
 			});
 		}
+		if (state.particles.length > MAX_PARTICLES) {
+			state.particles.splice(0, state.particles.length - MAX_PARTICLES);
+		}
 	};
 
 	const triggerOverdrive = () => {
@@ -876,7 +1318,14 @@ function mountSurvivalShooter(
 		while (state.xp >= state.nextLevelXp) {
 			state.xp -= state.nextLevelXp;
 			state.level += 1;
-			state.nextLevelXp = Math.round(state.nextLevelXp * 1.17 + 18);
+			state.nextLevelXp =
+				state.level < 5
+					? Math.round(state.nextLevelXp * 1.14 + 10)
+					: state.level < 11
+						? Math.round(state.nextLevelXp * 1.18 + 14)
+						: state.level < 18
+							? Math.round(state.nextLevelXp * 1.22 + 18)
+							: Math.round(state.nextLevelXp * 1.25 + 24);
 			emitParticles(state.player.x, state.player.y, 0x67e8f9, 14, {
 				speedMin: 36,
 				speedMax: 120,
@@ -896,21 +1345,23 @@ function mountSurvivalShooter(
 				alpha: 0.8,
 			});
 
-			if (state.level % 2 === 0) {
+			const grantUpgrade =
+				state.level <= 8 ? state.level % 2 === 0 : state.level % 3 === 0;
+			if (grantUpgrade) {
 				upgradeAbility();
 			}
 
-			if (state.level % 3 === 0) {
+			if (state.level % 4 === 0) {
 				state.player.damage += 1;
 				pushBanner(`Weapon power ${state.player.damage}`, 2.2);
 			}
 
-			if (state.level % 5 === 0) {
-				state.player.speed = Math.min(320, state.player.speed + 8);
+			if (state.level % 6 === 0) {
+				state.player.speed = Math.min(320, state.player.speed + 7);
 				pushBanner(`Mobility ${Math.round(state.player.speed)}`, 2.2);
 			}
 
-			if (state.level % 6 === 0) {
+			if (state.level % 9 === 0) {
 				state.player.maxLives = Math.min(8, state.player.maxLives + 1);
 				state.player.lives = Math.min(state.player.maxLives, state.player.lives + 1);
 				pushBanner(`Armor surge ${state.player.maxLives}`, 2.8);
@@ -918,32 +1369,128 @@ function mountSurvivalShooter(
 		}
 	};
 
-	const spawnXp = (x: number, y: number, elite: boolean) => {
-		const shape = getXpShape(state.level);
-		const count = elite ? 2 : 1;
+	const spawnXp = (
+		x: number,
+		y: number,
+		options: {
+			elite?: boolean;
+			tier?: XpRewardTier;
+			grantsPerk?: boolean;
+			forcedShape?: XpShape;
+			valueMultiplier?: number;
+		} = {},
+	) => {
+		const {
+			elite = false,
+			tier = "normal",
+			grantsPerk = false,
+			forcedShape,
+			valueMultiplier = 1,
+		} = options;
+		const shape = forcedShape ?? getXpShape(state.level);
+		const count = grantsPerk ? 1 : tier === "boss" ? 3 : elite ? 2 : 1;
+		const colorBase =
+			tier === "rare" ? blendColors(XP_SHAPE_COLORS[shape], 0x020617, 0.32) : XP_SHAPE_COLORS[shape];
 		for (let index = 0; index < count; index += 1) {
 			const angle = (TAU / Math.max(count, 1)) * index;
 			state.xpOrbs.push({
 				x: x + Math.cos(angle) * (elite ? 10 : 0),
 				y: y + Math.sin(angle) * (elite ? 10 : 0),
-				radius: elite ? 8 : 6,
-				value: getXpValue(state.level, elite && index === 0),
-				color: XP_SHAPE_COLORS[shape],
+				radius: tier === "boss" ? 9 : elite ? 8 : 6,
+				value: Math.round(getXpValue(state.level, elite && index === 0) * valueMultiplier),
+				color: grantsPerk ? blendColors(colorBase, 0xffffff, 0.16) : colorBase,
 				shape,
 				spin: PhaserLib.Math.FloatBetween(-1.6, 1.6),
+				tier,
+				grantsPerk,
 			});
 		}
+		condenseXpOrbs();
 	};
 
-	const createEnemy = (scene: PhaserScene) => {
+	const pickEnemyShape = (
+		kind: EnemyKind,
+		elite: boolean,
+	): { shape: EnemyShape; radiusMultiplier: number } => {
+		const unlockedShapes = getUnlockedEnemyShapes(state);
+		let shape: EnemyShape = "circle";
+		if (kind === "boss") {
+			shape =
+				PhaserLib.Utils.Array.GetRandom(
+					BOSS_ENEMY_SHAPES.filter((candidate) => unlockedShapes.includes(candidate)),
+				) ?? "hexagon";
+		} else if (kind === "rare") {
+			shape =
+				PhaserLib.Utils.Array.GetRandom(
+					RARE_ENEMY_SHAPES.filter((candidate) => unlockedShapes.includes(candidate)),
+				) ?? "quatrefoil";
+		} else if (kind === "tank") {
+			shape =
+				PhaserLib.Utils.Array.GetRandom(
+					TANK_ENEMY_SHAPES.filter((candidate) => unlockedShapes.includes(candidate)),
+				) ?? "square";
+		} else if (kind === "swift") {
+			shape =
+				state.level < 6 || Math.random() < 0.82
+					? "circle"
+					: (PhaserLib.Utils.Array.GetRandom(
+							SWIFT_ENEMY_SHAPES.filter((candidate) => unlockedShapes.includes(candidate)),
+						) ?? "circle");
+		} else if (elite && Math.random() < 0.28) {
+			shape =
+				PhaserLib.Utils.Array.GetRandom(
+					(["square", "pentagon", "hexagon"] as XpShape[]).filter((candidate) =>
+						unlockedShapes.includes(candidate),
+					),
+				) ?? "circle";
+		}
+
+		const radiusMultiplier =
+			shape === "circle"
+				? 1
+				: SMALL_FACE_SHAPES.has(shape)
+					? kind === "boss" || kind === "rare"
+						? 1.3
+						: 1.18
+					: kind === "boss"
+						? 1.14
+						: 1.06;
+		return { shape, radiusMultiplier };
+	};
+
+	const createEnemy = (scene: PhaserScene, forcedKind?: EnemyKind) => {
 		const layout = getLayout(scene);
 		const cameraLeft = state.cameraX;
 		const cameraRight = cameraLeft + layout.fieldWidth;
 		const side = PhaserLib.Math.Between(0, 3);
-		const pressure = state.level + state.timeSurvived / 45;
+		const pressure = getEnemyPressure(state);
+		const playerPower = getPlayerPowerScore(state);
+		const kind: EnemyKind =
+			forcedKind ??
+			(Math.random() < clamp(0.025 + pressure * 0.0025, 0.025, 0.13)
+				? "rare"
+				: Math.random() < clamp(0.14 + pressure * 0.004, 0.14, 0.24)
+					? "swift"
+					: Math.random() < clamp(0.14 + pressure * 0.0036, 0.14, 0.22)
+						? "tank"
+						: "normal");
 		const elite =
-			state.level >= 5 && Math.random() < clamp(0.04 + pressure * 0.008, 0.04, 0.22);
-		const radius = elite ? PhaserLib.Math.Between(18, 22) : PhaserLib.Math.Between(12, 16);
+			kind !== "boss" &&
+			kind !== "rare" &&
+			state.level >= 5 &&
+			Math.random() < clamp(0.04 + pressure * 0.008, 0.04, 0.22);
+		const { shape, radiusMultiplier } = pickEnemyShape(kind, elite);
+		const baseRadius =
+			kind === "boss"
+				? PhaserLib.Math.Between(30, 40)
+				: kind === "tank"
+					? PhaserLib.Math.Between(17, 21)
+					: kind === "rare"
+						? PhaserLib.Math.Between(15, 19)
+						: elite
+							? PhaserLib.Math.Between(18, 22)
+							: PhaserLib.Math.Between(12, 16);
+		const radius = Math.round(baseRadius * radiusMultiplier);
 		const margin = 54;
 		let x = 0;
 		let y = 0;
@@ -962,30 +1509,78 @@ function mountSurvivalShooter(
 			y = state.worldHeight + margin;
 		}
 
+		const sizeWeight = clamp(radius / 15, 0.78, 3.1);
+		const hpScale = 0.96 + playerPower * 0.038;
+		const kindHpMultiplier =
+			kind === "boss"
+				? 7.4
+				: kind === "tank"
+					? 2.2
+					: kind === "rare"
+						? 1.55
+						: kind === "swift"
+							? 0.82
+							: 1;
+		const kindSpeedMultiplier =
+			kind === "boss"
+				? 0.92
+				: kind === "tank"
+					? 0.82
+					: kind === "rare"
+						? 1.26
+						: kind === "swift"
+							? 1.58
+							: 1;
+		const damage =
+			kind === "boss"
+				? 3 + Math.floor(state.level / 14)
+				: kind === "tank"
+					? 2 + Math.floor(state.level / 20)
+					: kind === "rare"
+						? 2
+						: elite
+							? 2
+							: 1 + Math.floor(state.level / 28);
 		const maxHp =
 			state.overdriveUntil > state.timeSurvived
 				? 1
 				: Math.round(
-						(elite ? 5 : 1.6) +
-							(radius - (elite ? 18 : 12)) * (elite ? 0.8 : 0.6) +
-							pressure * (elite ? 0.58 : 0.24) +
-							PhaserLib.Math.FloatBetween(0, elite ? 1.8 : 1.1),
+						((elite ? 1.4 : 0.8) +
+							sizeWeight * (elite ? 2.25 : 1.7) +
+							pressure * (elite ? 0.62 : 0.34) +
+							PhaserLib.Math.FloatBetween(0.2, elite ? 1.2 : 0.9)) *
+							kindHpMultiplier *
+							hpScale,
 					);
 		const colorTier = Math.min(
 			Math.floor(pressure / 4),
-			(elite ? ENEMY_ELITE_COLORS : ENEMY_NORMAL_COLORS).length - 1,
+			(kind === "boss"
+				? ENEMY_BOSS_COLORS
+				: kind === "rare"
+					? ENEMY_RARE_COLORS
+					: elite
+						? ENEMY_ELITE_COLORS
+						: ENEMY_NORMAL_COLORS).length - 1,
 		);
-		const color = (elite ? ENEMY_ELITE_COLORS : ENEMY_NORMAL_COLORS)[colorTier];
-
+		const color =
+			(kind === "boss"
+				? ENEMY_BOSS_COLORS
+				: kind === "rare"
+					? ENEMY_RARE_COLORS
+					: elite
+						? ENEMY_ELITE_COLORS
+						: ENEMY_NORMAL_COLORS)[colorTier];
 		state.enemies.push({
 			id: nextEnemyId++,
 			x: clamp(x, -80, state.worldWidth + 80),
 			y,
 			radius,
 			speed:
-				(elite ? 74 : 82) +
-				pressure * (elite ? 1.7 : 1.2) +
-				PhaserLib.Math.FloatBetween(-4, 8),
+				((elite ? 76 : 84) +
+					pressure * (elite ? 1.95 : 1.45) +
+					state.player.speed * 0.045 +
+					PhaserLib.Math.FloatBetween(-4, 8)) *
+				kindSpeedMultiplier,
 			hp: maxHp,
 			maxHp,
 			color,
@@ -993,7 +1588,11 @@ function mountSurvivalShooter(
 			flashTimer: 0,
 			auraTickTimer: 0,
 			trailTickTimer: 0,
+			waterTickTimer: 0,
 			orbitalHitTimer: 0,
+			damage,
+			shape,
+			kind,
 		});
 	};
 
@@ -1001,27 +1600,29 @@ function mountSurvivalShooter(
 		const layout = getLayout(scene);
 		const cameraLeft = state.cameraX;
 		const cameraRight = cameraLeft + layout.fieldWidth;
-		const recycleDistance = layout.fieldWidth * 0.72;
+		const recycleDistance = layout.fieldWidth * (enemy.kind === "boss" ? 0.4 : 0.72);
 		const leadSideIsRight = state.lastHorizontalDirection >= 0;
+		const relocationBuffer = enemy.kind === "boss" ? PhaserLib.Math.Between(18, 44) : PhaserLib.Math.Between(36, 88);
+		const targetYOffset = enemy.kind === "boss" ? 0.24 : 0.35;
 
 		if (enemy.x < cameraLeft - recycleDistance && leadSideIsRight) {
-			enemy.x = Math.min(state.worldWidth + 48, cameraRight + PhaserLib.Math.Between(36, 88));
+			enemy.x = Math.min(state.worldWidth + 48, cameraRight + relocationBuffer);
 			enemy.y = clamp(
-				state.player.y + PhaserLib.Math.Between(-layout.fieldHeight * 0.35, layout.fieldHeight * 0.35),
+				state.player.y + PhaserLib.Math.Between(-layout.fieldHeight * targetYOffset, layout.fieldHeight * targetYOffset),
 				-enemy.radius * 2,
 				state.worldHeight + enemy.radius * 2,
 			);
 		} else if (enemy.x > cameraRight + recycleDistance && !leadSideIsRight) {
-			enemy.x = Math.max(-48, cameraLeft - PhaserLib.Math.Between(36, 88));
+			enemy.x = Math.max(-48, cameraLeft - relocationBuffer);
 			enemy.y = clamp(
-				state.player.y + PhaserLib.Math.Between(-layout.fieldHeight * 0.35, layout.fieldHeight * 0.35),
+				state.player.y + PhaserLib.Math.Between(-layout.fieldHeight * targetYOffset, layout.fieldHeight * targetYOffset),
 				-enemy.radius * 2,
 				state.worldHeight + enemy.radius * 2,
 			);
 		} else if (enemy.x < cameraLeft - layout.fieldWidth * 1.45) {
-			enemy.x = Math.min(state.worldWidth + 48, cameraRight + PhaserLib.Math.Between(36, 88));
+			enemy.x = Math.min(state.worldWidth + 48, cameraRight + relocationBuffer);
 		} else if (enemy.x > cameraRight + layout.fieldWidth * 1.45) {
-			enemy.x = Math.max(-48, cameraLeft - PhaserLib.Math.Between(36, 88));
+			enemy.x = Math.max(-48, cameraLeft - relocationBuffer);
 		}
 	};
 
@@ -1048,7 +1649,7 @@ function mountSurvivalShooter(
 				vx: Math.cos(angle) * 560,
 				vy: Math.sin(angle) * 560,
 				radius: 4,
-				damage: state.player.damage,
+				damage: state.player.damage * getForceMultiplier(state),
 				life: 1.6,
 				extraHitsRemaining: state.abilities.pierce,
 				ricochetsRemaining: getRicochetCount(state),
@@ -1093,7 +1694,15 @@ function mountSurvivalShooter(
 	const updateHud = (scene: PhaserScene) => {
 		const xpRatio = clamp(state.xp / Math.max(state.nextLevelXp, 1), 0, 1);
 		const showHud = state.phase === "playing" || state.phase === "paused";
-		const hiddenPerkKeys: AbilityKey[] = ["critChance", "critDamage", "dodge", "magnet"];
+		const hiddenPerkKeys: AbilityKey[] = [
+			"critChance",
+			"critDamage",
+			"dodge",
+			"growth",
+			"force",
+			"reach",
+			"magnet",
+		];
 		const activePerks = (Object.keys(ABILITY_LABELS) as AbilityKey[])
 			.filter((key) => state.abilities[key] > 0 && !hiddenPerkKeys.includes(key))
 			.map((key) => `${ABILITY_LABELS[key]} Lv.${state.abilities[key]}`);
@@ -1118,6 +1727,9 @@ function mountSurvivalShooter(
 				`Crit Damage x${getCritDamageMultiplier(state).toFixed(1)}`,
 				`Volley      ${getVolleyCount(state)}x${getProjectileCount(state)}`,
 				`Dodge       ${formatPercent(getDodgeChance(state))}`,
+				`Growth      ${formatPercent(getXpGainMultiplier(state) - 1)}`,
+				`Force       ${formatPercent(getForceMultiplier(state) - 1)}`,
+				`Reach       ${formatPercent(getReachMultiplier(state) - 1)}`,
 				`Magnet      ${Math.round(getMagnetRadius(state))}`,
 				"",
 				"PERKS",
@@ -1156,6 +1768,7 @@ function mountSurvivalShooter(
 				? [
 						"Run terminated",
 						`Survived ${formatTime(state.timeSurvived)}   Kills ${formatCompact(state.kills)}`,
+						`Damage ${formatCompact(Math.round(state.totalDamage))}`,
 						"Press Space, Enter, R, or click to restart",
 					].join("\n")
 				: state.overdriveUntil > state.timeSurvived
@@ -1170,29 +1783,6 @@ function mountSurvivalShooter(
 				: 1,
 		);
 		updateHudLayout(scene);
-	};
-
-	const drawPolygon = (
-		target: PhaserGraphics,
-		x: number,
-		y: number,
-		radius: number,
-		sides: number,
-		rotation: number,
-		color: number,
-		alpha = 1,
-	) => {
-		target.fillStyle(color, alpha);
-		target.beginPath();
-		for (let side = 0; side < sides; side += 1) {
-			const angle = rotation + (TAU * side) / sides;
-			const px = x + Math.cos(angle) * radius;
-			const py = y + Math.sin(angle) * radius;
-			if (side === 0) target.moveTo(px, py);
-			else target.lineTo(px, py);
-		}
-		target.closePath();
-		target.fillPath();
 	};
 
 	const tracePolygonPath = (
@@ -1214,6 +1804,66 @@ function mountSurvivalShooter(
 		target.closePath();
 	};
 
+	const tracePointPath = (
+		target: PhaserGraphics,
+		x: number,
+		y: number,
+		points: Array<{ x: number; y: number }>,
+		rotation: number,
+	) => {
+		target.beginPath();
+		points.forEach((point, index) => {
+			const px = x + point.x * Math.cos(rotation) - point.y * Math.sin(rotation);
+			const py = y + point.x * Math.sin(rotation) + point.y * Math.cos(rotation);
+			if (index === 0) target.moveTo(px, py);
+			else target.lineTo(px, py);
+		});
+		target.closePath();
+	};
+
+	const traceStarPath = (
+		target: PhaserGraphics,
+		x: number,
+		y: number,
+		outerRadius: number,
+		innerRadius: number,
+		points: number,
+		rotation: number,
+	) => {
+		target.beginPath();
+		for (let index = 0; index < points * 2; index += 1) {
+			const angle = rotation + (Math.PI * index) / points;
+			const radius = index % 2 === 0 ? outerRadius : innerRadius;
+			const px = x + Math.cos(angle) * radius;
+			const py = y + Math.sin(angle) * radius;
+			if (index === 0) target.moveTo(px, py);
+			else target.lineTo(px, py);
+		}
+		target.closePath();
+	};
+
+	const traceParametricPath = (
+		target: PhaserGraphics,
+		x: number,
+		y: number,
+		radius: number,
+		steps: number,
+		getRadius: (angle: number) => number,
+		rotation: number,
+	) => {
+		target.beginPath();
+		for (let index = 0; index <= steps; index += 1) {
+			const progress = index / steps;
+			const angle = rotation + progress * TAU;
+			const localRadius = radius * getRadius(angle - rotation);
+			const px = x + Math.cos(angle) * localRadius;
+			const py = y + Math.sin(angle) * localRadius;
+			if (index === 0) target.moveTo(px, py);
+			else target.lineTo(px, py);
+		}
+		target.closePath();
+	};
+
 	const drawOutlinedCircle = (
 		target: PhaserGraphics,
 		x: number,
@@ -1229,22 +1879,114 @@ function mountSurvivalShooter(
 		target.strokeCircle(x, y, radius);
 	};
 
-	const drawOutlinedPolygon = (
+	const drawOutlinedXpShape = (
 		target: PhaserGraphics,
 		x: number,
 		y: number,
 		radius: number,
-		sides: number,
+		shape: XpShape,
 		rotation: number,
 		color: number,
 		alpha = 1,
 		borderWidth = 2,
 	) => {
 		target.fillStyle(color, alpha);
-		tracePolygonPath(target, x, y, radius, sides, rotation);
+		if (shape in REGULAR_XP_SHAPE_SIDES) {
+			const sides = REGULAR_XP_SHAPE_SIDES[shape];
+			if (sides) tracePolygonPath(target, x, y, radius, sides, rotation);
+		} else if (shape === "kite") {
+			tracePointPath(
+				target,
+				x,
+				y,
+				[
+					{ x: 0, y: -radius },
+					{ x: radius * 0.62, y: radius * 0.08 },
+					{ x: 0, y: radius * 0.9 },
+					{ x: -radius * 0.34, y: radius * 0.08 },
+				],
+				rotation,
+			);
+		} else if (shape === "roundedTriangle") {
+			traceParametricPath(
+				target,
+				x,
+				y,
+				radius,
+				28,
+				(angle) => 0.78 + 0.2 * Math.cos(angle * 3),
+				rotation,
+			);
+		} else if (shape === "quatrefoil") {
+			traceParametricPath(
+				target,
+				x,
+				y,
+				radius,
+				32,
+				(angle) => 0.68 + 0.26 * Math.abs(Math.cos(angle * 2)),
+				rotation,
+			);
+		} else if (shape === "star4") {
+			traceStarPath(target, x, y, radius, radius * 0.42, 4, rotation);
+		} else if (shape === "star5") {
+			traceStarPath(target, x, y, radius, radius * 0.45, 5, rotation);
+		} else if (shape === "hexagram") {
+			traceStarPath(target, x, y, radius, radius * 0.48, 6, rotation);
+		} else if (shape === "star6") {
+			traceStarPath(target, x, y, radius, radius * 0.64, 6, rotation);
+		} else if (shape === "octagram") {
+			traceStarPath(target, x, y, radius, radius * 0.52, 8, rotation);
+		}
 		target.fillPath();
 		target.lineStyle(borderWidth, dimColor(PhaserLib, color, 0.42), alpha * 0.95);
-		tracePolygonPath(target, x, y, radius, sides, rotation);
+		if (shape in REGULAR_XP_SHAPE_SIDES) {
+			const sides = REGULAR_XP_SHAPE_SIDES[shape];
+			if (sides) tracePolygonPath(target, x, y, radius, sides, rotation);
+		} else if (shape === "kite") {
+			tracePointPath(
+				target,
+				x,
+				y,
+				[
+					{ x: 0, y: -radius },
+					{ x: radius * 0.62, y: radius * 0.08 },
+					{ x: 0, y: radius * 0.9 },
+					{ x: -radius * 0.34, y: radius * 0.08 },
+				],
+				rotation,
+			);
+		} else if (shape === "roundedTriangle") {
+			traceParametricPath(
+				target,
+				x,
+				y,
+				radius,
+				28,
+				(angle) => 0.78 + 0.2 * Math.cos(angle * 3),
+				rotation,
+			);
+		} else if (shape === "quatrefoil") {
+			traceParametricPath(
+				target,
+				x,
+				y,
+				radius,
+				32,
+				(angle) => 0.68 + 0.26 * Math.abs(Math.cos(angle * 2)),
+				rotation,
+			);
+		} else if (shape === "star4") {
+			traceStarPath(target, x, y, radius, radius * 0.42, 4, rotation);
+		} else if (shape === "star5") {
+			traceStarPath(target, x, y, radius, radius * 0.45, 5, rotation);
+		} else if (shape === "hexagram") {
+			traceStarPath(target, x, y, radius, radius * 0.48, 6, rotation);
+		} else if (shape === "star6") {
+			traceStarPath(target, x, y, radius, radius * 0.64, 6, rotation);
+		} else if (shape === "octagram") {
+			traceStarPath(target, x, y, radius, radius * 0.52, 8, rotation);
+		}
 		target.strokePath();
 	};
 
@@ -1356,6 +2098,7 @@ function mountSurvivalShooter(
 
 	const drawScene = (scene: PhaserScene) => {
 		if (!graphics) return;
+		if (xpOrbCullingFrame !== cullingFrameId) rebuildXpOrbCulling(scene);
 
 		const width = scene.scale.width;
 		const height = scene.scale.height;
@@ -1367,6 +2110,7 @@ function mountSurvivalShooter(
 		const orbitalStats = getOrbitalStats(state);
 		const orbitalDiamonds = getOrbitalDiamonds();
 		const showHud = state.phase === "playing" || state.phase === "paused";
+		const visibleEnemyIndices = getActiveEnemyIndices(scene);
 
 		graphics.clear();
 		graphics.fillStyle(0x07111a, 1);
@@ -1436,6 +2180,41 @@ function mountSurvivalShooter(
 			graphics.strokeCircle(screenX, screenY, cloud.radius + pulse * 2);
 		}
 
+		for (const pool of state.waterPools) {
+			const screenX = worldToScreenX(pool.x, layout);
+			const screenY = worldToScreenY(pool.y, layout);
+			if (
+				screenX < layout.fieldX - pool.radius - 32 ||
+				screenX > layout.fieldX + layout.fieldWidth + pool.radius + 32 ||
+				screenY < layout.fieldY - pool.radius - 32 ||
+				screenY > layout.fieldY + layout.fieldHeight + pool.radius + 32
+			) {
+				continue;
+			}
+			const alpha = clamp(pool.ttl / Math.max(pool.maxTtl, 0.01), 0, 1);
+			const wobble = Math.sin(state.timeSurvived * 4.6 + pool.spin) * 0.08 + 0.92;
+			const poolRadius = pool.radius * wobble;
+			graphics.fillStyle(0x67e8f9, 0.12 * alpha);
+			graphics.fillCircle(screenX, screenY, poolRadius + 6);
+			graphics.fillStyle(0x93c5fd, 0.2 * alpha);
+			graphics.fillCircle(screenX, screenY, poolRadius);
+			graphics.lineStyle(1.5, 0xe0f2fe, 0.26 * alpha);
+			graphics.strokeCircle(screenX, screenY, poolRadius + pulse * 3);
+			for (let bubbleIndex = 0; bubbleIndex < 3; bubbleIndex += 1) {
+				const bubbleAngle =
+					state.timeSurvived * (1.6 + bubbleIndex * 0.35) +
+					pool.spin +
+					(TAU * bubbleIndex) / 3;
+				const bubbleRadius = poolRadius * (0.34 + bubbleIndex * 0.14);
+				graphics.fillStyle(0xf8fafc, (0.18 - bubbleIndex * 0.03) * alpha);
+				graphics.fillCircle(
+					screenX + Math.cos(bubbleAngle) * bubbleRadius * 0.55,
+					screenY + Math.sin(bubbleAngle) * bubbleRadius * 0.42,
+					2.2 - bubbleIndex * 0.35,
+				);
+			}
+		}
+
 		for (const particle of state.particles) {
 			const screenX = worldToScreenX(particle.x, layout);
 			const screenY = worldToScreenY(particle.y, layout);
@@ -1459,7 +2238,9 @@ function mountSurvivalShooter(
 			);
 		}
 
-		for (const orb of state.xpOrbs) {
+		for (const orbIndex of xpOrbIndicesForRender) {
+			const orb = state.xpOrbs[orbIndex];
+			if (!orb) continue;
 			const screenX = worldToScreenX(orb.x, layout);
 			const screenY = worldToScreenY(orb.y, layout);
 			if (
@@ -1470,12 +2251,12 @@ function mountSurvivalShooter(
 			) {
 				continue;
 			}
-			drawOutlinedPolygon(
+			drawOutlinedXpShape(
 				graphics,
 				screenX,
 				screenY,
 				orb.radius,
-				XP_SHAPE_SIDES[orb.shape],
+				orb.shape,
 				state.timeSurvived * orb.spin,
 				orb.color,
 				0.95,
@@ -1500,7 +2281,9 @@ function mountSurvivalShooter(
 			drawOutlinedCircle(graphics, screenX, screenY, bullet.radius, bulletColor, 0.96, 1.5);
 		}
 
-		for (const enemy of state.enemies) {
+		for (const enemyIndex of visibleEnemyIndices) {
+			const enemy = state.enemies[enemyIndex];
+			if (!enemy) continue;
 			const screenX = worldToScreenX(enemy.x, layout);
 			const screenY = worldToScreenY(enemy.y, layout);
 			if (
@@ -1514,15 +2297,30 @@ function mountSurvivalShooter(
 
 			const enemyColor =
 				enemy.flashTimer > 0 ? lightenColor(PhaserLib, enemy.color, 0.38) : enemy.color;
-			drawOutlinedCircle(
-				graphics,
-				screenX,
-				screenY,
-				enemy.radius,
-				enemyColor,
-				1,
-				2,
-			);
+			const polygonShape = getEnemyPolygonShape(enemy.shape);
+			if (!polygonShape) {
+				drawOutlinedCircle(
+					graphics,
+					screenX,
+					screenY,
+					enemy.radius,
+					enemyColor,
+					1,
+					2,
+				);
+			} else {
+				drawOutlinedXpShape(
+					graphics,
+					screenX,
+					screenY,
+					enemy.radius,
+					polygonShape,
+					state.timeSurvived * 0.35,
+					enemyColor,
+					1,
+					2,
+				);
+			}
 			graphics.fillStyle(0x020617, 0.92);
 			graphics.fillCircle(screenX - enemy.radius * 0.28, screenY - enemy.radius * 0.16, 1.8);
 			graphics.fillCircle(screenX + enemy.radius * 0.28, screenY - enemy.radius * 0.16, 1.8);
@@ -1546,7 +2344,7 @@ function mountSurvivalShooter(
 			}
 		}
 
-		const aimTarget = findClosestEnemy(getActiveEnemyIndices(scene));
+		const aimTarget = findClosestEnemy(visibleEnemyIndices);
 		const aimAngle = aimTarget
 			? Math.atan2(aimTarget.y - state.player.y, aimTarget.x - state.player.x)
 			: -Math.PI / 2;
@@ -1625,6 +2423,27 @@ function mountSurvivalShooter(
 			state.player.invulnerabilityTimer > 0 ? 0.9 : 1,
 			2,
 		);
+		if (state.shieldTimer > 0) {
+			const shieldPulse = 0.96 + Math.sin(state.timeSurvived * 6.5) * 0.05;
+			graphics.fillStyle(0xf8fafc, 0.06);
+			graphics.fillCircle(
+				playerScreenX,
+				playerScreenY,
+				(state.player.radius + 10) * shieldPulse,
+			);
+			graphics.lineStyle(2, 0xf8fafc, 0.45);
+			graphics.strokeCircle(
+				playerScreenX,
+				playerScreenY,
+				(state.player.radius + 10) * shieldPulse,
+			);
+			graphics.lineStyle(1, 0xbfdbfe, 0.36);
+			graphics.strokeCircle(
+				playerScreenX,
+				playerScreenY,
+				(state.player.radius + 14) * shieldPulse,
+			);
+		}
 		graphics.fillStyle(0x020617, 0.9);
 			graphics.fillCircle(playerScreenX - 5, playerScreenY - 4, 2.1);
 			graphics.fillCircle(playerScreenX + 5, playerScreenY - 4, 2.1);
@@ -1693,7 +2512,11 @@ function mountSurvivalShooter(
 
 	const updateGame = (scene: PhaserScene, dt: number) => {
 		const frameDt = Math.min(dt, 0.05);
+		cullingFrameId += 1;
+		xpOrbCullingFrame = -1;
 		state.player.invulnerabilityTimer = Math.max(0, state.player.invulnerabilityTimer - frameDt);
+		state.shieldTimer = Math.max(0, state.shieldTimer - frameDt);
+		state.shieldCooldownTimer = Math.max(0, state.shieldCooldownTimer - frameDt);
 		state.screenFlash = Math.max(0, state.screenFlash - frameDt * 1.8);
 		state.bannerTimer = Math.max(0, state.bannerTimer - frameDt);
 
@@ -1801,6 +2624,14 @@ function mountSurvivalShooter(
 			}
 		}
 
+		for (let index = state.waterPools.length - 1; index >= 0; index -= 1) {
+			const pool = state.waterPools[index];
+			pool.ttl -= frameDt;
+			if (pool.ttl <= 0) {
+				state.waterPools.splice(index, 1);
+			}
+		}
+
 		for (let index = state.particles.length - 1; index >= 0; index -= 1) {
 			const particle = state.particles[index];
 			particle.ttl -= frameDt;
@@ -1822,11 +2653,22 @@ function mountSurvivalShooter(
 			triggerOverdrive();
 		}
 
+		if (
+			state.timeSurvived >= state.nextBossSpawnTime &&
+			!state.enemies.some((enemy) => enemy.kind === "boss")
+		) {
+			createEnemy(scene, "boss");
+			state.nextBossSpawnTime += 58 + state.level * 1.6 + PhaserLib.Math.Between(14, 28);
+		}
+
 		state.spawnTimer -= frameDt;
 		if (state.spawnTimer <= 0) {
-			const intensity = 1 + Math.floor(state.level / 8) + Math.floor(state.timeSurvived / 75);
+			const intensity =
+				1 +
+				Math.floor(getEnemyPressure(state) / 7) +
+				Math.floor(state.timeSurvived / 90);
 			const enemiesPerWave = clamp(
-				1 + Math.floor(Math.max(0, intensity - state.enemies.length / 8)),
+				1 + Math.floor(Math.max(0, intensity - state.enemies.length / 9)),
 				1,
 				4,
 			);
@@ -1834,13 +2676,77 @@ function mountSurvivalShooter(
 				createEnemy(scene);
 			}
 			state.spawnTimer = clamp(
-				1.35 - state.level * 0.018 - Math.min(state.timeSurvived, 240) * 0.0018,
-				0.24,
-				1.35,
+				1.42 - getEnemyPressure(state) * 0.016 - Math.min(state.timeSurvived, 240) * 0.0011,
+				0.3,
+				1.42,
 			);
 		}
 
 		const activeEnemyIndices = getActiveEnemyIndices(scene);
+		const holyWaterStats = getHolyWaterStats(state);
+		if (holyWaterStats && activeEnemyIndices.length > 0) {
+			state.waterTimer -= frameDt;
+			if (state.waterTimer <= 0) {
+				const target = findClosestEnemy(activeEnemyIndices) ?? findClosestEnemy();
+				if (target) {
+					for (let index = 0; index < holyWaterStats.pools; index += 1) {
+						const angle = PhaserLib.Math.FloatBetween(0, TAU);
+						const distance = PhaserLib.Math.FloatBetween(0, holyWaterStats.scatter);
+						const poolX = clamp(
+							target.x + Math.cos(angle) * distance,
+							24,
+							state.worldWidth - 24,
+						);
+						const poolY = clamp(
+							target.y + Math.sin(angle) * distance * 0.72,
+							24,
+							state.worldHeight - 24,
+						);
+						state.waterPools.push({
+							x: poolX,
+							y: poolY,
+							radius: holyWaterStats.radius,
+							ttl: holyWaterStats.duration,
+							maxTtl: holyWaterStats.duration,
+							damage: holyWaterStats.damage,
+							spin: PhaserLib.Math.FloatBetween(-1.4, 1.4),
+						});
+						emitParticles(poolX, poolY, 0x93c5fd, 5, {
+							speedMin: 16,
+							speedMax: 46,
+							radiusMin: 1,
+							radiusMax: 2.5,
+							ttlMin: 0.1,
+							ttlMax: 0.24,
+							alpha: 0.78,
+						});
+					}
+				}
+				state.waterTimer = holyWaterStats.cooldown;
+			}
+		} else {
+			state.waterTimer = 0;
+		}
+
+		const bubbleShieldStats = getBubbleShieldStats(state);
+		if (bubbleShieldStats) {
+			if (state.shieldTimer <= 0 && state.shieldCooldownTimer <= 0) {
+				state.shieldTimer = bubbleShieldStats.duration;
+				state.shieldCooldownTimer = bubbleShieldStats.cooldown;
+				emitParticles(state.player.x, state.player.y, 0xf8fafc, 10, {
+					speedMin: 16,
+					speedMax: 52,
+					radiusMin: 1,
+					radiusMax: 2.6,
+					ttlMin: 0.12,
+					ttlMax: 0.26,
+					alpha: 0.8,
+				});
+			}
+		} else {
+			state.shieldTimer = 0;
+			state.shieldCooldownTimer = 0;
+		}
 
 		state.player.shotTimer -= frameDt;
 		if (state.player.shotTimer <= 0 && activeEnemyIndices.length > 0) {
@@ -1893,6 +2799,43 @@ function mountSurvivalShooter(
 			state.novaTimer = 0;
 		}
 
+		const spiralShotsStats = getSpiralShotsStats(state);
+		if (spiralShotsStats) {
+			state.spiralTimer -= frameDt;
+			if (state.spiralTimer <= 0) {
+				const baseAngle = state.timeSurvived * 2.4;
+				for (let pairIndex = 0; pairIndex < spiralShotsStats.pairs; pairIndex += 1) {
+					const pairOffset = (Math.PI / Math.max(spiralShotsStats.pairs, 1)) * pairIndex;
+					for (const angle of [baseAngle + pairOffset, baseAngle + pairOffset + Math.PI]) {
+						state.bullets.push({
+							x: state.player.x + Math.cos(angle) * (state.player.radius + 8),
+							y: state.player.y + Math.sin(angle) * (state.player.radius + 8),
+							vx: Math.cos(angle) * spiralShotsStats.speed,
+							vy: Math.sin(angle) * spiralShotsStats.speed,
+							radius: 3.4,
+							damage: spiralShotsStats.damage,
+							life: spiralShotsStats.life,
+							extraHitsRemaining: 0,
+							ricochetsRemaining: 0,
+							hitEnemyIds: [],
+						});
+					}
+				}
+				emitParticles(state.player.x, state.player.y, 0x93c5fd, 8, {
+					speedMin: 20,
+					speedMax: 54,
+					radiusMin: 1,
+					radiusMax: 2.4,
+					ttlMin: 0.08,
+					ttlMax: 0.22,
+					alpha: 0.72,
+				});
+				state.spiralTimer = spiralShotsStats.cooldown;
+			}
+		} else {
+			state.spiralTimer = 0;
+		}
+
 		for (let bulletIndex = state.bullets.length - 1; bulletIndex >= 0; bulletIndex -= 1) {
 			const bullet = state.bullets[bulletIndex];
 			bullet.x += bullet.vx * frameDt;
@@ -1920,16 +2863,21 @@ function mountSurvivalShooter(
 			}
 		}
 
-		for (const enemyIndex of activeEnemyIndices) {
-			const enemy = state.enemies[enemyIndex];
-			if (!enemy) continue;
+		const layout = getLayout(scene);
+		for (const enemy of state.enemies) {
 			enemy.flashTimer = Math.max(0, enemy.flashTimer - frameDt);
 			enemy.auraTickTimer = Math.max(0, enemy.auraTickTimer - frameDt);
 			enemy.trailTickTimer = Math.max(0, enemy.trailTickTimer - frameDt);
+			enemy.waterTickTimer = Math.max(0, enemy.waterTickTimer - frameDt);
 			enemy.orbitalHitTimer = Math.max(0, enemy.orbitalHitTimer - frameDt);
 			const angle = Math.atan2(state.player.y - enemy.y, state.player.x - enemy.x);
-			enemy.x += Math.cos(angle) * enemy.speed * frameDt;
-			enemy.y += Math.sin(angle) * enemy.speed * frameDt;
+			const horizontalGap = Math.abs(state.player.x - enemy.x);
+			const catchUpMultiplier =
+				horizontalGap > layout.fieldWidth * 0.55
+					? 1 + clamp((horizontalGap - layout.fieldWidth * 0.55) / layout.fieldWidth, 0, 0.65)
+					: 1;
+			enemy.x += Math.cos(angle) * enemy.speed * catchUpMultiplier * frameDt;
+			enemy.y += Math.sin(angle) * enemy.speed * catchUpMultiplier * frameDt;
 			recycleEnemyIfLagging(enemy, scene);
 		}
 
@@ -2006,7 +2954,16 @@ function mountSurvivalShooter(
 				ttlMax: enemy.elite ? 0.46 : 0.34,
 				alpha: 0.9,
 			});
-			spawnXp(enemy.x, enemy.y, enemy.elite);
+			const rewardShape = getEnemyPolygonShape(enemy.shape) ?? getXpShape(state.level);
+			spawnXp(enemy.x, enemy.y, {
+				elite: enemy.elite,
+				tier: enemy.kind === "boss" ? "boss" : enemy.kind === "rare" ? "rare" : "normal",
+				grantsPerk: enemy.kind === "boss",
+				forcedShape: rewardShape,
+				valueMultiplier:
+					enemy.kind === "boss" ? 3.6 : enemy.kind === "rare" ? 2.2 : enemy.kind === "tank" ? 1.25 : 1,
+			});
+			xpOrbCullingFrame = -1;
 			state.kills += 1;
 			if (shrapnelStats) {
 				shrapnelBursts.push({
@@ -2022,11 +2979,13 @@ function mountSurvivalShooter(
 			enemy: Enemy,
 			damageAmount: number,
 			floatingText?: {
-				text: string;
-				tint: number;
+				text?: string;
+				tint?: number;
 				size?: number;
 				ttl?: number;
 				velocityY?: number;
+				particleColor?: number;
+				particleCount?: number;
 			},
 		) => {
 			if (enemy.hp <= 0 || defeatedEnemyIds.has(enemy.id)) return;
@@ -2035,7 +2994,7 @@ function mountSurvivalShooter(
 			enemy.hp -= roundedDamage;
 			enemy.flashTimer = 0.08;
 			state.totalDamage += damageDone;
-			if (floatingText) {
+			if (floatingText?.text && floatingText.tint !== undefined) {
 				addCombatText(
 					scene,
 					enemy.x,
@@ -2047,7 +3006,12 @@ function mountSurvivalShooter(
 					floatingText.velocityY,
 				);
 			}
-			emitParticles(enemy.x, enemy.y, floatingText?.tint ?? enemy.color, 3, {
+			emitParticles(
+				enemy.x,
+				enemy.y,
+				floatingText?.particleColor ?? floatingText?.tint ?? enemy.color,
+				floatingText?.particleCount ?? 3,
+				{
 				speedMin: 14,
 				speedMax: 44,
 				radiusMin: 1,
@@ -2055,7 +3019,8 @@ function mountSurvivalShooter(
 				ttlMin: 0.08,
 				ttlMax: 0.18,
 				alpha: 0.72,
-			});
+				},
+			);
 			if (enemy.hp <= 0) {
 				defeatEnemy(enemy);
 			}
@@ -2081,6 +3046,50 @@ function mountSurvivalShooter(
 				}
 			}
 			return closestEnemy;
+		};
+		const chainLightningStats = getChainLightningStats(state);
+		const arcChainLightning = (sourceEnemy: Enemy, baseDamage: number, hitEnemyIds: number[]) => {
+			if (!chainLightningStats) return;
+			const visitedIds = new Set<number>([sourceEnemy.id, ...hitEnemyIds]);
+			const candidates = state.enemies
+				.filter((enemy) => {
+					if (enemy.hp <= 0 || defeatedEnemyIds.has(enemy.id) || visitedIds.has(enemy.id)) {
+						return false;
+					}
+					const dx = enemy.x - sourceEnemy.x;
+					const dy = enemy.y - sourceEnemy.y;
+					return dx * dx + dy * dy <= chainLightningStats.range * chainLightningStats.range;
+				})
+				.sort((left, right) => {
+					const leftDistance = (left.x - sourceEnemy.x) ** 2 + (left.y - sourceEnemy.y) ** 2;
+					const rightDistance = (right.x - sourceEnemy.x) ** 2 + (right.y - sourceEnemy.y) ** 2;
+					return leftDistance - rightDistance;
+				})
+				.slice(0, chainLightningStats.chains);
+			candidates.forEach((enemy, index) => {
+				const damage = Math.max(
+					1,
+					baseDamage * chainLightningStats.damageMultiplier * (1 - index * 0.12),
+				);
+				emitParticles(enemy.x, enemy.y, 0x93c5fd, 4, {
+					speedMin: 18,
+					speedMax: 62,
+					radiusMin: 0.9,
+					radiusMax: 2.2,
+					ttlMin: 0.08,
+					ttlMax: 0.18,
+					alpha: 0.72,
+				});
+				applyEnemyDamage(enemy, damage, {
+					text: `${Math.max(1, Math.round(damage))}`,
+					tint: 0x93c5fd,
+					size: 13,
+					ttl: 0.32,
+					velocityY: 30,
+					particleColor: 0x93c5fd,
+					particleCount: 4,
+				});
+			});
 		};
 		const auraStats = getAuraStats(state);
 		if (auraStats) {
@@ -2131,6 +3140,21 @@ function mountSurvivalShooter(
 				}
 			}
 		}
+		if (state.waterPools.length > 0 && holyWaterStats) {
+			for (const enemyIndex of activeEnemyIndices) {
+				const enemy = state.enemies[enemyIndex];
+				if (!enemy || enemy.waterTickTimer > 0 || defeatedEnemyIds.has(enemy.id)) continue;
+				for (const pool of state.waterPools) {
+					if (!circleHit(pool.x, pool.y, pool.radius, enemy.x, enemy.y, enemy.radius)) continue;
+					applyEnemyDamage(enemy, pool.damage, {
+						particleColor: 0x93c5fd,
+						particleCount: 4,
+					});
+					enemy.waterTickTimer = holyWaterStats.tickInterval;
+					break;
+				}
+			}
+		}
 
 		while (shrapnelBursts.length > 0) {
 			const burst = shrapnelBursts.shift();
@@ -2172,7 +3196,12 @@ function mountSurvivalShooter(
 				applyEnemyDamage(enemy, damage, {
 					text: crit ? `${roundedDamage}!` : `${roundedDamage}`,
 					tint: damageTint,
+					particleColor: 0x7dd3fc,
+					particleCount: 4,
 				});
+				if (chainLightningStats) {
+					arcChainLightning(enemy, roundedDamage, bullet.hitEnemyIds);
+				}
 
 				if (bullet.extraHitsRemaining > 0) {
 					bullet.extraHitsRemaining -= 1;
@@ -2210,6 +3239,7 @@ function mountSurvivalShooter(
 			if (
 				enemy &&
 				state.player.invulnerabilityTimer <= 0 &&
+				state.shieldTimer <= 0 &&
 				circleHit(state.player.x, state.player.y, state.player.radius, enemy.x, enemy.y, enemy.radius)
 			) {
 				if (Math.random() < getDodgeChance(state)) {
@@ -2289,6 +3319,7 @@ function mountSurvivalShooter(
 						applyEnemyDamage(otherEnemy, thornsStats.damage);
 					}
 				}
+				state.player.lives = Math.max(0, state.player.lives - (enemy.damage - 1));
 				state.enemies.splice(enemyIndex, 1);
 				if (state.player.lives <= 0) {
 					state.player.lives = 0;
@@ -2299,8 +3330,25 @@ function mountSurvivalShooter(
 			}
 		}
 
-		for (let index = state.xpOrbs.length - 1; index >= 0; index -= 1) {
+		if (state.shieldTimer > 0) {
+			for (const enemyIndex of collisionEnemyIndices) {
+				const enemy = state.enemies[enemyIndex];
+				if (
+					enemy &&
+					circleHit(state.player.x, state.player.y, state.player.radius + 10, enemy.x, enemy.y, enemy.radius)
+				) {
+					const pushAngle = Math.atan2(enemy.y - state.player.y, enemy.x - state.player.x);
+					enemy.x += Math.cos(pushAngle) * 28;
+					enemy.y += Math.sin(pushAngle) * 28;
+				}
+			}
+		}
+
+		rebuildXpOrbCulling(scene);
+		for (let pointer = xpOrbIndicesForUpdate.length - 1; pointer >= 0; pointer -= 1) {
+			const index = xpOrbIndicesForUpdate[pointer];
 			const orb = state.xpOrbs[index];
+			if (!orb) continue;
 			const dx = state.player.x - orb.x;
 			const dy = state.player.y - orb.y;
 			const distance = Math.hypot(dx, dy) || 1;
@@ -2311,10 +3359,17 @@ function mountSurvivalShooter(
 				orb.y += (dy / distance) * pullSpeed * frameDt;
 			}
 			if (distance <= state.player.radius + orb.radius + 4) {
-				state.xp += orb.value;
+				state.xp += Math.max(1, Math.round(orb.value * getXpGainMultiplier(state)));
+				if (orb.grantsPerk) {
+					const perkLabel = upgradeAbility();
+					pushBanner(`Boss drop: ${perkLabel}`, 2.8);
+				}
 				state.xpOrbs.splice(index, 1);
+				xpOrbCullingFrame = -1;
 			}
 		}
+
+		if (xpOrbCullingFrame !== cullingFrameId) rebuildXpOrbCulling(scene);
 
 		levelUpIfNeeded();
 		updateHud(scene);
