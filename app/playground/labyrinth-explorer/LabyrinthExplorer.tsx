@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 
@@ -210,7 +209,7 @@ export default function LabyrinthExplorer() {
 				let current = grid[0];
 				const stack: Cell[] = [];
 				current.visited = true;
-				for (;;) {
+				for (; ;) {
 					const next = current.checkNeighbors();
 					if (next) {
 						next.visited = true;

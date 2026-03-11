@@ -14,6 +14,7 @@ type PhaserKey = import("phaser").Input.Keyboard.Key;
 type SpeedMode = "Slow" | "Normal" | "Fast";
 type Dir = 0 | 1 | 2 | 3;
 type Grid = number[][];
+type PackedBoard = bigint;
 
 type MoveTransition = {
 	fromRow: number;
@@ -97,15 +98,31 @@ type TileView = {
 	cacheKey: string;
 };
 
-type SearchEntry = {
+type SolverCacheEntry = {
+	generation: number;
 	depth: number;
-	isPlayer: boolean;
+	isPlayerTurn: boolean;
 	value: number;
 };
 
 type SearchContext = {
 	deadline: number;
-	table: Map<number, SearchEntry>;
+	generation: number;
+};
+
+type PackedMoveResult = {
+	board: PackedBoard;
+	gained: number;
+	moved: boolean;
+};
+
+type OrderedPackedMove = PackedMoveResult & {
+	dir: Dir;
+	heuristic: number;
+};
+
+type AutoplaySolver = {
+	findBestMove: (grid: Grid, budgetMs: number) => Dir | null;
 };
 
 type KeyMap = {
@@ -138,9 +155,9 @@ const SPEED_SETTINGS: Record<
 	SpeedMode,
 	{ animationMs: number; autoplayMs: number; searchBudgetMs: number }
 > = {
-	Slow: { animationMs: 220, autoplayMs: 210, searchBudgetMs: 28 },
-	Normal: { animationMs: 140, autoplayMs: 95, searchBudgetMs: 18 },
-	Fast: { animationMs: 90, autoplayMs: 38, searchBudgetMs: 9 },
+	Slow: { animationMs: 220, autoplayMs: 260, searchBudgetMs: 96 },
+	Normal: { animationMs: 140, autoplayMs: 125, searchBudgetMs: 44 },
+	Fast: { animationMs: 90, autoplayMs: 56, searchBudgetMs: 20 },
 };
 
 const TILE_COLORS: Record<
@@ -160,7 +177,22 @@ const TILE_COLORS: Record<
 	2048: { fill: 0x4c1d95, stroke: 0xc084fc, sheen: 0xe9d5ff, text: "#faf5ff" },
 };
 
-const ZOBRIST = createZobristTable();
+const CELL_MASK = 0xfn;
+const ROW_TABLE_SIZE = 1 << 16;
+const ROW_MOVE_LEFT = new Uint16Array(ROW_TABLE_SIZE);
+const ROW_MOVE_RIGHT = new Uint16Array(ROW_TABLE_SIZE);
+const ROW_GAIN_LEFT = new Float64Array(ROW_TABLE_SIZE);
+const ROW_GAIN_RIGHT = new Float64Array(ROW_TABLE_SIZE);
+const ROW_EMPTY_COUNT = new Uint8Array(ROW_TABLE_SIZE);
+const SOLVER_CACHE_LIMIT = 250_000;
+const SNAKE_PATHS = [
+	[0, 1, 2, 3, 7, 6, 5, 4, 8, 9, 10, 11, 15, 14, 13, 12],
+	[3, 2, 1, 0, 4, 5, 6, 7, 11, 10, 9, 8, 12, 13, 14, 15],
+	[12, 13, 14, 15, 11, 10, 9, 8, 4, 5, 6, 7, 3, 2, 1, 0],
+	[15, 14, 13, 12, 8, 9, 10, 11, 7, 6, 5, 4, 0, 1, 2, 3],
+] as const;
+
+initializeSolverTables();
 
 function emptyGrid(): Grid {
 	return Array.from({ length: BOARD_SIZE }, () =>
@@ -355,275 +387,452 @@ function legalMoves(grid: Grid): Dir[] {
 	return moves;
 }
 
-function createZobristTable(): number[][][] {
-	let seed = 0x9e3779b9;
-	const next = () => {
-		seed ^= seed << 13;
-		seed ^= seed >>> 17;
-		seed ^= seed << 5;
-		return seed >>> 0;
-	};
-
-	return Array.from({ length: BOARD_SIZE }, () =>
-		Array.from({ length: BOARD_SIZE }, () =>
-			Array.from({ length: 20 }, () => next()),
-		),
+function reverseRow(row: number): number {
+	return (
+		((row & 0x000f) << 12) |
+		((row & 0x00f0) << 4) |
+		((row & 0x0f00) >> 4) |
+		((row & 0xf000) >> 12)
 	);
 }
 
-function hashGrid(grid: Grid): number {
-	let hash = 0;
-	for (let row = 0; row < BOARD_SIZE; row += 1) {
-		for (let col = 0; col < BOARD_SIZE; col += 1) {
-			hash ^= ZOBRIST[row][col][Math.min(ZOBRIST[row][col].length - 1, grid[row][col])];
+function initializeSolverTables(): void {
+	for (let row = 0; row < ROW_TABLE_SIZE; row += 1) {
+		const cells = [
+			row & 0x000f,
+			(row >> 4) & 0x000f,
+			(row >> 8) & 0x000f,
+			(row >> 12) & 0x000f,
+		];
+		ROW_EMPTY_COUNT[row] = cells.reduce(
+			(total, cell) => total + (cell === 0 ? 1 : 0),
+			0,
+		);
+
+		const compacted = cells.filter((cell) => cell !== 0);
+		const nextRow = [0, 0, 0, 0];
+		let gained = 0;
+		let writeIndex = 0;
+
+		for (let index = 0; index < compacted.length; index += 1) {
+			const current = compacted[index];
+			const next = compacted[index + 1];
+			if (next !== undefined && next === current) {
+				const merged = current + 1;
+				nextRow[writeIndex] = merged;
+				gained += valueFromExp(merged);
+				writeIndex += 1;
+				index += 1;
+				continue;
+			}
+			nextRow[writeIndex] = current;
+			writeIndex += 1;
 		}
+
+		const packedLeft =
+			nextRow[0] |
+			(nextRow[1] << 4) |
+			(nextRow[2] << 8) |
+			(nextRow[3] << 12);
+		ROW_MOVE_LEFT[row] = packedLeft;
+		ROW_GAIN_LEFT[row] = gained;
+
+		const reversed = reverseRow(row);
+		const reversedCompacted = [
+			reversed & 0x000f,
+			(reversed >> 4) & 0x000f,
+			(reversed >> 8) & 0x000f,
+			(reversed >> 12) & 0x000f,
+		].filter((cell) => cell !== 0);
+		const nextRight = [0, 0, 0, 0];
+		let rightGain = 0;
+		let rightIndex = 0;
+		for (let index = 0; index < reversedCompacted.length; index += 1) {
+			const current = reversedCompacted[index];
+			const next = reversedCompacted[index + 1];
+			if (next !== undefined && next === current) {
+				const merged = current + 1;
+				nextRight[rightIndex] = merged;
+				rightGain += valueFromExp(merged);
+				rightIndex += 1;
+				index += 1;
+				continue;
+			}
+			nextRight[rightIndex] = current;
+			rightIndex += 1;
+		}
+		const packedRight = reverseRow(
+			nextRight[0] |
+				(nextRight[1] << 4) |
+				(nextRight[2] << 8) |
+				(nextRight[3] << 12),
+		);
+		ROW_MOVE_RIGHT[row] = packedRight;
+		ROW_GAIN_RIGHT[row] = rightGain;
 	}
-	return hash >>> 0;
 }
 
-function evaluateGrid(grid: Grid): number {
-	const emptyCells = getEmptyCells(grid).length;
-	const highestExp = maxExp(grid);
-
-	let smoothness = 0;
-	let mergePotential = 0;
-	let monotonicity = 0;
-
+function packGrid(grid: Grid): PackedBoard {
+	let board = 0n;
 	for (let row = 0; row < BOARD_SIZE; row += 1) {
 		for (let col = 0; col < BOARD_SIZE; col += 1) {
-			const current = grid[row][col];
-			if (current === 0) continue;
+			const shift = BigInt((row * BOARD_SIZE + col) * 4);
+			board |= BigInt(grid[row][col]) << shift;
+		}
+	}
+	return board;
+}
 
-			if (row + 1 < BOARD_SIZE && grid[row + 1][col] !== 0) {
-				smoothness -= Math.abs(current - grid[row + 1][col]);
-				if (grid[row + 1][col] === current) {
-					mergePotential += valueFromExp(current);
+function extractPackedRow(board: PackedBoard, rowIndex: number): number {
+	return Number((board >> BigInt(rowIndex * 16)) & 0xffffn);
+}
+
+function transposePackedBoard(board: PackedBoard): PackedBoard {
+	let transposed = 0n;
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			const sourceShift = BigInt((row * BOARD_SIZE + col) * 4);
+			const targetShift = BigInt((col * BOARD_SIZE + row) * 4);
+			transposed |= ((board >> sourceShift) & CELL_MASK) << targetShift;
+		}
+	}
+	return transposed;
+}
+
+function movePackedLeft(board: PackedBoard): PackedMoveResult {
+	let nextBoard = 0n;
+	let gained = 0;
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		const sourceRow = extractPackedRow(board, row);
+		nextBoard |= BigInt(ROW_MOVE_LEFT[sourceRow]) << BigInt(row * 16);
+		gained += ROW_GAIN_LEFT[sourceRow];
+	}
+	return { board: nextBoard, gained, moved: nextBoard !== board };
+}
+
+function movePackedRight(board: PackedBoard): PackedMoveResult {
+	let nextBoard = 0n;
+	let gained = 0;
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		const sourceRow = extractPackedRow(board, row);
+		nextBoard |= BigInt(ROW_MOVE_RIGHT[sourceRow]) << BigInt(row * 16);
+		gained += ROW_GAIN_RIGHT[sourceRow];
+	}
+	return { board: nextBoard, gained, moved: nextBoard !== board };
+}
+
+function movePacked(board: PackedBoard, dir: Dir): PackedMoveResult {
+	if (dir === 0) return movePackedLeft(board);
+	if (dir === 2) return movePackedRight(board);
+
+	const transposed = transposePackedBoard(board);
+	const shifted = dir === 1 ? movePackedLeft(transposed) : movePackedRight(transposed);
+	return {
+		board: transposePackedBoard(shifted.board),
+		gained: shifted.gained,
+		moved: shifted.moved,
+	};
+}
+
+function countPackedEmpties(board: PackedBoard): number {
+	return (
+		ROW_EMPTY_COUNT[extractPackedRow(board, 0)] +
+		ROW_EMPTY_COUNT[extractPackedRow(board, 1)] +
+		ROW_EMPTY_COUNT[extractPackedRow(board, 2)] +
+		ROW_EMPTY_COUNT[extractPackedRow(board, 3)]
+	);
+}
+
+function hasPackedMoves(board: PackedBoard): boolean {
+	if (countPackedEmpties(board) > 0) return true;
+	return (
+		movePackedLeft(board).moved ||
+		movePackedRight(board).moved ||
+		movePacked(board, 1).moved ||
+		movePacked(board, 3).moved
+	);
+}
+
+function evaluatePackedBoard(board: PackedBoard): number {
+	const cells = new Array<number>(16);
+	const values = new Array<number>(16);
+	let emptyCount = 0;
+	let highestExp = 0;
+
+	for (let index = 0; index < 16; index += 1) {
+		const exp = Number((board >> BigInt(index * 4)) & CELL_MASK);
+		cells[index] = exp;
+		values[index] = valueFromExp(exp);
+		if (exp === 0) emptyCount += 1;
+		if (exp > highestExp) highestExp = exp;
+	}
+
+	let smoothness = 0;
+	for (let row = 0; row < BOARD_SIZE; row += 1) {
+		for (let col = 0; col < BOARD_SIZE; col += 1) {
+			const index = row * BOARD_SIZE + col;
+			const value = cells[index];
+			if (value === 0) continue;
+
+			for (let nextCol = col + 1; nextCol < BOARD_SIZE; nextCol += 1) {
+				const rightValue = cells[row * BOARD_SIZE + nextCol];
+				if (rightValue !== 0) {
+					smoothness -= Math.abs(value - rightValue);
+					break;
 				}
 			}
 
-			if (col + 1 < BOARD_SIZE && grid[row][col + 1] !== 0) {
-				smoothness -= Math.abs(current - grid[row][col + 1]);
-				if (grid[row][col + 1] === current) {
-					mergePotential += valueFromExp(current);
+			for (let nextRow = row + 1; nextRow < BOARD_SIZE; nextRow += 1) {
+				const belowValue = cells[nextRow * BOARD_SIZE + col];
+				if (belowValue !== 0) {
+					smoothness -= Math.abs(value - belowValue);
+					break;
 				}
 			}
 		}
 	}
 
+	let monotonicity = 0;
 	for (let row = 0; row < BOARD_SIZE; row += 1) {
-		let leftScore = 0;
-		let rightScore = 0;
+		let descending = 0;
+		let ascending = 0;
 		for (let col = 0; col < BOARD_SIZE - 1; col += 1) {
-			const current = grid[row][col];
-			const next = grid[row][col + 1];
-			if (current > next) leftScore += current - next;
-			else rightScore += next - current;
+			const current = cells[row * BOARD_SIZE + col];
+			const next = cells[row * BOARD_SIZE + col + 1];
+			if (current > next) descending += current - next;
+			else if (next > current) ascending += next - current;
 		}
-		monotonicity += Math.max(leftScore, rightScore);
+		monotonicity += Math.max(descending, ascending);
 	}
 
 	for (let col = 0; col < BOARD_SIZE; col += 1) {
-		let upScore = 0;
-		let downScore = 0;
+		let descending = 0;
+		let ascending = 0;
 		for (let row = 0; row < BOARD_SIZE - 1; row += 1) {
-			const current = grid[row][col];
-			const next = grid[row + 1][col];
-			if (current > next) upScore += current - next;
-			else downScore += next - current;
+			const current = cells[row * BOARD_SIZE + col];
+			const next = cells[(row + 1) * BOARD_SIZE + col];
+			if (current > next) descending += current - next;
+			else if (next > current) ascending += next - current;
 		}
-		monotonicity += Math.max(upScore, downScore);
+		monotonicity += Math.max(descending, ascending);
 	}
 
-	const corners = [
-		grid[0][0],
-		grid[0][BOARD_SIZE - 1],
-		grid[BOARD_SIZE - 1][0],
-		grid[BOARD_SIZE - 1][BOARD_SIZE - 1],
-	];
-	const cornerBonus = corners.includes(highestExp)
-		? valueFromExp(highestExp) * 0.45
-		: -valueFromExp(highestExp) * 0.15;
+	const cornerValues = [values[0], values[3], values[12], values[15]];
+	let anchorIndex = 0;
+	for (let index = 1; index < cornerValues.length; index += 1) {
+		if (cornerValues[index] > cornerValues[anchorIndex]) {
+			anchorIndex = index;
+		}
+	}
+	const highestCornerValue = Math.max(...cornerValues);
+	const highestInCorner = highestCornerValue === valueFromExp(highestExp);
+	const snakePath = SNAKE_PATHS[anchorIndex];
+
+	let gradientScore = 0;
+	let snakeMonotonicity = 0;
+	for (let index = 0; index < snakePath.length; index += 1) {
+		const currentIndex = snakePath[index];
+		gradientScore += values[currentIndex] * (snakePath.length - index);
+		if (index + 1 < snakePath.length) {
+			const nextIndex = snakePath[index + 1];
+			if (cells[currentIndex] < cells[nextIndex]) {
+				snakeMonotonicity -= cells[nextIndex] - cells[currentIndex];
+			}
+		}
+	}
 
 	return (
-		emptyCells * 1600 +
-		monotonicity * 180 +
-		smoothness * 42 +
-		mergePotential * 0.65 +
-		cornerBonus
+		smoothness * 0.45 +
+		monotonicity * 5.4 +
+		Math.log(emptyCount + 1) * 18 +
+		highestExp * 3 +
+		snakeMonotonicity * 16 +
+		gradientScore * 0.0042 +
+		(highestInCorner ? highestCornerValue * 0.55 : -valueFromExp(highestExp) * 0.45)
 	);
 }
 
-function orderMoves(grid: Grid, moves: Dir[]): Dir[] {
-	return [...moves]
-		.map((dir) => {
-			const result = applyMove(grid, dir);
-			return {
-				dir,
-				score: result.moved ? evaluateGrid(result.grid) + result.gained * 0.8 : -1e12,
-			};
-		})
-		.sort((left, right) => right.score - left.score)
-		.map((entry) => entry.dir);
+function orderPackedMoves(board: PackedBoard): OrderedPackedMove[] {
+	const moves: OrderedPackedMove[] = [];
+	for (const dir of [0, 1, 2, 3] as const) {
+		const result = movePacked(board, dir);
+		if (!result.moved) continue;
+		moves.push({
+			...result,
+			dir,
+			heuristic:
+				evaluatePackedBoard(result.board) +
+				result.gained * 0.08 +
+				countPackedEmpties(result.board) * 7,
+		});
+	}
+	return moves.sort((left, right) => right.heuristic - left.heuristic);
 }
 
-function expectimax(
-	grid: Grid,
-	depth: number,
-	isPlayerTurn: boolean,
-	probability: number,
-	context: SearchContext,
-): number {
-	if (
-		depth <= 0 ||
-		probability < 0.00005 ||
-		!hasMovesAvailable(grid) ||
-		performance.now() >= context.deadline
-	) {
-		return evaluateGrid(grid);
-	}
+function createAutoplaySolver(): AutoplaySolver {
+	const cache = new Map<bigint, SolverCacheEntry>();
+	let generation = 0;
 
-	const hash =
-		hashGrid(grid) ^
-		(depth << 1) ^
-		(isPlayerTurn ? 0x9e3779b9 : 0x85ebca6b);
-	const cached = context.table.get(hash);
-	if (
-		cached &&
-		cached.isPlayer === isPlayerTurn &&
-		cached.depth >= depth
-	) {
-		return cached.value;
-	}
+	const makeCacheKey = (board: PackedBoard, isPlayerTurn: boolean) =>
+		(board << 1n) | (isPlayerTurn ? 1n : 0n);
 
-	if (isPlayerTurn) {
-		let best = -Infinity;
-		const moves = orderMoves(grid, legalMoves(grid));
-		for (const dir of moves) {
-			if (performance.now() >= context.deadline) break;
-			const result = applyMove(grid, dir);
-			if (!result.moved) continue;
-			const value = expectimax(
-				result.grid,
-				depth - 1,
-				false,
-				probability,
-				context,
-			);
-			if (value > best) best = value;
+	const expectimax = (
+		board: PackedBoard,
+		depth: number,
+		isPlayerTurn: boolean,
+		probability: number,
+		context: SearchContext,
+	): number => {
+		if (
+			depth <= 0 ||
+			probability < 0.00004 ||
+			!hasPackedMoves(board) ||
+			performance.now() >= context.deadline
+		) {
+			return evaluatePackedBoard(board);
 		}
-		const resolved = best === -Infinity ? evaluateGrid(grid) : best;
-		context.table.set(hash, {
+
+		const cacheKey = makeCacheKey(board, isPlayerTurn);
+		const cached = cache.get(cacheKey);
+		if (
+			cached &&
+			cached.generation === context.generation &&
+			cached.isPlayerTurn === isPlayerTurn &&
+			cached.depth >= depth
+		) {
+			return cached.value;
+		}
+
+		let resolved = evaluatePackedBoard(board);
+
+		if (isPlayerTurn) {
+			let best = -Infinity;
+			const moves = orderPackedMoves(board);
+			for (const move of moves) {
+				if (performance.now() >= context.deadline) break;
+				const value = expectimax(
+					move.board,
+					depth - 1,
+					false,
+					probability,
+					context,
+				);
+				if (value > best) best = value;
+			}
+			if (best !== -Infinity) resolved = best;
+		} else {
+			const emptyIndices: number[] = [];
+			for (let index = 0; index < 16; index += 1) {
+				if (((board >> BigInt(index * 4)) & CELL_MASK) === 0n) {
+					emptyIndices.push(index);
+				}
+			}
+
+			if (emptyIndices.length > 0) {
+				let total = 0;
+				let completed = 0;
+				const cellWeight = 1 / emptyIndices.length;
+				for (const index of emptyIndices) {
+					if (performance.now() >= context.deadline) break;
+					const shift = BigInt(index * 4);
+					const boardWithTwo = board | (1n << shift);
+					const boardWithFour = board | (2n << shift);
+					total +=
+						cellWeight *
+						(0.9 *
+							expectimax(
+								boardWithTwo,
+								depth - 1,
+								true,
+								probability * 0.9 * cellWeight,
+								context,
+							) +
+							0.1 *
+								expectimax(
+									boardWithFour,
+									depth - 1,
+									true,
+									probability * 0.1 * cellWeight,
+									context,
+								));
+					completed += 1;
+				}
+				if (completed === emptyIndices.length) resolved = total;
+			}
+		}
+
+		cache.set(cacheKey, {
+			generation: context.generation,
 			depth,
-			isPlayer: true,
+			isPlayerTurn,
 			value: resolved,
 		});
 		return resolved;
-	}
-
-	const emptyCells = getEmptyCells(grid);
-	if (emptyCells.length === 0) return evaluateGrid(grid);
-
-	const candidates =
-		emptyCells.length <= 6
-			? emptyCells
-			: [...emptyCells]
-					.map((cell) => {
-						let occupiedNeighbors = 0;
-						for (const [rowDelta, colDelta] of [
-							[-1, 0],
-							[1, 0],
-							[0, -1],
-							[0, 1],
-						]) {
-							const row = cell.row + rowDelta;
-							const col = cell.col + colDelta;
-							if (
-								row >= 0 &&
-								row < BOARD_SIZE &&
-								col >= 0 &&
-								col < BOARD_SIZE &&
-								grid[row][col] !== 0
-							) {
-								occupiedNeighbors += 1;
-							}
-						}
-						return { ...cell, occupiedNeighbors };
-					})
-					.sort(
-						(left, right) =>
-							right.occupiedNeighbors - left.occupiedNeighbors,
-					)
-					.slice(0, 6);
-
-	let total = 0;
-	let weight = 0;
-
-	for (const cell of candidates) {
-		if (performance.now() >= context.deadline) break;
-
-		const twoGrid = cloneGrid(grid);
-		twoGrid[cell.row][cell.col] = 1;
-		total += 0.9 * expectimax(twoGrid, depth - 1, true, probability * 0.9, context);
-		weight += 0.9;
-
-		const fourGrid = cloneGrid(grid);
-		fourGrid[cell.row][cell.col] = 2;
-		total += 0.1 * expectimax(fourGrid, depth - 1, true, probability * 0.1, context);
-		weight += 0.1;
-	}
-
-	const resolved = weight > 0 ? total / weight : evaluateGrid(grid);
-	context.table.set(hash, {
-		depth,
-		isPlayer: false,
-		value: resolved,
-	});
-	return resolved;
-}
-
-function bestAutoplayMove(grid: Grid, budgetMs: number): Dir | null {
-	const moves = orderMoves(grid, legalMoves(grid));
-	if (moves.length === 0) return null;
-
-	const deadline = performance.now() + budgetMs;
-	const context: SearchContext = {
-		deadline,
-		table: new Map(),
 	};
 
-	let bestMove: Dir | null = moves[0] ?? null;
-	const empties = getEmptyCells(grid).length;
-	let depth = empties >= 7 ? 4 : empties >= 4 ? 5 : 6;
+	const startingDepthForBoard = (board: PackedBoard): number => {
+		const emptyCount = countPackedEmpties(board);
+		if (emptyCount >= 8) return 4;
+		if (emptyCount >= 6) return 5;
+		if (emptyCount >= 4) return 6;
+		if (emptyCount >= 2) return 7;
+		return 8;
+	};
 
-	while (performance.now() < deadline - 1 && depth <= 8) {
-		let depthBestMove: Dir | null = bestMove;
-		let depthBestScore = -Infinity;
-		let completedDepth = true;
+	return {
+		findBestMove(grid: Grid, budgetMs: number): Dir | null {
+			const board = packGrid(grid);
+			const orderedMoves = orderPackedMoves(board);
+			if (orderedMoves.length === 0) return null;
 
-		for (const dir of moves) {
-			if (performance.now() >= deadline) {
-				completedDepth = false;
-				break;
+			generation += 1;
+			if (cache.size > SOLVER_CACHE_LIMIT) cache.clear();
+
+			const context: SearchContext = {
+				deadline: performance.now() + budgetMs,
+				generation,
+			};
+
+			let bestMove = orderedMoves[0]?.dir ?? null;
+			let principalVariation = orderedMoves;
+			let depth = startingDepthForBoard(board);
+
+			while (performance.now() < context.deadline - 1 && depth <= 10) {
+				let completedDepth = true;
+				let depthBestMove = bestMove;
+				let depthBestScore = -Infinity;
+				const depthScores = new Map<Dir, number>();
+
+				for (const move of principalVariation) {
+					if (performance.now() >= context.deadline) {
+						completedDepth = false;
+						break;
+					}
+					const score =
+						expectimax(move.board, depth - 1, false, 1, context) +
+						move.gained * 0.04;
+					depthScores.set(move.dir, score);
+					if (score > depthBestScore) {
+						depthBestScore = score;
+						depthBestMove = move.dir;
+					}
+				}
+
+				if (completedDepth && depthBestMove !== null) {
+					bestMove = depthBestMove;
+					principalVariation = [...principalVariation].sort(
+						(left, right) =>
+							(depthScores.get(right.dir) ?? right.heuristic) -
+							(depthScores.get(left.dir) ?? left.heuristic),
+					);
+				}
+
+				depth += 1;
 			}
-			const result = applyMove(grid, dir);
-			if (!result.moved) continue;
-			const score =
-				expectimax(result.grid, depth - 1, false, 1, context) +
-				result.gained * 0.45;
-			if (score > depthBestScore) {
-				depthBestScore = score;
-				depthBestMove = dir;
-			}
-		}
 
-		if (completedDepth && depthBestMove !== null) {
-			bestMove = depthBestMove;
-		}
-
-		depth += 1;
-	}
-
-	return bestMove;
+			return bestMove;
+		},
+	};
 }
 
 function readBestScore(): number {
@@ -673,6 +882,7 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 	let cursors: CursorKeys | null = null;
 	let keys: KeyMap | null = null;
 	let pointerStart: { x: number; y: number } | null = null;
+	const solver = createAutoplaySolver();
 
 	const state: RuntimeState = {
 		grid: emptyGrid(),
@@ -1116,9 +1326,11 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 				finalizeAnimation();
 			}
 		} else if (state.autoplay && !state.over && performance.now() >= state.nextAutoAt) {
-			const dir = bestAutoplayMove(
+			const emptyCount = getEmptyCells(state.grid).length;
+			const pressureBudget = Math.max(0, 7 - emptyCount) * 8;
+			const dir = solver.findBestMove(
 				state.grid,
-				SPEED_SETTINGS[state.speed].searchBudgetMs,
+				SPEED_SETTINGS[state.speed].searchBudgetMs + pressureBudget,
 			);
 			if (dir !== null) performMove(dir);
 			state.nextAutoAt = performance.now() + SPEED_SETTINGS[state.speed].autoplayMs;
