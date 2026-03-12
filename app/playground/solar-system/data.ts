@@ -1,9 +1,13 @@
 export type PlanetDef = {
 	name: string;
 	textureUrl: string;
+	accent: string;
+	summary: string;
 	axialTiltDeg: number;
 	rotationPeriodHours: number;
 	orbitalPeriodDays: number;
+	radiusEarths: number;
+	distanceAU: number;
 	radiusUnits: number;
 	distanceUnits: number;
 	ring?: { textureUrl: string; innerUnits: number; outerUnits: number };
@@ -40,63 +44,91 @@ export const planets: PlanetDef[] = [
 	{
 		name: "Sun",
 		textureUrl: "/textures/sun.jpg",
+		accent: "#f7b955",
+		summary: "A bright anchor with a warm corona that lights the whole miniature system.",
 		axialTiltDeg: P.Sun.tilt,
 		rotationPeriodHours: P.Sun.rotH,
 		orbitalPeriodDays: 0,
+		radiusEarths: P.Sun.rER,
+		distanceAU: P.Sun.aAU,
 		radiusUnits: radiusUnits(P.Sun.rER),
 		distanceUnits: distUnits(P.Sun.aAU),
 	},
 	{
 		name: "Mercury",
 		textureUrl: "/textures/mercury.jpg",
+		accent: "#c9b7a8",
+		summary: "A scorched inner world racing closest to the star.",
 		axialTiltDeg: P.Mercury.tilt,
 		rotationPeriodHours: P.Mercury.rotH,
 		orbitalPeriodDays: P.Mercury.yearD,
+		radiusEarths: P.Mercury.rER,
+		distanceAU: P.Mercury.aAU,
 		radiusUnits: radiusUnits(P.Mercury.rER),
 		distanceUnits: distUnits(P.Mercury.aAU),
 	},
 	{
 		name: "Venus",
 		textureUrl: "/textures/venus.jpg",
+		accent: "#e9c07a",
+		summary: "A cloudy amber sphere spinning slowly in retrograde.",
 		axialTiltDeg: P.Venus.tilt,
 		rotationPeriodHours: P.Venus.rotH,
 		orbitalPeriodDays: P.Venus.yearD,
+		radiusEarths: P.Venus.rER,
+		distanceAU: P.Venus.aAU,
 		radiusUnits: radiusUnits(P.Venus.rER),
 		distanceUnits: distUnits(P.Venus.aAU),
 	},
 	{
 		name: "Earth",
 		textureUrl: "/textures/earth.jpg",
+		accent: "#59b8ff",
+		summary: "Blue oceans, bright clouds, and a familiar moon tracing a tight orbit.",
 		axialTiltDeg: P.Earth.tilt,
 		rotationPeriodHours: P.Earth.rotH,
 		orbitalPeriodDays: P.Earth.yearD,
+		radiusEarths: P.Earth.rER,
+		distanceAU: P.Earth.aAU,
 		radiusUnits: radiusUnits(P.Earth.rER),
 		distanceUnits: distUnits(P.Earth.aAU),
 	},
 	{
 		name: "Mars",
 		textureUrl: "/textures/mars.jpg",
+		accent: "#ff8b6e",
+		summary: "A rust-red world with a sharp tilt and a colder path beyond Earth.",
 		axialTiltDeg: P.Mars.tilt,
 		rotationPeriodHours: P.Mars.rotH,
 		orbitalPeriodDays: P.Mars.yearD,
+		radiusEarths: P.Mars.rER,
+		distanceAU: P.Mars.aAU,
 		radiusUnits: radiusUnits(P.Mars.rER),
 		distanceUnits: distUnits(P.Mars.aAU),
 	},
 	{
 		name: "Jupiter",
 		textureUrl: "/textures/jupiter.jpg",
+		accent: "#d8a46b",
+		summary: "A striped gas giant dominating the middle of the system.",
 		axialTiltDeg: P.Jupiter.tilt,
 		rotationPeriodHours: P.Jupiter.rotH,
 		orbitalPeriodDays: P.Jupiter.yearD,
+		radiusEarths: P.Jupiter.rER,
+		distanceAU: P.Jupiter.aAU,
 		radiusUnits: radiusUnits(P.Jupiter.rER),
 		distanceUnits: distUnits(P.Jupiter.aAU),
 	},
 	{
 		name: "Saturn",
 		textureUrl: "/textures/saturn.jpg",
+		accent: "#efd7a6",
+		summary: "Elegant rings and a pale glow make it the showpiece of the outer planets.",
 		axialTiltDeg: P.Saturn.tilt,
 		rotationPeriodHours: P.Saturn.rotH,
 		orbitalPeriodDays: P.Saturn.yearD,
+		radiusEarths: P.Saturn.rER,
+		distanceAU: P.Saturn.aAU,
 		radiusUnits: radiusUnits(P.Saturn.rER),
 		distanceUnits: distUnits(P.Saturn.aAU),
 		ring: {
@@ -108,18 +140,26 @@ export const planets: PlanetDef[] = [
 	{
 		name: "Uranus",
 		textureUrl: "/textures/uranus.jpg",
+		accent: "#8dd8dd",
+		summary: "An icy cyan planet tipped dramatically onto its side.",
 		axialTiltDeg: P.Uranus.tilt,
 		rotationPeriodHours: P.Uranus.rotH,
 		orbitalPeriodDays: P.Uranus.yearD,
+		radiusEarths: P.Uranus.rER,
+		distanceAU: P.Uranus.aAU,
 		radiusUnits: radiusUnits(P.Uranus.rER),
 		distanceUnits: distUnits(P.Uranus.aAU),
 	},
 	{
 		name: "Neptune",
 		textureUrl: "/textures/neptune.jpg",
+		accent: "#6a8fff",
+		summary: "Deep blue, distant, and gliding through the darkest edge of the scene.",
 		axialTiltDeg: P.Neptune.tilt,
 		rotationPeriodHours: P.Neptune.rotH,
 		orbitalPeriodDays: P.Neptune.yearD,
+		radiusEarths: P.Neptune.rER,
+		distanceAU: P.Neptune.aAU,
 		radiusUnits: radiusUnits(P.Neptune.rER),
 		distanceUnits: distUnits(P.Neptune.aAU),
 	},

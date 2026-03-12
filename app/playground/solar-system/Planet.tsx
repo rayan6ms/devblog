@@ -3,7 +3,14 @@
 import { useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { DoubleSide, type Group, MathUtils, type Mesh, Vector3 } from "three";
+import {
+	AdditiveBlending,
+	DoubleSide,
+	type Group,
+	MathUtils,
+	type Mesh,
+	Vector3,
+} from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { MoonDef, PlanetDef } from "./data";
 import OrbitPath from "./OrbitPath";
@@ -29,6 +36,7 @@ export default function Planet({
 }: Props) {
 	const orbitPivot = useRef<Group>(null!);
 	const planetMesh = useRef<Mesh>(null!);
+	const glowMesh = useRef<Mesh>(null!);
 	const startAngle = useRef(Math.random() * Math.PI * 2);
 	const planetTex = useTexture(data.textureUrl);
 	const lastFollowPos = useRef<Vector3 | null>(null);
@@ -56,7 +64,7 @@ export default function Planet({
 		}
 	}, [followed, controlsRef, data.radiusUnits]);
 
-	useFrame((_, dt) => {
+	useFrame(({ clock }, dt) => {
 		const days = timeScaleDaysPerSec * dt;
 
 		if (data.orbitalPeriodDays > 0) {
@@ -67,6 +75,9 @@ export default function Planet({
 			const periodDays = data.rotationPeriodHours / 24.0;
 			planetMesh.current.rotation.y += Math.PI * 2 * (days / periodDays);
 		}
+
+		const pulse = 1 + Math.sin(clock.elapsedTime * 1.5 + startAngle.current) * 0.035;
+		glowMesh.current.scale.setScalar(pulse);
 
 		if (followed && controlsRef.current && lastFollowPos.current) {
 			planetMesh.current.getWorldPosition(tmp);
@@ -86,7 +97,12 @@ export default function Planet({
 	return (
 		<group>
 			{showOrbit && data.distanceUnits > 0 && (
-				<OrbitPath radius={data.distanceUnits} segments={256} />
+				<OrbitPath
+					radius={data.distanceUnits}
+					segments={256}
+					color={data.accent}
+					opacity={followed ? 0.48 : 0.18}
+				/>
 			)}
 
 			<group ref={orbitPivot} rotation={[0, startAngle.current, 0]}>
@@ -94,6 +110,7 @@ export default function Planet({
 					<group rotation={[MathUtils.degToRad(data.axialTiltDeg), 0, 0]}>
 						{data.ring && (
 							<SaturnRing
+								accent={data.accent}
 								textureUrl={data.ring.textureUrl}
 								innerUnits={data.ring.innerUnits}
 								outerUnits={data.ring.outerUnits}
@@ -103,16 +120,39 @@ export default function Planet({
 						{moon && (
 							<MoonOrbit
 								moon={moon}
+								showOrbit={showOrbit && followed}
 								timeScaleDaysPerSec={timeScaleDaysPerSec}
 							/>
 						)}
 
+						{data.name === "Sun" && (
+							<SunHalo
+								accent={data.accent}
+								radiusUnits={data.radiusUnits}
+							/>
+						)}
+
 						<mesh ref={planetMesh} onClick={() => setFollowed(data.name)}>
-							<sphereGeometry args={[data.radiusUnits, 64, 64]} />
+							<sphereGeometry args={[data.radiusUnits, 40, 40]} />
 							<meshStandardMaterial
 								map={planetTex}
-								emissive={data.name === "Sun" ? "#ffaa33" : undefined}
-								emissiveIntensity={data.name === "Sun" ? 0.45 : 0}
+								emissive={data.name === "Sun" ? data.accent : "#08131f"}
+								emissiveIntensity={data.name === "Sun" ? 1.2 : 0.12}
+								roughness={1}
+								metalness={0}
+							/>
+						</mesh>
+
+						<mesh ref={glowMesh} scale={1.14}>
+							<sphereGeometry args={[data.radiusUnits, 24, 24]} />
+							<meshBasicMaterial
+								color={data.accent}
+								transparent
+								opacity={
+									data.name === "Sun" ? 0.12 : followed ? 0.18 : 0.06
+								}
+								depthWrite={false}
+								blending={AdditiveBlending}
 							/>
 						</mesh>
 					</group>
@@ -123,34 +163,50 @@ export default function Planet({
 }
 
 function SaturnRing({
+	accent,
 	textureUrl,
 	innerUnits,
 	outerUnits,
 }: {
+	accent: string;
 	textureUrl: string;
 	innerUnits: number;
 	outerUnits: number;
 }) {
 	const ringTex = useTexture(textureUrl);
 	return (
-		<mesh rotation={[Math.PI / 2, 0, 0]}>
-			<ringGeometry args={[innerUnits, outerUnits, 128]} />
-			<meshBasicMaterial
-				map={ringTex}
-				transparent
-				alphaTest={0.35}
-				depthWrite={false}
-				side={DoubleSide}
-			/>
-		</mesh>
+		<group rotation={[Math.PI / 2, 0, 0]}>
+				<mesh>
+					<ringGeometry args={[innerUnits, outerUnits, 96]} />
+				<meshBasicMaterial
+					map={ringTex}
+					transparent
+					alphaTest={0.35}
+					depthWrite={false}
+					side={DoubleSide}
+				/>
+			</mesh>
+			<mesh scale={1.015}>
+				<ringGeometry args={[innerUnits, outerUnits, 96]} />
+				<meshBasicMaterial
+					color={accent}
+					transparent
+					opacity={0.08}
+					depthWrite={false}
+					side={DoubleSide}
+				/>
+			</mesh>
+		</group>
 	);
 }
 
 function MoonOrbit({
 	moon,
+	showOrbit,
 	timeScaleDaysPerSec,
 }: {
 	moon: MoonDef;
+	showOrbit: boolean;
 	timeScaleDaysPerSec: number;
 }) {
 	const pivot = useRef<Group>(null!);
@@ -161,12 +217,59 @@ function MoonOrbit({
 	});
 	return (
 		<group ref={pivot}>
+			{showOrbit && (
+				<OrbitPath radius={moon.distanceUnits} color="#cbd5e1" opacity={0.16} />
+			)}
 			<group position={[moon.distanceUnits, 0, 0]}>
 				<mesh>
-					<sphereGeometry args={[moon.radiusUnits, 48, 48]} />
-					<meshStandardMaterial map={tex} />
+					<sphereGeometry args={[moon.radiusUnits, 24, 24]} />
+					<meshStandardMaterial map={tex} roughness={1} metalness={0} />
 				</mesh>
 			</group>
+		</group>
+	);
+}
+
+function SunHalo({
+	accent,
+	radiusUnits,
+}: {
+	accent: string;
+	radiusUnits: number;
+}) {
+	const outerHalo = useRef<Mesh>(null!);
+	const innerHalo = useRef<Mesh>(null!);
+
+	useFrame(({ clock }) => {
+		const t = clock.elapsedTime;
+		const outerScale = 1 + Math.sin(t * 0.55) * 0.04;
+		const innerScale = 1 + Math.cos(t * 0.9) * 0.03;
+		outerHalo.current.scale.setScalar(outerScale);
+		innerHalo.current.scale.setScalar(innerScale);
+	});
+
+	return (
+		<group>
+			<mesh ref={outerHalo}>
+				<sphereGeometry args={[radiusUnits * 1.45, 24, 24]} />
+				<meshBasicMaterial
+					color={accent}
+					transparent
+					opacity={0.08}
+					depthWrite={false}
+					blending={AdditiveBlending}
+				/>
+			</mesh>
+			<mesh ref={innerHalo}>
+				<sphereGeometry args={[radiusUnits * 1.18, 24, 24]} />
+				<meshBasicMaterial
+					color="#ffd49a"
+					transparent
+					opacity={0.12}
+					depthWrite={false}
+					blending={AdditiveBlending}
+				/>
+			</mesh>
 		</group>
 	);
 }

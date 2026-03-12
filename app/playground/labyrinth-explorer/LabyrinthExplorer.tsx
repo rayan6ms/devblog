@@ -2768,34 +2768,6 @@ function saveBestScore(score: number) {
 	window.localStorage.setItem(STORAGE_KEY, String(Math.max(0, Math.floor(score))));
 }
 
-function TouchControlButton({
-	label,
-	onChange,
-	accentClassName,
-}: {
-	label: string;
-	onChange: (pressed: boolean) => void;
-	accentClassName: string;
-}) {
-	return (
-		<button
-			type="button"
-			className={`pointer-events-auto rounded-2xl border px-4 py-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-100 backdrop-blur-md transition active:scale-[0.98] ${accentClassName}`}
-			style={{ fontFamily: FONT_STACK }}
-			onPointerDown={(event) => {
-				event.preventDefault();
-				event.currentTarget.setPointerCapture(event.pointerId);
-				onChange(true);
-			}}
-			onPointerUp={() => onChange(false)}
-			onPointerCancel={() => onChange(false)}
-			onLostPointerCapture={() => onChange(false)}
-		>
-			{label}
-		</button>
-	);
-}
-
 function RunOverlay({
 	title,
 	description,
@@ -3113,41 +3085,6 @@ export default function LabyrinthExplorer() {
 					) : null}
 				</div>
 			</div>
-
-			{status === "ready" && uiState.phase === "playing" ? (
-				<div className="pointer-events-none absolute inset-x-3 bottom-3 flex justify-center sm:hidden">
-					<div className="grid grid-cols-4 gap-2">
-						<TouchControlButton
-							label="Left"
-							accentClassName="border-[#415e72] bg-[#08131c]/84"
-							onChange={(pressed) => {
-								controlsRef.current.turnLeft = pressed;
-							}}
-						/>
-						<TouchControlButton
-							label="Forward"
-							accentClassName="border-[#4d6b52] bg-[#081910]/84"
-							onChange={(pressed) => {
-								controlsRef.current.forward = pressed;
-							}}
-						/>
-						<TouchControlButton
-							label="Back"
-							accentClassName="border-[#725d40] bg-[#1a1208]/84"
-							onChange={(pressed) => {
-								controlsRef.current.backward = pressed;
-							}}
-						/>
-						<TouchControlButton
-							label="Right"
-							accentClassName="border-[#415e72] bg-[#08131c]/84"
-							onChange={(pressed) => {
-								controlsRef.current.turnRight = pressed;
-							}}
-						/>
-					</div>
-				</div>
-			) : null}
 
 			{status === "ready" && uiState.phase === "playing" ? (
 				<>

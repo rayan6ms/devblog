@@ -4,9 +4,19 @@ import { Line } from "@react-three/drei";
 import { useMemo } from "react";
 import * as THREE from "three";
 
-type Props = { radius: number; segments?: number };
+type Props = {
+	radius: number;
+	segments?: number;
+	color?: string;
+	opacity?: number;
+};
 
-export default function OrbitPath({ radius, segments = 128 }: Props) {
+export default function OrbitPath({
+	radius,
+	segments = 128,
+	color = "#7dd3fc",
+	opacity = 0.22,
+}: Props) {
 	const points = useMemo(() => {
 		const arr: THREE.Vector3[] = [];
 		for (let i = 0; i <= segments; i++) {
@@ -18,5 +28,13 @@ export default function OrbitPath({ radius, segments = 128 }: Props) {
 		return arr;
 	}, [radius, segments]);
 
-	return <Line points={points} transparent opacity={0.25} linewidth={1} />;
+	return (
+		<Line
+			points={points}
+			color={color}
+			transparent
+			opacity={opacity}
+			linewidth={1}
+		/>
+	);
 }
