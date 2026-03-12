@@ -28,7 +28,8 @@ export const welcomeMessage = String.raw`
                                 |___/ 
 
 Type "help" to list commands.
-Tab completes commands. ArrowUp and ArrowDown walk command history.`;
+Try "tree", "ls Documents", "cat Workspace/client/brief.txt", or "find . v3.txt".
+Tab completes commands and paths. Press Tab twice to list matches. ArrowUp and ArrowDown walk command history. Ctrl+L clears.`;
 
 export const commandDescriptions = {
 	help: "Show the list of supported commands",
@@ -49,6 +50,7 @@ export const commandDescriptions = {
 	hostname: "Print the terminal host name",
 	history: "Show previous commands",
 	find: "Find files or directories by name",
+	tree: "Print the directory tree",
 } as const;
 
 type CommandName = keyof typeof commandDescriptions;
@@ -508,6 +510,52 @@ const commandHandlers: Record<CommandName, CommandHandler> = {
 		walk(startNode, startPath);
 
 		return { output: matches.join("\n") };
+	},
+	tree: (args, context) => {
+		const { options, values } = parseFlags(args);
+		const targetArg = values[0] ?? ".";
+		const targetPath = resolvePath(context.state.cwd, targetArg);
+		const targetNode = getNodeAtPath(context.state.fileSystem, targetPath);
+
+		if (!targetNode) {
+			return createError(`tree: '${targetArg}': No such file or directory`);
+		}
+
+		const showHidden = options.has("a");
+		const labelFor = (name: string, node: FileSystemNode) =>
+			node.type === "directory" ? `${name}/` : name;
+
+		if (!isDirectory(targetNode)) {
+			return {
+				output: labelFor(splitPath(targetPath).at(-1) ?? targetArg, targetNode),
+			};
+		}
+
+		const rootLabel =
+			targetArg === "."
+				? "."
+				: labelFor(splitPath(targetPath).at(-1) ?? "/", targetNode);
+		const lines = [rootLabel];
+
+		const walk = (node: FileSystemNode, prefix: string) => {
+			if (!isDirectory(node)) {
+				return;
+			}
+
+			const entries = Object.entries(node.contents)
+				.filter(([, child]) => showHidden || !child.hidden)
+				.sort(([left], [right]) => left.localeCompare(right));
+
+			entries.forEach(([name, child], index) => {
+				const isLast = index === entries.length - 1;
+				const branch = isLast ? "`-- " : "|-- ";
+				lines.push(`${prefix}${branch}${labelFor(name, child)}`);
+				walk(child, `${prefix}${isLast ? "    " : "|   "}`);
+			});
+		};
+
+		walk(targetNode, "");
+		return { output: lines.join("\n") };
 	},
 };
 

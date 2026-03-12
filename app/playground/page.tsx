@@ -339,7 +339,23 @@ const Playground: React.FC = () => {
 			contentRef.current.classList.add("pointer-events-none"); // blocks pointer on background only
 		}
 
+		const isEditableTarget = (target: EventTarget | null) => {
+			if (!(target instanceof HTMLElement)) {
+				return false;
+			}
+
+			if (target.isContentEditable) {
+				return true;
+			}
+
+			return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+		};
+
 		const blockKeys = (e: KeyboardEvent) => {
+			if (isEditableTarget(e.target)) {
+				return;
+			}
+
 			const keys = [
 				"ArrowUp",
 				"ArrowDown",
