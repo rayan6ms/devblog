@@ -86,7 +86,7 @@ export default function RecentItem({
 							: "h-[280px] sm:h-[340px] lg:h-[380px] xxl:h-[550px]"
 						: fluid
 							? compact
-								? "h-[220px] sm:h-[258px] lg:h-[236px]"
+								? "h-[190px] sm:h-[220px] lg:h-[205px]"
 								: "h-[240px] sm:h-[280px] lg:h-[260px]"
 							: "h-[220px] sm:h-[270px] xxl:h-[210px]"
 				}`}

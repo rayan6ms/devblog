@@ -394,8 +394,8 @@ const Playground: React.FC = () => {
 				>
 					<section className="overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
 						<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
-							<div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:items-end">
-								<div className="max-w-3xl">
+							<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+								<div className="max-w-2xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
 										Interactive archive
 									</p>
@@ -409,28 +409,28 @@ const Playground: React.FC = () => {
 										static.
 									</p>
 								</div>
-								<div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+								<div className="flex flex-wrap gap-3 lg:justify-end">
+									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 											Total projects
 										</p>
-										<p className="mt-2 text-3xl font-semibold text-wheat">
+										<p className="mt-2 text-2xl font-semibold text-wheat">
 											{games.length}
 										</p>
 									</div>
-									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 											Playable
 										</p>
-										<p className="mt-2 text-3xl font-semibold text-wheat">
+										<p className="mt-2 text-2xl font-semibold text-wheat">
 											{playable.length}
 										</p>
 									</div>
-									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 											Watch-only
 										</p>
-										<p className="mt-2 text-3xl font-semibold text-wheat">
+										<p className="mt-2 text-2xl font-semibold text-wheat">
 											{watchOnly.length}
 										</p>
 									</div>
