@@ -1,8 +1,8 @@
 "use client";
 
-import { OrbitControls, Sparkles, Stars, useTexture } from "@react-three/drei";
+import { OrbitControls, Stars, useTexture } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { type CSSProperties, useRef, useState } from "react";
+import { Suspense, type CSSProperties, useRef, useState } from "react";
 import { BackSide, type Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { moon, planets } from "./data";
@@ -10,15 +10,34 @@ import Planet from "./Planet";
 
 const DEFAULT_CAMERA: [number, number, number] = [0, 20, 170];
 const DEFAULT_TARGET: [number, number, number] = [0, 0, 0];
+const SCENE_TEXTURES = [
+	...planets.map((planet) => planet.textureUrl),
+	...planets
+		.map((planet) => planet.ring?.textureUrl)
+		.filter((url): url is string => Boolean(url)),
+	moon.textureUrl,
+	"/textures/starfield.jpg",
+	"/textures/starfield2.jpg",
+];
+const UNIQUE_SCENE_TEXTURES = [...new Set(SCENE_TEXTURES)];
 const STAR_FIELD_STYLE: CSSProperties = {
 	backgroundImage: [
-		"radial-gradient(circle at 20% 30%, rgba(255,255,255,0.95) 0 1px, transparent 1.4px)",
-		"radial-gradient(circle at 75% 20%, rgba(147,197,253,0.7) 0 1px, transparent 1.6px)",
-		"radial-gradient(circle at 55% 75%, rgba(251,191,36,0.45) 0 1px, transparent 1.8px)",
-		"radial-gradient(circle at 80% 65%, rgba(255,255,255,0.65) 0 1px, transparent 1.6px)",
+		"radial-gradient(circle at 20% 30%, rgba(255,255,255,0.95) 0 1px, transparent 1.25px)",
+		"radial-gradient(circle at 75% 20%, rgba(147,197,253,0.78) 0 1px, transparent 1.45px)",
+		"radial-gradient(circle at 55% 75%, rgba(251,191,36,0.55) 0 1px, transparent 1.5px)",
+		"radial-gradient(circle at 80% 65%, rgba(255,255,255,0.72) 0 1px, transparent 1.4px)",
 	].join(","),
-	backgroundSize: "240px 240px, 320px 320px, 280px 280px, 360px 360px",
-	backgroundPosition: "0 0, 40px 60px, 120px 40px, 10px 120px",
+	backgroundSize: "190px 190px, 250px 250px, 220px 220px, 300px 300px",
+	backgroundPosition: "0 0, 26px 48px, 100px 34px, 8px 110px",
+};
+const SCENE_STAR_OVERLAY_STYLE: CSSProperties = {
+	backgroundImage: [
+		"radial-gradient(circle, rgba(255,255,255,0.78) 0 0.8px, transparent 1px)",
+		"radial-gradient(circle, rgba(147,197,253,0.52) 0 1px, transparent 1.2px)",
+		"radial-gradient(circle, rgba(251,191,36,0.34) 0 1px, transparent 1.2px)",
+	].join(","),
+	backgroundSize: "130px 130px, 190px 190px, 240px 240px",
+	backgroundPosition: "0 0, 22px 40px, 80px 24px",
 };
 
 function formatOrbit(days: number) {
@@ -32,11 +51,15 @@ function formatDistance(au: number) {
 	return `${au.toFixed(2)} AU`;
 }
 
+for (const textureUrl of UNIQUE_SCENE_TEXTURES) {
+	useTexture.preload(textureUrl);
+}
+
 export default function SolarSystem() {
 	const controlsRef = useRef<OrbitControlsImpl | null>(null);
 	const [followed, setFollowed] = useState<string | null>(null);
 	const [showOrbits, setShowOrbits] = useState(true);
-	const [timeScale, setTimeScale] = useState(6);
+	const [timeScale, setTimeScale] = useState(0.4);
 
 	const featuredPlanet =
 		planets.find((planet) => planet.name === (followed ?? "Sun")) ?? planets[0];
@@ -51,36 +74,63 @@ export default function SolarSystem() {
 	};
 
 	return (
-		<div className="relative flex h-full min-h-[720px] w-full select-none flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[#040814] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.5)]">
-			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#173150_0%,#08111d_38%,#03060d_100%)]" />
+		<div className="relative isolate flex h-full min-h-[720px] w-full select-none flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[#040814] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.5)]">
+			<div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,#173150_0%,#08111d_38%,#03060d_100%)]" />
 			<div
-				className="pointer-events-none absolute inset-0 opacity-80"
+				className="pointer-events-none absolute inset-0 rounded-[30px] opacity-90"
 				style={STAR_FIELD_STYLE}
 			/>
-			<div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-[#3b82f6]/12 blur-3xl" />
-			<div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-[#f59e0b]/10 blur-3xl" />
-			<div className="pointer-events-none absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-[#38bdf8]/10 blur-3xl" />
+			<div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-[#3b82f6]/14 blur-3xl" />
+			<div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-[#f59e0b]/12 blur-3xl" />
+			<div className="pointer-events-none absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-[#38bdf8]/12 blur-3xl" />
 
-			<div className="relative z-10 border-b border-[#233247] bg-[#07111d]/82 backdrop-blur-xl">
-				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
-					<div className="mr-auto min-w-48">
+			<div className="relative z-10 rounded-t-[30px] border-b border-[#233247] bg-[#07111d]/86 backdrop-blur-xl">
+				<div className="flex flex-col gap-4 px-4 py-4 sm:px-5">
+					<div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							Solar System
-						</div>
-						<div className="max-w-2xl font-mono text-xs text-slate-400">
-							A watch-mode miniature observatory with passive camera motion,
-							layered stars, and readable planet telemetry.
+							<div>Solar System</div>
+							<div className="mt-2 max-w-2xl text-xs font-normal tracking-[0.18em] text-slate-400">
+								A watch-mode miniature observatory with a stronger star field and a quieter HUD.
+							</div>
 						</div>
 					</div>
-					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
-						<StatPill label="Mode" value="Watch" />
-						<StatPill label="Focus" value={followed ?? "Free orbit"} />
-						<StatPill label="Orbits" value={showOrbits ? "Visible" : "Hidden"} />
-						<StatPill label="Time" value={`${timeScale.toFixed(1)} d/s`} />
-					</div>
-				</div>
 
-				<div className="flex flex-col gap-4 px-4 pb-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between">
+					<div className="grid gap-3 rounded-[24px] border border-[#1a2740] bg-[#07111d]/80 p-4 backdrop-blur-xl sm:grid-cols-[auto_minmax(170px,220px)] sm:items-end">
+						<label className="flex items-center justify-between gap-3 font-mono text-xs uppercase tracking-[0.2em] text-slate-300 sm:min-w-[120px]">
+							<span>Orbit paths</span>
+							<button
+								type="button"
+								onClick={() => setShowOrbits((value) => !value)}
+								className={`inline-flex h-8 items-center justify-center rounded-full border px-3 text-[11px] leading-none align-middle transition ${
+									showOrbits
+										? "border-sky-300/40 bg-sky-300/15 text-sky-100"
+										: "border-[#223048] bg-[#0b1320] text-slate-300"
+								}`}
+							>
+								{showOrbits ? "On" : "Off"}
+							</button>
+						</label>
+
+						<label className="grid gap-2 font-mono text-xs uppercase tracking-[0.2em] text-slate-300">
+							<div className="flex items-center justify-between gap-3">
+								<span>Time scale</span>
+								<span className="text-slate-100">{timeScale.toFixed(1)} d/s</span>
+							</div>
+							<input
+								className="w-full sm:max-w-[220px]"
+								style={{ accentColor: featuredPlanet.accent }}
+								type="range"
+								min={0.05}
+								max={10}
+								step={0.05}
+								value={timeScale}
+								onChange={(event) =>
+									setTimeScale(Number.parseFloat(event.target.value))
+								}
+							/>
+						</label>
+					</div>
+
 					<div className="flex flex-wrap gap-2">
 						{planets.map((planet) => {
 							const active = followed === planet.name;
@@ -117,115 +167,33 @@ export default function SolarSystem() {
 							</button>
 						)}
 					</div>
-
-					<div className="grid gap-3 rounded-[24px] border border-[#1a2740] bg-[#07111d]/80 p-4 backdrop-blur-xl lg:min-w-[320px]">
-						<label className="flex items-center justify-between gap-3 font-mono text-xs uppercase tracking-[0.2em] text-slate-300">
-							<span>Orbit paths</span>
-							<button
-								type="button"
-								onClick={() => setShowOrbits((value) => !value)}
-								className={`rounded-full border px-3 py-1 text-[11px] transition ${
-									showOrbits
-										? "border-sky-300/40 bg-sky-300/15 text-sky-100"
-										: "border-[#223048] bg-[#0b1320] text-slate-300"
-								}`}
-							>
-								{showOrbits ? "On" : "Off"}
-							</button>
-						</label>
-
-						<label className="grid gap-2 font-mono text-xs uppercase tracking-[0.2em] text-slate-300">
-							<div className="flex items-center justify-between gap-3">
-								<span>Time scale</span>
-								<span className="text-slate-100">{timeScale.toFixed(1)} d/s</span>
-							</div>
-							<input
-								className="w-full"
-								style={{ accentColor: featuredPlanet.accent }}
-								type="range"
-								min={0.4}
-								max={24}
-								step={0.2}
-								value={timeScale}
-								onChange={(event) =>
-									setTimeScale(Number.parseFloat(event.target.value))
-								}
-							/>
-						</label>
-					</div>
 				</div>
 			</div>
 
 			<div className="relative min-h-0 flex-1">
 				<Canvas
 					camera={{ position: DEFAULT_CAMERA, fov: 46 }}
-					className="absolute inset-0"
+					className="absolute inset-0 rounded-b-[30px]"
 					dpr={[1, 1.5]}
 					performance={{ min: 0.6 }}
 					gl={{ antialias: false }}
 				>
-					<color attach="background" args={["#02050c"]} />
-					<fog attach="fog" args={["#02050c", 220, 920]} />
-					<ambientLight intensity={0.28} />
-					<hemisphereLight
-						args={["#9dd8ff", "#02050c", 0.24]}
-					/>
-					<pointLight position={[0, 0, 0]} intensity={3.1} color="#ffd79a" />
-					<DeepSpaceBackdrop />
-					<Stars radius={520} depth={140} count={3200} factor={4} fade />
-					<Stars
-						radius={380}
-						depth={70}
-						count={900}
-						factor={1.8}
-						fade
-						saturation={0}
-					/>
-					<Sparkles
-						count={56}
-						scale={[360, 140, 360]}
-						size={2.4}
-						speed={0.08}
-						color="#8cc8ff"
-					/>
-					<Sparkles
-						count={18}
-						scale={[220, 72, 220]}
-						size={3.2}
-						speed={0.06}
-						color="#ffd089"
-					/>
-
-					{planets.map((planet) => (
-						<Planet
-							key={planet.name}
-							data={planet}
-							moon={planet.name === "Earth" ? moon : undefined}
-							followed={followed === planet.name}
-							setFollowed={setFollowed}
+					<Suspense fallback={null}>
+						<SolarSystemScene
 							controlsRef={controlsRef}
-							showOrbit={showOrbits}
-							timeScaleDaysPerSec={timeScale}
+							followed={followed}
+							setFollowed={setFollowed}
+							showOrbits={showOrbits}
+							timeScale={timeScale}
 						/>
-					))}
-
-					<OrbitControls
-						ref={controlsRef}
-						autoRotate={!followed}
-						autoRotateSpeed={0.28}
-						enableDamping
-						enablePan={false}
-						enableZoom
-						dampingFactor={0.06}
-						rotateSpeed={0.45}
-						maxDistance={900}
-						minDistance={10}
-						minPolarAngle={0.35}
-						maxPolarAngle={Math.PI - 0.35}
-					/>
+					</Suspense>
 				</Canvas>
 
-				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_34%,rgba(2,6,23,0.44)_100%)]" />
+				<div
+					className="pointer-events-none absolute inset-0 opacity-75 mix-blend-screen"
+					style={SCENE_STAR_OVERLAY_STYLE}
+				/>
+				<div className="pointer-events-none absolute inset-0 rounded-b-[30px] bg-[radial-gradient(circle_at_center,transparent_34%,rgba(2,6,23,0.44)_100%)]" />
 
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
 					<div className="max-w-md rounded-[24px] border border-[#1a2740] bg-[#07111d]/78 p-4 backdrop-blur-xl">
@@ -267,6 +235,60 @@ export default function SolarSystem() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function SolarSystemScene({
+	controlsRef,
+	followed,
+	setFollowed,
+	showOrbits,
+	timeScale,
+}: {
+	controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
+	followed: string | null;
+	setFollowed: (name: string | null) => void;
+	showOrbits: boolean;
+	timeScale: number;
+}) {
+	return (
+		<>
+			<color attach="background" args={["#02050c"]} />
+			<fog attach="fog" args={["#02050c", 220, 920]} />
+			<ambientLight intensity={0.28} />
+			<hemisphereLight args={["#9dd8ff", "#02050c", 0.24]} />
+			<pointLight position={[0, 0, 0]} intensity={3.1} color="#ffd79a" />
+			<DeepSpaceBackdrop />
+			<Stars radius={560} depth={180} count={3200} factor={4.2} fade />
+
+			{planets.map((planet) => (
+				<Planet
+					key={planet.name}
+					data={planet}
+					moon={planet.name === "Earth" ? moon : undefined}
+					followed={followed === planet.name}
+					setFollowed={setFollowed}
+					controlsRef={controlsRef}
+					showOrbit={showOrbits}
+					timeScaleDaysPerSec={timeScale}
+				/>
+			))}
+
+			<OrbitControls
+				ref={controlsRef}
+				autoRotate={!followed}
+				autoRotateSpeed={0.2}
+				enableDamping
+				enablePan={false}
+				enableZoom
+				dampingFactor={0.06}
+				rotateSpeed={0.45}
+				maxDistance={900}
+				minDistance={10}
+				minPolarAngle={0.35}
+				maxPolarAngle={Math.PI - 0.35}
+			/>
+		</>
 	);
 }
 
@@ -314,20 +336,6 @@ function DeepSpaceBackdrop() {
 				</mesh>
 			</group>
 		</>
-	);
-}
-
-function StatPill({
-	label,
-	value,
-}: {
-	label: string;
-	value: string;
-}) {
-	return (
-		<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-			{label} {value}
-		</div>
 	);
 }
 

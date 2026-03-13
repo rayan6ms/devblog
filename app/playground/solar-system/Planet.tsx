@@ -36,7 +36,6 @@ export default function Planet({
 }: Props) {
 	const orbitPivot = useRef<Group>(null!);
 	const planetMesh = useRef<Mesh>(null!);
-	const glowMesh = useRef<Mesh>(null!);
 	const startAngle = useRef(Math.random() * Math.PI * 2);
 	const planetTex = useTexture(data.textureUrl);
 	const lastFollowPos = useRef<Vector3 | null>(null);
@@ -64,7 +63,7 @@ export default function Planet({
 		}
 	}, [followed, controlsRef, data.radiusUnits]);
 
-	useFrame(({ clock }, dt) => {
+	useFrame((_, dt) => {
 		const days = timeScaleDaysPerSec * dt;
 
 		if (data.orbitalPeriodDays > 0) {
@@ -75,9 +74,6 @@ export default function Planet({
 			const periodDays = data.rotationPeriodHours / 24.0;
 			planetMesh.current.rotation.y += Math.PI * 2 * (days / periodDays);
 		}
-
-		const pulse = 1 + Math.sin(clock.elapsedTime * 1.5 + startAngle.current) * 0.035;
-		glowMesh.current.scale.setScalar(pulse);
 
 		if (followed && controlsRef.current && lastFollowPos.current) {
 			planetMesh.current.getWorldPosition(tmp);
@@ -143,13 +139,13 @@ export default function Planet({
 							/>
 						</mesh>
 
-						<mesh ref={glowMesh} scale={1.14}>
+						<mesh scale={1.14}>
 							<sphereGeometry args={[data.radiusUnits, 24, 24]} />
 							<meshBasicMaterial
 								color={data.accent}
 								transparent
 								opacity={
-									data.name === "Sun" ? 0.12 : followed ? 0.18 : 0.06
+									data.name === "Sun" ? 0.1 : followed ? 0.08 : 0.025
 								}
 								depthWrite={false}
 								blending={AdditiveBlending}

@@ -1,12 +1,12 @@
 "use client";
 
 import {
-	useEffect,
-	useRef,
-	useState,
 	type Dispatch,
 	type RefObject,
 	type SetStateAction,
+	useEffect,
+	useRef,
+	useState,
 } from "react";
 
 type Point = { x: number; y: number };
@@ -37,6 +37,43 @@ type SearchPool = {
 	heapScores: number[];
 };
 
+type RgbColor = {
+	r: number;
+	g: number;
+	b: number;
+};
+
+type SnakeTheme = {
+	key: string;
+	label: string;
+	description: string;
+	accent: string;
+	snakeHead: RgbColor;
+	snakeTail: RgbColor;
+	snakeEye: string;
+};
+
+type BoardTheme = {
+	key: string;
+	label: string;
+	boardBg: string;
+	cellStart: string;
+	cellEnd: string;
+	boardShadow: string;
+	arrow: string;
+	path: string;
+	pathDot: string;
+	overlayTint: string;
+	overlayText: string;
+	appleStem: string;
+	appleBody: string;
+	appleShadow: string;
+	stageGlow: string;
+	stageGrid: string;
+};
+
+type LoadStatus = "loading" | "ready" | "error";
+
 type UiBridge = {
 	speedRef: MutableRef<number>;
 	pausedRef: MutableRef<boolean>;
@@ -59,7 +96,10 @@ type MountOptions = UiBridge & {
 	cellPx: number;
 	seed?: number;
 	arrowsRef: MutableRef<boolean>;
+	bodyGapRef: MutableRef<boolean>;
 	lastUiSync: MutableRef<number>;
+	themeRef: MutableRef<SnakeTheme>;
+	boardThemeRef: MutableRef<BoardTheme>;
 };
 
 type EngineOptions = UiBridge & {
@@ -82,6 +122,12 @@ const ROOT_PARENT = -2;
 const UNVISITED_PARENT = -1;
 const A_STAR_INF = 1e15;
 const A_STAR_STEP = 1000;
+const SPEED_MIN = 1;
+const SPEED_MAX = 100;
+const SPEED_STEP = 0.5;
+const STAGE_PADDING = 8;
+const SNAKE_COLOR_INTERVALS = 15;
+const SNAKE_COLOR_SOFT_END = 11 / 15;
 
 const DIRS = {
 	UP: { x: 0, y: -1 },
@@ -96,6 +142,222 @@ const CARDINAL_DIRS: readonly Dir[] = [
 	DIRS.DOWN,
 	DIRS.UP,
 ];
+
+const SNAKE_THEMES: readonly SnakeTheme[] = [
+	{
+		key: "classic",
+		label: "Original",
+		description: "The original green-to-blue arcade body with red eyes.",
+		accent: "#22c55e",
+		snakeHead: { r: 0, g: 255, b: 0 },
+		snakeTail: { r: 0, g: 0, b: 255 },
+		snakeEye: "rgb(255 96 96)",
+	},
+	{
+		key: "solar-flare",
+		label: "Solar Flare",
+		description: "Gold head fading into hot pink.",
+		accent: "#fb923c",
+		snakeHead: { r: 251, g: 191, b: 36 },
+		snakeTail: { r: 236, g: 72, b: 153 },
+		snakeEye: "rgb(255 249 196)",
+	},
+	{
+		key: "midnight-bloom",
+		label: "Midnight Bloom",
+		description: "Pink head tapering into violet.",
+		accent: "#c084fc",
+		snakeHead: { r: 244, g: 114, b: 182 },
+		snakeTail: { r: 129, g: 140, b: 248 },
+		snakeEye: "rgb(255 255 255)",
+	},
+	{
+		key: "glacier",
+		label: "Glacier",
+		description: "Ice blue head with a mint tail.",
+		accent: "#67e8f9",
+		snakeHead: { r: 125, g: 211, b: 252 },
+		snakeTail: { r: 16, g: 185, b: 129 },
+		snakeEye: "rgb(224 242 254)",
+	},
+	{
+		key: "toxic",
+		label: "Toxic",
+		description: "Acid lime head with a deep purple tail.",
+		accent: "#a3e635",
+		snakeHead: { r: 163, g: 230, b: 53 },
+		snakeTail: { r: 88, g: 28, b: 135 },
+		snakeEye: "rgb(250 250 250)",
+	},
+	{
+		key: "ember",
+		label: "Ember",
+		description: "Flame orange body cooling into crimson.",
+		accent: "#f97316",
+		snakeHead: { r: 249, g: 115, b: 22 },
+		snakeTail: { r: 190, g: 24, b: 93 },
+		snakeEye: "rgb(255 245 157)",
+	},
+	{
+		key: "lagoon",
+		label: "Lagoon",
+		description: "Bright aqua blending into ocean blue.",
+		accent: "#22d3ee",
+		snakeHead: { r: 34, g: 211, b: 238 },
+		snakeTail: { r: 37, g: 99, b: 235 },
+		snakeEye: "rgb(240 253 250)",
+	},
+	{
+		key: "candy",
+		label: "Candy",
+		description: "Bubblegum pink sliding into cherry red.",
+		accent: "#fb7185",
+		snakeHead: { r: 251, g: 113, b: 133 },
+		snakeTail: { r: 220, g: 38, b: 38 },
+		snakeEye: "rgb(255 255 255)",
+	},
+	{
+		key: "citrus",
+		label: "Citrus",
+		description: "Lemon yellow with a tangerine finish.",
+		accent: "#facc15",
+		snakeHead: { r: 250, g: 204, b: 21 },
+		snakeTail: { r: 249, g: 115, b: 22 },
+		snakeEye: "rgb(120 53 15)",
+	},
+	{
+		key: "forest",
+		label: "Forest",
+		description: "Fresh green body fading into dark pine.",
+		accent: "#4ade80",
+		snakeHead: { r: 74, g: 222, b: 128 },
+		snakeTail: { r: 21, g: 128, b: 61 },
+		snakeEye: "rgb(240 253 244)",
+	},
+	{
+		key: "royal",
+		label: "Royal",
+		description: "Lavender highlights with a cobalt tail.",
+		accent: "#818cf8",
+		snakeHead: { r: 196, g: 181, b: 253 },
+		snakeTail: { r: 67, g: 56, b: 202 },
+		snakeEye: "rgb(255 255 255)",
+	},
+	{
+		key: "mono",
+		label: "Monochrome",
+		description: "White body fading into graphite.",
+		accent: "#e5e7eb",
+		snakeHead: { r: 255, g: 255, b: 255 },
+		snakeTail: { r: 82, g: 82, b: 91 },
+		snakeEye: "rgb(239 68 68)",
+	},
+] as const;
+
+const BOARD_THEMES: readonly BoardTheme[] = [
+	{
+		key: "classic",
+		label: "Classic",
+		boardBg: "rgb(18 18 18)",
+		cellStart: "rgba(122, 122, 122, 0.92)",
+		cellEnd: "rgba(76, 76, 76, 0.92)",
+		boardShadow: "rgba(255, 255, 255, 0.08)",
+		arrow: "rgb(220 80 120)",
+		path: "rgb(70 150 255)",
+		pathDot: "rgba(70, 150, 255, 0.55)",
+		overlayTint: "rgba(0, 0, 0, 0.62)",
+		overlayText: "rgb(255 255 255)",
+		appleStem: "#2EAD53",
+		appleBody: "#BA222E",
+		appleShadow: "#821C29",
+		stageGlow: "rgba(56, 189, 248, 0.14)",
+		stageGrid: "rgba(125, 211, 252, 0.12)",
+	},
+	{
+		key: "ember",
+		label: "Ember",
+		boardBg: "rgb(28 14 9)",
+		cellStart: "rgba(251, 146, 60, 0.84)",
+		cellEnd: "rgba(194, 65, 12, 0.84)",
+		boardShadow: "rgba(251, 146, 60, 0.12)",
+		arrow: "rgb(251 146 60)",
+		path: "rgb(244 114 182)",
+		pathDot: "rgba(244, 114, 182, 0.58)",
+		overlayTint: "rgba(20, 9, 4, 0.68)",
+		overlayText: "rgb(255 237 213)",
+		appleStem: "#65A30D",
+		appleBody: "#FB7185",
+		appleShadow: "#9F1239",
+		stageGlow: "rgba(251, 146, 60, 0.16)",
+		stageGrid: "rgba(253, 186, 116, 0.12)",
+	},
+	{
+		key: "midnight",
+		label: "Midnight",
+		boardBg: "rgb(9 13 28)",
+		cellStart: "rgba(129, 140, 248, 0.78)",
+		cellEnd: "rgba(79, 70, 229, 0.78)",
+		boardShadow: "rgba(196, 181, 253, 0.12)",
+		arrow: "rgb(244 114 182)",
+		path: "rgb(129 140 248)",
+		pathDot: "rgba(129, 140, 248, 0.55)",
+		overlayTint: "rgba(7, 9, 20, 0.72)",
+		overlayText: "rgb(241 245 249)",
+		appleStem: "#34D399",
+		appleBody: "#F472B6",
+		appleShadow: "#9D174D",
+		stageGlow: "rgba(192, 132, 252, 0.16)",
+		stageGrid: "rgba(196, 181, 253, 0.12)",
+	},
+	{
+		key: "glacier",
+		label: "Glacier",
+		boardBg: "rgb(6 24 30)",
+		cellStart: "rgba(103, 232, 249, 0.72)",
+		cellEnd: "rgba(45, 212, 191, 0.7)",
+		boardShadow: "rgba(103, 232, 249, 0.1)",
+		arrow: "rgb(34 197 94)",
+		path: "rgb(34 211 238)",
+		pathDot: "rgba(34, 211, 238, 0.5)",
+		overlayTint: "rgba(4, 17, 21, 0.68)",
+		overlayText: "rgb(236 254 255)",
+		appleStem: "#84CC16",
+		appleBody: "#F97316",
+		appleShadow: "#9A3412",
+		stageGlow: "rgba(34, 211, 238, 0.14)",
+		stageGrid: "rgba(103, 232, 249, 0.12)",
+	},
+] as const;
+
+function cycleOption<T>(values: readonly T[], current: T) {
+	const index = values.indexOf(current);
+	return values[(index + 1) % values.length] ?? values[0];
+}
+
+function mixColor(from: RgbColor, to: RgbColor, amount: number): RgbColor {
+	const t = Math.max(0, Math.min(1, amount));
+	return {
+		r: Math.round(from.r + (to.r - from.r) * t),
+		g: Math.round(from.g + (to.g - from.g) * t),
+		b: Math.round(from.b + (to.b - from.b) * t),
+	};
+}
+
+function colorToCss(color: RgbColor, alpha?: number) {
+	if (alpha === undefined) {
+		return `rgb(${color.r} ${color.g} ${color.b})`;
+	}
+
+	return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+}
+
+function snapToDevicePixels(value: number, scale: number) {
+	return Math.round(value * scale) / scale;
+}
+
+function getBoardInset(cellPx: number) {
+	return Math.max(2, Math.floor(cellPx * 0.2));
+}
 
 function isOpposite(a: Dir, b: Dir) {
 	return a.x === -b.x && a.y === -b.y;
@@ -207,6 +469,38 @@ function drawRoundedRect(
 	context.fill();
 }
 
+function drawCornerRoundedRect(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	radii: { tl: number; tr: number; br: number; bl: number },
+): void {
+	const tl = Math.max(0, Math.min(radii.tl, width / 2, height / 2));
+	const tr = Math.max(0, Math.min(radii.tr, width / 2, height / 2));
+	const br = Math.max(0, Math.min(radii.br, width / 2, height / 2));
+	const bl = Math.max(0, Math.min(radii.bl, width / 2, height / 2));
+
+	context.beginPath();
+	context.moveTo(x + tl, y);
+	context.lineTo(x + width - tr, y);
+	if (tr > 0) context.quadraticCurveTo(x + width, y, x + width, y + tr);
+	else context.lineTo(x + width, y);
+	context.lineTo(x + width, y + height - br);
+	if (br > 0)
+		context.quadraticCurveTo(x + width, y + height, x + width - br, y + height);
+	else context.lineTo(x + width, y + height);
+	context.lineTo(x + bl, y + height);
+	if (bl > 0) context.quadraticCurveTo(x, y + height, x, y + height - bl);
+	else context.lineTo(x, y + height);
+	context.lineTo(x, y + tl);
+	if (tl > 0) context.quadraticCurveTo(x, y, x + tl, y);
+	else context.lineTo(x, y);
+	context.closePath();
+	context.fill();
+}
+
 function createCanvasLayer(width: number, height: number): HTMLCanvasElement {
 	const canvas = document.createElement("canvas");
 	canvas.width = width;
@@ -214,9 +508,14 @@ function createCanvasLayer(width: number, height: number): HTMLCanvasElement {
 	return canvas;
 }
 
-function createBoardLayer(boardSize: number, cellPx: number): HTMLCanvasElement {
-	const width = boardSize * cellPx;
-	const height = boardSize * cellPx;
+function createBoardLayer(
+	boardSize: number,
+	cellPx: number,
+	boardTheme: BoardTheme,
+): HTMLCanvasElement {
+	const boardInset = getBoardInset(cellPx);
+	const width = boardSize * cellPx + boardInset * 2;
+	const height = boardSize * cellPx + boardInset * 2;
 	const canvas = createCanvasLayer(width, height);
 	const context = canvas.getContext("2d");
 
@@ -225,19 +524,30 @@ function createBoardLayer(boardSize: number, cellPx: number): HTMLCanvasElement 
 	}
 
 	context.imageSmoothingEnabled = false;
-	context.fillStyle = "rgb(18 18 18)";
+	context.fillStyle = boardTheme.boardBg;
 	context.fillRect(0, 0, width, height);
+	context.strokeStyle = boardTheme.boardShadow;
+	context.lineWidth = Math.max(1, cellPx * 0.05);
+	context.strokeRect(0.5, 0.5, width - 1, height - 1);
 
-	context.fillStyle = "rgba(120, 120, 120, 0.862745098)";
 	const pad = Math.floor(cellPx * 0.2);
 	const gap = pad >> 1;
 
 	for (let x = 0; x < boardSize; x++) {
 		for (let y = 0; y < boardSize; y++) {
+			const gradient = context.createLinearGradient(
+				boardInset + x * cellPx + gap,
+				boardInset + y * cellPx + gap,
+				boardInset + x * cellPx + cellPx - gap,
+				boardInset + y * cellPx + cellPx - gap,
+			);
+			gradient.addColorStop(0, boardTheme.cellStart);
+			gradient.addColorStop(1, boardTheme.cellEnd);
+			context.fillStyle = gradient;
 			drawRoundedRect(
 				context,
-				x * cellPx + gap,
-				y * cellPx + gap,
+				boardInset + x * cellPx + gap,
+				boardInset + y * cellPx + gap,
 				cellPx - pad,
 				cellPx - pad,
 				3,
@@ -252,9 +562,11 @@ function createDirectionHintsLayer(
 	boardSize: number,
 	cellPx: number,
 	dirmat: Dir[][][],
+	boardTheme: BoardTheme,
 ): HTMLCanvasElement {
-	const width = boardSize * cellPx;
-	const height = boardSize * cellPx;
+	const boardInset = getBoardInset(cellPx);
+	const width = boardSize * cellPx + boardInset * 2;
+	const height = boardSize * cellPx + boardInset * 2;
 	const canvas = createCanvasLayer(width, height);
 	const context = canvas.getContext("2d");
 
@@ -263,14 +575,14 @@ function createDirectionHintsLayer(
 	}
 
 	context.imageSmoothingEnabled = false;
-	context.strokeStyle = "rgb(220 80 120)";
-	context.fillStyle = "rgb(220 80 120)";
+	context.strokeStyle = boardTheme.arrow;
+	context.fillStyle = boardTheme.arrow;
 	context.lineWidth = 1.25;
 
 	for (let y = 0; y < boardSize; y++) {
 		for (let x = 0; x < boardSize; x++) {
-			const centerX = x * cellPx + cellPx / 2;
-			const centerY = y * cellPx + cellPx / 2;
+			const centerX = boardInset + x * cellPx + cellPx / 2;
+			const centerY = boardInset + y * cellPx + cellPx / 2;
 			const dirs = dirmat[y][x];
 
 			for (let i = 0; i < dirs.length; i++) {
@@ -303,7 +615,7 @@ function createDirectionHintsLayer(
 	return canvas;
 }
 
-function createAppleSprite(cell: number): HTMLCanvasElement {
+function createAppleSprite(cell: number, boardTheme: BoardTheme): HTMLCanvasElement {
 	const canvas = document.createElement("canvas");
 	canvas.width = cell;
 	canvas.height = cell;
@@ -316,12 +628,36 @@ function createAppleSprite(cell: number): HTMLCanvasElement {
 	context.imageSmoothingEnabled = false;
 
 	const art: (string | null)[][] = [
-		[null, "#2EAD53", null, null, null],
-		[null, "#BA222E", "#2EAD53", "#BA222E", null],
-		["#821C29", "#BA222E", "#BA222E", "#BA222E", "#BA222E"],
-		["#821C29", "#BA222E", "#BA222E", "#BA222E", "#BA222E"],
-		["#821C29", "#821C29", "#BA222E", "#BA222E", "#BA222E"],
-		[null, "#821C29", "#821C29", "#821C29", null],
+		[null, boardTheme.appleStem, null, null, null],
+		[null, boardTheme.appleBody, boardTheme.appleStem, boardTheme.appleBody, null],
+		[
+			boardTheme.appleShadow,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+		],
+		[
+			boardTheme.appleShadow,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+		],
+		[
+			boardTheme.appleShadow,
+			boardTheme.appleShadow,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+			boardTheme.appleBody,
+		],
+		[
+			null,
+			boardTheme.appleShadow,
+			boardTheme.appleShadow,
+			boardTheme.appleShadow,
+			null,
+		],
 	];
 
 	const rows = art.length;
@@ -396,6 +732,7 @@ function mountSnakeGame(
 		pausedRef,
 		autoRef,
 		arrowsRef,
+		bodyGapRef,
 		overRef,
 		winRef,
 		resetBus,
@@ -403,6 +740,8 @@ function mountSnakeGame(
 		scoreR,
 		stepsR,
 		lastUiSync,
+		themeRef,
+		boardThemeRef,
 		setPaused,
 		setScore,
 		setSteps,
@@ -410,16 +749,10 @@ function mountSnakeGame(
 		setWin,
 	}: MountOptions,
 ): () => void {
-	const width = boardSize * cellPx;
-	const height = boardSize * cellPx;
+	const boardInset = getBoardInset(cellPx);
+	const width = boardSize * cellPx + boardInset * 2;
+	const height = boardSize * cellPx + boardInset * 2;
 	const graph = buildBoardGraph(boardSize);
-	const boardLayer = createBoardLayer(boardSize, cellPx);
-	const arrowsLayer = createDirectionHintsLayer(
-		boardSize,
-		cellPx,
-		graph.dirmat,
-	);
-	const appleSprite = createAppleSprite(cellPx);
 	const engine = createSnakeEngine({
 		boardSize,
 		seed,
@@ -446,6 +779,31 @@ function mountSnakeGame(
 	let stepMs = 1000 / movesPerSecond;
 	let accumulator = 0;
 	let lastFrameAt = performance.now();
+	const renderScale =
+		typeof window === "undefined"
+			? 1
+			: Math.max(1, window.devicePixelRatio || 1);
+	let activeTheme = themeRef.current;
+	let activeBoardTheme = boardThemeRef.current;
+	let boardLayer = createBoardLayer(boardSize, cellPx, activeBoardTheme);
+	let arrowsLayer = createDirectionHintsLayer(
+		boardSize,
+		cellPx,
+		graph.dirmat,
+		activeBoardTheme,
+	);
+	let appleSprite = createAppleSprite(cellPx, activeBoardTheme);
+
+	function refreshThemeAssets(theme: SnakeTheme) {
+		activeTheme = theme;
+	}
+
+	function refreshBoardThemeAssets(theme: BoardTheme) {
+		activeBoardTheme = theme;
+		boardLayer = createBoardLayer(boardSize, cellPx, theme);
+		arrowsLayer = createDirectionHintsLayer(boardSize, cellPx, graph.dirmat, theme);
+		appleSprite = createAppleSprite(cellPx, theme);
+	}
 
 	function drawPathOverlay(
 		context: CanvasRenderingContext2D,
@@ -454,14 +812,14 @@ function mountSnakeGame(
 		if (!arrowsRef.current || overRef.current || winRef.current) return;
 		if (!pathIds || pathIds.length <= 1) return;
 
-		context.strokeStyle = "rgb(70 150 255)";
+		context.strokeStyle = activeBoardTheme.path;
 		context.lineWidth = Math.max(2, cellPx * 0.08);
 		context.beginPath();
 
 		for (let i = 0; i < pathIds.length; i++) {
 			const id = pathIds[i];
-			const centerX = (id % boardSize) * cellPx + cellPx / 2;
-			const centerY = ((id / boardSize) | 0) * cellPx + cellPx / 2;
+			const centerX = boardInset + (id % boardSize) * cellPx + cellPx / 2;
+			const centerY = boardInset + ((id / boardSize) | 0) * cellPx + cellPx / 2;
 
 			if (i === 0) context.moveTo(centerX, centerY);
 			else context.lineTo(centerX, centerY);
@@ -469,13 +827,13 @@ function mountSnakeGame(
 
 		context.stroke();
 
-		context.fillStyle = "rgba(70, 150, 255, 0.549019608)";
+		context.fillStyle = activeBoardTheme.pathDot;
 		const radius = Math.max(3, cellPx * 0.12);
 
 		for (let i = 0; i < pathIds.length; i++) {
 			const id = pathIds[i];
-			const centerX = (id % boardSize) * cellPx + cellPx / 2;
-			const centerY = ((id / boardSize) | 0) * cellPx + cellPx / 2;
+			const centerX = boardInset + (id % boardSize) * cellPx + cellPx / 2;
+			const centerY = boardInset + ((id / boardSize) | 0) * cellPx + cellPx / 2;
 
 			context.beginPath();
 			context.arc(centerX, centerY, radius / 2, 0, Math.PI * 2);
@@ -486,36 +844,160 @@ function mountSnakeGame(
 	function drawSnake(context: CanvasRenderingContext2D) {
 		const snakeIds = engine.getSnakeIds();
 		const dir = engine.getDir();
+		const lastIndex = Math.max(1, snakeIds.length - 1);
+		const occupied = new Set(snakeIds);
+		const inBounds = (x: number, y: number) =>
+			x >= 0 && y >= 0 && x < boardSize && y < boardSize;
 
 		for (let i = 0; i < snakeIds.length; i++) {
 			const id = snakeIds[i];
 			const x = id % boardSize;
 			const y = (id / boardSize) | 0;
-			const intensity = Math.floor(255 - i * (255 / (snakeIds.length * 1.7)));
+			const progress =
+				(i / Math.max(lastIndex, SNAKE_COLOR_INTERVALS)) * SNAKE_COLOR_SOFT_END;
+			const segmentColor = mixColor(
+				activeTheme.snakeHead,
+				activeTheme.snakeTail,
+				progress,
+			);
+			const inset = bodyGapRef.current ? Math.max(1, Math.floor(cellPx * 0.06)) : 0;
+			const isHead = i === 0;
+			const isTail = i === snakeIds.length - 1;
+			const segmentRadius = bodyGapRef.current
+				? Math.max(4, Math.floor(cellPx * 0.22))
+				: Math.max(2, Math.floor(cellPx * 0.16));
+			const drawX = snapToDevicePixels(boardInset + x * cellPx + inset, renderScale);
+			const drawY = snapToDevicePixels(boardInset + y * cellPx + inset, renderScale);
+			const drawSize = Math.max(
+				1 / renderScale,
+				snapToDevicePixels(cellPx - inset * 2, renderScale),
+			);
 
-			context.fillStyle = `rgb(0 ${intensity} ${255 - intensity})`;
-			drawRoundedRect(context, x * cellPx, y * cellPx, cellPx, cellPx, 4);
+			context.fillStyle = colorToCss(segmentColor, i === 0 ? 1 : 0.96);
 
-			if (i !== 0) continue;
+			if (bodyGapRef.current) {
+				drawRoundedRect(
+					context,
+					drawX,
+					drawY,
+					drawSize,
+					drawSize,
+					segmentRadius,
+				);
+			} else {
+				let cornerRadii = { tl: 0, tr: 0, br: 0, bl: 0 };
 
-			context.fillStyle = "rgb(255 64 64)";
-			const eye = cellPx / 5;
+				if (snakeIds.length === 1) {
+					cornerRadii = {
+						tl: segmentRadius,
+						tr: segmentRadius,
+						br: segmentRadius,
+						bl: segmentRadius,
+					};
+				} else if (isHead || isTail) {
+					const exposedDir =
+						isHead
+							? dir
+							: (() => {
+								const prev = snakeIds[snakeIds.length - 2] ?? id;
+								const prevX = prev % boardSize;
+								const prevY = (prev / boardSize) | 0;
+								return { x: x - prevX, y: y - prevY };
+							})();
+
+					if (exposedDir.x === 1) {
+						cornerRadii = { tl: 0, tr: segmentRadius, br: segmentRadius, bl: 0 };
+					} else if (exposedDir.x === -1) {
+						cornerRadii = { tl: segmentRadius, tr: 0, br: 0, bl: segmentRadius };
+					} else if (exposedDir.y === -1) {
+						cornerRadii = { tl: segmentRadius, tr: segmentRadius, br: 0, bl: 0 };
+					} else {
+						cornerRadii = { tl: 0, tr: 0, br: segmentRadius, bl: segmentRadius };
+					}
+				} else {
+					const prevId = snakeIds[i - 1] ?? id;
+					const nextId = snakeIds[i + 1] ?? id;
+					const prevDir = {
+						x: (prevId % boardSize) - x,
+						y: ((prevId / boardSize) | 0) - y,
+					};
+					const nextDir = {
+						x: (nextId % boardSize) - x,
+						y: ((nextId / boardSize) | 0) - y,
+					};
+
+					if (prevDir.x !== nextDir.x && prevDir.y !== nextDir.y) {
+						const exposedX = -(prevDir.x || nextDir.x);
+						const exposedY = -(prevDir.y || nextDir.y);
+						const diagonalX = x + exposedX;
+						const diagonalY = y + exposedY;
+						const diagonalBlocked =
+							inBounds(diagonalX, diagonalY) &&
+							occupied.has(diagonalY * boardSize + diagonalX);
+
+						if (!diagonalBlocked) {
+							if (exposedX === -1 && exposedY === -1) {
+								cornerRadii.tl = segmentRadius;
+							} else if (exposedX === 1 && exposedY === -1) {
+								cornerRadii.tr = segmentRadius;
+							} else if (exposedX === 1 && exposedY === 1) {
+								cornerRadii.br = segmentRadius;
+							} else if (exposedX === -1 && exposedY === 1) {
+								cornerRadii.bl = segmentRadius;
+							}
+						}
+					}
+				}
+
+				if (
+					cornerRadii.tl === 0 &&
+					cornerRadii.tr === 0 &&
+					cornerRadii.br === 0 &&
+					cornerRadii.bl === 0
+				) {
+					context.fillRect(
+						snapToDevicePixels(boardInset + x * cellPx, renderScale),
+						snapToDevicePixels(boardInset + y * cellPx, renderScale),
+						snapToDevicePixels(cellPx, renderScale),
+						snapToDevicePixels(cellPx, renderScale),
+					);
+				} else {
+					drawCornerRoundedRect(
+						context,
+						drawX,
+						drawY,
+						drawSize,
+						drawSize,
+						cornerRadii,
+					);
+				}
+			}
+
+			if (!isHead) continue;
+
+			context.fillStyle = activeTheme.snakeEye;
+			const eye = Math.max(2, Math.floor(cellPx * 0.18));
 			const drawEye = (eyeX: number, eyeY: number) => {
-				drawRoundedRect(context, eyeX, eyeY, eye, eye, 2);
+				context.fillRect(
+					snapToDevicePixels(boardInset + eyeX, renderScale),
+					snapToDevicePixels(boardInset + eyeY, renderScale),
+					eye,
+					eye,
+				);
 			};
 
 			if (dir.x === 1) {
-				drawEye(x * cellPx + cellPx * 0.6, y * cellPx + cellPx * 0.25);
-				drawEye(x * cellPx + cellPx * 0.6, y * cellPx + cellPx * 0.6);
+				drawEye(x * cellPx + cellPx * 0.58, y * cellPx + cellPx * 0.22);
+				drawEye(x * cellPx + cellPx * 0.58, y * cellPx + cellPx * 0.6);
 			} else if (dir.x === -1) {
-				drawEye(x * cellPx + cellPx * 0.2, y * cellPx + cellPx * 0.25);
-				drawEye(x * cellPx + cellPx * 0.2, y * cellPx + cellPx * 0.6);
+				drawEye(x * cellPx + cellPx * 0.18, y * cellPx + cellPx * 0.22);
+				drawEye(x * cellPx + cellPx * 0.18, y * cellPx + cellPx * 0.6);
 			} else if (dir.y === -1) {
-				drawEye(x * cellPx + cellPx * 0.25, y * cellPx + cellPx * 0.2);
-				drawEye(x * cellPx + cellPx * 0.6, y * cellPx + cellPx * 0.2);
+				drawEye(x * cellPx + cellPx * 0.22, y * cellPx + cellPx * 0.18);
+				drawEye(x * cellPx + cellPx * 0.6, y * cellPx + cellPx * 0.18);
 			} else {
-				drawEye(x * cellPx + cellPx * 0.25, y * cellPx + cellPx * 0.6);
-				drawEye(x * cellPx + cellPx * 0.6, y * cellPx + cellPx * 0.6);
+				drawEye(x * cellPx + cellPx * 0.22, y * cellPx + cellPx * 0.58);
+				drawEye(x * cellPx + cellPx * 0.6, y * cellPx + cellPx * 0.58);
 			}
 		}
 	}
@@ -526,24 +1008,26 @@ function mountSnakeGame(
 
 		const x = appleId % boardSize;
 		const y = (appleId / boardSize) | 0;
-		context.drawImage(appleSprite, x * cellPx, y * cellPx);
+		context.drawImage(appleSprite, boardInset + x * cellPx, boardInset + y * cellPx);
 	}
 
 	function drawOverlay(context: CanvasRenderingContext2D) {
 		if (!pausedRef.current && !overRef.current) return;
 
-		context.fillStyle = "rgba(0, 0, 0, 0.588235294)";
+		context.fillStyle = activeBoardTheme.overlayTint;
 		context.fillRect(0, 0, width, height);
-		context.fillStyle = "white";
+		context.fillStyle = activeBoardTheme.overlayText;
 		context.textAlign = "center";
 		context.textBaseline = "middle";
-		context.font = "22px sans-serif";
+		context.font =
+			'600 22px ui-monospace, "SFMono-Regular", "Cascadia Code", monospace';
 		context.fillText(
 			overRef.current ? (winRef.current ? "You Win!" : "Game Over") : "Paused",
 			width / 2,
 			height / 2 - 16,
 		);
-		context.font = "14px sans-serif";
+		context.font =
+			'500 14px ui-monospace, "SFMono-Regular", "Cascadia Code", monospace';
 		context.fillText(
 			"Enter to restart • Space to toggle pause",
 			width / 2,
@@ -560,6 +1044,13 @@ function mountSnakeGame(
 
 	function drawFrame() {
 		if (!renderer) return;
+
+		if (themeRef.current !== activeTheme) {
+			refreshThemeAssets(themeRef.current);
+		}
+		if (boardThemeRef.current !== activeBoardTheme) {
+			refreshBoardThemeAssets(boardThemeRef.current);
+		}
 
 		if (resetBus.current) {
 			resetBus.current = false;
@@ -583,7 +1074,7 @@ function mountSnakeGame(
 		}
 
 		const context = renderer.gameContext;
-		context.setTransform(1, 0, 0, 1, 0, 0);
+		context.setTransform(renderScale, 0, 0, renderScale, 0, 0);
 		context.imageSmoothingEnabled = false;
 		context.clearRect(0, 0, width, height);
 		context.drawImage(boardLayer, 0, 0);
@@ -617,16 +1108,18 @@ function mountSnakeGame(
 		if (!controlsKey) return;
 		event.preventDefault();
 
-		if (overRef.current) {
-			if (event.key === "Enter") {
-				resetBus.current = true;
-				pausedRef.current = false;
-				overRef.current = false;
-				setPaused(false);
-				setGameOver(false);
-			}
+		if (key === "enter") {
+			resetBus.current = true;
+			pausedRef.current = false;
+			overRef.current = false;
+			winRef.current = false;
+			setPaused(false);
+			setGameOver(false);
+			setWin(false);
 			return;
 		}
+
+		if (overRef.current) return;
 
 		if (key === " " || key === "escape") {
 			const nextPaused = !pausedRef.current;
@@ -657,6 +1150,12 @@ function mountSnakeGame(
 		create(): void {
 			renderer = this.sys.game.renderer as PhaserCanvasRenderer;
 			renderer.gameContext.imageSmoothingEnabled = false;
+			this.game.canvas.width = Math.round(width * renderScale);
+			this.game.canvas.height = Math.round(height * renderScale);
+			this.game.canvas.style.width = `${width}px`;
+			this.game.canvas.style.height = `${height}px`;
+			this.game.canvas.style.display = "block";
+			this.game.canvas.style.imageRendering = "pixelated";
 			lastFrameAt = performance.now();
 			engine.reset();
 			this.game.events.on(PhaserLib.Core.Events.POST_RENDER, drawFrame);
@@ -678,7 +1177,7 @@ function mountSnakeGame(
 		transparent: false,
 		antialias: false,
 		pixelArt: true,
-		backgroundColor: "#121212",
+		backgroundColor: activeBoardTheme.boardBg,
 	});
 
 	window.addEventListener("keydown", onKeyDown);
@@ -1503,27 +2002,77 @@ export default function SnakePhaser({
 	className?: string;
 }) {
 	const hostRef = useRef<HTMLDivElement | null>(null);
+	const stageViewportRef = useRef<HTMLDivElement | null>(null);
 
+	const [status, setStatus] = useState<LoadStatus>("loading");
 	const [score, setScore] = useState(0);
 	const [steps, setSteps] = useState(0);
-	const [speed, setSpeed] = useState(initialSpeed);
+	const [speed, setSpeed] = useState(
+		Math.min(SPEED_MAX, Math.max(SPEED_MIN, initialSpeed)),
+	);
 	const [paused, setPaused] = useState(false);
 	const [gameOver, setGameOver] = useState(false);
 	const [win, setWin] = useState(false);
 	const [autoPlay, setAutoPlay] = useState(true);
 	const [showArrows, setShowArrows] = useState(false);
+	const [boardDimension, setBoardDimension] = useState(boardSize);
+	const [showBodyGap, setShowBodyGap] = useState(true);
+	const [boardTheme, setBoardTheme] = useState<BoardTheme>(BOARD_THEMES[0]);
+	const [theme, setTheme] = useState<SnakeTheme>(SNAKE_THEMES[0]);
+	const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
 
 	const speedRef = useRef(speed);
 	const pausedRef = useRef(paused);
 	const autoRef = useRef(autoPlay);
 	const arrowsRef = useRef(showArrows);
+	const bodyGapRef = useRef(showBodyGap);
 	const overRef = useRef(gameOver);
 	const winRef = useRef(win);
+	const themeRef = useRef(theme);
+	const boardThemeRef = useRef(boardTheme);
 	const resetBus = useRef(false);
 	const justReset = useRef(false);
 	const scoreR = useRef(0);
 	const stepsR = useRef(0);
 	const lastUiSync = useRef(0);
+	const speedHoldTimeoutRef = useRef<number | null>(null);
+	const speedHoldIntervalRef = useRef<number | null>(null);
+
+	const safeBoardWidth = Math.max(
+		0,
+		stageSize.width - STAGE_PADDING,
+	);
+	const safeBoardHeight = Math.max(
+		0,
+		stageSize.height - STAGE_PADDING,
+	);
+	const resolvedCellPx =
+		safeBoardWidth > 0 && safeBoardHeight > 0
+			? Math.max(
+				4,
+				Math.min(
+					cellPx,
+					Math.floor(
+						Math.min(
+							safeBoardWidth / boardDimension,
+							safeBoardHeight / boardDimension,
+						),
+					),
+				),
+			)
+			: 0;
+	const boardInsetPx = getBoardInset(resolvedCellPx);
+	const boardPixelSize = resolvedCellPx * boardDimension + boardInsetPx * 2;
+	const length = score + 1;
+	const statusLabel =
+		status === "loading" ? "Loading" : status === "error" ? "Error" : "Ready";
+	const sessionLabel = gameOver
+		? win
+			? "Won"
+			: "Game Over"
+		: paused
+			? "Paused"
+			: statusLabel;
 
 	useEffect(() => {
 		speedRef.current = speed;
@@ -1542,6 +2091,10 @@ export default function SnakePhaser({
 	}, [showArrows]);
 
 	useEffect(() => {
+		bodyGapRef.current = showBodyGap;
+	}, [showBodyGap]);
+
+	useEffect(() => {
 		overRef.current = gameOver;
 	}, [gameOver]);
 
@@ -1550,7 +2103,50 @@ export default function SnakePhaser({
 	}, [win]);
 
 	useEffect(() => {
-		if (!hostRef.current) return;
+		themeRef.current = theme;
+	}, [theme]);
+
+	useEffect(() => {
+		boardThemeRef.current = boardTheme;
+	}, [boardTheme]);
+
+	useEffect(() => {
+		setBoardDimension(boardSize);
+	}, [boardSize]);
+
+	useEffect(() => {
+		const node = stageViewportRef.current;
+		if (!node) return;
+
+		const syncSize = (width: number, height: number) => {
+			const next = {
+				width: Math.max(0, Math.floor(width)),
+				height: Math.max(0, Math.floor(height)),
+			};
+			setStageSize((current) =>
+				current.width === next.width && current.height === next.height
+					? current
+					: next,
+			);
+		};
+
+		const rect = node.getBoundingClientRect();
+		syncSize(rect.width, rect.height);
+
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) return;
+			syncSize(entry.contentRect.width, entry.contentRect.height);
+		});
+		observer.observe(node);
+
+		return () => {
+			observer.disconnect();
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!hostRef.current || resolvedCellPx < 4) return;
 
 		let cleanup: (() => void) | null = null;
 		let cancelled = false;
@@ -1558,119 +2154,109 @@ export default function SnakePhaser({
 		(async () => {
 			if (!hostRef.current) return;
 
-			const phaserModule = await import("phaser");
-			if (cancelled || !hostRef.current) return;
+			try {
+				setStatus("loading");
+				const phaserModule = await import("phaser");
+				if (cancelled || !hostRef.current) return;
 
-			const PhaserLib = ("default" in phaserModule
-				? phaserModule.default
-				: phaserModule) as PhaserModule;
+				const PhaserLib = ("default" in phaserModule
+					? phaserModule.default
+					: phaserModule) as PhaserModule;
 
-			cleanup = mountSnakeGame(hostRef.current, PhaserLib, {
-				boardSize,
-				cellPx,
-				seed,
-				speedRef,
-				pausedRef,
-				autoRef,
-				arrowsRef,
-				overRef,
-				winRef,
-				resetBus,
-				justReset,
-				scoreR,
-				stepsR,
-				lastUiSync,
-				setPaused,
-				setScore,
-				setSteps,
-				setGameOver,
-				setWin,
-			});
+				cleanup = mountSnakeGame(hostRef.current, PhaserLib, {
+					boardSize: boardDimension,
+					cellPx: resolvedCellPx,
+					seed,
+					speedRef,
+					pausedRef,
+					autoRef,
+					arrowsRef,
+					bodyGapRef,
+					overRef,
+					winRef,
+					resetBus,
+					justReset,
+					scoreR,
+					stepsR,
+					lastUiSync,
+					themeRef,
+					boardThemeRef,
+					setPaused,
+					setScore,
+					setSteps,
+					setGameOver,
+					setWin,
+				});
+				setStatus("ready");
+			} catch {
+				if (!cancelled) {
+					setStatus("error");
+				}
+			}
 		})();
 
 		return () => {
 			cancelled = true;
 			cleanup?.();
 		};
-	}, [boardSize, cellPx, seed]);
-
-	const holdRAF = useRef<number | null>(null);
-	const holdStart = useRef(0);
-	const holdDir = useRef<1 | -1>(1);
-	const holdClicksAcc = useRef(0);
+	}, [boardDimension, resolvedCellPx, seed]);
 
 	function stepSpeed(direction: 1 | -1, clicks = 1) {
 		setSpeed((currentSpeed) => {
-			let nextSpeed = currentSpeed + direction * 0.5 * clicks;
+			let nextSpeed = currentSpeed + direction * SPEED_STEP * clicks;
 			if (!Number.isFinite(nextSpeed)) nextSpeed = currentSpeed;
-			nextSpeed = Math.max(0.5, Math.min(200, nextSpeed));
+			nextSpeed = Math.max(SPEED_MIN, Math.min(SPEED_MAX, nextSpeed));
 			return +nextSpeed.toFixed(1);
 		});
 	}
 
-	function cancelHold() {
-		if (holdRAF.current) {
-			cancelAnimationFrame(holdRAF.current);
-			holdRAF.current = null;
+	function clearSpeedHold() {
+		if (speedHoldTimeoutRef.current !== null) {
+			window.clearTimeout(speedHoldTimeoutRef.current);
+			speedHoldTimeoutRef.current = null;
+		}
+
+		if (speedHoldIntervalRef.current !== null) {
+			window.clearInterval(speedHoldIntervalRef.current);
+			speedHoldIntervalRef.current = null;
 		}
 	}
 
-	function startHold(direction: 1 | -1) {
-		holdDir.current = direction;
-		holdStart.current = performance.now();
-		holdClicksAcc.current = 0;
-
-		const delay = 300;
-		const r0 = 0.35;
-		const k = 5;
-
-		let last = performance.now();
-		let seeded = false;
-
-		const loop = (now: number) => {
-			if (!holdRAF.current) return;
-
-			const elapsed = now - holdStart.current;
-
-			if (elapsed >= delay && !seeded) {
-				seeded = true;
-				stepSpeed(holdDir.current, 1);
-				holdClicksAcc.current = 0;
-				last = now;
-			}
-
-			if (elapsed < delay) {
-				holdRAF.current = requestAnimationFrame(loop);
-				return;
-			}
-
-			const dt = (now - last) / 1000;
-			last = now;
-			const t = (elapsed - delay) / 1000;
-			const clicksPerSec = r0 * Math.exp(k * t);
-
-			holdClicksAcc.current += clicksPerSec * dt;
-
-			const wholeClicks = Math.floor(holdClicksAcc.current);
-			if (wholeClicks >= 1) {
-				stepSpeed(holdDir.current, wholeClicks);
-				holdClicksAcc.current -= wholeClicks;
-			}
-
-			holdRAF.current = requestAnimationFrame(loop);
-		};
-
-		holdRAF.current = requestAnimationFrame(loop);
+	function startSpeedHold(direction: 1 | -1) {
+		clearSpeedHold();
+		stepSpeed(direction);
+		speedHoldTimeoutRef.current = window.setTimeout(() => {
+			speedHoldIntervalRef.current = window.setInterval(() => {
+				stepSpeed(direction);
+			}, 80);
+		}, 240);
 	}
 
-	function endHold(direction: 1 | -1, applyTap: boolean) {
-		const elapsed = performance.now() - holdStart.current;
-		cancelHold();
-		if (applyTap && elapsed < 300) stepSpeed(direction, 1);
+	useEffect(() => {
+		return () => {
+			if (speedHoldTimeoutRef.current !== null) {
+				window.clearTimeout(speedHoldTimeoutRef.current);
+			}
+			if (speedHoldIntervalRef.current !== null) {
+				window.clearInterval(speedHoldIntervalRef.current);
+			}
+		};
+	}, []);
+
+	function restartGame() {
+		resetBus.current = true;
+		pausedRef.current = false;
+		overRef.current = false;
+		winRef.current = false;
+		setPaused(false);
+		setGameOver(false);
+		setWin(false);
 	}
 
 	return (
-		<div className={`snake-root flex flex-col items-center gap-3 ${className}`}>
+		<div
+			className={`snake-root flex h-full min-h-0 w-full select-none flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ${className}`}
+		>
 			<style jsx>{`
 				.snake-root,
 				.snake-root * {
@@ -1678,114 +2264,290 @@ export default function SnakePhaser({
 					user-select: none !important;
 				}
 			`}</style>
-			<div
-				className="flex flex-wrap items-center gap-3 text-zinc-200"
-				onMouseDown={(event) => event.preventDefault()}
-			>
-				<div className="px-3 py-1 rounded bg-zinc-800/80 border border-zinc-700">
-					<span className="font-semibold">Speed:</span>{" "}
+			<div className="border-b border-[#233247] bg-[#07111d]/92 backdrop-blur">
+				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
+					<div className="mr-auto min-w-48">
+						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
+							Snake Grid
+						</div>
+						<div className="font-mono text-xs text-slate-400">
+							Classic snake, plenty of snake palettes, and a responsive square stage.
+						</div>
+					</div>
+					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Score {score}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Length {length}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Steps {steps}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Mode {autoPlay ? "Auto" : "Manual"}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Theme {boardTheme.label}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							Snake {theme.label}
+						</div>
+						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+							{sessionLabel}
+						</div>
+					</div>
+				</div>
+
+				<div className="flex flex-wrap gap-2 px-4 pb-4 sm:px-5">
 					<button
 						type="button"
-						className="px-2 hover:text-white text-purple-300"
-						onPointerDown={(event) => {
-							event.preventDefault();
-							event.currentTarget.setPointerCapture(event.pointerId);
-							startHold(-1);
-						}}
-						onPointerUp={() => endHold(-1, true)}
-						onPointerCancel={() => cancelHold()}
-						onPointerLeave={() => cancelHold()}
-						onContextMenu={(event) => event.preventDefault()}
+						className="select-none rounded-full bg-slate-100 px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-white"
+						onClick={restartGame}
 					>
-						–
+						Restart
 					</button>
-					<span className="mx-1 tabular-nums inline-block text-right">
-						{speed.toFixed(1)}
-					</span>
 					<button
 						type="button"
-						className="px-2 hover:text-white text-purple-300"
-						onPointerDown={(event) => {
-							event.preventDefault();
-							event.currentTarget.setPointerCapture(event.pointerId);
-							startHold(1);
+						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						onClick={() => {
+							const nextPaused = !pausedRef.current;
+							pausedRef.current = nextPaused;
+							setPaused(nextPaused);
 						}}
-						onPointerUp={() => endHold(1, true)}
-						onPointerCancel={() => cancelHold()}
-						onPointerLeave={() => cancelHold()}
-						onContextMenu={(event) => event.preventDefault()}
 					>
-						+
+						{paused ? "Resume" : "Pause"}
+					</button>
+					<button
+						type="button"
+						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						onClick={() => {
+							const nextAutoPlay = !autoRef.current;
+							autoRef.current = nextAutoPlay;
+							setAutoPlay(nextAutoPlay);
+						}}
+					>
+						{autoPlay ? "Autoplay On" : "Autoplay Off"}
+					</button>
+					<button
+						type="button"
+						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						onClick={() => {
+							const nextShowArrows = !arrowsRef.current;
+							arrowsRef.current = nextShowArrows;
+							setShowArrows(nextShowArrows);
+						}}
+					>
+						{showArrows ? "Path Hints On" : "Path Hints Off"}
+					</button>
+					<button
+						type="button"
+						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						onClick={() =>
+							setBoardTheme((current) => cycleOption(BOARD_THEMES, current))
+						}
+					>
+						Theme {boardTheme.label}
+					</button>
+					<button
+						type="button"
+						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						onClick={() =>
+							setTheme((current) => cycleOption(SNAKE_THEMES, current))
+						}
+					>
+						Snake Colors {theme.label}
 					</button>
 				</div>
-				<div className="px-3 py-1 rounded bg-zinc-800/80 border border-zinc-700">
-					<span className="font-semibold">Score:</span>{" "}
-					<span className="tabular-nums">{score}</span>
-				</div>
-				<div className="px-3 py-1 rounded bg-zinc-800/80 border border-zinc-700">
-					<span className="font-semibold">Steps:</span>{" "}
-					<span className="tabular-nums">{steps}</span>
-				</div>
-				<button
-					type="button"
-					className={`px-3 py-1 rounded border border-zinc-700 ${
-						paused ? "bg-zinc-700" : "bg-zinc-800/80 hover:bg-zinc-700"
-					}`}
-					onClick={() => {
-						const nextPaused = !pausedRef.current;
-						pausedRef.current = nextPaused;
-						setPaused(nextPaused);
-					}}
-				>
-					{paused ? "Resume" : "Pause"}
-				</button>
-				<button
-					type="button"
-					className={`px-3 py-1 rounded border border-zinc-700 ${
-						autoPlay ? "bg-emerald-700" : "bg-zinc-800/80 hover:bg-zinc-700"
-					}`}
-					onClick={() => {
-						const nextAutoPlay = !autoRef.current;
-						autoRef.current = nextAutoPlay;
-						setAutoPlay(nextAutoPlay);
-					}}
-				>
-					{autoPlay ? "Autoplay" : "Manual"}
-				</button>
-				<button
-					type="button"
-					className={`px-3 py-1 rounded border border-zinc-700 ${
-						showArrows ? "bg-fuchsia-700" : "bg-zinc-800/80 hover:bg-zinc-700"
-					}`}
-					onClick={() => {
-						const nextShowArrows = !arrowsRef.current;
-						arrowsRef.current = nextShowArrows;
-						setShowArrows(nextShowArrows);
-					}}
-				>
-					{showArrows ? "Arrows On" : "Arrows Off"}
-				</button>
-				<button
-					type="button"
-					className="px-3 py-1 rounded bg-zinc-800/80 border border-zinc-700 hover:bg-zinc-700"
-					onClick={() => {
-						resetBus.current = true;
-						pausedRef.current = false;
-						overRef.current = false;
-						setPaused(false);
-						setGameOver(false);
-					}}
-				>
-					Restart
-				</button>
 			</div>
-			<div
-				ref={hostRef}
-				className="rounded-lg overflow-hidden shadow-lg"
-				style={{ width: boardSize * cellPx, height: boardSize * cellPx }}
-			/>
-			<div className="text-sm text-zinc-400">
-				WASD/Arrows • Space pause • Enter restart
+
+			<div className="grid min-h-0 flex-1 gap-3 px-4 pb-2 pt-2 sm:px-5 sm:pb-3 sm:pt-3 xl:grid-cols-[320px_minmax(0,1fr)]">
+				<div className="flex min-h-0 flex-col gap-4">
+					<div className="rounded-[26px] border border-[#223048] bg-[#09121e]/88 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)]">
+						<div className="flex items-start justify-between gap-3">
+							<div>
+								<p className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-400">
+									Speed
+								</p>
+								<p className="mt-2 font-mono text-3xl font-semibold text-slate-100">
+									{speed.toFixed(1)}
+								</p>
+							</div>
+							<div className="rounded-full border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300">
+								Moves / sec
+							</div>
+						</div>
+
+						<div className="mt-4 flex items-center gap-3">
+							<button
+								type="button"
+								className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#223048] bg-[#0b1320] text-xl text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+								onPointerDown={(event) => {
+									event.preventDefault();
+									event.currentTarget.setPointerCapture(event.pointerId);
+									startSpeedHold(-1);
+								}}
+								onPointerUp={clearSpeedHold}
+								onPointerCancel={clearSpeedHold}
+								onContextMenu={(event) => event.preventDefault()}
+								aria-label="Decrease speed"
+							>
+								-
+							</button>
+							<input
+								type="range"
+								min={SPEED_MIN}
+								max={SPEED_MAX}
+								step={SPEED_STEP}
+								value={speed}
+								onChange={(event) => {
+									setSpeed(Number(event.target.value));
+								}}
+								className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#162234] accent-slate-100"
+								aria-label="Snake speed"
+							/>
+							<button
+								type="button"
+								className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#223048] bg-[#0b1320] text-xl text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+								onPointerDown={(event) => {
+									event.preventDefault();
+									event.currentTarget.setPointerCapture(event.pointerId);
+									startSpeedHold(1);
+								}}
+								onPointerUp={clearSpeedHold}
+								onPointerCancel={clearSpeedHold}
+								onContextMenu={(event) => event.preventDefault()}
+								aria-label="Increase speed"
+							>
+								+
+							</button>
+						</div>
+
+						<div className="mt-3 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-slate-500">
+							<span>Precision {SPEED_STEP.toFixed(1)}</span>
+							<span>
+								Range {SPEED_MIN.toFixed(0)}-{SPEED_MAX.toFixed(0)}
+							</span>
+						</div>
+						<p className="mt-3 font-mono text-xs leading-6 text-slate-400">
+							Tap for exact half-step changes or hold either side to sweep the slider.
+						</p>
+					</div>
+
+					<div className="rounded-[26px] border border-[#223048] bg-[#09121e]/88 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)]">
+						<div className="flex items-center gap-3">
+							<span
+								className="h-3 w-3 rounded-full"
+								style={{ backgroundColor: theme.accent }}
+							/>
+							<div>
+								<p className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-400">
+									Snake Palette
+								</p>
+								<p className="mt-1 font-mono text-lg text-slate-100">
+									{theme.label}
+								</p>
+							</div>
+						</div>
+						<p className="mt-3 font-mono text-xs leading-6 text-slate-400">
+							{theme.description}
+						</p>
+						<div className="mt-4 grid grid-cols-2 gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300">
+							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+								Theme {boardTheme.label}
+							</div>
+							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+								Controls WASD / Arrows
+							</div>
+							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+								Space Pause
+							</div>
+							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+								Enter Restart
+							</div>
+							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+								Board {boardDimension}x{boardDimension}
+							</div>
+						</div>
+
+						<div className="mt-4 border-t border-[#223048] pt-4">
+							<div className="flex items-start justify-between gap-3">
+								<div>
+									<p className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-400">
+										Board Size
+									</p>
+									<p className="mt-1 font-mono text-lg text-slate-100">
+										{boardDimension} x {boardDimension}
+									</p>
+								</div>
+								<button
+									type="button"
+									className="rounded-full border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300"
+									onClick={() => setShowBodyGap((current) => !current)}
+								>
+									Body Gap {showBodyGap ? "On" : "Off"}
+								</button>
+							</div>
+							<input
+								type="range"
+								min={10}
+								max={30}
+								step={2}
+								value={boardDimension}
+								onChange={(event) => {
+									setBoardDimension(Number(event.target.value));
+								}}
+								className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-[#162234] accent-slate-100"
+								aria-label="Board size"
+							/>
+							<div className="mt-3 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-slate-500">
+								<span>10 x 10</span>
+								<span>Default 20 x 20</span>
+								<span>30 x 30</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div
+					ref={stageViewportRef}
+					className="relative min-h-[380px] overflow-hidden rounded-[28px] border border-[#223048] bg-[#07111d]/80"
+				>
+					<div
+						className="pointer-events-none absolute inset-0"
+						style={{
+							backgroundImage: `radial-gradient(circle at top, ${boardTheme.stageGlow}, transparent 55%), linear-gradient(135deg, ${boardTheme.stageGrid} 0, transparent 32%, transparent 68%, ${boardTheme.stageGrid} 100%)`,
+						}}
+					/>
+					<div className="absolute inset-0 grid place-items-center overflow-hidden p-0">
+						{boardPixelSize > 0 && (
+							<div
+								ref={hostRef}
+								className="overflow-hidden bg-[#050810] ring-1 ring-inset ring-[#26344d] shadow-[0_24px_70px_rgba(0,0,0,0.38)]"
+								style={{
+									width: boardPixelSize,
+									height: boardPixelSize,
+									maxWidth: "100%",
+									maxHeight: "100%",
+									borderRadius: Math.max(6, boardInsetPx * 1.15),
+									imageRendering: "pixelated",
+								}}
+							/>
+						)}
+					</div>
+
+					{status === "loading" && (
+						<div className="absolute inset-0 grid place-items-center bg-[#050810]/72 px-6 text-center font-mono text-sm text-slate-300">
+							Booting Phaser scene...
+						</div>
+					)}
+
+					{status === "error" && (
+						<div className="absolute inset-0 grid place-items-center bg-[#050810]/82 px-6 text-center font-mono text-sm text-rose-300">
+							Unable to load the snake scene.
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);

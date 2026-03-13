@@ -460,7 +460,7 @@ const Playground: React.FC = () => {
 			{isOpen && (
 				<>
 					<div
-						className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+						className="fixed inset-0 z-40 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.12),transparent_32%),linear-gradient(to_bottom,rgba(9,9,11,0.72),rgba(0,0,0,0.88))] backdrop-blur-md"
 						onMouseDown={(e) => {
 							if (e.currentTarget === e.target)
 								backdropMouseDownRef.current = true;
@@ -482,37 +482,50 @@ const Playground: React.FC = () => {
 						}}
 					>
 						<div
-							className="relative h-[min(94vh,1000px)] w-[min(98vw,1600px)] overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg shadow-xl shadow-black/50"
+							className="relative flex h-[min(94vh,1000px)] w-[min(98vw,1600px)] flex-col overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_32px_90px_rgba(0,0,0,0.55)]"
 							onClick={(e) => e.stopPropagation()}
 						>
-							<div className="absolute top-2 md:top-3 left-4 md:left-5 right-14 md:right-16 flex items-center gap-3 z-20">
-								<h3
-									id="game-title"
-									className="text-white text-lg md:text-2xl font-semibold truncate"
-									title={selectedGame?.name}
-								>
-									{selectedGame?.name}
-								</h3>
+							<div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.14),transparent_60%)]" />
+
+							<div className="relative z-20 border-b border-zinc-700/50 bg-lessDarkBg/92 px-4 py-3 backdrop-blur-sm md:px-5 md:py-4">
+								<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
+									<div className="min-w-0">
+										<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+											Playground
+										</p>
+										<h3
+											id="game-title"
+											className="mt-1 truncate font-somerton text-lg uppercase tracking-[0.08em] text-wheat md:text-xl"
+											title={selectedGame?.name}
+										>
+											{selectedGame?.name}
+										</h3>
+									</div>
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-3 py-2">
+										<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+											Mode
+										</p>
+										<p className="mt-1 text-sm font-semibold text-wheat">
+											{selectedGame?.mode === "play" ? "Playable" : "Watch-only"}
+										</p>
+									</div>
+								</div>
 							</div>
 
 							<button
-								className="absolute top-1.5 md:top-2 right-2.5 md:right-3 z-20"
+								className="absolute right-3 top-3 z-30 md:right-4 md:top-4"
 								onClick={closeGame}
 								aria-label="Close Game"
 							>
-								<FaXmark className="w-8 h-8 p-1 text-wheat hover:text-purpleContrast hover:bg-gray-700/50 rounded-xl transition-colors" />
+								<FaXmark className="h-9 w-9 rounded-xl border border-zinc-700/60 bg-greyBg/80 p-1.5 text-wheat transition-colors hover:border-zinc-500/70 hover:bg-zinc-800/90 hover:text-purpleContrast" />
 							</button>
 
-							<div className="w-full h-full pt-12 px-3 md:px-4 pb-3 md:pb-4">
-								<div className="w-full h-full flex items-center justify-center">
-									<div className="w-full h-full max-w-full max-h-full">
-										{SelectedComponent ? (
-											<SelectedComponent />
-										) : (
-											<p className="text-zinc-200">Loading...</p>
-										)}
-									</div>
-								</div>
+							<div className="min-h-0 flex-1">
+								{SelectedComponent ? (
+									<SelectedComponent />
+								) : (
+									<p className="p-6 text-zinc-200">Loading...</p>
+								)}
 							</div>
 						</div>
 					</div>
