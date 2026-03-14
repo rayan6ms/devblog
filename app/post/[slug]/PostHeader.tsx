@@ -1,101 +1,107 @@
-"use client";
-
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Image from "next/image";
 import Link from "next/link";
 import { FaBookmark, FaEye } from "react-icons/fa6";
-import slugify from "slugify";
+import { getPostSlug, type IPost } from "@/data/posts";
 
-export default function PostHeader({ tags }: { tags: string[] }) {
-	const updated = true;
-	const author = "Johann Gottfried";
-	const date = "2023-11-20";
+function formatViews(value: number) {
+	return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${value}`;
+}
 
-	const formattedViews = (num: number) =>
-		num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
+function getInitials(name: string) {
+	return name
+		.split(" ")
+		.slice(0, 2)
+		.map((part) => part.charAt(0).toUpperCase())
+		.join("");
+}
 
-	const formattedDate = format(parseISO(date), "dd MMM yyyy", {
+export default function PostHeader({ post }: { post: IPost }) {
+	const formattedDate = format(parseISO(post.date), "dd MMM yyyy", {
 		locale: ptBR,
-	}).replace(/ (\w)/, (_match, p1) => ` ${p1.toUpperCase()}`);
-
-	const fullFormattedDate = (date: string) =>
-		format(parseISO(date), "EEEE, dd MMMM yyyy", { locale: ptBR });
-
-	let formattedAuthor =
-		author.length > 20 ? `${author.slice(0, 20)}...` : author;
-	formattedAuthor = formattedAuthor
-		.toLowerCase()
-		.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
-
-	const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+	}).replace(/ (\w)/, (_match, letter) => ` ${letter.toUpperCase()}`);
 
 	return (
-		<section className="mb-6">
-			<div className="flex justify-between items-center mb-4">
-				<div className="flex gap-4">
-					<Link
-						href={`/profile/${slugify(author, { lower: true, strict: true })}`}
-					>
-						<Image
-							className="w-[52px] h-[52px] object-cover rounded-full"
-							src="https://i.etsystatic.com/19286482/r/il/96c0fd/2980731281/il_1080xN.2980731281_j8z4.jpg"
-							alt={`Avatar de ${author}`}
-							title={`Avatar de ${author}`}
-							width={52}
-							height={52}
-						/>
-					</Link>
-					<div className="flex-col">
+		<section className="overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg/80 shadow-lg shadow-zinc-950/10">
+			<div className="grid gap-6 border-b border-zinc-700/50 p-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-end sm:p-8">
+				<div>
+					<div className="flex flex-wrap gap-2">
 						<Link
-							href={`/profile/${slugify(author, { lower: true, strict: true })}`}
-							rel="author"
-							className="text-gray-100 font-bold text-xl hover:text-purpleContrast transition-all ease-in-out"
+							href={`/tag?selected=${getPostSlug(post.mainTag)}`}
+							className="rounded-full border border-purpleContrast/40 bg-purpleContrast/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-wheat transition-colors hover:bg-purpleContrast/25"
 						>
-							{formattedAuthor}
+							{post.mainTag}
 						</Link>
-						<p className="flex flex-col sm:flex-row gap-1 font-europa text-zinc-400">
-							<span title={capitalize(fullFormattedDate(date))}>
-								Postado <time dateTime={date}>{formattedDate}</time>
+						{post.tags.slice(0, 3).map((tag) => (
+							<Link
+								key={tag}
+								href={`/tag?selected=${getPostSlug(tag)}`}
+								className="rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+							>
+								{tag}
+							</Link>
+						))}
+					</div>
+
+					<h1 className="mt-5 text-4xl font-somerton uppercase leading-tight text-wheat sm:text-5xl">
+						{post.title}
+					</h1>
+					<p className="mt-4 max-w-3xl text-base leading-8 text-zinc-300">
+						{post.description}
+					</p>
+				</div>
+
+				<div className="rounded-[24px] border border-zinc-700/50 bg-darkBg/50 p-5">
+					<div className="flex items-center gap-4">
+						<div className="flex h-14 w-14 items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/80 text-sm font-semibold text-wheat">
+							{getInitials(post.author)}
+						</div>
+						<div>
+							<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+								Written by
+							</p>
+							<Link
+								href={`/profile/${getPostSlug(post.author)}`}
+								className="mt-1 block text-lg font-semibold text-zinc-100 transition-colors hover:text-wheat"
+							>
+								{post.author}
+							</Link>
+						</div>
+					</div>
+
+					<div className="mt-5 grid gap-3 text-sm text-zinc-400">
+						<div className="flex items-center justify-between">
+							<span>Published</span>
+							<time dateTime={post.date}>{formattedDate}</time>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="inline-flex items-center gap-2">
+								<FaEye />
+								Views
 							</span>
-							{updated && (
-								<>
-									<span className="mx-0.5 hidden sm:block">•</span>
-									<span title={capitalize(fullFormattedDate(date))}>
-										Atualizado <time dateTime={date}>{formattedDate}</time>
-									</span>
-								</>
-							)}
-						</p>
+							<span>{formatViews(post.views)}</span>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="inline-flex items-center gap-2">
+								<FaBookmark />
+								Reading progress
+							</span>
+							<span>{post.hasStartedReading ? `${post.percentRead}%` : "New"}</span>
+						</div>
 					</div>
 				</div>
-				<div className="flex gap-2 mr-3 px-3 py-1 opacity-75 text-zinc-400 bg-zinc-800 rounded-xl">
-					<p className="flex items-center gap-1">
-						<FaEye /> <span>{formattedViews(1320)}</span>
-					</p>
-					<span>|</span>
-					<p className="flex items-center gap-1.5">
-						<FaBookmark /> <span>{formattedViews(430)}</span>
-					</p>
-				</div>
 			</div>
-			<h1 className="text-3xl text-wheat font-bold">
-				Como melhorar a acessibilidade web
-			</h1>
-			<p className="text-lg mt-2 text-gray-200">
-				A importância e técnicas de acessibilidade web.
-			</p>
-			<div className="border border-slate-700 my-3" />
-			<div className="flex gap-2">
-				{tags.slice(0, 5).map((tag: string) => (
-					<Link
-						key={tag}
-						href={`/tag?selected=${slugify(tag, { lower: true, strict: true })}`}
-						className="text-[13px] tracking-[.06em] leading-5 w-fit p-1 font-sans bg-gray-800 rounded-lg text-zinc-400 hover:bg-gray-700 hover:text-purpleContrast uppercase transition-all ease-in-out duration-300"
-					>
-						{tag}
-					</Link>
-				))}
+
+			<div className="relative h-56 overflow-hidden sm:h-72 lg:h-[20rem]">
+				<Image
+					fill
+					src={post.image}
+					alt={post.title}
+					className="object-cover"
+					sizes="(max-width: 1024px) 100vw, 1200px"
+				/>
+				<div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(20,23,26,0.12),rgba(20,23,26,0.5)_72%,rgba(20,23,26,0.72))]" />
 			</div>
 		</section>
 	);

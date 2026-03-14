@@ -13,6 +13,8 @@ import {
 	FaSpinner,
 } from "react-icons/fa6";
 import PhaserBackground from "@/PhaserBackground";
+import { getUser } from "@/data/posts";
+import { writeMockAuth } from "@/components/useClientAuth";
 import SocialAuthButton from "./SocialAuthButton";
 
 export default function LoginForm() {
@@ -49,14 +51,17 @@ export default function LoginForm() {
 		},
 	];
 
-	function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		setIsLoading(true);
 
-		const userSlug = "johann-gottfried";
-
 		try {
-			router.push(`/profile/${userSlug}`);
+			const user = await getUser();
+			writeMockAuth({
+				id: "me",
+				...user,
+			});
+			router.push("/profile/me");
 		} catch (error) {
 			console.error(error);
 		} finally {

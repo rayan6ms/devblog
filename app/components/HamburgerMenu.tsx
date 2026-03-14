@@ -13,11 +13,13 @@ export default function HamburgerMenu({
 		<button
 			type="button"
 			onClick={() => setIsMenuOpen(!isMenuOpen)}
-			className={`w-fit h-fit block ${!isMenuOpen && !fromScrollBar ? "md:hidden" : "lg:hidden"} bg-transparent`}
+			className={`block h-fit w-fit rounded-2xl border border-zinc-700/60 bg-darkBg/70 p-1.5 shadow-lg shadow-zinc-950/10 transition-colors hover:border-zinc-500/70 hover:bg-greyBg/80 ${
+				!isMenuOpen && !fromScrollBar ? "md:hidden" : "lg:hidden"
+			}`}
 			aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
 		>
 			<svg
-				className="w-10 h-10 fill-wheat hover:fill-purpleContrast transition-color ease-in-out duration-200"
+				className="h-8 w-8 fill-wheat transition-colors duration-200 hover:fill-purpleContrast sm:h-9 sm:w-9"
 				viewBox="0 0 100 100"
 				aria-hidden="true"
 				focusable="false"

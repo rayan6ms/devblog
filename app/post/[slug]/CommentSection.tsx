@@ -1,15 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo, useState } from "react";
+import { useClientAuth } from "@/components/useClientAuth";
 import Comment from "./Comment";
 import LoginModal from "./LoginModal";
 import ReportCommentModal from "./ReportCommentModal";
-
-const user = "me";
-const userIsLoggedIn = false;
-const userAvatar =
-	"https://imagens.brasil.elpais.com/resizer/nCpDbZnTqbBMJsTdXM6xmN17xpg=/1960x0/arc-anglerfish-eu-central-1-prod-prisa.s3.amazonaws.com/public/6TIOUTQV4DCNJTPRHFBQQCYQGA.jpg";
 
 const comments = [
 	{
@@ -44,6 +39,7 @@ type CommentReportPayload = {
 };
 
 export default function CommentSection() {
+	const { isAuthed, profile } = useClientAuth();
 	const [isLoginOpen, setIsLoginOpen] = useState(false);
 
 	const [isReportOpen, setIsReportOpen] = useState(false);
@@ -74,9 +70,11 @@ export default function CommentSection() {
 			{} as Record<number, "up" | "down" | null>,
 		),
 	);
+	const currentUser = profile?.name || "Guest";
+	const avatarLetter = currentUser.charAt(0).toUpperCase() || "G";
 
 	const handleComment = () => {
-		if (!userIsLoggedIn) {
+		if (!isAuthed) {
 			setIsLoginOpen(true);
 			return;
 		}
@@ -84,7 +82,7 @@ export default function CommentSection() {
 	};
 
 	const handleVote = (id: number, action: "up" | "down") => {
-		if (!userIsLoggedIn) {
+		if (!isAuthed) {
 			setIsLoginOpen(true);
 			return;
 		}
@@ -106,7 +104,7 @@ export default function CommentSection() {
 	};
 
 	const handleFlag = (id: number) => {
-		if (!userIsLoggedIn) {
+		if (!isAuthed) {
 			setIsLoginOpen(true);
 			return;
 		}
@@ -132,33 +130,33 @@ export default function CommentSection() {
 
 	return (
 		<section className="mt-10">
-			<h1 className="text-xl font-bold">Comment Section</h1>
+			<h2 className="text-2xl font-somerton uppercase text-wheat">
+				Comment section
+			</h2>
 
-			<div className="flex mt-5 mb-12">
-				<Image
-					className="w-12 h-12 object-cover rounded-full mr-4"
-					src={userAvatar}
-					alt={`Avatar de ${user}`}
-					title={`Avatar de ${user}`}
-					width={48}
-					height={48}
-				/>
-				<div className="flex flex-col w-full h-full bg-greyBg/90 border border-zinc-700/50 shadow-md shadow-zinc-900 rounded-lg">
+			<div className="mb-12 mt-5 flex items-start gap-4">
+				<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-zinc-700/60 bg-greyBg/75 text-sm font-semibold text-wheat">
+					{avatarLetter}
+				</div>
+				<div className="flex h-full w-full flex-col overflow-hidden rounded-[24px] border border-zinc-700/50 bg-greyBg/90 shadow-md shadow-zinc-900">
 					<textarea
-						className="p-5 rounded-t-lg bg-greyBg/90 border-b border-zinc-700/50 text-zinc-400"
+						className="border-b border-zinc-700/50 bg-greyBg/90 p-5 text-zinc-300 outline-none placeholder:text-zinc-500"
 						name="Comment input area"
 						cols={5}
 						rows={2}
 						placeholder="Adicione um comentário"
 						onClick={() => {
-							if (!userIsLoggedIn) setIsLoginOpen(true);
+							if (!isAuthed) setIsLoginOpen(true);
 						}}
 					/>
-					<div className="flex justify-end p-1">
+					<div className="flex items-center justify-between px-4 py-3">
+						<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+							{isAuthed ? `Commenting as ${currentUser}` : "Login required to comment"}
+						</p>
 						<button
 							type="button"
 							onClick={handleComment}
-							className="bg-purpleContrast/80 hover:bg-purpleContrast rounded-lg p-1 px-1.5 mr-0.5 text-sm text-gray-200"
+							className="rounded-full bg-purpleContrast/80 px-4 py-2 text-sm font-semibold text-gray-100 transition-colors hover:bg-purpleContrast"
 						>
 							Comentar
 						</button>

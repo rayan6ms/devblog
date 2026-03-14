@@ -61,7 +61,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 							{section.description}
 						</p>
 					</div>
-					<RecentItem post={posts.recent[index]} fluid />
+					<RecentItem post={posts.recent[index]} fluid compact />
 					<div className="flex flex-col gap-5">
 						{posts.recommended.slice(0, 2).map((post: IPost, postIndex: number) => (
 							<TrendingItem

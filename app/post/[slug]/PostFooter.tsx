@@ -1,83 +1,92 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { IconType } from "react-icons";
 import { FaGithub, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa6";
-import slugify from "slugify";
+import { getPostSlug, type IPost } from "@/data/posts";
 
-export default function PostFooter() {
-	const author = "Johann Gottfried";
-	const authorDescription =
-		"Olá, pessoal! Meu nome é Johann Gottfried e sou um entusiasta de tecnologia apaixonado por explorar as últimas inovações e descobertas do mundo digital.";
-	const authorSocials: { link: string; icon: IconType }[] = [
+function getInitials(name: string) {
+	return name
+		.split(" ")
+		.slice(0, 2)
+		.map((part) => part.charAt(0).toUpperCase())
+		.join("");
+}
+
+export default function PostFooter({ post }: { post: IPost }) {
+	const authorHandle = getPostSlug(post.author);
+	const authorDescription = `${post.author} writes around ${post.mainTag}, with recurring threads in ${post.tags
+		.slice(0, 2)
+		.join(" and ")}. This author block now follows the same card style as the rest of the archive instead of relying on hardcoded placeholder assets.`;
+	const authorSocials: { icon: IconType; link: string }[] = [
 		{
-			link: `https://twitter.com/${author}`,
 			icon: FaTwitter,
+			link: `https://twitter.com/${authorHandle}`,
 		},
 		{
-			link: `https://www.linkedin.com/in/${author}`,
 			icon: FaLinkedin,
+			link: `https://www.linkedin.com/in/${authorHandle}`,
 		},
 		{
-			link: `https://www.youtube.com/${author}`,
 			icon: FaYoutube,
+			link: `https://www.youtube.com/@${authorHandle}`,
 		},
 		{
-			link: `https://github.com/${author}`,
 			icon: FaGithub,
+			link: `https://github.com/${authorHandle}`,
 		},
 	];
 
 	return (
-		<section className="flex border-t-2 border-slate-700 my-11 pt-6">
-			<Link href={`/profile/${slugify(author, { lower: true, strict: true })}`}>
-				<Image
-					className="min-w-[64px] min-h-[64px] max-w-[64px] max-h-[64px]
-            sm:min-w-[86px] sm:min-h-[86px] sm:max-w-[86px] sm:max-h-[86px] object-cover rounded-full"
-					src="https://i.etsystatic.com/19286482/r/il/96c0fd/2980731281/il_1080xN.2980731281_j8z4.jpg"
-					alt={`Avatar de ${author}`}
-					title={`Avatar de ${author}`}
-					width={86}
-					height={86}
-				/>
-			</Link>
-			<div className="mt-1 ml-5 sm:ml-7">
-				<Link
-					href={`/profile/${slugify(author, { lower: true, strict: true })}`}
-					rel="author"
-					className="text-gray-100 font-bold text-xl hover:text-purpleContrast transition-all ease-in-out"
-				>
-					{author}
-				</Link>
-				<p className="flex max-h-[72px] w-11/12 mt-1 mb-2 gap-1 text-zinc-400">
-					<span className="line-clamp-3" title={authorDescription}>
-						{authorDescription}
-					</span>
-				</p>
-				<div className="flex flex-col sm:flex-row sm:items-center">
-					<Link
-						className="text-[13px] tracking-[.06em] leading-5 w-fit p-1.5 font-sans bg-gray-800 rounded-lg text-zinc-400 hover:bg-gray-700 hover:text-purpleContrast uppercase transition-all ease-in-out duration-300"
-						href={`/profile/${slugify(author, { lower: true, strict: true })}`}
-					>
-						Posts do autor
-					</Link>
-					<div className="flex gap-4 mt-3 sm:mt-0 sm:ml-3">
-						{authorSocials.map(({ link, icon: Icon }) => (
-							<a
-								key={link}
-								href={link}
-								target="_blank"
-								className="rounded-full group antialiased"
-							>
-								<Icon
-									className="text-wheat
-                      text-lg
-                      group-hover:text-purpleContrast
-                      transition-all ease-in-out"
-								/>
-							</a>
-						))}
-					</div>
+		<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/85 p-6 shadow-lg shadow-zinc-950/10">
+			<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+				Author
+			</p>
+
+			<div className="mt-5 flex items-start gap-4">
+				<div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-zinc-700/60 bg-darkBg/60 text-lg font-semibold text-wheat">
+					{getInitials(post.author)}
 				</div>
+
+				<div className="min-w-0">
+					<Link
+						href={`/profile/${authorHandle}`}
+						rel="author"
+						className="text-xl font-semibold text-zinc-100 transition-colors hover:text-wheat"
+					>
+						{post.author}
+					</Link>
+					<p className="mt-3 text-sm leading-7 text-zinc-400">
+						{authorDescription}
+					</p>
+				</div>
+			</div>
+
+			<div className="mt-5 flex flex-wrap gap-2">
+				<Link
+					className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+					href={`/profile/${authorHandle}`}
+				>
+					Posts do autor
+				</Link>
+				<Link
+					className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+					href={`/tag?selected=${getPostSlug(post.mainTag)}`}
+				>
+					More in {post.mainTag}
+				</Link>
+			</div>
+
+			<div className="mt-6 flex flex-wrap gap-3">
+				{authorSocials.map(({ icon: Icon, link }) => (
+					<a
+						key={link}
+						href={link}
+						target="_blank"
+						rel="noreferrer"
+						className="group flex rounded-2xl border border-zinc-700/60 bg-darkBg/60 p-3 transition-colors hover:border-zinc-500/70"
+					>
+						<Icon className="text-base text-wheat transition-colors group-hover:text-purpleContrast" />
+					</a>
+				))}
 			</div>
 		</section>
 	);

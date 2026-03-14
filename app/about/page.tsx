@@ -14,32 +14,61 @@ const storyCards = [
 	},
 ];
 
-const offsetVariants = [
-	"lg:-translate-x-12",
+const horizontalVariants = [
+	"lg:-translate-x-10",
 	"lg:translate-x-0",
-	"lg:translate-x-12",
-];
-
-const gradientVariants = [
-	"bg-[linear-gradient(135deg,rgba(103,79,248,0.22),rgba(34,37,44,0.94)_34%,rgba(34,37,44,0.98)_100%)]",
-	"bg-[linear-gradient(135deg,rgba(56,189,248,0.18),rgba(34,37,44,0.92)_28%,rgba(34,37,44,0.98)_100%)]",
-	"bg-[linear-gradient(135deg,rgba(245,158,11,0.16),rgba(34,37,44,0.92)_26%,rgba(34,37,44,0.98)_100%)]",
+	"lg:translate-x-10",
 ];
 
 function shuffle<T>(items: T[]) {
-	const result = [...items];
+	const next = [...items];
 
-	for (let index = result.length - 1; index > 0; index -= 1) {
+	for (let index = next.length - 1; index > 0; index -= 1) {
 		const randomIndex = Math.floor(Math.random() * (index + 1));
-		[result[index], result[randomIndex]] = [result[randomIndex], result[index]];
+		[next[index], next[randomIndex]] = [next[randomIndex], next[index]];
 	}
 
-	return result;
+	return next;
+}
+
+function randomBetween(min: number, max: number) {
+	return Math.random() * (max - min) + min;
+}
+
+function wrapHue(value: number) {
+	return ((value % 360) + 360) % 360;
+}
+
+function buildGradientSet(count: number) {
+	const baseHue = randomBetween(208, 246);
+
+	return Array.from({ length: count }, (_, index) => {
+		const primaryHue = wrapHue(baseHue + index * randomBetween(18, 26));
+		const accentHue = wrapHue(primaryHue + randomBetween(32, 54));
+		const contrastHue = wrapHue(primaryHue - randomBetween(28, 46));
+		const originA = {
+			x: randomBetween(16, 76).toFixed(0),
+			y: randomBetween(16, 34).toFixed(0),
+		};
+		const originB = {
+			x: randomBetween(24, 84).toFixed(0),
+			y: randomBetween(58, 84).toFixed(0),
+		};
+		const shellHue = wrapHue(primaryHue + randomBetween(-8, 10));
+
+		return {
+			backgroundImage: [
+				`radial-gradient(circle at ${originA.x}% ${originA.y}%, hsl(${primaryHue} 78% 62% / 0.18), transparent 34%)`,
+				`radial-gradient(circle at ${originB.x}% ${originB.y}%, hsl(${accentHue} 72% 60% / 0.12), transparent 28%)`,
+				`linear-gradient(135deg, hsl(${shellHue} 18% 24% / 0.94), hsl(${contrastHue} 18% 13% / 0.95))`,
+			].join(", "),
+		};
+	});
 }
 
 export default function Page() {
-	const offsets = shuffle(offsetVariants);
-	const gradients = shuffle(gradientVariants);
+	const shuffledOffsets = shuffle(horizontalVariants);
+	const gradientStyles = buildGradientSet(storyCards.length);
 
 	return (
 		<>
@@ -68,7 +97,12 @@ export default function Page() {
 								{storyCards.map((card, index) => (
 									<div
 										key={card.text}
-										className={`mx-auto w-full max-w-3xl rounded-[28px] border border-zinc-700/60 p-7 shadow-lg shadow-zinc-950/10 transition-transform duration-500 ${offsets[index]} ${gradients[index]}`}
+										className={`mx-auto w-full max-w-3xl rounded-[28px] border border-zinc-700/60 p-7 shadow-lg shadow-zinc-950/10 transition-transform duration-500 ${shuffledOffsets[index]} animate-slide-down opacity-0`}
+										style={{
+											animationDelay: `${0.15 + index * 0.15}s`,
+											animationFillMode: "forwards",
+											...gradientStyles[index],
+										}}
 									>
 										<p className="text-base leading-8 text-zinc-200 sm:text-lg">
 											{card.text}

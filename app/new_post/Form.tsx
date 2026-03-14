@@ -133,20 +133,29 @@ export default function Form({
 	};
 
 	return (
-		<form
-			onSubmit={handleSubmit(onSubmit)}
-			className="w-full flex flex-col items-center my-2"
-		>
-			<div className="flex flex-col gap-4 p-4 w-full max-w-4xl">
-				<div className="flex items-center justify-between">
-					<h2 className="text-xl font-bold uppercase text-wheat">
-						{mode === "edit" ? "Edit Post" : "Create New Post"}
-					</h2>
-					<div className="flex items-center gap-3">
-						<label className="text-zinc-300 text-sm">
-							Status:
+		<form onSubmit={handleSubmit(onSubmit)} className="w-full">
+			<div className="mx-auto grid w-full max-w-4xl gap-6">
+				<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/80 p-5 shadow-lg shadow-zinc-950/10 sm:p-6">
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+						<div>
+							<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								Editor
+							</p>
+							<h2 className="mt-2 text-3xl font-somerton text-wheat">
+								{mode === "edit" ? "Edit post" : "Create new post"}
+							</h2>
+							<p className="mt-3 max-w-xl text-sm leading-7 text-zinc-400">
+								Fill in the article metadata first, then shape the body in the
+								markdown editor below.
+							</p>
+						</div>
+
+						<label className="text-sm text-zinc-300">
+							<span className="mb-2 block text-xs uppercase tracking-[0.18em] text-zinc-500">
+								Status
+							</span>
 							<select
-								className="ml-2 bg-zinc-700/60 border border-zinc-600/60 rounded px-2 py-1 text-zinc-100"
+								className="h-11 rounded-full border border-zinc-600/60 bg-zinc-700/60 px-4 text-zinc-100 outline-none transition-colors focus:border-purpleContrast/45"
 								{...register("status")}
 							>
 								<option value="draft">Draft</option>
@@ -157,55 +166,84 @@ export default function Form({
 					</div>
 				</div>
 
-				<label className="block">
-					<span className="text-zinc-200">Title:</span>
-					<input
-						type="text"
-						{...register("title")}
-						maxLength={MAX_TITLE}
-						className="bg-zinc-500/40 p-2.5 mt-1 block w-full rounded-md border border-gray-300/20 shadow-sm outline-none focus:border-purple-500"
-						placeholder="e.g. Understanding Promises in JavaScript"
-					/>
-					<div className="flex justify-between">
-						<p className="text-red-500">{errors.title?.message}</p>
-						<CircleProgress
-							size={26}
-							progress={
-								(MAX_TITLE - Math.max(0, title?.length || 0)) / MAX_TITLE
-							}
-							remaining={MAX_TITLE - (title?.length || 0)}
-						/>
+				<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/80 p-5 shadow-lg shadow-zinc-950/10 sm:p-6">
+					<div className="grid gap-5">
+						<label className="block">
+							<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
+								Title
+							</span>
+							<input
+								type="text"
+								{...register("title")}
+								maxLength={MAX_TITLE}
+								className="mt-2 block h-12 w-full rounded-2xl border border-zinc-600/45 bg-zinc-500/30 px-4 text-zinc-100 shadow-sm outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
+								placeholder="e.g. Understanding Promises in JavaScript"
+							/>
+							<div className="mt-2 flex items-center justify-between">
+								<p className="text-sm text-red-500">{errors.title?.message}</p>
+								<CircleProgress
+									size={26}
+									progress={
+										(MAX_TITLE - Math.max(0, title?.length || 0)) / MAX_TITLE
+									}
+									remaining={MAX_TITLE - (title?.length || 0)}
+								/>
+							</div>
+						</label>
+
+						<div>
+							<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
+								Main tag
+							</span>
+							<div className="mt-2">
+								<MainTagInput
+									tags={mainTagsOptions}
+									onTagSelect={handleMainTagSelect}
+								/>
+							</div>
+							{errors.mainTag ? (
+								<p className="mt-2 text-sm text-red-500">
+									{errors.mainTag.message}
+								</p>
+							) : null}
+						</div>
+
+						<div>
+							<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
+								Tags
+							</span>
+							<div className="mt-2">
+								<TagsInput onChange={handleTagsChange} maxTags={MAX_TAGS} />
+							</div>
+							{errors.tags ? (
+								<p className="mt-2 text-sm text-red-500">{errors.tags.message}</p>
+							) : null}
+						</div>
+
+						<label className="block">
+							<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
+								Short description
+							</span>
+							<input
+								type="text"
+								{...register("description")}
+								maxLength={220}
+								className="mt-2 block h-12 w-full rounded-2xl border border-zinc-600/45 bg-zinc-500/30 px-4 text-zinc-100 shadow-sm outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
+								placeholder="One-liner used in cards and meta…"
+							/>
+							<p className="mt-2 text-sm text-red-500">
+								{errors.description?.message}
+							</p>
+						</label>
 					</div>
-				</label>
-
-				<MainTagInput
-					tags={mainTagsOptions}
-					onTagSelect={handleMainTagSelect}
-				/>
-				{errors.mainTag && (
-					<p className="text-red-500">{errors.mainTag.message}</p>
-				)}
-
-				<div className="block">
-					<span className="text-zinc-200">Tags:</span>
-					<TagsInput onChange={handleTagsChange} maxTags={MAX_TAGS} />
-					{errors.tags && <p className="text-red-500">{errors.tags.message}</p>}
 				</div>
 
-				<label className="block">
-					<span className="text-zinc-200">Short description (optional):</span>
-					<input
-						type="text"
-						{...register("description")}
-						maxLength={220}
-						className="bg-zinc-500/40 p-2.5 mt-1 block w-full rounded-md border border-gray-300/20 shadow-sm outline-none focus:border-purple-500"
-						placeholder="One-liner used in cards and meta…"
-					/>
-					<p className="text-red-500">{errors.description?.message}</p>
-				</label>
-
-				<div className="block">
-					<span className="text-zinc-200 block mb-1">Content:</span>
+				<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/80 p-5 shadow-lg shadow-zinc-950/10 sm:p-6">
+					<div className="mb-4">
+						<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
+							Content
+						</span>
+					</div>
 					<Controller
 						control={control}
 						name="content"
@@ -217,8 +255,8 @@ export default function Form({
 							/>
 						)}
 					/>
-					<div className="flex justify-between">
-						<p className="text-red-500">{errors.content?.message}</p>
+					<div className="mt-3 flex items-center justify-between">
+						<p className="text-sm text-red-500">{errors.content?.message}</p>
 						<CircleProgress
 							size={26}
 							progress={
@@ -229,20 +267,20 @@ export default function Form({
 					</div>
 				</div>
 
-				<div className="flex gap-3 justify-end">
-					{mode === "create" && (
+				<div className="flex flex-wrap justify-end gap-3">
+					{mode === "create" ? (
 						<button
 							type="button"
-							className="px-4 py-2 bg-zinc-700/60 text-white rounded-md hover:bg-zinc-700/80 border border-zinc-600/50"
+							className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-600/50 bg-zinc-700/60 px-5 text-sm font-semibold text-zinc-100 transition-colors hover:bg-zinc-700/80"
 							onClick={() => reset()}
 							disabled={isSubmitting}
 						>
 							Clear
 						</button>
-					)}
+					) : null}
 					<button
 						type="submit"
-						className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+						className="inline-flex h-11 items-center justify-center rounded-full border border-purpleContrast/35 bg-purpleContrast/20 px-5 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/28 disabled:opacity-50"
 						disabled={isSubmitting}
 					>
 						{isSubmitting

@@ -36,7 +36,7 @@ export default function RecommendedItem({
 		<Link
 			href={`/post/${postId}`}
 			className={`group flex
-        h-[100px] w-full
+        h-[92px] w-full
         sm:w-[460px]
         md:w-[360px]
         lg:w-[420px]
@@ -61,12 +61,13 @@ export default function RecommendedItem({
 					{title}
 				</h3>
 			</div>
-			<div className="flex relative min-w-[100px] max-w-[100px] h-[100px] overflow-hidden rounded-lg">
+			<div className="relative flex h-[92px] min-w-[92px] max-w-[92px] overflow-hidden rounded-lg">
 				<Image
 					src={image}
 					alt={title}
-					width={100}
-					height={100}
+					width={120}
+					height={120}
+					quality={90}
 					className="w-full h-full rounded-lg object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out"
 				/>
 			</div>

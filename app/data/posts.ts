@@ -724,6 +724,34 @@ export async function getAllPosts(): Promise<IPost[]> {
 	return posts;
 }
 
+export function getPostSlug(title: string) {
+	return slugify(title, { lower: true, strict: true });
+}
+
+export async function getPostBySlug(slug: string): Promise<IPost | null> {
+	return posts.find((post) => getPostSlug(post.title) === slug) ?? null;
+}
+
+export async function getRelatedPostsBySlug(
+	slug: string,
+	limit: number = 3,
+): Promise<IPost[]> {
+	const currentPost = await getPostBySlug(slug);
+
+	if (!currentPost) {
+		return [];
+	}
+
+	return posts
+		.filter((post) => getPostSlug(post.title) !== slug)
+		.filter(
+			(post) =>
+				post.mainTag === currentPost.mainTag ||
+				post.tags.some((tag) => currentPost.tags.includes(tag)),
+		)
+		.slice(0, limit);
+}
+
 export const getFilteredPosts = async (
 	tagsArray: string[],
 ): Promise<IPost[]> => {

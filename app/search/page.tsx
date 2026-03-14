@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import Footer from "@/components/Footer";
 import PostsGrid from "@/components/PostsGrid";
 import type { IPost } from "@/data/posts";
@@ -12,6 +13,7 @@ function SearchPageContent() {
 	const [posts, setPosts] = useState<IPost[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [totalPages, setTotalPages] = useState(0);
+	const [totalResults, setTotalResults] = useState(0);
 	const [startPage, setStartPage] = useState(1);
 
 	const itemsPerPage = 24;
@@ -28,6 +30,7 @@ function SearchPageContent() {
 
 	useEffect(() => {
 		if (!q) return;
+
 		async function fetchData() {
 			setLoading(true);
 			const { posts, total } = await getPostsByQueryPaginated(
@@ -36,10 +39,12 @@ function SearchPageContent() {
 				itemsPerPage,
 			);
 			setPosts(posts);
+			setTotalResults(total);
 			setTotalPages(Math.max(1, Math.ceil(total / itemsPerPage)));
 			setStartPage(1);
 			setLoading(false);
 		}
+
 		fetchData();
 	}, [q, currentPage]);
 
@@ -72,7 +77,6 @@ function SearchPageContent() {
 
 	const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
 	const heading = q ? `Results for “${q}”` : "Search";
-	const needsPad = posts.length > 0 && posts.length < 5;
 
 	if (loading) {
 		return (
@@ -85,61 +89,95 @@ function SearchPageContent() {
 
 	return (
 		<>
-			<div className="w-full flex flex-col items-center my-6">
-				<div className="xxl:w-[90%] w-full">
-					<div
-						className={`grid grid-cols-1 gap-5 px-2 ${needsPad ? "md:pb-[85px]" : ""}`}
-					>
-						{q && posts.length === 0 ? (
-							<>
-								<h2 className="ml-2 my-1.5 col-start-1 row-start-1 text-2xl font-somerton uppercase text-wheat">
+			<main className="min-h-screen bg-darkBg px-4 pb-12 pt-6 text-gray sm:px-6 lg:px-8">
+				<div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8">
+					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
+						<div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.15fr)_auto] lg:items-end">
+							<div>
+								<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+									Search Archive
+								</p>
+								<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
 									{heading}
-								</h2>
-								<div className="col-start-1 row-start-2 px-2 py-8 text-zinc-300">
-									No results found.{" "}
-									<button
-										type="button"
-										className="text-purpleContrast underline underline-offset-4"
-										onClick={() => router.push("/recent")}
-									>
-										See recent posts
-									</button>
+								</h1>
+								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+									Browse matched articles across the archive. Results stay tied
+									to the same post cards used everywhere else, with quick paging
+									when the query spans multiple screens.
+								</p>
+							</div>
+
+							<div className="flex flex-wrap gap-3 lg:justify-end">
+								<div className="rounded-2xl border border-zinc-700/60 bg-greyBg/70 px-4 py-3">
+									<p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+										Matches
+									</p>
+									<p className="mt-1 text-lg font-semibold text-zinc-100">
+										{totalResults}
+									</p>
 								</div>
-							</>
+								<div className="rounded-2xl border border-zinc-700/60 bg-greyBg/70 px-4 py-3">
+									<p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+										Page
+									</p>
+									<p className="mt-1 text-lg font-semibold text-zinc-100">
+										{currentPage} / {Math.max(totalPages, 1)}
+									</p>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-4 py-5 shadow-xl shadow-zinc-950/20 sm:px-6 sm:py-6">
+						{q && posts.length === 0 ? (
+							<div className="rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-12 text-center">
+								<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+									No Match
+								</p>
+								<h2 className="mt-3 text-3xl font-somerton text-wheat">
+									Nothing showed up for “{q}”.
+								</h2>
+								<p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-zinc-400 sm:text-base">
+									Try a shorter query, search by tag or author, or jump back to
+									the latest posts to keep browsing.
+								</p>
+								<button
+									type="button"
+									className="mt-6 inline-flex items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/80 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/80 hover:text-wheat"
+									onClick={() => router.push("/recent")}
+								>
+									See recent posts
+								</button>
+							</div>
 						) : (
 							<PostsGrid posts={posts} heading={heading} highlightTerm={q} />
 						)}
 
-						{posts.length > 0 && totalPages > 1 && (
-							<div className="flex justify-center mt-6 space-x-1">
-								<button
-									type="button"
-									onClick={() => handleRealignPageChange(1)}
-									disabled={currentPage === 1}
-									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
-								>
-									First
-								</button>
+						{posts.length > 0 && totalPages > 1 ? (
+							<div className="mt-8 flex flex-wrap items-center justify-center gap-2">
 								<button
 									type="button"
 									onClick={() => handleRealignPageChange(currentPage - 1)}
 									disabled={currentPage === 1}
-									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
+									className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/70 px-4 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-45"
 								>
+									<FaArrowLeft className="text-xs" />
 									Previous
 								</button>
 
 								{[...Array(endPage - startPage + 1)].map((_, index) => {
 									const page = startPage + index;
+									const active = page === currentPage;
+
 									return (
 										<button
 											key={page}
 											type="button"
 											onClick={() => handleRealignPageChange(page)}
-											className={`px-4 py-2 rounded-lg ${
-												page === currentPage
-													? "bg-purpleContrast text-white"
-													: "bg-gray-600 text-white hover:bg-purpleContrast transition-transform duration-300"
+											className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+												active
+													? "border-purpleContrast/45 bg-purpleContrast/18 text-wheat"
+													: "border-zinc-700/60 bg-greyBg/70 text-zinc-100 hover:border-zinc-500/70 hover:text-wheat"
 											}`}
 										>
 											{page}
@@ -151,23 +189,16 @@ function SearchPageContent() {
 									type="button"
 									onClick={() => handleRealignPageChange(currentPage + 1)}
 									disabled={currentPage === totalPages}
-									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
+									className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/70 px-4 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-45"
 								>
 									Next
-								</button>
-								<button
-									type="button"
-									onClick={() => handleRealignPageChange(totalPages)}
-									disabled={currentPage === totalPages}
-									className="px-4 py-2 bg-gray-600 text-white rounded-lg disabled:opacity-50 hover:bg-purpleContrast transition-transform duration-300 disabled:cursor-not-allowed"
-								>
-									Last
+									<FaArrowRight className="text-xs" />
 								</button>
 							</div>
-						)}
-					</div>
+						) : null}
+					</section>
 				</div>
-			</div>
+			</main>
 			<Footer />
 		</>
 	);

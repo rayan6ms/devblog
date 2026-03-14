@@ -47,7 +47,7 @@ export default function TrendingItem({
 			<div
 				className={`relative flex overflow-hidden rounded-lg ${
 					section
-						? "h-[120px] min-w-[120px] max-w-[120px] sm:h-[132px] sm:min-w-[132px] sm:max-w-[132px]"
+						? "h-[96px] min-w-[96px] max-w-[96px] sm:h-[108px] sm:min-w-[108px] sm:max-w-[108px]"
 						: "h-[130px] min-w-[130px] max-w-[130px] sm:h-[180px] sm:min-w-[180px] sm:max-w-[180px] md:h-[150px] md:min-w-[150px] md:max-w-[150px] xxl:h-[105px] xxl:min-w-[105px] xxl:max-w-[105px]"
 				}`}
 			>
@@ -55,8 +55,13 @@ export default function TrendingItem({
 					src={image}
 					alt={title}
 					fill
+					quality={90}
 					className="w-full h-full rounded-lg object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out"
-					sizes="(max-width: 640px) 180px, (max-width: 1024px) 150px, 105px"
+					sizes={
+						section
+							? "(max-width: 640px) 120px, 108px"
+							: "(max-width: 640px) 220px, (max-width: 1024px) 180px, 150px"
+					}
 				/>
 			</div>
 			<div className="flex h-full min-w-0 flex-1 flex-col justify-center">

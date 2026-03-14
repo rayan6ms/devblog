@@ -12,20 +12,17 @@ export default function Icons({ className }: IconsProps) {
 	];
 
 	return (
-		<div className={`space-x-4 ${className}`}>
+		<div className={`flex flex-wrap items-center gap-2 ${className}`}>
 			{socialMediaIcons.map(({ Icon, link }) => (
 				<a
 					key={link}
 					href={link}
 					target="_blank"
 					rel="noreferrer"
-					className="flex border-2 border-wheat rounded-full p-3 group antialiased"
+					className="group flex rounded-2xl border border-zinc-700/60 bg-greyBg/75 p-3 antialiased transition-colors hover:border-zinc-500/70 hover:bg-greyBg"
 				>
 					<Icon
-						className="text-wheat
-              text-lg
-              group-hover:text-purpleContrast
-              transition-all ease-in-out"
+						className="text-lg text-wheat transition-colors ease-in-out group-hover:text-purpleContrast"
 					/>
 				</a>
 			))}

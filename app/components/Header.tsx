@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
 	FaLightbulb,
 	FaPaperPlane,
@@ -12,13 +12,7 @@ import {
 } from "react-icons/fa6";
 import Icons from "./Icons";
 import SuggestModal from "./SuggestModal";
-
-const WRITER_ROLES = ["owner", "admin", "writer"];
-
-// localStorage.removeItem('authUser');
-// localStorage.setItem('authUser', JSON.stringify({ id: 'me', role: 'writer' }));
-// localStorage.setItem('authUser', JSON.stringify({ id: 'me', role: 'member' }));
-// localStorage.setItem('userProfile', JSON.stringify({ ...JSON.parse(localStorage.getItem('userProfile')||'{}'), role: 'member' }));
+import { useClientAuth } from "./useClientAuth";
 
 export default function Header() {
 	const pathname = usePathname();
@@ -26,128 +20,103 @@ export default function Header() {
 		pathname === "/login" ||
 		pathname === "/register" ||
 		pathname === "/not-found";
-
-	const [isAuthed, setIsAuthed] = useState(false);
-	const [activeUser, setActiveUser] = useState<string>("me");
-	const [role, setRole] = useState<string>("member");
+	const { activeUser, canWrite, isAuthed } = useClientAuth();
 	const [isSuggestOpen, setIsSuggestOpen] = useState(false);
-
-	useEffect(() => {
-		const readAuth = () => {
-			try {
-				const authRaw = localStorage.getItem("authUser");
-				const profileRaw = localStorage.getItem("userProfile");
-
-				let authed = false;
-				let id = "me";
-				let r: string | undefined;
-
-				if (authRaw) {
-					const parsed = JSON.parse(authRaw);
-					authed = true;
-					id = parsed?.id ?? "me";
-					r = parsed?.role;
-				}
-				if (!r && profileRaw) {
-					const p = JSON.parse(profileRaw);
-					r = p?.role;
-				}
-
-				setIsAuthed(authed);
-				setActiveUser(id);
-				setRole((r || "member").toLowerCase());
-			} catch {
-				setIsAuthed(false);
-				setActiveUser("me");
-				setRole("member");
-			}
-		};
-
-		readAuth();
-		const onStorage = (e: StorageEvent) => {
-			if (e.key === "authUser" || e.key === "userProfile") readAuth();
-		};
-		window.addEventListener("storage", onStorage);
-		return () => window.removeEventListener("storage", onStorage);
-	}, []);
-
-	const canWrite = useMemo(() => WRITER_ROLES.includes(role), [role]);
 
 	if (hideHeader) return null;
 
 	return (
 		<>
-			<header className="bg-darkBg py-6 md:p-7">
-				<div className="flex justify-around items-center">
-					<Icons className="hidden md:flex" />
+			<header className="bg-darkBg px-4 pt-8 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-[1440px] rounded-t-[30px] border border-b-0 border-zinc-700/50 bg-lessDarkBg/90">
+					<div className="border-b border-zinc-700/50 px-6 py-6 sm:px-8">
+						<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+							<div className="max-w-3xl">
+								<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+									Development archive
+								</p>
+								<div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+									<div>
+										<Link href="/" aria-label="Home">
+											<h1 className="text-5xl font-somerton text-wheat sm:text-6xl">
+												DEVBLoG
+											</h1>
+										</Link>
+										<p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+											Frontend notes, posts, and interactive experiments kept in
+											one place with the same section framing used across the rest
+											of the site.
+										</p>
+									</div>
+								</div>
+							</div>
 
-					<Link href="/" aria-label="Home">
-						<h1 className="text-white text-6xl font-somerton">DEVBLoG</h1>
-					</Link>
+							<div className="flex flex-wrap items-center gap-3 lg:justify-end">
+								<Icons className="hidden md:flex" />
 
-					<nav className="flex space-x-4">
-						<Link
-							href={`/profile/${activeUser}`}
-							className="rounded-full p-2 group transition-all ease-in-out"
-							aria-label="Profile"
-						>
-							<FaUser className="text-wheat text-lg group-hover:text-purpleContrast transition-all ease-in-out" />
-						</Link>
+								{isAuthed && activeUser ? (
+									<Link
+										href={`/profile/${activeUser}`}
+										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+										aria-label="Profile"
+									>
+										<FaUser className="text-xs" />
+										Profile
+									</Link>
+								) : null}
 
-						{isAuthed ? (
-							canWrite ? (
-								<Link
-									href="/new_post"
-									className="flex items-center space-x-2 bg-neutral-800 border-2 border-neutral-500 hover:border-purpleContrast rounded-3xl px-2 py-1 hover:bg-indigo-700 transition-all"
-									aria-label="Create new post"
+								{isAuthed ? (
+									canWrite ? (
+										<Link
+											href="/new_post"
+											className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
+											aria-label="Create new post"
+										>
+											<FaPlus className="text-xs" />
+											Create
+										</Link>
+									) : (
+										<button
+											type="button"
+											onClick={() => setIsSuggestOpen(true)}
+											className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+											aria-label="Suggest a post"
+											title="Suggest a post (requires review)"
+										>
+											<FaLightbulb className="text-xs" />
+											Suggest
+										</button>
+									)
+								) : (
+									<Link
+										href="/login"
+										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+										aria-label="Login"
+									>
+										<FaRightToBracket className="text-xs" />
+										Login
+									</Link>
+								)}
+
+								<a
+									href="https://t.me/+d-L4_z7gQjg5ZWQx"
+									target="_blank"
+									rel="noopener"
+									className="inline-flex items-center gap-2 rounded-full border border-purpleContrast/50 bg-purpleContrast/15 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/25"
 								>
-									<FaPlus className="text-wheat" />
-									<span className="text-wheat font-bold text-sm">Create</span>
-								</Link>
-							) : (
-								<button
-									type="button"
-									onClick={() => setIsSuggestOpen(true)}
-									className="flex items-center space-x-2 bg-zinc-800 border-2 border-zinc-600 rounded-3xl px-2 py-1 hover:bg-zinc-700 transition-all"
-									aria-label="Suggest a post"
-									title="Suggest a post (requires review)"
-								>
-									<FaLightbulb className="text-zinc-200" />
-									<span className="text-zinc-200 font-semibold text-sm">
-										Suggest
-									</span>
-								</button>
-							)
-						) : (
-							<Link
-								href="/login"
-								className="flex items-center space-x-2 bg-zinc-800 border-2 border-zinc-600 rounded-3xl px-2 py-1 hover:bg-zinc-700 transition-all"
-								aria-label="Login"
-							>
-								<FaRightToBracket className="text-zinc-200" />
-								<span className="text-zinc-200 font-semibold text-sm">
-									Login
-								</span>
-							</Link>
-						)}
-
-						<a
-							href="https://t.me/+d-L4_z7gQjg5ZWQx"
-							target="_blank"
-							className="hidden sm:flex border-2 border-purpleContrast items-center space-x-1 bg-purpleContrast rounded-md px-2 hover:bg-indigo-700 transition-all ease-in-out"
-							rel="noopener"
-						>
-							<FaPaperPlane className="text-wheat pb-[2px] mr-[2px]" />
-							<span className="text-wheat font-bold text-sm">TELEGRAM</span>
-						</a>
-					</nav>
+									<FaPaperPlane className="text-xs" />
+									Telegram
+								</a>
+							</div>
+						</div>
+					</div>
 				</div>
 			</header>
 
 			<SuggestModal
 				isOpen={isSuggestOpen}
 				onClose={() => setIsSuggestOpen(false)}
-				authorId={activeUser}
+				authorId={activeUser || "me"}
 			/>
 		</>
 	);
