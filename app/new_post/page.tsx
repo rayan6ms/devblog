@@ -89,7 +89,7 @@ export default function Page() {
 								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
 									Use the same mock authoring flow that powers the post preview
 									routes. Draft content, review the metadata, and publish to the
-									local mock archive.
+									local mock blog.
 								</p>
 							</div>
 

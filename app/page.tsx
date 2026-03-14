@@ -125,12 +125,13 @@ export default function Home() {
 										Start here
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										A clearer front page for the archive
+										A personal dev blog with room to explore
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										The layout stays familiar, but the framing now matches the
-										rest of the site: featured reading up front, a focused
-										trending snapshot, and clearer paths into the archive.
+										devblog is where I publish development writing, opinions,
+										tutorials, and experiments. The front page highlights featured
+										reading, what is trending now, and quick ways to branch into
+										the rest of the blog.
 									</p>
 								</div>
 								<div className="grid gap-3 sm:grid-cols-3">
@@ -192,11 +193,11 @@ export default function Home() {
 								Explore further
 							</p>
 							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-								More ways into the archive
+								More ways into the blog
 							</h2>
 							<p className="mt-3 text-sm leading-7 text-zinc-400">
-								These routes were already useful. They now look and read like
-								deliberate entry points instead of disconnected cards.
+								Use these sections to move between what is new, what is getting
+								attention, and the posts worth revisiting.
 							</p>
 						</div>
 						<SecondSection

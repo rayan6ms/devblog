@@ -43,7 +43,7 @@ export default function AuthShell({
 						</div>
 						<div className="relative mt-10 max-w-md rounded-[28px] border border-zinc-700/50 bg-greyBg/70 p-6 shadow-lg shadow-zinc-950/10">
 							<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-								Inside the archive
+								Inside devblog
 							</p>
 							<h2 className="mt-3 text-2xl font-somerton uppercase text-wheat">
 								{asideTitle}

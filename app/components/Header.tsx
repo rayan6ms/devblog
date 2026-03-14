@@ -33,19 +33,18 @@ export default function Header() {
 						<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
 							<div className="max-w-3xl">
 								<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-									Development archive
+									Personal dev blog
 								</p>
 								<div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
 									<div>
 										<Link href="/" aria-label="Home">
 											<h1 className="text-5xl font-somerton text-wheat sm:text-6xl">
-												DEVBLoG
+												devblog
 											</h1>
 										</Link>
 										<p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-											Frontend notes, posts, and interactive experiments kept in
-											one place with the same section framing used across the rest
-											of the site.
+											Tutorials, opinions, frontend notes, and interactive side
+											projects collected in one place.
 										</p>
 									</div>
 								</div>

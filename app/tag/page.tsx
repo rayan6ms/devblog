@@ -298,9 +298,9 @@ function TagsPageContent() {
 										Discover posts by topic
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										The tag page should help you narrow down the archive fast.
-										Pick a main topic, layer a few supporting tags, and keep the
-										results grid in view while you refine.
+										Use tags to narrow the blog quickly. Pick a main topic, layer
+										a few supporting tags, and keep the results grid in view while
+										you refine.
 									</p>
 								</div>
 

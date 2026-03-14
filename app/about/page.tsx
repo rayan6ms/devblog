@@ -4,13 +4,13 @@ export const dynamic = "force-dynamic";
 
 const storyCards = [
 	{
-		text: "DEVBLOG is a software development blog built as both a working archive and a portfolio. It is where I collect tutorials, experiments, interface ideas, and the parts of frontend work I enjoy refining the most.",
+		text: "devblog is my personal software development blog. It is where I publish tutorials, opinions, experiments, interface ideas, and the parts of web development I enjoy refining the most.",
 	},
 	{
-		text: "The stack centers on Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser, and a few supporting libraries for data shaping and experiments. The idea is to keep the project practical while still leaving room for visual work and interaction.",
+		text: "The stack centers on Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser, and a few supporting libraries for data shaping and experiments. The goal is to keep the project practical, simple, and enjoyable to build without losing the visual side of the work.",
 	},
 	{
-		text: "Beyond posts, the site leans into interactivity: tag-driven discovery, recommendations, user tools, and a playground full of games and sketches. The goal is to make the project feel authored, not templated.",
+		text: "Beyond posts, the site leans into interactivity: tag-driven discovery, recommendations, user tools, and a playground full of games and sketches. I am not a game developer, but the playground is a good home for hobby projects and another way to show what I can build.",
 	},
 ];
 
@@ -124,13 +124,13 @@ export default function Page() {
 									About the project
 								</p>
 								<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-									The portfolio side of the archive
+									A personal blog that also shows my work
 								</h1>
 								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-									This page keeps the original intent, but frames it with the
-									same visual language as the rest of the site: stronger
-									structure, cleaner spacing, and room for the project&apos;s
-									more personal side.
+									This project is a writing space first, but it also works as a
+									portfolio piece. The point is to show how I think about UI,
+									frontend systems, and interactive work inside something I would
+									actually keep using.
 								</p>
 							</div>
 						</div>

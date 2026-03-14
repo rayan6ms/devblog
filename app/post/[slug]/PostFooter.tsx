@@ -15,7 +15,7 @@ export default function PostFooter({ post }: { post: IPost }) {
 	const authorHandle = getPostSlug(post.author);
 	const authorDescription = `${post.author} writes around ${post.mainTag}, with recurring threads in ${post.tags
 		.slice(0, 2)
-		.join(" and ")}. This author block now follows the same card style as the rest of the archive instead of relying on hardcoded placeholder assets.`;
+		.join(" and ")}. This author block follows the same card style as the rest of devblog instead of relying on hardcoded placeholder assets.`;
 	const authorSocials: { icon: IconType; link: string }[] = [
 		{
 			icon: FaTwitter,
@@ -65,7 +65,7 @@ export default function PostFooter({ post }: { post: IPost }) {
 					className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 					href={`/profile/${authorHandle}`}
 				>
-					Posts do autor
+					Author posts
 				</Link>
 				<Link
 					className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"

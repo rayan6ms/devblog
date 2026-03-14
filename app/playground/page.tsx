@@ -35,15 +35,22 @@ const games: Game[] = [
 		importer: () => import("./snake-game/SnakePhaser"),
 	},
 	{
+		name: "Minesweeper",
+		description: "Minesweeper",
+		img: "https://www.hollywoodreporter.com/wp-content/uploads/2021/07/MCDAVEN_EC081-H-2021.jpg?w=1296",
+		mode: "play",
+		importer: () => import("./minesweeper/MineSweeper"),
+	},
+	{
 		name: "AntSimulator",
-		description: "Ant colony race — watch the chaos unfold",
+		description: "Ant colony race",
 		img: "https://www.playstationlifestyle.net/wp-content/uploads/sites/9/2022/09/new-iron-man-game-by-ea.jpg?w=640",
 		mode: "watch",
 		importer: () => import("./ant-simulator/AntSimulator"),
 	},
 	{
 		name: "SolarSystem",
-		description: "Planetary dance — sit back and enjoy",
+		description: "Planetary dance",
 		img: "https://disneyplusbrasil.com.br/wp-content/uploads/2023/05/Peter-Quill-de-capacete.jpg",
 		mode: "watch",
 		importer: () => import("./solar-system/SolarSystem"),
@@ -397,16 +404,16 @@ const Playground: React.FC = () => {
 							<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-2xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Interactive archive
+										Playground
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 										Games, sketches, and playable detours
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										The playground keeps the experimental side of the project in
-										view. Some pieces are meant to be played, some are meant to
-										be watched, and all of them keep the site from feeling too
-										static.
+										This page is a home for hobby experiments. I am primarily a
+										web developer, not a game developer, but these small projects
+										are a useful way to explore interaction, motion, and browser
+										rendering ideas.
 									</p>
 								</div>
 								<div className="flex flex-wrap gap-3 lg:justify-end">

@@ -54,7 +54,7 @@ export default function Footer() {
 					<div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)] lg:items-start">
 						<div>
 							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								DEVBLOG
+								devblog
 							</p>
 							<h2 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
 								Posts, experiments, interface work.
@@ -107,7 +107,7 @@ export default function Footer() {
 				</div>
 
 				<div className="flex flex-col gap-3 px-6 py-4 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-					<p>&copy; {new Date().getFullYear()} DEVBLOG.</p>
+					<p>&copy; {new Date().getFullYear()} devblog.</p>
 					<p>Articles, UI experiments, and interactive side work.</p>
 				</div>
 			</div>

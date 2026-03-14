@@ -207,7 +207,7 @@ function RecentPageContent() {
 	const pageEnd = Math.min(pageStart + ITEMS_PER_PAGE, posts.length);
 	const visiblePosts = posts.slice(pageStart, pageEnd);
 	const newestPost = posts[0];
-	const archiveViews = useMemo(
+	const totalViews = useMemo(
 		() => posts.reduce((sum, post) => sum + post.views, 0),
 		[posts],
 	);
@@ -257,23 +257,23 @@ function RecentPageContent() {
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Latest archive
+										Latest posts
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 										The newest posts, in order
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										The recent page should feel like a clean archive, not just a
-										grid dump. This version makes recency explicit, keeps paging
-										close at hand, and gives the latest entries proper breathing
-										room.
+										This page is the clearest view of the blog in publishing
+										order. It keeps the newest writing front and center, with
+										pagination and topic cues close by when you want to keep
+										browsing.
 									</p>
 								</div>
 
 								<div className="grid gap-3 sm:grid-cols-3">
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Archive size
+											Post count
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{posts.length}
@@ -289,10 +289,10 @@ function RecentPageContent() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Archive views
+											Total views
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
-											{formatViews(archiveViews)}
+											{formatViews(totalViews)}
 										</p>
 									</div>
 								</div>
@@ -360,15 +360,15 @@ function RecentPageContent() {
 					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
 						<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
 							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								Archive guide
+								Reading guide
 							</p>
 							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
 								Stay oriented
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">
-								Move through the archive page by page, keep an eye on the newest
-								entry, and jump into the topics appearing most often in the latest
-								batch of posts.
+								Move through the blog page by page, keep an eye on the newest
+								entry, and jump into the topics showing up most often in the
+								latest batch of posts.
 							</p>
 
 							<div className="mt-6 rounded-2xl border border-zinc-700/50 bg-greyBg/75 p-4">
@@ -423,11 +423,11 @@ function RecentPageContent() {
 											Recent posts
 										</p>
 										<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-											Newest entries in the archive
+											Newest entries on devblog
 										</h2>
 										<p className="mt-2 text-sm leading-6 text-zinc-400">
 											Ordered strictly by publish date so the page behaves like a
-											recent archive first, not a mixed content feed.
+											true recent-post feed, not a mixed grab bag.
 										</p>
 									</div>
 

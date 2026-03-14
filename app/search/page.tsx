@@ -95,15 +95,15 @@ function SearchPageContent() {
 						<div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.15fr)_auto] lg:items-end">
 							<div>
 								<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-									Search Archive
+									Search posts
 								</p>
 								<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
 									{heading}
 								</h1>
 								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-									Browse matched articles across the archive. Results stay tied
-									to the same post cards used everywhere else, with quick paging
-									when the query spans multiple screens.
+									Browse matching posts across devblog. Results use the same post
+									cards as the rest of the site, with paging when a query spans
+									more than one screen.
 								</p>
 							</div>
 

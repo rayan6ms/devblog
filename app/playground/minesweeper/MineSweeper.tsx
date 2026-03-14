@@ -1,916 +1,2453 @@
-// @ts-nocheck
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 
-import { NextReactP5Wrapper } from "@p5-wrapper/next";
-import type { Sketch } from "@p5-wrapper/react";
-import type React from "react";
-import { useRef } from "react";
+type PhaserModule = typeof import("phaser");
+type PhaserGame = import("phaser").Game;
+type PhaserScene = import("phaser").Scene;
+type PhaserCanvasTexture = import("phaser").Textures.CanvasTexture;
+type PhaserImage = import("phaser").GameObjects.Image;
 
-// Classic Minesweeper levels
-type Level = { name: string; cols: number; rows: number; mines: number };
-const LEVELS: Level[] = [
-	{ name: "Beginner", cols: 9, rows: 9, mines: 10 },
-	{ name: "Intermediate", cols: 16, rows: 16, mines: 40 },
-	{ name: "Expert", cols: 30, rows: 16, mines: 99 },
-];
+type DifficultyKey = "beginner" | "intermediate" | "expert";
+type ThemeKey = "aurora" | "ember" | "glacier" | "voltage";
+type PointerMode = "reveal" | "flag";
+type LoadStatus = "loading" | "ready" | "error";
+type GameStatus = "ready" | "playing" | "won" | "lost";
 
-// Number colors like the original (approx.)
-const NUM_COLORS: Record<number, [number, number, number]> = {
-	1: [0, 0, 255],
-	2: [0, 128, 0],
-	3: [255, 0, 0],
-	4: [0, 0, 128],
-	5: [128, 0, 0],
-	6: [0, 128, 128],
-	7: [0, 0, 0],
-	8: [128, 128, 128],
+type Size = {
+	width: number;
+	height: number;
 };
 
-type Cell = {
+type HslColor = {
+	h: number;
+	s: number;
+	l: number;
+};
+
+type ThemeSeed = {
+	name: string;
+	backgroundTop: HslColor;
+	backgroundBottom: HslColor;
+	panel: HslColor;
+	panelEdge: HslColor;
+	board: HslColor;
+	boardEdge: HslColor;
+	hidden: HslColor;
+	hiddenDeep: HslColor;
+	revealed: HslColor;
+	revealedEdge: HslColor;
+	accent: HslColor;
+	accentAlt: HslColor;
+	text: HslColor;
+	muted: HslColor;
+	flag: HslColor;
+	mine: HslColor;
+};
+
+type ThemePalette = {
+	name: string;
+	backgroundTop: string;
+	backgroundBottom: string;
+	panel: string;
+	panelEdge: string;
+	board: string;
+	boardEdge: string;
+	hidden: string;
+	hiddenDeep: string;
+	hiddenStroke: string;
+	revealed: string;
+	revealedEdge: string;
+	accent: string;
+	accentAlt: string;
+	accentGlow: string;
+	text: string;
+	muted: string;
+	flag: string;
+	mine: string;
+	mineGlow: string;
+	numberColors: Record<number, string>;
+};
+
+type LevelConfig = {
+	key: DifficultyKey;
+	label: string;
+	cols: number;
+	rows: number;
+	mines: number;
+};
+
+type RuntimeCell = {
 	mine: boolean;
-	r: number;
-	c: number;
-	adj: number;
 	revealed: boolean;
 	flagged: boolean;
-	question: boolean;
+	adjacent: number;
 };
 
-type GameState = "ready" | "playing" | "dead" | "won";
-
-type SketchConfig = {
-	levelIndex: number;
-	auto: boolean;
+type RuntimeGame = {
+	level: LevelConfig;
+	cells: RuntimeCell[];
+	neighbors: number[][];
+	state: GameStatus;
+	paused: boolean;
+	safeRevealed: number;
+	flagsPlaced: number;
+	startedAt: number | null;
+	finishedAt: number | null;
+	pauseStartedAt: number | null;
+	pausedTotalMs: number;
+	elapsedMs: number;
+	explosion: number | null;
+	solverFocus: number | null;
+	solverLabel: string;
+	solverRisk: number | null;
 };
 
-function createP5MinesweeperSketch(
-	config: SketchConfig,
-	hostRef: React.RefObject<HTMLDivElement>,
-): Sketch {
-	return (p) => {
-		// --- Layout constants for classic look ---
-		const TILE = 16; // classic tile size in design pixels
-		const PAD = 6; // outer padding
-		const BEVEL = 2; // border thickness per ridge
+type Constraint = {
+	cells: number[];
+	need: number;
+};
 
-		// base (design) sizes; we scale entire UI to fit wrapper
-		let level = LEVELS[config.levelIndex] ?? LEVELS[1];
-		let cols = level.cols;
-		let rows = level.rows;
-		let minesTarget = level.mines;
+type SolverInsight = {
+	safe: number[];
+	mines: number[];
+	target: number | null;
+	targetRisk: number | null;
+	label: string;
+	probabilities: Map<number, number>;
+};
 
-		const headerH = 40; // classic header panel height
-		const boardW = cols * TILE;
-		const boardH = rows * TILE;
-		const baseW = PAD * 2 + BEVEL * 4 + boardW;
-		const baseH = PAD * 2 + BEVEL * 4 + headerH + 4 + boardH; // +4 gap under header
+type LayoutMetrics = {
+	frameX: number;
+	frameY: number;
+	frameWidth: number;
+	frameHeight: number;
+	headerHeight: number;
+	boardX: number;
+	boardY: number;
+	boardWidth: number;
+	boardHeight: number;
+	cellSize: number;
+	boardRadius: number;
+	pad: number;
+};
 
-		// runtime sizes
-		let scaleFactor = 1;
-		let cw = baseW;
-		let ch = baseH;
+type Surface = {
+	width: number;
+	height: number;
+	dpr: number;
+	canvas: HTMLCanvasElement;
+	context: CanvasRenderingContext2D;
+	texture: PhaserCanvasTexture;
+	image: PhaserImage;
+	textureKey: string;
+};
 
-		// game state
-		let grid: Cell[] = [];
-		let placedMines = 0;
-		let flagsLeft = minesTarget;
-		let revealedCount = 0;
-		let state: GameState = "ready";
-		let firstRevealDone = false;
-		let startMillis = 0;
-		let elapsed = 0; // seconds
+type SettingsSnapshot = {
+	difficulty: DifficultyKey;
+	autoplay: boolean;
+	solverDelayMs: number;
+	themeKey: ThemeKey;
+	hueShift: number;
+	glowBoost: number;
+	pointerMode: PointerMode;
+};
 
-		// UI interaction
-		let hovered: { r: number; c: number } | null = null;
-		let pressLeft = false;
-		let pressRight = false;
-		let autoPlay = config.auto;
-		let autoTickCooldown = 0;
+type UiState = {
+	status: GameStatus;
+	paused: boolean;
+	minesLeft: number;
+	elapsedSec: number;
+	score: number;
+	progress: number;
+	solverLabel: string;
+	solverRiskText: string;
+	difficultyLabel: string;
+	autoplay: boolean;
+	pointerMode: PointerMode;
+};
 
-		// convenience indices
-		const idx = (r: number, c: number) => r * cols + c;
+type SceneControls = {
+	reset: () => void;
+	solverStep: () => void;
+	togglePause: () => void;
+};
 
-		function neighbors(r: number, c: number) {
-			const out: [number, number][] = [];
-			for (let dr = -1; dr <= 1; dr++) {
-				for (let dc = -1; dc <= 1; dc++) {
-					if (dr === 0 && dc === 0) continue;
-					const rr = r + dr;
-					const cc = c + dc;
-					if (rr >= 0 && rr < rows && cc >= 0 && cc < cols) out.push([rr, cc]);
-				}
-			}
-			return out;
-		}
+type CurrentRef<T> = {
+	current: T;
+};
 
-		function reset() {
-			grid = [];
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) {
-					grid.push({
-						mine: false,
-						r,
-						c,
-						adj: 0,
-						revealed: false,
-						flagged: false,
-						question: false,
-					});
-				}
-			}
-			placedMines = 0;
-			flagsLeft = minesTarget;
-			revealedCount = 0;
-			state = "ready";
-			firstRevealDone = false;
-			startMillis = 0;
-			elapsed = 0;
-		}
+type Bridge = {
+	settingsRef: CurrentRef<SettingsSnapshot>;
+	controlsRef: CurrentRef<SceneControls | null>;
+	onUiState: (state: UiState) => void;
+};
 
-		function computeAdj() {
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) {
-					const cell = grid[idx(r, c)];
-					if (cell.mine) {
-						cell.adj = 9;
-					} else {
-						let a = 0;
-						for (const [rr, cc] of neighbors(r, c))
-							if (grid[idx(rr, cc)].mine) a++;
-						cell.adj = a;
-					}
-				}
-			}
-		}
+const FONT_STACK =
+	'"IBM Plex Mono","Fira Code","SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace';
 
-		function placeMinesSafe(firstR: number, firstC: number) {
-			const forbidden = new Set<number>();
-			forbidden.add(idx(firstR, firstC));
-			for (const [rr, cc] of neighbors(firstR, firstC))
-				forbidden.add(idx(rr, cc));
-			let need = minesTarget;
-			while (need > 0) {
-				const r = Math.floor(p.random(rows));
-				const c = Math.floor(p.random(cols));
-				const k = idx(r, c);
-				if (forbidden.has(k)) continue;
-				const cell = grid[k];
-				if (!cell.mine) {
-					cell.mine = true;
-					need--;
-				}
-			}
-			placedMines = minesTarget;
-			computeAdj();
-		}
+const DIFFICULTIES: Record<DifficultyKey, LevelConfig> = {
+	beginner: { key: "beginner", label: "Beginner", cols: 9, rows: 9, mines: 10 },
+	intermediate: {
+		key: "intermediate",
+		label: "Intermediate",
+		cols: 16,
+		rows: 16,
+		mines: 40,
+	},
+	expert: { key: "expert", label: "Expert", cols: 30, rows: 16, mines: 99 },
+};
 
-		function reveal(r: number, c: number) {
-			const cell = grid[idx(r, c)];
-			if (cell.revealed || cell.flagged || state === "dead" || state === "won")
-				return;
-			if (!firstRevealDone) {
-				placeMinesSafe(r, c);
-				firstRevealDone = true;
-				startMillis = p.millis();
-			}
-			cell.revealed = true;
-			revealedCount++;
-			if (cell.mine) {
-				state = "dead";
-				return;
-			}
-			if (cell.adj === 0) floodReveal(r, c);
-			checkWin();
-		}
+const DIFFICULTY_ORDER: DifficultyKey[] = [
+	"beginner",
+	"intermediate",
+	"expert",
+];
 
-		function floodReveal(r: number, c: number) {
-			const stack: [number, number][] = [[r, c]];
-			const seen = new Set<number>();
-			while (stack.length) {
-				const [rr, cc] = stack.pop()!;
-				for (const [nr, nc] of neighbors(rr, cc)) {
-					const k = idx(nr, nc);
-					if (seen.has(k)) continue;
-					const n = grid[k];
-					if (!n.revealed && !n.flagged && !n.mine) {
-						n.revealed = true;
-						revealedCount++;
-						if (n.adj === 0) stack.push([nr, nc]);
-					}
-					seen.add(k);
-				}
-			}
-		}
+const SPEED_OPTIONS = [
+	{ label: "Think", delayMs: 1000 },
+	{ label: "Measured", delayMs: 700 },
+	{ label: "Calm", delayMs: 420 },
+	{ label: "Quick", delayMs: 180 },
+] as const;
 
-		function toggleFlag(r: number, c: number) {
-			const cell = grid[idx(r, c)];
-			if (cell.revealed || state === "dead" || state === "won") return;
-			if (cell.flagged) {
-				cell.flagged = false;
-				flagsLeft++;
-			} else {
-				if (flagsLeft <= 0) return;
-				cell.flagged = true;
-				flagsLeft--;
-			}
-		}
+const THEME_ORDER: ThemeKey[] = ["aurora", "ember", "glacier", "voltage"];
 
-		function chord(r: number, c: number) {
-			const cell = grid[idx(r, c)];
-			if (!cell.revealed || cell.adj <= 0) return;
-			let flags = 0;
-			const unknowns: [number, number][] = [];
-			for (const [rr, cc] of neighbors(r, c)) {
-				const n = grid[idx(rr, cc)];
-				if (n.flagged) flags++;
-				else if (!n.revealed) unknowns.push([rr, cc]);
-			}
-			if (flags === cell.adj) {
-				for (const [rr, cc] of unknowns) reveal(rr, cc);
-			}
-		}
+const EMPTY_UI_STATE: UiState = {
+	status: "ready",
+	paused: false,
+	minesLeft: DIFFICULTIES.intermediate.mines,
+	elapsedSec: 0,
+	score: 0,
+	progress: 0,
+	solverLabel: "Opening ready",
+	solverRiskText: "0%",
+	difficultyLabel: DIFFICULTIES.intermediate.label,
+	autoplay: false,
+	pointerMode: "reveal",
+};
 
-		function checkWin() {
-			const safeTiles = cols * rows - minesTarget;
-			if (revealedCount >= safeTiles && state !== "dead") state = "won";
-		}
+const THEME_SEEDS: Record<ThemeKey, ThemeSeed> = {
+	aurora: {
+		name: "Aurora",
+		backgroundTop: { h: 0.58, s: 0.68, l: 0.14 },
+		backgroundBottom: { h: 0.86, s: 0.74, l: 0.08 },
+		panel: { h: 0.63, s: 0.32, l: 0.12 },
+		panelEdge: { h: 0.58, s: 0.44, l: 0.26 },
+		board: { h: 0.61, s: 0.28, l: 0.1 },
+		boardEdge: { h: 0.58, s: 0.48, l: 0.3 },
+		hidden: { h: 0.54, s: 0.78, l: 0.52 },
+		hiddenDeep: { h: 0.72, s: 0.72, l: 0.36 },
+		revealed: { h: 0.62, s: 0.18, l: 0.9 },
+		revealedEdge: { h: 0.56, s: 0.18, l: 0.72 },
+		accent: { h: 0.48, s: 0.92, l: 0.56 },
+		accentAlt: { h: 0.82, s: 0.88, l: 0.62 },
+		text: { h: 0.56, s: 0.2, l: 0.94 },
+		muted: { h: 0.57, s: 0.18, l: 0.72 },
+		flag: { h: 0.08, s: 0.92, l: 0.6 },
+		mine: { h: 0.95, s: 0.86, l: 0.58 },
+	},
+	ember: {
+		name: "Ember",
+		backgroundTop: { h: 0.04, s: 0.82, l: 0.14 },
+		backgroundBottom: { h: 0.94, s: 0.78, l: 0.08 },
+		panel: { h: 0.03, s: 0.34, l: 0.11 },
+		panelEdge: { h: 0.06, s: 0.5, l: 0.26 },
+		board: { h: 0.02, s: 0.28, l: 0.09 },
+		boardEdge: { h: 0.05, s: 0.56, l: 0.28 },
+		hidden: { h: 0.06, s: 0.9, l: 0.52 },
+		hiddenDeep: { h: 0.96, s: 0.82, l: 0.38 },
+		revealed: { h: 0.09, s: 0.26, l: 0.9 },
+		revealedEdge: { h: 0.08, s: 0.18, l: 0.74 },
+		accent: { h: 0.11, s: 0.98, l: 0.62 },
+		accentAlt: { h: 0.98, s: 0.88, l: 0.62 },
+		text: { h: 0.09, s: 0.18, l: 0.95 },
+		muted: { h: 0.08, s: 0.22, l: 0.72 },
+		flag: { h: 0.01, s: 0.94, l: 0.58 },
+		mine: { h: 0.94, s: 0.88, l: 0.58 },
+	},
+	glacier: {
+		name: "Glacier",
+		backgroundTop: { h: 0.52, s: 0.54, l: 0.16 },
+		backgroundBottom: { h: 0.66, s: 0.54, l: 0.08 },
+		panel: { h: 0.57, s: 0.28, l: 0.13 },
+		panelEdge: { h: 0.52, s: 0.42, l: 0.28 },
+		board: { h: 0.58, s: 0.24, l: 0.1 },
+		boardEdge: { h: 0.53, s: 0.48, l: 0.28 },
+		hidden: { h: 0.54, s: 0.74, l: 0.56 },
+		hiddenDeep: { h: 0.63, s: 0.62, l: 0.4 },
+		revealed: { h: 0.56, s: 0.2, l: 0.92 },
+		revealedEdge: { h: 0.56, s: 0.14, l: 0.76 },
+		accent: { h: 0.51, s: 0.96, l: 0.62 },
+		accentAlt: { h: 0.59, s: 0.82, l: 0.64 },
+		text: { h: 0.56, s: 0.22, l: 0.96 },
+		muted: { h: 0.56, s: 0.18, l: 0.74 },
+		flag: { h: 0.98, s: 0.88, l: 0.6 },
+		mine: { h: 0.92, s: 0.74, l: 0.56 },
+	},
+	voltage: {
+		name: "Voltage",
+		backgroundTop: { h: 0.7, s: 0.7, l: 0.14 },
+		backgroundBottom: { h: 0.56, s: 0.7, l: 0.08 },
+		panel: { h: 0.7, s: 0.34, l: 0.12 },
+		panelEdge: { h: 0.73, s: 0.48, l: 0.3 },
+		board: { h: 0.72, s: 0.26, l: 0.1 },
+		boardEdge: { h: 0.68, s: 0.56, l: 0.3 },
+		hidden: { h: 0.76, s: 0.88, l: 0.56 },
+		hiddenDeep: { h: 0.58, s: 0.84, l: 0.38 },
+		revealed: { h: 0.7, s: 0.18, l: 0.9 },
+		revealedEdge: { h: 0.69, s: 0.16, l: 0.74 },
+		accent: { h: 0.16, s: 0.94, l: 0.6 },
+		accentAlt: { h: 0.62, s: 0.98, l: 0.62 },
+		text: { h: 0.7, s: 0.2, l: 0.95 },
+		muted: { h: 0.68, s: 0.18, l: 0.74 },
+		flag: { h: 0.03, s: 0.94, l: 0.58 },
+		mine: { h: 0.92, s: 0.88, l: 0.58 },
+	},
+};
 
-		// --- Solver (deterministic + small-cluster enumeration + probability) ---
-		function solverStep(): boolean {
-			if (state === "dead" || state === "won") return false;
-			if (!firstRevealDone) {
-				const center = [Math.floor(rows / 2), Math.floor(cols / 2)];
-				reveal(center[0], center[1]);
-				return true;
-			}
+function clamp(value: number, min: number, max: number) {
+	return Math.min(max, Math.max(min, value));
+}
 
-			let acted = false;
-			// Basic rules
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) {
-					const cell = grid[idx(r, c)];
-					if (!cell.revealed || cell.adj <= 0) continue;
-					let flagCount = 0;
-					const unknowns: [number, number][] = [];
-					for (const [rr, cc] of neighbors(r, c)) {
-						const n = grid[idx(rr, cc)];
-						if (n.flagged) flagCount++;
-						else if (!n.revealed) unknowns.push([rr, cc]);
-					}
-					if (unknowns.length === 0) continue;
-					if (flagCount === cell.adj) {
-						for (const [rr, cc] of unknowns) {
-							reveal(rr, cc);
-							acted = true;
-						}
-					} else if (flagCount + unknowns.length === cell.adj) {
-						for (const [rr, cc] of unknowns) {
-							const n = grid[idx(rr, cc)];
-							if (!n.flagged) {
-								toggleFlag(rr, cc);
-								acted = true;
-							}
-						}
-					}
-				}
-			}
-			if (acted) return true;
+function wrap01(value: number) {
+	const wrapped = value % 1;
+	return wrapped < 0 ? wrapped + 1 : wrapped;
+}
 
-			// Build frontier constraints
-			type FrontierCell = {
-				r: number;
-				c: number;
-				adj: number;
-				flags: number;
-				unknowns: [number, number][];
-			};
-			const frontier: FrontierCell[] = [];
-			const unknownSet = new Set<number>();
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) {
-					const cell = grid[idx(r, c)];
-					if (!cell.revealed || cell.adj <= 0) continue;
-					let flags = 0;
-					const unknowns: [number, number][] = [];
-					for (const [rr, cc] of neighbors(r, c)) {
-						const n = grid[idx(rr, cc)];
-						if (n.flagged) flags++;
-						else if (!n.revealed) {
-							unknowns.push([rr, cc]);
-							unknownSet.add(idx(rr, cc));
-						}
-					}
-					if (unknowns.length > 0)
-						frontier.push({ r, c, adj: cell.adj, flags, unknowns });
-				}
-			}
-
-			const unknownList = Array.from(unknownSet);
-			if (frontier.length === 0 && unknownList.length) {
-				// No constraints visible; pick a corner preference to reduce risk
-				const corners: [number, number][] = [
-					[0, 0],
-					[0, cols - 1],
-					[rows - 1, 0],
-					[rows - 1, cols - 1],
-				];
-				for (const [rr, cc] of corners) {
-					const n = grid[idx(rr, cc)];
-					if (!n.revealed && !n.flagged) {
-						reveal(rr, cc);
-						return true;
-					}
-				}
-				// Otherwise choose uniformly among unknowns
-				const pick = unknownList[Math.floor(p.random(unknownList.length))];
-				const rr = Math.floor(pick / cols);
-				const cc = pick % cols;
-				reveal(rr, cc);
-				return true;
-			}
-
-			// Partition unknowns into clusters connected by shared constraints
-			const uNeighbors = new Map<number, Set<number>>();
-			for (const f of frontier) {
-				const set = f.unknowns.map(([rr, cc]) => idx(rr, cc));
-				for (const a of set) {
-					if (!uNeighbors.has(a)) uNeighbors.set(a, new Set());
-					for (const b of set) if (a !== b) uNeighbors.get(a)!.add(b);
-				}
-			}
-			const clusters: number[][] = [];
-			const visited = new Set<number>();
-			for (const u of unknownList) {
-				if (visited.has(u)) continue;
-				const stack = [u];
-				const comp: number[] = [];
-				visited.add(u);
-				while (stack.length) {
-					const x = stack.pop()!;
-					comp.push(x);
-					for (const y of uNeighbors.get(x) ?? []) {
-						if (!visited.has(y)) {
-							visited.add(y);
-							stack.push(y);
-						}
-					}
-				}
-				clusters.push(comp);
-			}
-
-			// For each cluster, attempt exact enumeration if small
-			type Prob = { k: number; probMine: number };
-			const decisions: Prob[] = [];
-
-			for (const comp of clusters) {
-				if (comp.length <= 12) {
-					// constraints affecting this component
-					const relevant = frontier.filter((f) =>
-						f.unknowns.some(([rr, cc]) => comp.includes(idx(rr, cc))),
-					);
-					const compIndex = new Map<number, number>();
-					comp.forEach((k, i) => compIndex.set(k, i));
-
-					// gather per-constraint masks
-					const masks = relevant.map((f) => {
-						const mask = new Array(comp.length).fill(0);
-						let totalUnknownHere = 0;
-						for (const [rr, cc] of f.unknowns) {
-							const k = idx(rr, cc);
-							if (compIndex.has(k)) {
-								mask[compIndex.get(k)!] = 1;
-								totalUnknownHere++;
-							}
-						}
-						return { mask, need: f.adj - f.flags };
-					});
-
-					const n = comp.length;
-					const tally = new Array(n).fill(0);
-					let worlds = 0;
-
-					function valid(assign: number[]) {
-						for (const { mask, need } of masks) {
-							let sum = 0;
-							for (let i = 0; i < n; i++) if (mask[i]) sum += assign[i];
-							if (sum < 0 || sum > need) return false;
-						}
-						for (const { mask, need } of masks) {
-							let sum = 0;
-							for (let i = 0; i < n; i++) if (mask[i]) sum += assign[i];
-							if (sum !== need) return false;
-						}
-						return true;
-					}
-
-					function backtrack(i: number, assign: number[]) {
-						if (i === n) {
-							if (valid(assign)) {
-								worlds++;
-								for (let j = 0; j < n; j++) tally[j] += assign[j];
-							}
-							return;
-						}
-						assign[i] = 0;
-						backtrack(i + 1, assign);
-						assign[i] = 1;
-						backtrack(i + 1, assign);
-					}
-					backtrack(0, new Array(n).fill(0));
-
-					if (worlds > 0) {
-						for (let i = 0; i < n; i++) {
-							decisions.push({ k: comp[i], probMine: tally[i] / worlds });
-						}
-					}
-				}
-			}
-
-			if (decisions.length) {
-				decisions.sort((a, b) => a.probMine - b.probMine);
-				const best = decisions[0];
-				const rr = Math.floor(best.k / cols);
-				const cc = best.k % cols;
-				if (best.probMine <= 0) {
-					reveal(rr, cc);
-				} else if (best.probMine >= 1) {
-					toggleFlag(rr, cc);
-				} else {
-					reveal(rr, cc);
-				}
-				return true;
-			}
-
-			// Fallback: global guess by density
-			const hidden: number[] = [];
-			for (let k = 0; k < grid.length; k++) {
-				const cell = grid[k];
-				if (!cell.revealed && !cell.flagged) hidden.push(k);
-			}
-			if (hidden.length) {
-				const pick = hidden[Math.floor(p.random(hidden.length))];
-				const rr = Math.floor(pick / cols);
-				const cc = pick % cols;
-				reveal(rr, cc);
-				return true;
-			}
-
-			return false;
-		}
-
-		// --- Drawing helpers ---
-		function setScaleToHost() {
-			const host = hostRef.current;
-			if (!host) return;
-			const w = host.clientWidth || baseW;
-			const h = host.clientHeight || baseH;
-			const s = Math.min(w / baseW, h / baseH);
-			scaleFactor = Math.max(0.5, s);
-			cw = Math.floor(baseW * scaleFactor);
-			ch = Math.floor(baseH * scaleFactor);
-			p.resizeCanvas(cw, ch);
-			p.pixelDensity(1);
-		}
-
-		function designToScreen(x: number) {
-			return Math.round(x * scaleFactor);
-		}
-
-		function drawBevelRect(
-			x: number,
-			y: number,
-			w: number,
-			h: number,
-			raised: boolean,
-		) {
-			p.noStroke();
-			p.fill(192);
-			p.rect(
-				designToScreen(x),
-				designToScreen(y),
-				designToScreen(w),
-				designToScreen(h),
-			);
-			// edges
-			const tl = raised ? 255 : 128;
-			const br = raised ? 128 : 255;
-			p.stroke(tl);
-			p.line(
-				designToScreen(x),
-				designToScreen(y),
-				designToScreen(x + w - 1),
-				designToScreen(y),
-			);
-			p.line(
-				designToScreen(x),
-				designToScreen(y),
-				designToScreen(x),
-				designToScreen(y + h - 1),
-			);
-			p.stroke(br);
-			p.line(
-				designToScreen(x),
-				designToScreen(y + h - 1),
-				designToScreen(x + w - 1),
-				designToScreen(y + h - 1),
-			);
-			p.line(
-				designToScreen(x + w - 1),
-				designToScreen(y),
-				designToScreen(x + w - 1),
-				designToScreen(y + h - 1),
-			);
-			p.noStroke();
-		}
-
-		function drawOuterBorder() {
-			p.background(192);
-			p.strokeWeight(designToScreen(1));
-			// outer ridge
-			p.stroke(255);
-			p.rect(
-				designToScreen(0.5),
-				designToScreen(0.5),
-				designToScreen(baseW - 1),
-				designToScreen(baseH - 1),
-			);
-			p.stroke(128);
-			p.rect(
-				designToScreen(1.5),
-				designToScreen(1.5),
-				designToScreen(baseW - 3),
-				designToScreen(baseH - 3),
-			);
-		}
-
-		function drawLED(x: number, y: number, value: number, digits = 3) {
-			const str = Math.max(-999, Math.min(999, value))
-				.toString()
-				.padStart(digits, value < 0 ? digits : digits, "0");
-			const segW = 9;
-			const segH = 15;
-			drawBevelRect(x, y, digits * (segW + 2) + 6, segH + 6, true);
-			p.fill(0);
-			p.rect(
-				designToScreen(x + 3),
-				designToScreen(y + 3),
-				designToScreen(digits * (segW + 2)),
-				designToScreen(segH),
-			);
-			const mapDigit: Record<string, number[]> = {
-				"0": [0, 1, 2, 4, 5, 6],
-				"1": [2, 5],
-				"2": [0, 2, 3, 4, 6],
-				"3": [0, 2, 3, 5, 6],
-				"4": [1, 2, 3, 5],
-				"5": [0, 1, 3, 5, 6],
-				"6": [0, 1, 3, 4, 5, 6],
-				"7": [0, 2, 5],
-				"8": [0, 1, 2, 3, 4, 5, 6],
-				"9": [0, 1, 2, 3, 5, 6],
-				"-": [3],
-			};
-			for (let i = 0; i < digits; i++) {
-				const d = str[str.length - digits + i] ?? "0";
-				const on = mapDigit[d] ?? [];
-				const ox = x + 3 + i * (segW + 2);
-				const oy = y + 3;
-				p.push();
-				p.translate(designToScreen(ox), designToScreen(oy));
-				p.fill(255, 0, 0);
-				const seg = (
-					s: number,
-					x1: number,
-					y1: number,
-					x2: number,
-					y2: number,
-				) => {
-					if (!on.includes(s)) return;
-					p.noStroke();
-					p.rect(0, 0, 0, 0);
-					p.beginShape();
-					p.vertex(designToScreen(x1), designToScreen(y1));
-					p.vertex(designToScreen(x2), designToScreen(y1));
-					p.vertex(designToScreen(x2), designToScreen(y2));
-					p.vertex(designToScreen(x1), designToScreen(y2));
-					p.endShape(p.CLOSE);
-				};
-				seg(0, 1, 0, segW - 1, 2);
-				seg(3, 1, segH / 2 - 1, segW - 1, segH / 2 + 1);
-				seg(6, 1, segH - 2, segW - 1, segH);
-				seg(1, 0, 1, 2, segH / 2 - 1);
-				seg(4, 0, segH / 2 + 1, 2, segH - 1);
-				seg(2, segW - 2, 1, segW, segH / 2 - 1);
-				seg(5, segW - 2, segH / 2 + 1, segW, segH - 1);
-				p.pop();
-			}
-		}
-
-		function drawFace(x: number, y: number) {
-			const size = 24;
-			drawBevelRect(x, y, size + 8, size + 8, true);
-			const cx = x + 4 + size / 2;
-			const cy = y + 4 + size / 2;
-			p.push();
-			p.translate(designToScreen(cx), designToScreen(cy));
-			p.scale(scaleFactor);
-			p.noStroke();
-			p.fill(255, 255, 0);
-			p.circle(0, 0, size);
-			p.fill(0);
-			// eyes
-			p.circle(-5, -3, 3);
-			p.circle(5, -3, 3);
-			// mouth by state
-			p.stroke(0);
-			p.noFill();
-			p.strokeWeight(2);
-			if (state === "dead") {
-				p.line(-6, 5, -2, 1);
-				p.line(6, 5, 2, 1);
-				p.line(-4, -1, -2, 1);
-				p.line(4, -1, 2, 1);
-			} else if (state === "won") {
-				p.strokeWeight(2);
-				p.arc(0, 2, 12, 10, 0, p.PI);
-				p.rect(-8, -7, 16, 4);
-			} else if (pressLeft) {
-				p.line(-6, 6, 6, 6);
-			} else {
-				p.arc(0, 6, 12, 10, 0, p.PI);
-			}
-			p.pop();
-		}
-
-		function cellAtMouse(
-			mx: number,
-			my: number,
-		): { r: number; c: number } | null {
-			const bx = PAD + BEVEL * 2;
-			const by = PAD + BEVEL * 2 + headerH + 4;
-			const x = mx / scaleFactor - bx;
-			const y = my / scaleFactor - by;
-			if (x < 0 || y < 0) return null;
-			const c = Math.floor(x / TILE);
-			const r = Math.floor(y / TILE);
-			if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
-			return { r, c };
-		}
-
-		function drawTile(cell: Cell) {
-			const bx = PAD + BEVEL * 2;
-			const by = PAD + BEVEL * 2 + headerH + 4;
-			const x = bx + cell.c * TILE;
-			const y = by + cell.r * TILE;
-
-			if (!cell.revealed) {
-				drawBevelRect(x, y, TILE, TILE, true);
-				if (cell.flagged) {
-					p.push();
-					p.translate(designToScreen(x), designToScreen(y));
-					p.scale(scaleFactor);
-					p.stroke(0);
-					p.line(4, 12, 4, 3);
-					p.fill(255, 0, 0);
-					p.triangle(5, 3, 5, 9, 11, 6);
-					p.pop();
-				} else if (cell.question) {
-					p.push();
-					p.translate(designToScreen(x), designToScreen(y));
-					p.scale(scaleFactor);
-					p.fill(0);
-					p.textSize(12);
-					p.textAlign(p.CENTER, p.CENTER);
-					p.text("?", TILE / 2, TILE / 2 + 1);
-					p.pop();
-				}
-				return;
-			}
-
-			// revealed face
-			p.noStroke();
-			p.fill(192);
-			p.rect(
-				designToScreen(x),
-				designToScreen(y),
-				designToScreen(TILE),
-				designToScreen(TILE),
-			);
-			p.stroke(128);
-			p.line(
-				designToScreen(x),
-				designToScreen(y),
-				designToScreen(x + TILE - 1),
-				designToScreen(y),
-			);
-			p.line(
-				designToScreen(x),
-				designToScreen(y),
-				designToScreen(x),
-				designToScreen(y + TILE - 1),
-			);
-
-			if (cell.mine) {
-				p.push();
-				p.translate(designToScreen(x + TILE / 2), designToScreen(y + TILE / 2));
-				p.scale(scaleFactor);
-				p.fill(0);
-				p.circle(0, 0, 10);
-				for (let a = 0; a < 8; a++) {
-					const ang = (p.TWO_PI * a) / 8;
-					p.rectMode(p.CENTER);
-					p.push();
-					p.rotate(ang);
-					p.rect(0, 0, 12, 2);
-					p.pop();
-				}
-				p.fill(200);
-				p.circle(-2, -2, 3);
-				p.pop();
-				return;
-			}
-
-			if (cell.adj > 0) {
-				const col = NUM_COLORS[cell.adj] ?? [0, 0, 0];
-				p.fill(col[0], col[1], col[2]);
-				p.textAlign(p.CENTER, p.CENTER);
-				p.textSize(designToScreen(12));
-				p.text(
-					`${cell.adj}`,
-					designToScreen(x + TILE / 2),
-					designToScreen(y + TILE / 2 + 1),
-				);
-			}
-		}
-
-		function drawHeader() {
-			const x = PAD + BEVEL * 2;
-			const y = PAD + BEVEL * 2;
-			drawBevelRect(x, y, boardW, headerH, true);
-			drawLED(x + 6, y + 6, Math.max(-99, Math.min(999, flagsLeft)));
-			drawFace(x + boardW / 2 - 16, y + 6);
-			elapsed =
-				state === "playing" || firstRevealDone
-					? Math.min(999, Math.floor((p.millis() - startMillis) / 1000))
-					: 0;
-			if (state === "dead" || state === "won") {
-				elapsed = Math.min(
-					999,
-					Math.floor((startMillis ? p.millis() - startMillis : 0) / 1000),
-				);
-			}
-			drawLED(x + boardW - 6 - (9 + 2) * 3 - 6, y + 6, elapsed);
-		}
-
-		function drawBoardFrame() {
-			const x = PAD;
-			const y = PAD;
-			drawBevelRect(
-				x,
-				y,
-				BEVEL * 4 + boardW,
-				BEVEL * 2 + headerH + 4 + BEVEL * 2 + boardH,
-				true,
-			);
-			drawBevelRect(
-				x + BEVEL,
-				y + BEVEL,
-				BEVEL * 2 + boardW,
-				headerH + 4 + BEVEL * 2 + boardH,
-				false,
-			);
-			drawBevelRect(x + BEVEL * 2, y + BEVEL * 2, boardW, headerH, true);
-			drawBevelRect(
-				x + BEVEL * 2,
-				y + BEVEL * 2 + headerH + 4,
-				boardW,
-				boardH,
-				true,
-			);
-		}
-
-		// --- p5 lifecycle ---
-		p.setup = () => {
-			p.createCanvas(baseW, baseH);
-			setScaleToHost();
-			reset();
-			// Disable context menu on right-click
-			(p.canvas as any).oncontextmenu = (e: MouseEvent) => e.preventDefault();
-			p.textFont("system-ui, -apple-system, Segoe UI, Arial");
-		};
-
-		p.windowResized = () => {
-			setScaleToHost();
-		};
-
-		p.draw = () => {
-			drawOuterBorder();
-			drawBoardFrame();
-			drawHeader();
-
-			hovered = null;
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) drawTile(grid[idx(r, c)]);
-			}
-
-			// auto-play pacing
-			if (autoPlay && state !== "dead" && state !== "won") {
-				if (!firstRevealDone) state = "playing";
-				autoTickCooldown--;
-				let steps = 0;
-				while (autoTickCooldown <= 0 && steps < 16) {
-					const moved = solverStep();
-					if (!moved) {
-						autoTickCooldown = 10; // brief pause when stuck
-						break;
-					}
-					steps++;
-					autoTickCooldown = 0;
-				}
-			}
-		};
-
-		p.mousePressed = () => {
-			const pos = cellAtMouse(p.mouseX, p.mouseY);
-			const faceX = PAD + BEVEL * 2 + boardW / 2 - 16;
-			const faceY = PAD + BEVEL * 2 + 6;
-			const inFace =
-				p.mouseX >= designToScreen(faceX) &&
-				p.mouseX <= designToScreen(faceX + 24 + 8) &&
-				p.mouseY >= designToScreen(faceY) &&
-				p.mouseY <= designToScreen(faceY + 24 + 8);
-
-			if (inFace) {
-				reset();
-				return;
-			}
-
-			if (pos) {
-				if (p.mouseButton === p.LEFT) {
-					pressLeft = true;
-					if (state === "ready") state = "playing";
-				} else if (p.mouseButton === p.RIGHT) {
-					pressRight = true;
-				}
-			}
-		};
-
-		p.mouseReleased = () => {
-			const pos = cellAtMouse(p.mouseX, p.mouseY);
-			if (pressLeft && pressRight && pos) {
-				chord(pos.r, pos.c);
-			} else if (pressLeft && pos) {
-				reveal(pos.r, pos.c);
-			} else if (pressRight && pos) {
-				const cell = grid[idx(pos.r, pos.c)];
-				if (!cell.revealed) toggleFlag(pos.r, pos.c);
-			}
-			pressLeft = false;
-			pressRight = false;
-		};
-
-		p.keyPressed = () => {
-			if (p.key === "r" || p.key === "R") reset();
-			if (p.key === "a" || p.key === "A") autoPlay = !autoPlay;
-			if (p.key === "1") {
-				level = LEVELS[0];
-				cols = level.cols;
-				rows = level.rows;
-				minesTarget = level.mines;
-				reset();
-			}
-			if (p.key === "2") {
-				level = LEVELS[1];
-				cols = level.cols;
-				rows = level.rows;
-				minesTarget = level.mines;
-				reset();
-			}
-			if (p.key === "3") {
-				level = LEVELS[2];
-				cols = level.cols;
-				rows = level.rows;
-				minesTarget = level.mines;
-				reset();
-			}
-			if (p.key === "s" || p.key === "S") {
-				solverStep();
-			}
-		};
+function shiftColor(color: HslColor, hueShift: number, saturation = 0, lightness = 0) {
+	return {
+		h: wrap01(color.h + hueShift),
+		s: clamp(color.s + saturation, 0, 1),
+		l: clamp(color.l + lightness, 0, 1),
 	};
 }
 
-export default function MinesweeperClassic(): JSX.Element {
-	const hostRef = useRef<HTMLDivElement | null>(null);
-	const sketch = createP5MinesweeperSketch(
-		{ levelIndex: 1, auto: false },
-		hostRef,
+function toneColor(
+	color: HslColor,
+	hueShift: number,
+	saturationScale = 0.62,
+	lightnessShift = 0,
+) {
+	return {
+		h: wrap01(color.h + hueShift),
+		s: clamp(color.s * saturationScale, 0.05, 1),
+		l: clamp(color.l + lightnessShift, 0, 1),
+	};
+}
+
+function hslToCss(color: HslColor) {
+	return `hsl(${Math.round(wrap01(color.h) * 360)} ${Math.round(color.s * 100)}% ${Math.round(color.l * 100)}%)`;
+}
+
+function resolveTheme(themeKey: ThemeKey, hueShift: number, glowBoost: number): ThemePalette {
+	const seed = THEME_SEEDS[themeKey];
+	const accent = toneColor(
+		seed.accent,
+		hueShift * 0.18,
+		0.72 + glowBoost * 0.1,
+		0.02,
+	);
+	const accentAlt = toneColor(
+		seed.accentAlt,
+		hueShift * 0.26,
+		0.64 + glowBoost * 0.08,
+		0.04,
+	);
+	const numberShift = hueShift * 0.08;
+
+	return {
+		name: seed.name,
+		backgroundTop: hslToCss(toneColor(seed.backgroundTop, hueShift * 0.12, 0.34, 0.01)),
+		backgroundBottom: hslToCss(toneColor(seed.backgroundBottom, hueShift * 0.12, 0.28)),
+		panel: hslToCss(toneColor(seed.panel, hueShift * 0.08, 0.28, 0.01)),
+		panelEdge: hslToCss(toneColor(seed.panelEdge, hueShift * 0.14, 0.36, 0.02)),
+		board: hslToCss(toneColor(seed.board, hueShift * 0.06, 0.3, 0.01)),
+		boardEdge: hslToCss(toneColor(seed.boardEdge, hueShift * 0.12, 0.4, 0.03)),
+		hidden: hslToCss(toneColor(seed.hidden, hueShift * 0.16, 0.52, 0.01)),
+		hiddenDeep: hslToCss(toneColor(seed.hiddenDeep, hueShift * 0.18, 0.48, -0.01)),
+		hiddenStroke: hslToCss(toneColor(seed.hiddenDeep, hueShift * 0.18, 0.28, -0.09)),
+		revealed: hslToCss(toneColor(seed.revealed, hueShift * 0.03, 0.08, -0.12)),
+		revealedEdge: hslToCss(toneColor(seed.revealedEdge, hueShift * 0.03, 0.12, -0.08)),
+		accent: hslToCss(accent),
+		accentAlt: hslToCss(accentAlt),
+		accentGlow: hslToCss(toneColor(accent, 0.02, 0.56, 0.1)),
+		text: hslToCss(toneColor(seed.text, 0, 0.14)),
+		muted: hslToCss(toneColor(seed.muted, 0, 0.16, -0.02)),
+		flag: hslToCss(toneColor(seed.flag, hueShift * 0.04, 0.58, 0.01)),
+		mine: hslToCss(toneColor(seed.mine, hueShift * 0.04, 0.52, 0.03)),
+		mineGlow: hslToCss(toneColor(seed.mine, hueShift * 0.03, 0.42, 0.12)),
+		numberColors: {
+			1: hslToCss({ h: wrap01(0.58 + numberShift), s: 0.52, l: 0.42 }),
+			2: hslToCss({ h: wrap01(0.34 + numberShift), s: 0.42, l: 0.34 }),
+			3: hslToCss({ h: wrap01(0.01 + numberShift), s: 0.54, l: 0.46 }),
+			4: hslToCss({ h: wrap01(0.67 + numberShift), s: 0.46, l: 0.38 }),
+			5: hslToCss({ h: wrap01(0.92 + numberShift), s: 0.34, l: 0.34 }),
+			6: hslToCss({ h: wrap01(0.5 + numberShift), s: 0.42, l: 0.36 }),
+			7: hslToCss({ h: wrap01(0.8 + numberShift), s: 0.12, l: 0.24 }),
+			8: hslToCss({ h: wrap01(0.56 + numberShift), s: 0.1, l: 0.4 }),
+		},
+	};
+}
+
+function resolveHostSize(host: HTMLDivElement): Size {
+	const rect = host.getBoundingClientRect();
+	return {
+		width: Math.max(1, Math.floor(host.clientWidth || rect.width || 1)),
+		height: Math.max(1, Math.floor(host.clientHeight || rect.height || 1)),
+	};
+}
+
+function createNeighbors(cols: number, rows: number) {
+	const neighbors: number[][] = Array.from({ length: cols * rows }, () => []);
+
+	for (let row = 0; row < rows; row += 1) {
+		for (let col = 0; col < cols; col += 1) {
+			const index = row * cols + col;
+			for (let dy = -1; dy <= 1; dy += 1) {
+				for (let dx = -1; dx <= 1; dx += 1) {
+					if (dx === 0 && dy === 0) continue;
+					const nextRow = row + dy;
+					const nextCol = col + dx;
+					if (nextRow < 0 || nextRow >= rows || nextCol < 0 || nextCol >= cols) {
+						continue;
+					}
+					neighbors[index].push(nextRow * cols + nextCol);
+				}
+			}
+		}
+	}
+
+	return neighbors;
+}
+
+function createRuntime(level: LevelConfig): RuntimeGame {
+	return {
+		level,
+		cells: Array.from({ length: level.cols * level.rows }, () => ({
+			mine: false,
+			revealed: false,
+			flagged: false,
+			adjacent: 0,
+		})),
+		neighbors: createNeighbors(level.cols, level.rows),
+		state: "ready",
+		paused: false,
+		safeRevealed: 0,
+		flagsPlaced: 0,
+		startedAt: null,
+		finishedAt: null,
+		pauseStartedAt: null,
+		pausedTotalMs: 0,
+		elapsedMs: 0,
+		explosion: null,
+		solverFocus: Math.floor((level.rows / 2)) * level.cols + Math.floor(level.cols / 2),
+		solverLabel: "Opening move",
+		solverRisk: 0,
+	};
+}
+
+function resetRuntime(runtime: RuntimeGame, level: LevelConfig) {
+	const fresh = createRuntime(level);
+	runtime.level = fresh.level;
+	runtime.cells = fresh.cells;
+	runtime.neighbors = fresh.neighbors;
+	runtime.state = fresh.state;
+	runtime.paused = fresh.paused;
+	runtime.safeRevealed = fresh.safeRevealed;
+	runtime.flagsPlaced = fresh.flagsPlaced;
+	runtime.startedAt = fresh.startedAt;
+	runtime.finishedAt = fresh.finishedAt;
+	runtime.pauseStartedAt = fresh.pauseStartedAt;
+	runtime.pausedTotalMs = fresh.pausedTotalMs;
+	runtime.elapsedMs = fresh.elapsedMs;
+	runtime.explosion = fresh.explosion;
+	runtime.solverFocus = fresh.solverFocus;
+	runtime.solverLabel = fresh.solverLabel;
+	runtime.solverRisk = fresh.solverRisk;
+}
+
+function seededShuffle(values: number[]) {
+	for (let index = values.length - 1; index > 0; index -= 1) {
+		const swapIndex = Math.floor(Math.random() * (index + 1));
+		[values[index], values[swapIndex]] = [values[swapIndex], values[index]];
+	}
+	return values;
+}
+
+function placeMines(runtime: RuntimeGame, startIndex: number) {
+	const safeZone = new Set<number>([startIndex, ...runtime.neighbors[startIndex]]);
+	const candidates = new Set<number>();
+
+	for (let index = 0; index < runtime.cells.length; index += 1) {
+		if (safeZone.has(index)) continue;
+		candidates.add(index);
+	}
+
+	if (candidates.size < runtime.level.mines) {
+		for (let index = 0; index < runtime.cells.length; index += 1) {
+			if (index !== startIndex) candidates.add(index);
+		}
+	}
+
+	const shuffled = seededShuffle(Array.from(candidates));
+
+	for (let mine = 0; mine < runtime.level.mines; mine += 1) {
+		runtime.cells[shuffled[mine]].mine = true;
+	}
+
+	for (let index = 0; index < runtime.cells.length; index += 1) {
+		const cell = runtime.cells[index];
+		if (cell.mine) {
+			cell.adjacent = -1;
+			continue;
+		}
+		let adjacent = 0;
+		for (const neighbor of runtime.neighbors[index]) {
+			if (runtime.cells[neighbor].mine) adjacent += 1;
+		}
+		cell.adjacent = adjacent;
+	}
+}
+
+function ensureStarted(runtime: RuntimeGame, index: number, now: number) {
+	if (runtime.startedAt !== null) return;
+	placeMines(runtime, index);
+	runtime.startedAt = now;
+	runtime.state = "playing";
+	runtime.paused = false;
+	runtime.pauseStartedAt = null;
+	runtime.pausedTotalMs = 0;
+}
+
+function finalizeWin(runtime: RuntimeGame, now: number) {
+	runtime.state = "won";
+	runtime.paused = false;
+	runtime.finishedAt = now;
+	runtime.pauseStartedAt = null;
+	runtime.elapsedMs =
+		runtime.startedAt === null ? 0 : now - runtime.startedAt - runtime.pausedTotalMs;
+
+	for (const cell of runtime.cells) {
+		if (cell.mine && !cell.flagged) {
+			cell.flagged = true;
+		}
+	}
+
+	runtime.flagsPlaced = runtime.level.mines;
+}
+
+function checkWin(runtime: RuntimeGame, now: number) {
+	if (runtime.state === "lost") return;
+	const safeCells = runtime.cells.length - runtime.level.mines;
+	if (runtime.safeRevealed >= safeCells) {
+		finalizeWin(runtime, now);
+	}
+}
+
+function revealIndex(runtime: RuntimeGame, index: number, now: number) {
+	const startCell = runtime.cells[index];
+	if (
+		startCell.revealed ||
+		startCell.flagged ||
+		runtime.state === "won" ||
+		runtime.state === "lost" ||
+		runtime.paused
+	) {
+		return false;
+	}
+
+	ensureStarted(runtime, index, now);
+
+	const queue = [index];
+	let changed = false;
+
+	while (queue.length > 0) {
+		const current = queue.pop();
+		if (current === undefined) continue;
+		const cell = runtime.cells[current];
+
+		if (cell.revealed || cell.flagged) continue;
+		cell.revealed = true;
+		changed = true;
+
+		if (cell.mine) {
+			runtime.state = "lost";
+			runtime.paused = false;
+			runtime.finishedAt = now;
+			runtime.pauseStartedAt = null;
+			runtime.elapsedMs =
+				runtime.startedAt === null ? 0 : now - runtime.startedAt - runtime.pausedTotalMs;
+			runtime.explosion = current;
+			return true;
+		}
+
+		runtime.safeRevealed += 1;
+		if (cell.adjacent === 0) {
+			for (const neighbor of runtime.neighbors[current]) {
+				const nextCell = runtime.cells[neighbor];
+				if (!nextCell.revealed && !nextCell.flagged && !nextCell.mine) {
+					queue.push(neighbor);
+				}
+			}
+		}
+	}
+
+	checkWin(runtime, now);
+	return changed;
+}
+
+function toggleFlag(runtime: RuntimeGame, index: number) {
+	const cell = runtime.cells[index];
+	if (
+		cell.revealed ||
+		runtime.state === "won" ||
+		runtime.state === "lost" ||
+		runtime.paused
+	) {
+		return false;
+	}
+	cell.flagged = !cell.flagged;
+	runtime.flagsPlaced += cell.flagged ? 1 : -1;
+	return true;
+}
+
+function chordIndex(runtime: RuntimeGame, index: number, now: number) {
+	const cell = runtime.cells[index];
+	if (
+		!cell.revealed ||
+		cell.adjacent <= 0 ||
+		runtime.state === "won" ||
+		runtime.state === "lost" ||
+		runtime.paused
+	) {
+		return false;
+	}
+
+	let flagged = 0;
+	const hidden: number[] = [];
+
+	for (const neighbor of runtime.neighbors[index]) {
+		const nextCell = runtime.cells[neighbor];
+		if (nextCell.flagged) flagged += 1;
+		else if (!nextCell.revealed) hidden.push(neighbor);
+	}
+
+	if (flagged !== cell.adjacent) return false;
+
+	let changed = false;
+	for (const neighbor of hidden) {
+		changed = revealIndex(runtime, neighbor, now) || changed;
+		if (runtime.explosion !== null) return true;
+	}
+	return changed;
+}
+
+function updateElapsed(runtime: RuntimeGame, now: number) {
+	if (runtime.startedAt === null) {
+		runtime.elapsedMs = 0;
+		return false;
+	}
+	const nextElapsed =
+		runtime.finishedAt !== null
+			? runtime.finishedAt - runtime.startedAt - runtime.pausedTotalMs
+			: runtime.paused && runtime.pauseStartedAt !== null
+				? runtime.pauseStartedAt - runtime.startedAt - runtime.pausedTotalMs
+				: now - runtime.startedAt - runtime.pausedTotalMs;
+	if (nextElapsed === runtime.elapsedMs) return false;
+	runtime.elapsedMs = nextElapsed;
+	return true;
+}
+
+function togglePause(runtime: RuntimeGame, now: number) {
+	if (runtime.startedAt === null || runtime.state === "won" || runtime.state === "lost") {
+		return false;
+	}
+
+	if (runtime.paused) {
+		runtime.paused = false;
+		runtime.pausedTotalMs += now - (runtime.pauseStartedAt ?? now);
+		runtime.pauseStartedAt = null;
+		updateElapsed(runtime, now);
+		return true;
+	}
+
+	runtime.paused = true;
+	runtime.pauseStartedAt = now;
+	updateElapsed(runtime, now);
+	return true;
+}
+
+function buildConstraints(runtime: RuntimeGame) {
+	const constraints: Constraint[] = [];
+	const seen = new Set<string>();
+
+	for (let index = 0; index < runtime.cells.length; index += 1) {
+		const cell = runtime.cells[index];
+		if (!cell.revealed || cell.adjacent <= 0) continue;
+
+		let flagged = 0;
+		const frontier: number[] = [];
+
+		for (const neighbor of runtime.neighbors[index]) {
+			const nextCell = runtime.cells[neighbor];
+			if (nextCell.flagged) flagged += 1;
+			else if (!nextCell.revealed) frontier.push(neighbor);
+		}
+
+		if (frontier.length === 0) continue;
+		const need = cell.adjacent - flagged;
+		if (need < 0 || need > frontier.length) continue;
+		frontier.sort((left, right) => left - right);
+		const key = `${need}|${frontier.join(",")}`;
+		if (seen.has(key)) continue;
+		seen.add(key);
+		constraints.push({ cells: frontier, need });
+	}
+
+	return constraints;
+}
+
+function collectDeterministic(runtime: RuntimeGame) {
+	const safe = new Set<number>();
+	const mines = new Set<number>();
+
+	for (let index = 0; index < runtime.cells.length; index += 1) {
+		const cell = runtime.cells[index];
+		if (!cell.revealed || cell.adjacent <= 0) continue;
+
+		let flagged = 0;
+		const hidden: number[] = [];
+
+		for (const neighbor of runtime.neighbors[index]) {
+			const nextCell = runtime.cells[neighbor];
+			if (nextCell.flagged) flagged += 1;
+			else if (!nextCell.revealed) hidden.push(neighbor);
+		}
+
+		if (hidden.length === 0) continue;
+		if (flagged === cell.adjacent) {
+			for (const neighbor of hidden) safe.add(neighbor);
+		} else if (flagged + hidden.length === cell.adjacent) {
+			for (const neighbor of hidden) mines.add(neighbor);
+		}
+	}
+
+	return {
+		safe: Array.from(safe),
+		mines: Array.from(mines),
+	};
+}
+
+function isSubset(source: number[], target: number[]) {
+	let sourceIndex = 0;
+	let targetIndex = 0;
+
+	while (sourceIndex < source.length && targetIndex < target.length) {
+		if (source[sourceIndex] === target[targetIndex]) {
+			sourceIndex += 1;
+			targetIndex += 1;
+			continue;
+		}
+		if (source[sourceIndex] > target[targetIndex]) {
+			targetIndex += 1;
+			continue;
+		}
+		return false;
+	}
+
+	return sourceIndex === source.length;
+}
+
+function subtractSorted(from: number[], values: number[]) {
+	const result: number[] = [];
+	let fromIndex = 0;
+	let valueIndex = 0;
+
+	while (fromIndex < from.length) {
+		if (valueIndex >= values.length || from[fromIndex] < values[valueIndex]) {
+			result.push(from[fromIndex]);
+			fromIndex += 1;
+			continue;
+		}
+		if (from[fromIndex] === values[valueIndex]) {
+			fromIndex += 1;
+			valueIndex += 1;
+			continue;
+		}
+		valueIndex += 1;
+	}
+
+	return result;
+}
+
+function collectSubsetInferences(constraints: Constraint[]) {
+	const safe = new Set<number>();
+	const mines = new Set<number>();
+
+	for (let leftIndex = 0; leftIndex < constraints.length; leftIndex += 1) {
+		const left = constraints[leftIndex];
+		for (let rightIndex = 0; rightIndex < constraints.length; rightIndex += 1) {
+			if (leftIndex === rightIndex) continue;
+			const right = constraints[rightIndex];
+			if (left.cells.length >= right.cells.length) continue;
+			if (!isSubset(left.cells, right.cells)) continue;
+
+			const delta = subtractSorted(right.cells, left.cells);
+			if (delta.length === 0) continue;
+
+			if (left.need === right.need) {
+				for (const cell of delta) safe.add(cell);
+			}
+
+			if (right.need - left.need === delta.length) {
+				for (const cell of delta) mines.add(cell);
+			}
+		}
+	}
+
+	return {
+		safe: Array.from(safe),
+		mines: Array.from(mines),
+	};
+}
+
+function enumerateComponent(variables: number[], constraints: Constraint[]) {
+	const probabilities = new Map<number, number>();
+	const variableToLocal = new Map<number, number>();
+	const variableDegrees = new Array<number>(variables.length).fill(0);
+	variables.forEach((variable, index) => variableToLocal.set(variable, index));
+
+	const localConstraints = constraints.map((constraint) => ({
+		cells: constraint.cells
+			.map((cell) => variableToLocal.get(cell))
+			.filter((value): value is number => value !== undefined),
+		need: constraint.need,
+	}));
+
+	for (const constraint of localConstraints) {
+		for (const cell of constraint.cells) {
+			variableDegrees[cell] += 1;
+		}
+	}
+
+	const order = variables
+		.map((_, index) => index)
+		.sort((left, right) => variableDegrees[right] - variableDegrees[left]);
+
+	const constraintRefsByVariable: number[][] = Array.from(
+		{ length: variables.length },
+		() => [],
 	);
 
+	localConstraints.forEach((constraint, constraintIndex) => {
+		for (const cell of constraint.cells) {
+			constraintRefsByVariable[cell].push(constraintIndex);
+		}
+	});
+
+	const needLeft = localConstraints.map((constraint) => constraint.need);
+	const remaining = localConstraints.map((constraint) => constraint.cells.length);
+	const assignment = new Int8Array(variables.length).fill(-1);
+	const tally = new Float64Array(variables.length);
+	let worlds = 0;
+
+	function recurse(position: number) {
+		if (position >= order.length) {
+			for (const need of needLeft) {
+				if (need !== 0) return;
+			}
+			worlds += 1;
+			for (let index = 0; index < assignment.length; index += 1) {
+				if (assignment[index] === 1) tally[index] += 1;
+			}
+			return;
+		}
+
+		const variable = order[position];
+		const relatedConstraints = constraintRefsByVariable[variable];
+
+		for (const value of [0, 1]) {
+			let valid = true;
+			for (const constraintIndex of relatedConstraints) {
+				remaining[constraintIndex] -= 1;
+				if (value === 1) needLeft[constraintIndex] -= 1;
+				if (
+					needLeft[constraintIndex] < 0 ||
+					needLeft[constraintIndex] > remaining[constraintIndex]
+				) {
+					valid = false;
+				}
+			}
+
+			assignment[variable] = value;
+			if (valid) recurse(position + 1);
+
+			for (const constraintIndex of relatedConstraints) {
+				if (value === 1) needLeft[constraintIndex] += 1;
+				remaining[constraintIndex] += 1;
+			}
+			assignment[variable] = -1;
+		}
+	}
+
+	recurse(0);
+
+	if (worlds === 0) {
+		return {
+			worlds,
+			probabilities,
+		};
+	}
+
+	for (let index = 0; index < variables.length; index += 1) {
+		probabilities.set(variables[index], tally[index] / worlds);
+	}
+
+	return {
+		worlds,
+		probabilities,
+	};
+}
+
+function solveProbabilities(constraints: Constraint[]) {
+	const frontier = new Set<number>();
+	for (const constraint of constraints) {
+		for (const cell of constraint.cells) frontier.add(cell);
+	}
+
+	const frontierList = Array.from(frontier);
+	const constraintRefsByCell = new Map<number, number[]>();
+	constraints.forEach((constraint, constraintIndex) => {
+		for (const cell of constraint.cells) {
+			const existing = constraintRefsByCell.get(cell);
+			if (existing) existing.push(constraintIndex);
+			else constraintRefsByCell.set(cell, [constraintIndex]);
+		}
+	});
+
+	const probabilities = new Map<number, number>();
+	const solved = new Set<number>();
+	const visitedCells = new Set<number>();
+	const visitedConstraints = new Set<number>();
+	const maxExactVariables = 18;
+
+	for (const root of frontierList) {
+		if (visitedCells.has(root)) continue;
+
+		const variableQueue = [root];
+		const componentVariables: number[] = [];
+		const componentConstraintIndices = new Set<number>();
+		visitedCells.add(root);
+
+		while (variableQueue.length > 0) {
+			const cell = variableQueue.pop();
+			if (cell === undefined) continue;
+			componentVariables.push(cell);
+
+			for (const constraintIndex of constraintRefsByCell.get(cell) ?? []) {
+				if (!visitedConstraints.has(constraintIndex)) {
+					visitedConstraints.add(constraintIndex);
+				}
+				componentConstraintIndices.add(constraintIndex);
+				for (const relatedCell of constraints[constraintIndex].cells) {
+					if (visitedCells.has(relatedCell)) continue;
+					visitedCells.add(relatedCell);
+					variableQueue.push(relatedCell);
+				}
+			}
+		}
+
+		if (componentVariables.length > maxExactVariables) {
+			continue;
+		}
+
+		const componentConstraints = Array.from(componentConstraintIndices).map(
+			(index) => constraints[index],
+		);
+		const result = enumerateComponent(componentVariables, componentConstraints);
+		if (result.worlds === 0) continue;
+
+		for (const [cell, probability] of result.probabilities) {
+			probabilities.set(cell, probability);
+			solved.add(cell);
+		}
+	}
+
+	return {
+		frontier: frontierList,
+		probabilities,
+		solved,
+	};
+}
+
+function heuristicProbabilityMap(
+	runtime: RuntimeGame,
+	constraints: Constraint[],
+	probabilities: Map<number, number>,
+) {
+	const frontierSet = new Set<number>();
+	const mineBudget = runtime.level.mines - runtime.flagsPlaced;
+
+	for (const constraint of constraints) {
+		for (const cell of constraint.cells) frontierSet.add(cell);
+	}
+
+	for (const cell of frontierSet) {
+		if (probabilities.has(cell)) continue;
+
+		let weightedTotal = 0;
+		let weightSum = 0;
+
+		for (const constraint of constraints) {
+			if (!constraint.cells.includes(cell)) continue;
+			const density = constraint.need / constraint.cells.length;
+			const weight = 1 + Math.max(0, 6 - constraint.cells.length) * 0.18;
+			weightedTotal += density * weight;
+			weightSum += weight;
+		}
+
+		if (weightSum > 0) {
+			probabilities.set(cell, clamp(weightedTotal / weightSum, 0, 1));
+		}
+	}
+
+	let expectedFrontierMines = 0;
+	for (const cell of frontierSet) {
+		expectedFrontierMines += probabilities.get(cell) ?? 0;
+	}
+
+	const hiddenOutside = runtime.cells.reduce((count, cell, index) => {
+		if (cell.revealed || cell.flagged || frontierSet.has(index)) return count;
+		return count + 1;
+	}, 0);
+
+	const outsideRisk =
+		hiddenOutside > 0
+			? clamp((mineBudget - expectedFrontierMines) / hiddenOutside, 0, 1)
+			: 1;
+
+	return {
+		probabilities,
+		frontier: frontierSet,
+		outsideRisk,
+	};
+}
+
+function chooseBestTarget(
+	runtime: RuntimeGame,
+	probabilities: Map<number, number>,
+	frontier: Set<number>,
+	outsideRisk: number,
+) {
+	const centerColumn = (runtime.level.cols - 1) / 2;
+	const centerRow = (runtime.level.rows - 1) / 2;
+	let bestIndex: number | null = null;
+	let bestRisk = Number.POSITIVE_INFINITY;
+	let bestScore = Number.NEGATIVE_INFINITY;
+
+	for (let index = 0; index < runtime.cells.length; index += 1) {
+		const cell = runtime.cells[index];
+		if (cell.revealed || cell.flagged) continue;
+
+		const row = Math.floor(index / runtime.level.cols);
+		const col = index % runtime.level.cols;
+		const probability = frontier.has(index)
+			? probabilities.get(index) ?? outsideRisk
+			: outsideRisk;
+		let pressure = 0;
+		let frontierDegree = 0;
+
+		for (const neighbor of runtime.neighbors[index]) {
+			const neighborCell = runtime.cells[neighbor];
+			if (neighborCell.revealed && neighborCell.adjacent > 0) frontierDegree += 1;
+			if (!neighborCell.revealed && !neighborCell.flagged) pressure += 1;
+		}
+
+		const centrality =
+			1 -
+			(Math.abs(col - centerColumn) / Math.max(1, centerColumn + 0.5) +
+				Math.abs(row - centerRow) / Math.max(1, centerRow + 0.5)) /
+				2;
+		const score = frontierDegree * 1.5 + pressure * 0.18 + centrality * 0.9;
+
+		if (
+			probability < bestRisk - 0.0001 ||
+			(Math.abs(probability - bestRisk) < 0.0001 && score > bestScore)
+		) {
+			bestIndex = index;
+			bestRisk = probability;
+			bestScore = score;
+		}
+	}
+
+	return {
+		index: bestIndex,
+		risk: Number.isFinite(bestRisk) ? bestRisk : null,
+	};
+}
+
+function analyzeRuntime(runtime: RuntimeGame): SolverInsight {
+	if (runtime.state === "won") {
+		return {
+			safe: [],
+			mines: [],
+			target: null,
+			targetRisk: null,
+			label: "Board cleared",
+			probabilities: new Map(),
+		};
+	}
+
+	if (runtime.state === "lost") {
+		return {
+			safe: [],
+			mines: [],
+			target: null,
+			targetRisk: null,
+			label: "Board exploded",
+			probabilities: new Map(),
+		};
+	}
+
+	if (runtime.startedAt === null) {
+		const opening =
+			Math.floor(runtime.level.rows / 2) * runtime.level.cols +
+			Math.floor(runtime.level.cols / 2);
+		return {
+			safe: [],
+			mines: [],
+			target: opening,
+			targetRisk: 0,
+			label: "Center opening",
+			probabilities: new Map([[opening, 0]]),
+		};
+	}
+
+	const deterministic = collectDeterministic(runtime);
+	if (deterministic.safe.length > 0 || deterministic.mines.length > 0) {
+		return {
+			safe: deterministic.safe,
+			mines: deterministic.mines,
+			target: deterministic.safe[0] ?? deterministic.mines[0] ?? null,
+			targetRisk: deterministic.safe.length > 0 ? 0 : 1,
+			label: "Deterministic sweep",
+			probabilities: new Map(),
+		};
+	}
+
+	const constraints = buildConstraints(runtime);
+	const subset = collectSubsetInferences(constraints);
+	if (subset.safe.length > 0 || subset.mines.length > 0) {
+		return {
+			safe: subset.safe,
+			mines: subset.mines,
+			target: subset.safe[0] ?? subset.mines[0] ?? null,
+			targetRisk: subset.safe.length > 0 ? 0 : 1,
+			label: "Subset inference",
+			probabilities: new Map(),
+		};
+	}
+
+	if (constraints.length === 0) {
+		const hidden = runtime.cells.findIndex((cell) => !cell.revealed && !cell.flagged);
+		return {
+			safe: [],
+			mines: [],
+			target: hidden >= 0 ? hidden : null,
+			targetRisk:
+				hidden >= 0
+					? clamp(
+							(runtime.level.mines - runtime.flagsPlaced) /
+								Math.max(1, runtime.cells.filter((cell) => !cell.revealed && !cell.flagged).length),
+							0,
+							1,
+						)
+					: null,
+			label: "Open field search",
+			probabilities: new Map(),
+		};
+	}
+
+	const exact = solveProbabilities(constraints);
+	const exactSafe: number[] = [];
+	const exactMines: number[] = [];
+
+	for (const [cell, probability] of exact.probabilities) {
+		if (probability <= 0) exactSafe.push(cell);
+		else if (probability >= 1) exactMines.push(cell);
+	}
+
+	if (exactSafe.length > 0 || exactMines.length > 0) {
+		return {
+			safe: exactSafe,
+			mines: exactMines,
+			target: exactSafe[0] ?? exactMines[0] ?? null,
+			targetRisk: exactSafe.length > 0 ? 0 : 1,
+			label: "Exact frontier search",
+			probabilities: exact.probabilities,
+		};
+	}
+
+	const heuristic = heuristicProbabilityMap(runtime, constraints, exact.probabilities);
+	const best = chooseBestTarget(
+		runtime,
+		heuristic.probabilities,
+		heuristic.frontier,
+		heuristic.outsideRisk,
+	);
+
+	return {
+		safe: [],
+		mines: [],
+		target: best.index,
+		targetRisk: best.risk,
+		label:
+			exact.solved.size > 0
+				? "Exact risk model"
+				: heuristic.frontier.size > 0
+					? "Probability-guided guess"
+					: "Density guess",
+		probabilities: heuristic.probabilities,
+	};
+}
+
+function refreshSolverPreview(runtime: RuntimeGame) {
+	const insight = analyzeRuntime(runtime);
+	runtime.solverFocus = insight.target;
+	runtime.solverLabel = insight.label;
+	runtime.solverRisk = insight.targetRisk;
+	return insight;
+}
+
+function applySolverMove(runtime: RuntimeGame, now: number, singleStep = false) {
+	if (runtime.state === "won" || runtime.state === "lost" || runtime.paused) return false;
+
+	let insight = refreshSolverPreview(runtime);
+	let changed = false;
+	const batchLimit = singleStep ? 1 : 16;
+	let applied = 0;
+
+	if (insight.mines.length > 0 || insight.safe.length > 0) {
+		for (const mine of insight.mines) {
+			if (applied >= batchLimit) break;
+			changed = toggleFlag(runtime, mine) || changed;
+			applied += 1;
+		}
+
+		for (const safe of insight.safe) {
+			if (applied >= batchLimit) break;
+			changed = revealIndex(runtime, safe, now) || changed;
+			applied += 1;
+			if (runtime.explosion !== null) break;
+		}
+
+		refreshSolverPreview(runtime);
+		return changed;
+	}
+
+	if (insight.target !== null) {
+		changed = revealIndex(runtime, insight.target, now) || changed;
+		insight = refreshSolverPreview(runtime);
+		return changed || insight.target !== null;
+	}
+
+	return changed;
+}
+
+function toUiState(runtime: RuntimeGame, settings: SettingsSnapshot): UiState {
+	const progress =
+		(runtime.safeRevealed /
+			Math.max(1, runtime.cells.length - runtime.level.mines)) *
+		100;
+	const score =
+		runtime.safeRevealed * 10 +
+		(runtime.flagsPlaced * 2) +
+		(runtime.state === "won" ? 250 : 0);
+
+	return {
+		status: runtime.state,
+		paused: runtime.paused,
+		minesLeft: runtime.level.mines - runtime.flagsPlaced,
+		elapsedSec: Math.floor(runtime.elapsedMs / 1000),
+		score,
+		progress,
+		solverLabel: runtime.solverLabel,
+		solverRiskText:
+			runtime.solverRisk === null ? "n/a" : `${Math.round(runtime.solverRisk * 100)}%`,
+		difficultyLabel: runtime.level.label,
+		autoplay: settings.autoplay,
+		pointerMode: settings.pointerMode,
+	};
+}
+
+function createSurface(
+	size: Size,
+	scene: PhaserScene,
+	textureKey: string,
+) {
+	const dpr =
+		typeof window === "undefined"
+			? 1
+			: Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+	const canvas = document.createElement("canvas");
+	canvas.width = Math.max(1, Math.floor(size.width * dpr));
+	canvas.height = Math.max(1, Math.floor(size.height * dpr));
+	const context = canvas.getContext("2d");
+	if (!context) {
+		throw new Error("Unable to create 2D canvas context");
+	}
+	context.setTransform(dpr, 0, 0, dpr, 0, 0);
+	context.imageSmoothingEnabled = true;
+
+	const existingTexture = scene.textures.exists(textureKey)
+		? scene.textures.get(textureKey)
+		: null;
+
+	if (existingTexture) {
+		scene.textures.remove(textureKey);
+	}
+
+	const texture = scene.textures.addCanvas(textureKey, canvas);
+	if (!texture) {
+		throw new Error("Unable to create Phaser canvas texture");
+	}
+	const image = scene.add.image(0, 0, textureKey).setOrigin(0, 0);
+	image.setDisplaySize(size.width, size.height);
+
+	return {
+		width: size.width,
+		height: size.height,
+		dpr,
+		canvas,
+		context,
+		texture,
+		image,
+		textureKey,
+	};
+}
+
+function destroySurface(scene: PhaserScene, surface: Surface | null) {
+	if (!surface) return;
+	surface.image.destroy();
+	if (scene.textures.exists(surface.textureKey)) {
+		scene.textures.remove(surface.textureKey);
+	}
+}
+
+function roundedPath(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	radius: number,
+) {
+	const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
+	context.beginPath();
+	context.moveTo(x + safeRadius, y);
+	context.lineTo(x + width - safeRadius, y);
+	context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+	context.lineTo(x + width, y + height - safeRadius);
+	context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+	context.lineTo(x + safeRadius, y + height);
+	context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+	context.lineTo(x, y + safeRadius);
+	context.quadraticCurveTo(x, y, x + safeRadius, y);
+	context.closePath();
+}
+
+function fillRoundedRect(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	radius: number,
+	fillStyle: string | CanvasGradient,
+) {
+	roundedPath(context, x, y, width, height, radius);
+	context.fillStyle = fillStyle;
+	context.fill();
+}
+
+function strokeRoundedRect(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	radius: number,
+	strokeStyle: string | CanvasGradient,
+	lineWidth: number,
+) {
+	roundedPath(context, x, y, width, height, radius);
+	context.strokeStyle = strokeStyle;
+	context.lineWidth = lineWidth;
+	context.stroke();
+}
+
+function drawPill(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	text: string,
+	theme: ThemePalette,
+	fontSize: number,
+) {
+	context.font = `600 ${fontSize}px ${FONT_STACK}`;
+	const width = context.measureText(text).width + fontSize * 1.8;
+	const height = fontSize * 1.95;
+	const gradient = context.createLinearGradient(x, y, x + width, y + height);
+	gradient.addColorStop(0, "rgba(255,255,255,0.12)");
+	gradient.addColorStop(1, "rgba(255,255,255,0.05)");
+	fillRoundedRect(context, x, y, width, height, height / 2, gradient);
+	strokeRoundedRect(context, x, y, width, height, height / 2, theme.panelEdge, 1);
+	context.fillStyle = theme.text;
+	context.textBaseline = "middle";
+	context.fillText(text, x + fontSize * 0.9, y + height / 2);
+	return width;
+}
+
+function resolveLayout(size: Size, runtime: RuntimeGame): LayoutMetrics {
+	const pad = clamp(Math.min(size.width, size.height) * 0.028, 16, 28);
+	const frameX = pad;
+	const frameY = pad;
+	const frameWidth = size.width - pad * 2;
+	const frameHeight = size.height - pad * 2;
+	const headerHeight = 0;
+	const boardPad = clamp(frameWidth * 0.04, 14, 24);
+	const boardAreaWidth = frameWidth - boardPad * 2;
+	const boardAreaHeight = frameHeight - boardPad * 2;
+	const cellSize = Math.max(
+		8,
+		Math.floor(
+			Math.min(
+				boardAreaWidth / runtime.level.cols,
+				boardAreaHeight / runtime.level.rows,
+			),
+		),
+	);
+	const boardWidth = cellSize * runtime.level.cols;
+	const boardHeight = cellSize * runtime.level.rows;
+	const boardX = frameX + (frameWidth - boardWidth) / 2;
+	const boardY = frameY + (frameHeight - boardHeight) / 2;
+	return {
+		frameX,
+		frameY,
+		frameWidth,
+		frameHeight,
+		headerHeight,
+		boardX,
+		boardY,
+		boardWidth,
+		boardHeight,
+		cellSize,
+		boardRadius: Math.max(14, cellSize * 0.42),
+		pad,
+	};
+}
+
+function formatStatus(status: GameStatus) {
+	if (status === "won") return "Board cleared";
+	if (status === "lost") return "Mine hit";
+	if (status === "playing") return "Sweep in progress";
+	return "Ready to open";
+}
+
+function drawFlagIcon(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	size: number,
+	theme: ThemePalette,
+) {
+	context.save();
+	context.translate(x, y);
+	context.strokeStyle = theme.text;
+	context.lineWidth = Math.max(1.5, size * 0.08);
+	context.lineCap = "round";
+	context.beginPath();
+	context.moveTo(size * 0.38, size * 0.78);
+	context.lineTo(size * 0.38, size * 0.2);
+	context.stroke();
+
+	context.fillStyle = theme.flag;
+	context.beginPath();
+	context.moveTo(size * 0.42, size * 0.22);
+	context.lineTo(size * 0.78, size * 0.34);
+	context.lineTo(size * 0.42, size * 0.5);
+	context.closePath();
+	context.fill();
+
+	context.strokeStyle = "rgba(255,255,255,0.15)";
+	context.beginPath();
+	context.moveTo(size * 0.4, size * 0.78);
+	context.lineTo(size * 0.7, size * 0.78);
+	context.stroke();
+	context.restore();
+}
+
+function drawMineIcon(
+	context: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	size: number,
+	theme: ThemePalette,
+) {
+	context.save();
+	context.translate(x + size / 2, y + size / 2);
+	context.fillStyle = theme.mineGlow;
+	context.beginPath();
+	context.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+	context.fill();
+
+	context.strokeStyle = theme.mine;
+	context.lineWidth = Math.max(1.2, size * 0.07);
+	for (let spoke = 0; spoke < 8; spoke += 1) {
+		const angle = (Math.PI * 2 * spoke) / 8;
+		context.beginPath();
+		context.moveTo(Math.cos(angle) * size * 0.18, Math.sin(angle) * size * 0.18);
+		context.lineTo(Math.cos(angle) * size * 0.42, Math.sin(angle) * size * 0.42);
+		context.stroke();
+	}
+
+	context.fillStyle = theme.mine;
+	context.beginPath();
+	context.arc(0, 0, size * 0.24, 0, Math.PI * 2);
+	context.fill();
+	context.restore();
+}
+
+function drawBoard(
+	surface: Surface,
+	runtime: RuntimeGame,
+	settings: SettingsSnapshot,
+	hoveredCell: number | null,
+	pulseTimeMs: number,
+) {
+	const theme = resolveTheme(settings.themeKey, settings.hueShift, settings.glowBoost);
+	const context = surface.context;
+	const size = { width: surface.width, height: surface.height };
+	const layout = resolveLayout(size, runtime);
+	const pulse = 0.5 + Math.sin(pulseTimeMs / 420) * 0.5;
+
+	context.clearRect(0, 0, surface.width, surface.height);
+
+	const background = context.createLinearGradient(0, 0, 0, surface.height);
+	background.addColorStop(0, theme.backgroundTop);
+	background.addColorStop(1, theme.backgroundBottom);
+	context.fillStyle = background;
+	context.fillRect(0, 0, surface.width, surface.height);
+
+	context.beginPath();
+	context.fillStyle = theme.accentGlow;
+	context.globalAlpha = 0.035;
+	context.arc(surface.width * 0.84, surface.height * 0.14, Math.max(surface.width, surface.height) * 0.2, 0, Math.PI * 2);
+	context.fill();
+	context.globalAlpha = 1;
+
+	fillRoundedRect(
+		context,
+		layout.frameX,
+		layout.frameY,
+		layout.frameWidth,
+		layout.frameHeight,
+		28,
+		theme.panel,
+	);
+	strokeRoundedRect(
+		context,
+		layout.frameX,
+		layout.frameY,
+		layout.frameWidth,
+		layout.frameHeight,
+		28,
+		theme.panelEdge,
+		1.5,
+	);
+
+	const boardGradient = context.createLinearGradient(
+		layout.boardX,
+		layout.boardY,
+		layout.boardX + layout.boardWidth,
+		layout.boardY + layout.boardHeight,
+	);
+	boardGradient.addColorStop(0, theme.board);
+	boardGradient.addColorStop(1, "rgba(0,0,0,0.12)");
+	fillRoundedRect(
+		context,
+		layout.boardX - layout.cellSize * 0.22,
+		layout.boardY - layout.cellSize * 0.22,
+		layout.boardWidth + layout.cellSize * 0.44,
+		layout.boardHeight + layout.cellSize * 0.44,
+		layout.boardRadius,
+		boardGradient,
+	);
+	strokeRoundedRect(
+		context,
+		layout.boardX - layout.cellSize * 0.22,
+		layout.boardY - layout.cellSize * 0.22,
+		layout.boardWidth + layout.cellSize * 0.44,
+		layout.boardHeight + layout.cellSize * 0.44,
+		layout.boardRadius,
+		theme.boardEdge,
+		1.5,
+	);
+
+	for (let index = 0; index < runtime.cells.length; index += 1) {
+		const row = Math.floor(index / runtime.level.cols);
+		const col = index % runtime.level.cols;
+		const x = layout.boardX + col * layout.cellSize;
+		const y = layout.boardY + row * layout.cellSize;
+		const sizePx = layout.cellSize;
+		const cell = runtime.cells[index];
+		const radius = Math.max(4, sizePx * 0.18);
+		const isFocus = runtime.solverFocus === index && runtime.state !== "lost" && runtime.state !== "won";
+		const isHover = hoveredCell === index;
+
+		if (cell.revealed) {
+			fillRoundedRect(context, x, y, sizePx, sizePx, radius, theme.revealed);
+			strokeRoundedRect(context, x, y, sizePx, sizePx, radius, theme.revealedEdge, 1);
+		} else {
+			fillRoundedRect(context, x, y, sizePx, sizePx, radius, theme.hidden);
+			strokeRoundedRect(context, x, y, sizePx, sizePx, radius, theme.hiddenStroke, 1);
+			context.strokeStyle = "rgba(255,255,255,0.05)";
+			context.lineWidth = 1;
+			context.beginPath();
+			context.moveTo(x + sizePx * 0.2, y + sizePx * 0.18);
+			context.lineTo(x + sizePx * 0.8, y + sizePx * 0.18);
+			context.stroke();
+		}
+
+		if (!cell.revealed && (isHover || isFocus)) {
+			context.save();
+			context.globalAlpha = isFocus ? 0.08 + pulse * 0.08 : 0.05;
+			fillRoundedRect(context, x, y, sizePx, sizePx, radius, theme.accentGlow);
+			context.restore();
+			strokeRoundedRect(
+				context,
+				x + 1,
+				y + 1,
+				sizePx - 2,
+				sizePx - 2,
+				radius,
+				isFocus ? theme.accent : theme.accentAlt,
+				isFocus ? 2 : 1.4,
+			);
+		}
+
+		if (cell.flagged && !cell.revealed) {
+			drawFlagIcon(context, x, y, sizePx, theme);
+		}
+
+		const showMine =
+			cell.mine &&
+			(cell.revealed || runtime.state === "lost" || runtime.state === "won");
+
+		if (showMine) {
+			if (runtime.explosion === index) {
+				fillRoundedRect(context, x, y, sizePx, sizePx, radius, "rgba(239,68,68,0.24)");
+			}
+			drawMineIcon(context, x, y, sizePx, theme);
+			continue;
+		}
+
+		if (cell.revealed && cell.adjacent > 0) {
+			context.fillStyle = theme.numberColors[cell.adjacent] ?? theme.text;
+			context.font = `800 ${Math.max(12, sizePx * 0.58)}px ${FONT_STACK}`;
+			context.textAlign = "center";
+			context.textBaseline = "middle";
+			context.fillText(`${cell.adjacent}`, x + sizePx / 2, y + sizePx / 2 + 1);
+			context.textAlign = "left";
+			context.textBaseline = "alphabetic";
+		}
+	}
+
+	surface.texture.refresh();
+}
+
+function mountMinesweeper(
+	host: HTMLDivElement,
+	PhaserLib: PhaserModule,
+	bridge: Bridge,
+) {
+	let game: PhaserGame | null = null;
+	let observer: ResizeObserver | null = null;
+	let currentSize = resolveHostSize(host);
+	const resolution =
+		typeof window === "undefined"
+			? 1
+			: Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
+	class MinesweeperScene extends PhaserLib.Scene {
+		private runtime = createRuntime(DIFFICULTIES[bridge.settingsRef.current.difficulty]);
+
+		private surface: Surface | null = null;
+
+		private hoveredCell: number | null = null;
+
+		private pulseTimeMs = 0;
+
+		private solverAccumulator = 0;
+
+		private cleanupInput: (() => void) | null = null;
+
+		private themeFingerprint = "";
+
+		private difficultyKey = bridge.settingsRef.current.difficulty;
+
+		constructor() {
+			super("minesweeper-phaser");
+		}
+
+		create() {
+				this.surface = createSurface(
+					currentSize,
+					this,
+					`minesweeper-surface-${Math.random().toString(36).slice(2)}`,
+				);
+			this.cameras.main.setBackgroundColor("#04060c");
+			this.input.mouse?.disableContextMenu();
+			this.cleanupInput = this.bindInput();
+			refreshSolverPreview(this.runtime);
+			this.syncUi();
+			this.renderBoard();
+				bridge.controlsRef.current = {
+					reset: () => {
+						this.resetBoard();
+					},
+					solverStep: () => {
+						this.runSolver(true);
+					},
+					togglePause: () => {
+						if (togglePause(this.runtime, performance.now())) {
+							this.syncUi();
+							this.renderBoard();
+						}
+					},
+				};
+			this.events.once(PhaserLib.Scenes.Events.SHUTDOWN, this.cleanup, this);
+			this.events.once(PhaserLib.Scenes.Events.DESTROY, this.cleanup, this);
+		}
+
+		update(_time: number, delta: number) {
+			let needsRender = updateElapsed(this.runtime, performance.now());
+			this.pulseTimeMs += delta;
+
+			if (this.difficultyKey !== bridge.settingsRef.current.difficulty) {
+				this.difficultyKey = bridge.settingsRef.current.difficulty;
+				this.resetBoard();
+				needsRender = true;
+			}
+
+			const fingerprint = `${bridge.settingsRef.current.themeKey}:${bridge.settingsRef.current.hueShift.toFixed(3)}:${bridge.settingsRef.current.glowBoost.toFixed(3)}`;
+			if (fingerprint !== this.themeFingerprint) {
+				this.themeFingerprint = fingerprint;
+				needsRender = true;
+			}
+
+				if (
+					bridge.settingsRef.current.autoplay &&
+					!this.runtime.paused &&
+					this.runtime.state !== "won" &&
+					this.runtime.state !== "lost"
+				) {
+				this.solverAccumulator += delta;
+				const delay = bridge.settingsRef.current.solverDelayMs;
+				while (this.solverAccumulator >= delay) {
+					this.solverAccumulator -= delay;
+					if (!this.runSolver(false)) break;
+					needsRender = true;
+					if (bridge.settingsRef.current.solverDelayMs > 100) break;
+				}
+			} else {
+				this.solverAccumulator = 0;
+			}
+
+			if (needsRender) {
+				this.syncUi();
+				this.renderBoard();
+			}
+		}
+
+		handleResize(nextSize: Size) {
+			currentSize = nextSize;
+			if (!this.surface) return;
+			destroySurface(this, this.surface);
+				this.surface = createSurface(
+					nextSize,
+					this,
+					`minesweeper-surface-${Math.random().toString(36).slice(2)}`,
+				);
+			this.scale.resize(nextSize.width, nextSize.height);
+			this.renderBoard();
+		}
+
+		private bindInput() {
+			const canvas = this.game.canvas;
+			if (!canvas) return null;
+
+			const toLogicalPoint = (event: PointerEvent) => {
+				const rect = canvas.getBoundingClientRect();
+				const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * this.scale.width;
+				const y = ((event.clientY - rect.top) / Math.max(1, rect.height)) * this.scale.height;
+				return { x, y };
+			};
+
+			const onPointerMove = (event: PointerEvent) => {
+				const point = toLogicalPoint(event);
+				const hovered = this.cellAtPoint(point.x, point.y);
+				if (hovered !== this.hoveredCell) {
+					this.hoveredCell = hovered;
+					this.renderBoard();
+				}
+			};
+
+			const onPointerLeave = () => {
+				if (this.hoveredCell === null) return;
+				this.hoveredCell = null;
+				this.renderBoard();
+			};
+
+			const onPointerUp = (event: PointerEvent) => {
+				const point = toLogicalPoint(event);
+				const cell = this.cellAtPoint(point.x, point.y);
+				if (cell === null) return;
+				const alternate =
+					event.button === 2 ||
+					(event.pointerType !== "mouse" &&
+						bridge.settingsRef.current.pointerMode === "flag");
+				if (this.handleInputAction(cell, alternate)) {
+					this.syncUi();
+					this.renderBoard();
+				}
+			};
+
+			const onContextMenu = (event: MouseEvent) => {
+				event.preventDefault();
+			};
+
+			canvas.addEventListener("pointermove", onPointerMove);
+			canvas.addEventListener("pointerleave", onPointerLeave);
+			canvas.addEventListener("pointerup", onPointerUp);
+			canvas.addEventListener("contextmenu", onContextMenu);
+
+			return () => {
+				canvas.removeEventListener("pointermove", onPointerMove);
+				canvas.removeEventListener("pointerleave", onPointerLeave);
+				canvas.removeEventListener("pointerup", onPointerUp);
+				canvas.removeEventListener("contextmenu", onContextMenu);
+			};
+		}
+
+		private cellAtPoint(x: number, y: number) {
+			const layout = resolveLayout(currentSize, this.runtime);
+			if (
+				x < layout.boardX ||
+				y < layout.boardY ||
+				x >= layout.boardX + layout.boardWidth ||
+				y >= layout.boardY + layout.boardHeight
+			) {
+				return null;
+			}
+
+			const col = Math.floor((x - layout.boardX) / layout.cellSize);
+			const row = Math.floor((y - layout.boardY) / layout.cellSize);
+			if (
+				row < 0 ||
+				row >= this.runtime.level.rows ||
+				col < 0 ||
+				col >= this.runtime.level.cols
+			) {
+				return null;
+			}
+
+			return row * this.runtime.level.cols + col;
+		}
+
+		private handleInputAction(index: number, alternate: boolean) {
+			const now = performance.now();
+			let changed = false;
+
+			if (alternate) {
+				changed = toggleFlag(this.runtime, index);
+			} else {
+				const cell = this.runtime.cells[index];
+				changed = cell.revealed
+					? chordIndex(this.runtime, index, now)
+					: revealIndex(this.runtime, index, now);
+			}
+
+			if (changed) {
+				refreshSolverPreview(this.runtime);
+			}
+
+			return changed;
+		}
+
+		private runSolver(singleStep: boolean) {
+			const changed = applySolverMove(this.runtime, performance.now(), singleStep);
+			if (changed) {
+				this.syncUi();
+				this.renderBoard();
+			}
+			return changed;
+		}
+
+		private resetBoard() {
+			resetRuntime(this.runtime, DIFFICULTIES[bridge.settingsRef.current.difficulty]);
+			this.hoveredCell = null;
+			this.solverAccumulator = 0;
+			refreshSolverPreview(this.runtime);
+			this.syncUi();
+			this.renderBoard();
+		}
+
+		private syncUi() {
+			bridge.onUiState(toUiState(this.runtime, bridge.settingsRef.current));
+		}
+
+		private renderBoard() {
+			if (!this.surface) return;
+			drawBoard(
+				this.surface,
+				this.runtime,
+				bridge.settingsRef.current,
+				this.hoveredCell,
+				this.pulseTimeMs,
+			);
+		}
+
+		private cleanup() {
+			this.cleanupInput?.();
+			this.cleanupInput = null;
+			destroySurface(this, this.surface);
+			this.surface = null;
+			bridge.controlsRef.current = null;
+		}
+	}
+
+	const gameConfig = {
+		type: PhaserLib.CANVAS,
+		parent: host,
+		backgroundColor: "#04060c",
+		width: currentSize.width,
+		height: currentSize.height,
+		render: {
+			antialias: true,
+			pixelArt: false,
+			roundPixels: false,
+		},
+		scale: {
+			mode: PhaserLib.Scale.NONE,
+			autoCenter: PhaserLib.Scale.NO_CENTER,
+			width: currentSize.width,
+			height: currentSize.height,
+		},
+		scene: [MinesweeperScene],
+	} as any;
+	gameConfig.resolution = resolution;
+
+	game = new PhaserLib.Game(gameConfig);
+
+	if (game.canvas) {
+		game.canvas.style.display = "block";
+		game.canvas.style.width = "100%";
+		game.canvas.style.height = "100%";
+		game.canvas.style.touchAction = "manipulation";
+	}
+
+	observer = new ResizeObserver(() => {
+		currentSize = resolveHostSize(host);
+		if (!game || currentSize.width <= 0 || currentSize.height <= 0) return;
+		const scene = game.scene.keys["minesweeper-phaser"] as
+			| MinesweeperScene
+			| undefined;
+		if (!scene) return;
+		scene.handleResize(currentSize);
+	});
+	observer.observe(host);
+
+	return () => {
+		observer?.disconnect();
+		observer = null;
+		bridge.controlsRef.current = null;
+		game?.destroy(true);
+		game = null;
+	};
+}
+
+export default function MineSweeper() {
+	const hostRef = useRef<HTMLDivElement | null>(null);
+	const controlsRef = useRef<SceneControls | null>(null);
+	const settingsRef = useRef<SettingsSnapshot>({
+		difficulty: "intermediate",
+		autoplay: false,
+		solverDelayMs: SPEED_OPTIONS[1].delayMs,
+		themeKey: "glacier",
+		hueShift: 0,
+		glowBoost: 0.12,
+		pointerMode: "reveal",
+	});
+	const [status, setStatus] = useState<LoadStatus>("loading");
+	const [errorMessage, setErrorMessage] = useState("");
+	const [uiState, setUiState] = useState<UiState>(EMPTY_UI_STATE);
+	const [difficulty, setDifficulty] = useState<DifficultyKey>("intermediate");
+	const [autoplay, setAutoplay] = useState(false);
+	const [speedIndex, setSpeedIndex] = useState(1);
+	const [themeKey, setThemeKey] = useState<ThemeKey>("glacier");
+	const [hueShift, setHueShift] = useState(0);
+	const [glowBoost, setGlowBoost] = useState(0.12);
+	const [pointerMode, setPointerMode] = useState<PointerMode>("reveal");
+
+	useEffect(() => {
+		settingsRef.current.difficulty = difficulty;
+	}, [difficulty]);
+
+	useEffect(() => {
+		settingsRef.current.autoplay = autoplay;
+	}, [autoplay]);
+
+	useEffect(() => {
+		settingsRef.current.solverDelayMs = SPEED_OPTIONS[speedIndex]?.delayMs ?? SPEED_OPTIONS[0].delayMs;
+	}, [speedIndex]);
+
+	useEffect(() => {
+		settingsRef.current.themeKey = themeKey;
+	}, [themeKey]);
+
+	useEffect(() => {
+		settingsRef.current.hueShift = hueShift;
+	}, [hueShift]);
+
+	useEffect(() => {
+		settingsRef.current.glowBoost = glowBoost;
+	}, [glowBoost]);
+
+	useEffect(() => {
+		settingsRef.current.pointerMode = pointerMode;
+	}, [pointerMode]);
+
+	useEffect(() => {
+		let cleanup: (() => void) | null = null;
+		let cancelled = false;
+
+		(async () => {
+			if (!hostRef.current) return;
+
+			try {
+				const phaserModule = await import("phaser");
+				if (cancelled || !hostRef.current) return;
+
+				const PhaserLib = ("default" in phaserModule
+					? phaserModule.default
+					: phaserModule) as PhaserModule;
+
+				cleanup = mountMinesweeper(hostRef.current, PhaserLib, {
+					settingsRef,
+					controlsRef,
+					onUiState: setUiState,
+				});
+				setErrorMessage("");
+				setStatus("ready");
+			} catch (error) {
+				console.error("Minesweeper failed to initialize", error);
+				if (!cancelled) {
+					setErrorMessage(
+						error instanceof Error ? error.message : "Unknown initialization error",
+					);
+					setStatus("error");
+				}
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+			cleanup?.();
+		};
+	}, []);
+
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			const target = event.target;
+			if (
+				target instanceof HTMLElement &&
+				(target.isContentEditable || target.closest("input, textarea, select"))
+			) {
+				return;
+			}
+
+			if (event.key.toLowerCase() === "p") {
+				event.preventDefault();
+				controlsRef.current?.togglePause();
+			}
+		};
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, []);
+
+	const theme = resolveTheme(themeKey, hueShift, glowBoost);
+	const speed = SPEED_OPTIONS[speedIndex] ?? SPEED_OPTIONS[0];
+	const statusLabel = uiState.paused ? "Paused" : formatStatus(uiState.status);
+
 	return (
-		<div className="w-full h-full bg-[#C0C0C0]" ref={hostRef}>
-			<NextReactP5Wrapper sketch={sketch} />
+		<div
+			className="flex h-full min-h-[720px] w-full flex-col overflow-hidden rounded-[30px] border shadow-[0_18px_60px_rgba(0,0,0,0.24)] lg:min-h-[760px]"
+			style={{
+				borderColor: theme.panelEdge,
+				backgroundImage: `linear-gradient(180deg, ${theme.backgroundTop} 0%, ${theme.backgroundBottom} 100%)`,
+				color: theme.text,
+			}}
+		>
+			<div
+				className="border-b px-4 py-4 sm:px-5"
+				style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(10,12,18,0.22)" }}
+			>
+				<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+					<div className="min-w-0">
+						<div
+							className="text-[11px] font-semibold uppercase tracking-[0.26em]"
+							style={{ color: theme.muted }}
+						>
+							Playground
+						</div>
+						<h2 className="mt-2 font-mono text-2xl font-semibold uppercase tracking-[0.1em]">
+							Minesweeper
+						</h2>
+						<div className="mt-2 text-sm leading-6" style={{ color: theme.muted }}>
+							{statusLabel} • {uiState.solverLabel} • risk {uiState.solverRiskText}
+						</div>
+					</div>
+
+					<div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[520px]">
+						{[
+							{ label: "Mines", value: `${uiState.minesLeft}` },
+							{ label: "Time", value: `${uiState.elapsedSec}s` },
+							{ label: "Points", value: `${uiState.score}` },
+							{ label: "Clear", value: `${uiState.progress.toFixed(0)}%` },
+						].map((item) => (
+							<div
+								key={item.label}
+								className="rounded-[18px] border px-4 py-3"
+								style={{
+									borderColor: theme.panelEdge,
+									backgroundColor: "rgba(8,10,16,0.16)",
+								}}
+							>
+								<div
+									className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+									style={{ color: theme.muted }}
+								>
+									{item.label}
+								</div>
+								<div className="mt-1 font-mono text-xl font-semibold">
+									{item.value}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+
+			<div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+				<div
+					className="w-full border-b px-4 py-5 sm:px-5 lg:w-[320px] lg:border-b-0 lg:border-r"
+					style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(10,12,18,0.2)" }}
+				>
+					<div className="grid gap-4">
+						<div>
+							<div
+								className="text-xs font-semibold uppercase tracking-[0.24em]"
+								style={{ color: theme.muted }}
+							>
+								Run
+							</div>
+							<div className="mt-3 flex flex-wrap gap-2">
+								<button
+									type="button"
+									onClick={() => controlsRef.current?.reset()}
+									className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{ backgroundColor: theme.text, color: theme.backgroundBottom }}
+								>
+									New board
+								</button>
+								<button
+									type="button"
+									onClick={() => controlsRef.current?.togglePause()}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.2)",
+									}}
+								>
+									{uiState.paused ? "Resume" : "Pause"}
+								</button>
+								<button
+									type="button"
+									onClick={() => setAutoplay((value) => !value)}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.2)",
+									}}
+								>
+									Autoplay {autoplay ? "On" : "Off"}
+								</button>
+								<button
+									type="button"
+									onClick={() => controlsRef.current?.solverStep()}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.2)",
+									}}
+								>
+									Solver step
+								</button>
+							</div>
+						</div>
+
+						<div>
+							<div
+								className="text-xs font-semibold uppercase tracking-[0.24em]"
+								style={{ color: theme.muted }}
+							>
+								Difficulty
+							</div>
+							<div className="mt-3 flex flex-wrap gap-2">
+								{DIFFICULTY_ORDER.map((key) => {
+									const active = difficulty === key;
+									return (
+										<button
+											key={key}
+											type="button"
+											onClick={() => setDifficulty(key)}
+											className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+											style={{
+												borderColor: active ? theme.accent : theme.panelEdge,
+												backgroundColor: active
+													? "rgba(255,255,255,0.08)"
+													: "rgba(8,10,16,0.16)",
+												color: active ? theme.text : theme.muted,
+											}}
+										>
+											{DIFFICULTIES[key].label}
+										</button>
+									);
+								})}
+							</div>
+						</div>
+
+						<div>
+							<div
+								className="text-xs font-semibold uppercase tracking-[0.24em]"
+								style={{ color: theme.muted }}
+							>
+								Color system
+							</div>
+							<div className="mt-3 flex flex-wrap gap-2">
+								{THEME_ORDER.map((key) => {
+									const swatch = resolveTheme(key, 0, 0.2);
+									const active = themeKey === key;
+									return (
+										<button
+											key={key}
+											type="button"
+											onClick={() => setThemeKey(key)}
+											className="rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+											style={{
+												borderColor: active ? theme.accent : theme.panelEdge,
+												backgroundColor: active
+													? "rgba(255,255,255,0.08)"
+													: "rgba(8,10,16,0.16)",
+												color: active ? theme.text : swatch.muted,
+											}}
+										>
+											{swatch.name}
+										</button>
+									);
+								})}
+							</div>
+							<div className="mt-3 flex flex-wrap gap-2">
+								<button
+									type="button"
+									onClick={() => setHueShift(Math.random())}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.16)",
+									}}
+								>
+									Remix tone
+								</button>
+								<button
+									type="button"
+									onClick={() =>
+										setGlowBoost((value) =>
+											value > 0.28 ? 0.04 : Number((value + 0.06).toFixed(2)),
+										)
+									}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.16)",
+									}}
+								>
+									Accent {glowBoost.toFixed(2)}
+								</button>
+							</div>
+						</div>
+
+						<div>
+							<div
+								className="text-xs font-semibold uppercase tracking-[0.24em]"
+								style={{ color: theme.muted }}
+							>
+								Input + solver
+							</div>
+							<div className="mt-3 flex flex-wrap gap-2">
+								<button
+									type="button"
+									onClick={() =>
+										setSpeedIndex((value) => (value + 1) % SPEED_OPTIONS.length)
+									}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.16)",
+									}}
+								>
+									Speed {speed.label}
+								</button>
+								<button
+									type="button"
+									onClick={() =>
+										setPointerMode((value) => (value === "reveal" ? "flag" : "reveal"))
+									}
+									className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition"
+									style={{
+										borderColor: theme.panelEdge,
+										backgroundColor: "rgba(8,10,16,0.16)",
+									}}
+								>
+									Touch {pointerMode}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className="relative min-h-[440px] flex-1 lg:min-h-0">
+					<div ref={hostRef} className="absolute inset-0" />
+
+					{status === "loading" && (
+						<div className="absolute inset-0 grid place-items-center bg-black/10 px-6 text-center font-mono text-sm" style={{ color: theme.text }}>
+							Booting Phaser scene...
+						</div>
+					)}
+
+					{status === "error" && (
+						<div className="absolute inset-0 grid place-items-center bg-black/20 px-6 text-center font-mono text-sm" style={{ color: theme.flag }}>
+							<div>
+								<div>Unable to load the Minesweeper scene.</div>
+								{errorMessage ? (
+									<div className="mt-2 text-xs uppercase tracking-[0.16em]">
+										{errorMessage}
+									</div>
+								) : null}
+							</div>
+						</div>
+					)}
+
+					{status === "ready" && uiState.paused && (
+						<div className="absolute inset-0 grid place-items-center bg-black/26 px-6 text-center">
+							<div
+								className="rounded-[26px] border px-8 py-7 shadow-[0_16px_44px_rgba(0,0,0,0.22)]"
+								style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(11,13,19,0.76)" }}
+							>
+								<div className="font-mono text-3xl font-semibold uppercase tracking-[0.14em]">
+									Paused
+								</div>
+								<div className="mt-3 text-sm leading-6" style={{ color: theme.muted }}>
+									Press <span style={{ color: theme.text }}>P</span> or use resume to continue.
+								</div>
+								<div className="mt-5 flex justify-center gap-2">
+									<button
+										type="button"
+										onClick={() => controlsRef.current?.togglePause()}
+										className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+										style={{ backgroundColor: theme.text, color: theme.backgroundBottom }}
+									>
+										Resume
+									</button>
+									<button
+										type="button"
+										onClick={() => controlsRef.current?.reset()}
+										className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+										style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(255,255,255,0.05)" }}
+									>
+										New board
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{status === "ready" && uiState.status === "won" && (
+						<div className="absolute inset-0 grid place-items-center bg-black/24 px-6 text-center">
+							<div
+								className="rounded-[26px] border px-8 py-7 shadow-[0_16px_44px_rgba(0,0,0,0.22)]"
+								style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(11,13,19,0.76)" }}
+							>
+								<div className="font-mono text-3xl font-semibold uppercase tracking-[0.14em]">
+									Field cleared
+								</div>
+								<div className="mt-3 text-sm leading-6" style={{ color: theme.muted }}>
+									{uiState.score} points in {uiState.elapsedSec}s.
+								</div>
+								<div className="mt-5 flex justify-center gap-2">
+									<button
+										type="button"
+										onClick={() => controlsRef.current?.reset()}
+										className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+										style={{ backgroundColor: theme.text, color: theme.backgroundBottom }}
+									>
+										Play again
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{status === "ready" && uiState.status === "lost" && (
+						<div className="absolute inset-0 grid place-items-center bg-black/24 px-6 text-center">
+							<div
+								className="rounded-[26px] border px-8 py-7 shadow-[0_16px_44px_rgba(0,0,0,0.22)]"
+								style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(11,13,19,0.76)" }}
+							>
+								<div className="font-mono text-3xl font-semibold uppercase tracking-[0.14em]">
+									Mine hit
+								</div>
+								<div className="mt-3 text-sm leading-6" style={{ color: theme.muted }}>
+									{uiState.score} points before the explosion.
+								</div>
+								<div className="mt-5 flex justify-center gap-2">
+									<button
+										type="button"
+										onClick={() => controlsRef.current?.reset()}
+										className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+										style={{ backgroundColor: theme.text, color: theme.backgroundBottom }}
+									>
+										Try again
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }

@@ -34,7 +34,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 		{
 			title: "Recent Posts",
 			path: "/recent",
-			description: "Jump into the archive from the newest entries first.",
+			description: "Start with the newest writing and work backward from there.",
 		},
 		{
 			title: "Recommended Posts",

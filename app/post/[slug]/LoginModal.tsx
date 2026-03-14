@@ -31,7 +31,7 @@ function LoginModal({ isOpen, onClose }: LoginModalProps) {
 					</button>
 				</div>
 				<div className="border-b border-zinc-400 my-3" />
-				<h1 className="text-6xl font-somerton ml-2 mb-3">DEVBLoG</h1>
+				<h1 className="text-6xl font-somerton ml-2 mb-3">devblog</h1>
 				<p className="text-gray mb-8">
 					Descubra uma experiência melhor ao se conectar. Participe da conversa!
 				</p>

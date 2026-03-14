@@ -62,7 +62,7 @@ export default function Comments({ comments }: CommentsProps) {
 				<div>
 					<h3 className="font-somerton text-2xl uppercase">Comments</h3>
 					<p className="text-sm text-zinc-400">
-						Recent activity across the archive
+						Recent activity across the blog
 					</p>
 				</div>
 			</div>

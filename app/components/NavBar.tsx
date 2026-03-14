@@ -162,7 +162,7 @@ export default function NavBar() {
 										Navigation
 									</p>
 									<h2 className="mt-2 text-4xl font-somerton text-wheat">
-										DEVBLoG
+										devblog
 									</h2>
 								</div>
 								<HamburgerMenu
@@ -270,7 +270,7 @@ export default function NavBar() {
 									href="/"
 									className="hidden text-3xl font-somerton text-wheat xl:block"
 								>
-									DEVBLoG
+									devblog
 								</Link>
 
 								<ul className="hidden flex-1 flex-wrap items-center gap-2 lg:flex">

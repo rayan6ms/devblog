@@ -23,7 +23,7 @@ ${post.description}
 
 ## Why this post exists
 
-This mock article is now generated from the same data source used elsewhere in the archive. That means the title, summary, author, topic labels, image, and related suggestions all come from the shared mock dataset instead of a separate placeholder screen.
+This mock article is now generated from the same data source used elsewhere in devblog. That means the title, summary, author, topic labels, image, and related suggestions all come from the shared mock dataset instead of a separate placeholder screen.
 
 ## Main angle
 

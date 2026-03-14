@@ -296,7 +296,7 @@ export default function TrendingPage() {
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">
 								Main topics with the strongest presence in the current trending
-								stack. Use them to branch into the archive without losing the
+								stack. Use them to branch into related posts without losing the
 								context of what is hot right now.
 							</p>
 

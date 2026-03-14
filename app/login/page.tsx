@@ -4,10 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
 	FaArrowRight,
-	FaDiscord,
 	FaEye,
 	FaEyeSlash,
-	FaFacebook,
 	FaGithub,
 	FaGoogle,
 	FaSpinner,
@@ -36,18 +34,6 @@ export default function LoginForm() {
 			icon: FaGithub,
 			bgColor: "bg-gray-800",
 			hoverBgColor: "hover:bg-gray-900 border border-gray-700",
-		},
-		{
-			provider: "facebook",
-			icon: FaFacebook,
-			bgColor: "bg-blue-600",
-			hoverBgColor: "hover:bg-blue-700 border border-blue-500/50",
-		},
-		{
-			provider: "discord",
-			icon: FaDiscord,
-			bgColor: "bg-indigo-500",
-			hoverBgColor: "hover:bg-indigo-600 border border-gray-500",
 		},
 	];
 
@@ -129,7 +115,7 @@ export default function LoginForm() {
 						</div>
 					</div>
 
-					<div className="mt-6 grid grid-cols-4 gap-3">
+					<div className="mt-6 grid grid-cols-2 gap-3">
 						{socialAuthOptions.map((option) => (
 							<SocialAuthButton
 								key={option.provider}
