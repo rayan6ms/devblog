@@ -36,15 +36,13 @@ function LinkPill({
 		<Link
 			href={href}
 			onClick={onClick}
-			className={`border font-semibold uppercase transition-colors ${
-				compact
+			className={`border font-semibold uppercase transition-colors ${compact
 					? "rounded-2xl px-3 py-2 text-xs tracking-[0.15em]"
 					: "rounded-full px-4 py-2 text-sm tracking-[0.18em]"
-			} ${
-				active
+				} ${active
 					? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
 					: "border-zinc-700/60 bg-greyBg/55 text-zinc-300 hover:border-zinc-500/70 hover:text-wheat"
-			}`}
+				}`}
 		>
 			{label}
 		</Link>
@@ -142,8 +140,8 @@ export default function NavBar() {
 								))}
 							</ul>
 
-							<div className="ml-auto hidden md:block">
-								<SearchBar />
+							<div className="ml-auto hidden w-full max-w-[340px] md:block">
+								<SearchBar reserveSpace />
 							</div>
 						</div>
 
@@ -182,11 +180,10 @@ export default function NavBar() {
 											key={item.href}
 											href={item.href}
 											onClick={() => setIsMenuOpen(false)}
-											className={`rounded-[24px] border px-5 py-4 text-lg font-semibold uppercase tracking-[0.16em] transition-colors ${
-												pathname === item.href
+											className={`rounded-[24px] border px-5 py-4 text-lg font-semibold uppercase tracking-[0.16em] transition-colors ${pathname === item.href
 													? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
 													: "border-zinc-700/60 bg-greyBg/75 text-zinc-300 hover:border-zinc-500/70 hover:text-wheat"
-											}`}
+												}`}
 										>
 											{item.label}
 										</Link>
@@ -252,11 +249,10 @@ export default function NavBar() {
 			) : null}
 
 			<div
-				className={`fixed inset-x-0 top-4 z-[60] transition-all duration-300 ${
-					isScrolled && !hasModalOpen
+				className={`fixed inset-x-0 top-4 z-[60] transition-all duration-300 ${isScrolled && !hasModalOpen
 						? "translate-y-0 opacity-100"
 						: "pointer-events-none -translate-y-6 opacity-0"
-				}`}
+					}`}
 			>
 				<div className="mx-auto max-w-[1440px] px-4">
 					<div className="rounded-[22px] border border-zinc-700/50 bg-lessDarkBg/92 shadow-xl shadow-zinc-950/20 backdrop-blur-xl">
@@ -290,11 +286,11 @@ export default function NavBar() {
 									))}
 								</ul>
 
-								<div className="ml-auto flex items-center gap-3">
-									<div className="hidden sm:block">
-										<SearchBar tabIndex={isScrolled ? 0 : -1} />
-									</div>
+								<div className="hidden w-full max-w-[340px] sm:block">
+									<SearchBar reserveSpace tabIndex={isScrolled ? 0 : -1} />
+								</div>
 
+								<div className="ml-auto flex items-center gap-3">
 									{isAuthed && activeUser ? (
 										<Link
 											href={`/profile/${activeUser}`}

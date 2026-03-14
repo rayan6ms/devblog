@@ -18,7 +18,13 @@ interface Post {
 	description: string;
 }
 
-export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
+export default function SearchBar({
+	tabIndex,
+	reserveSpace = false,
+}: {
+	tabIndex?: number;
+	reserveSpace?: boolean;
+}) {
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const [suggestions, setSuggestions] = useState<Post[]>([]);
@@ -144,38 +150,45 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 		<form
 			ref={containerRef}
 			onSubmit={handleSearch}
-			className={`relative ml-auto origin-right transition-[width] duration-300 ${isSearchOpen ? "w-full sm:w-[340px]" : "w-12"
+			className={`relative ml-auto h-[50px] ${reserveSpace ? "w-full max-w-[340px] min-w-[50px]" : "w-full"
 				}`}
 		>
-			<div className="flex h-12 items-center rounded-[18px] border border-zinc-700/60 bg-darkBg/72 p-1 shadow-lg shadow-zinc-950/15 transition-colors focus-within:border-purpleContrast/50 hover:border-zinc-500/70">
-				<input
-					ref={searchInput}
-					tabIndex={tabIndex}
-					type="text"
-					value={query}
-					onChange={(event) => setQuery(event.target.value)}
-					onKeyDown={handleKeyDown}
-					placeholder="Search posts"
-					className={`h-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width,margin] duration-300 placeholder:text-zinc-500 ${isSearchOpen
-							? "ml-3 w-full pl-1 pr-3 opacity-100"
-							: "pointer-events-none ml-0 w-0 px-0 opacity-0"
-						}`}
-					aria-label="Search posts"
-				/>
-				<button
-					type="button"
-					onClick={handleButtonClick}
-					tabIndex={tabIndex}
-					className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 text-zinc-100 transition-colors hover:bg-purpleContrast/25"
-					aria-label={isSearchOpen ? "Search" : "Open search"}
-				>
-					<FaMagnifyingGlass className="text-sm" />
-				</button>
+			<div
+				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${isSearchOpen ? "w-full" : "w-[50px]"
+					}`}
+			>
+				<div className="flex min-w-0 flex-1 items-center overflow-hidden">
+					<input
+						ref={searchInput}
+						tabIndex={tabIndex}
+						type="text"
+						value={query}
+						onChange={(event) => setQuery(event.target.value)}
+						onKeyDown={handleKeyDown}
+						placeholder="Search posts"
+						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${isSearchOpen
+								? "pl-4 pr-3 opacity-100"
+								: "pointer-events-none w-0 px-0 opacity-0"
+							}`}
+						aria-label="Search posts"
+					/>
+				</div>
+				<div className="flex h-full w-[48px] shrink-0 items-center justify-center">
+					<button
+						type="button"
+						onClick={handleButtonClick}
+						tabIndex={tabIndex}
+						className="flex h-[38px] w-[38px] items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 text-zinc-100 transition-colors hover:bg-purpleContrast/25"
+						aria-label={isSearchOpen ? "Search" : "Open search"}
+					>
+						<FaMagnifyingGlass className="text-sm" />
+					</button>
+				</div>
 			</div>
 
 			{suggestions.length > 0 ? (
 				<ul
-					className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[90] overflow-hidden rounded-[22px] border border-zinc-700/60 bg-lessDarkBg/98 shadow-2xl shadow-zinc-950/40"
+					className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] w-full overflow-hidden rounded-[22px] border border-zinc-700/60 bg-lessDarkBg/98 shadow-2xl shadow-zinc-950/40"
 					aria-label="Search suggestions"
 				>
 					{suggestions.map((suggestion, index) => {
@@ -191,8 +204,8 @@ export default function SearchBar({ tabIndex }: { tabIndex?: number }) {
 										goToResults(suggestion.title);
 									}}
 									className={`w-full px-4 py-3 text-left text-sm leading-6 text-zinc-200 transition-colors ${isActive
-											? "bg-purpleContrast/18"
-											: "hover:bg-greyBg/80"
+										? "bg-purpleContrast/18"
+										: "hover:bg-greyBg/80"
 										}`}
 								>
 									{suggestion.title}
