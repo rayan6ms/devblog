@@ -92,7 +92,7 @@ export default function NavBar() {
 		window.addEventListener("scroll", handleScroll, { passive: true });
 
 		return () => window.removeEventListener("scroll", handleScroll);
-	}, []);
+	}, [pathname]);
 
 	useEffect(() => {
 		document.body.classList.toggle("overflow-hidden", isMenuOpen);
@@ -287,7 +287,7 @@ export default function NavBar() {
 					}`}
 			>
 				<div className="mx-auto max-w-[1440px] px-4">
-					<div className="rounded-[22px] border border-zinc-700/50 bg-lessDarkBg/92 shadow-xl shadow-zinc-950/20 backdrop-blur-xl">
+					<div className="relative overflow-hidden rounded-[22px] border border-zinc-700/50 bg-lessDarkBg/92 shadow-xl shadow-zinc-950/20 backdrop-blur-xl">
 						<nav className="px-3 py-3 sm:px-4">
 							<div className="flex items-center gap-3">
 								<div className="xl:hidden">
@@ -389,10 +389,10 @@ export default function NavBar() {
 						</nav>
 
 						{isScrolled && inPost ? (
-							<div className="mt-1 h-1 rounded-b-[18px] bg-darkBg/80">
+							<div className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-darkBg/70">
 								<div
 									style={{ width: `${progress}%` }}
-									className="h-full rounded-r-[18px] bg-purpleContrast transition-[width] duration-150"
+									className="h-full bg-purpleContrast transition-[width] duration-150"
 								/>
 							</div>
 						) : null}

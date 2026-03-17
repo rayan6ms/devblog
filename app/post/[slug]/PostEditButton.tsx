@@ -13,17 +13,21 @@ const canEditByRole = (role?: string) => {
 export default function PostEditButton({
 	slug,
 	authorName,
+	authorSlug,
 }: {
 	slug: string;
 	authorName: string;
+	authorSlug: string;
 }) {
 	const router = useRouter();
-	const { isAuthed, profile, role } = useClientAuth();
+	const { activeUser, isAuthed, isLoading, profile, role } = useClientAuth();
+	const normalize = (value?: string | null) => value?.trim().toLowerCase() || "";
+	const matchesAuthor =
+		normalize(activeUser) === normalize(authorSlug) ||
+		normalize(profile?.username) === normalize(authorSlug) ||
+		normalize(profile?.name) === normalize(authorName);
 	const allowed =
-		isAuthed &&
-		(canEditByRole(role) ||
-			(profile?.name || "").trim().toLowerCase() ===
-				(authorName || "").trim().toLowerCase());
+		isAuthed && !isLoading && (canEditByRole(role) || matchesAuthor);
 
 	if (!allowed) return null;
 
@@ -33,9 +37,9 @@ export default function PostEditButton({
 			aria-label="Edit post"
 			title="Edit post"
 			onClick={() => router.push(`/post/${slug}/edit`)}
-			className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+			className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 		>
-			<FaPenToSquare className="text-zinc-100" />
+			<FaPenToSquare className="text-sm text-zinc-100" />
 			<span>Edit</span>
 		</button>
 	);

@@ -60,11 +60,16 @@ export default async function Page({ params }: PostPageProps) {
 			<div className="min-h-screen bg-darkBg text-gray">
 				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8">
 					<div className="grid gap-6">
-						<div className="flex justify-end">
-							<PostEditButton slug={slug} authorName={post.author} />
-						</div>
-
-						<PostHeader post={post} />
+						<PostHeader
+							post={post}
+							editAction={
+								<PostEditButton
+									slug={slug}
+									authorName={post.author}
+									authorSlug={getPostSlug(post.author)}
+								/>
+							}
+						/>
 
 						<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
 							<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">

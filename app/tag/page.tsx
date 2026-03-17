@@ -118,7 +118,7 @@ function TagPostCard({
 						<button
 							key={tag}
 							type="button"
-							className="rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-wheat"
+							className="capitalize rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-wheat"
 							onClick={() => onSelectTag(tag)}
 						>
 							{tag}

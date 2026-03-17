@@ -51,7 +51,7 @@ export default function SelectedTags({
 					tags.map((tag) => (
 						<span
 							key={tag.slug}
-							className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg px-3 py-2 text-sm text-zinc-200"
+							className="capitalize inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg px-3 py-2 text-sm text-zinc-200"
 						>
 							{tag.label}
 							<button

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Image from "next/image";
@@ -17,7 +18,13 @@ function getInitials(name: string) {
 		.join("");
 }
 
-export default function PostHeader({ post }: { post: IPost }) {
+export default function PostHeader({
+	post,
+	editAction,
+}: {
+	post: IPost;
+	editAction?: ReactNode;
+}) {
 	const formattedDate = format(parseISO(post.date), "dd MMM yyyy", {
 		locale: ptBR,
 	}).replace(/ (\w)/, (_match, letter) => ` ${letter.toUpperCase()}`);
@@ -26,22 +33,26 @@ export default function PostHeader({ post }: { post: IPost }) {
 		<section className="overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg/80 shadow-lg shadow-zinc-950/10">
 			<div className="grid gap-6 border-b border-zinc-700/50 p-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-end sm:p-8">
 				<div>
-					<div className="flex flex-wrap gap-2">
-						<Link
-							href={`/tag?selected=${getPostSlug(post.mainTag)}`}
-							className="rounded-full border border-purpleContrast/40 bg-purpleContrast/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-wheat transition-colors hover:bg-purpleContrast/25"
-						>
-							{post.mainTag}
-						</Link>
-						{post.tags.slice(0, 3).map((tag) => (
+					<div className="flex flex-wrap items-start justify-between gap-3">
+						<div className="flex flex-wrap gap-2">
 							<Link
-								key={tag}
-								href={`/tag?selected=${getPostSlug(tag)}`}
-								className="rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+								href={`/tag?selected=${getPostSlug(post.mainTag)}`}
+								className="rounded-full border border-purpleContrast/40 bg-purpleContrast/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-wheat transition-colors hover:bg-purpleContrast/25"
 							>
-								{tag}
+								{post.mainTag}
 							</Link>
-						))}
+							{post.tags.slice(0, 3).map((tag) => (
+								<Link
+									key={tag}
+									href={`/tag?selected=${getPostSlug(tag)}`}
+									className="rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+								>
+									{tag}
+								</Link>
+							))}
+						</div>
+
+						{editAction ? <div className="shrink-0">{editAction}</div> : null}
 					</div>
 
 					<h1 className="mt-5 text-4xl font-somerton uppercase leading-tight text-wheat sm:text-5xl">
