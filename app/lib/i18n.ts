@@ -1,4 +1,4 @@
-export const LOCALES = ["en", "pt-BR", "es", "de", "ru"] as const;
+export const LOCALES = ["en", "pt-BR", "es", "de", "ru", "fr", "ja"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
@@ -13,6 +13,8 @@ const LOCALE_TO_INTL: Record<Locale, string> = {
 	es: "es-ES",
 	de: "de-DE",
 	ru: "ru-RU",
+	fr: "fr-FR",
+	ja: "ja-JP",
 };
 
 export const localeOptions = [
@@ -21,6 +23,8 @@ export const localeOptions = [
 	{ shortLabel: "ES", value: "es", label: "Español" },
 	{ shortLabel: "DE", value: "de", label: "Deutsch" },
 	{ shortLabel: "RU", value: "ru", label: "Русский" },
+	{ shortLabel: "FR", value: "fr", label: "Français" },
+	{ shortLabel: "JA", value: "ja", label: "日本語" },
 ] as const;
 
 export function resolveLocale(value?: string | null): Locale | null {
@@ -48,6 +52,14 @@ export function resolveLocale(value?: string | null): Locale | null {
 
 	if (normalized === "ru" || normalized === "ru-ru") {
 		return "ru";
+	}
+
+	if (normalized === "fr" || normalized === "fr-fr") {
+		return "fr";
+	}
+
+	if (normalized === "ja" || normalized === "ja-jp") {
+		return "ja";
 	}
 
 	return null;
@@ -112,6 +124,7 @@ const dictionaries = {
 			preparingPage: "Preparing the page",
 			noItemsYet: "No items to show yet.",
 			noDescriptionYet: "No profile description yet.",
+			percentComplete: (progress: number) => `${progress}% complete`,
 		},
 		language: {
 			label: "Language",
@@ -585,6 +598,7 @@ const dictionaries = {
 			title: "Title",
 			titlePlaceholder: "A title that deserves the click",
 			slug: "Slug",
+			slugPlaceholder: "post-url-slug",
 			regenerate: "Regenerate",
 			finalUrl: (slug: string) => `Final URL: /post/${slug}`,
 			description: "Description",
@@ -697,6 +711,8 @@ const dictionaries = {
 				`${count} ${count === 1 ? "image" : "images"} inserted into the markdown.`,
 			imageDefaultAlt: "Image",
 			imageUploadError: "Unable to upload image.",
+			progressAria: (progress: number, remaining: number) =>
+				`${progress}% progress, ${remaining} minutes remaining`,
 		},
 		postValidation: {
 			imageRequired: "Image is required.",
@@ -816,6 +832,7 @@ const dictionaries = {
 			preparingPage: "Preparando a página",
 			noItemsYet: "Ainda não há itens para mostrar.",
 			noDescriptionYet: "Ainda não há descrição de perfil.",
+			percentComplete: (progress: number) => `${progress}% concluído`,
 		},
 		language: {
 			label: "Idioma",
@@ -1154,7 +1171,7 @@ const dictionaries = {
 		login: {
 			eyebrow: "Acesso de membro",
 			title: "Entrar",
-			email: "Email",
+			email: "E-mail",
 			password: "Senha",
 			hidePassword: "Ocultar senha",
 			showPassword: "Mostrar senha",
@@ -1168,7 +1185,7 @@ const dictionaries = {
 			eyebrow: "Criar acesso",
 			title: "Registrar",
 			name: "Nome",
-			email: "Email",
+			email: "E-mail",
 			password: "Senha",
 			confirmPassword: "Confirmar senha",
 			hidePassword: "Ocultar senha",
@@ -1193,7 +1210,7 @@ const dictionaries = {
 			viewedPosts: "Posts vistos",
 			comments: "Comentários",
 			handle: "Usuário",
-			email: "Email",
+			email: "E-mail",
 			role: "Função",
 			passwordLogin: "Login por senha",
 			configured: "Configurado",
@@ -1293,6 +1310,7 @@ const dictionaries = {
 			title: "Título",
 			titlePlaceholder: "Um título que mereça o clique",
 			slug: "Slug",
+			slugPlaceholder: "slug-da-url-do-post",
 			regenerate: "Gerar novamente",
 			finalUrl: (slug: string) => `URL final: /post/${slug}`,
 			description: "Descrição",
@@ -1406,6 +1424,8 @@ const dictionaries = {
 				`${count} ${count === 1 ? "imagem inserida" : "imagens inseridas"} no markdown.`,
 			imageDefaultAlt: "Imagem",
 			imageUploadError: "Não foi possível enviar a imagem.",
+			progressAria: (progress: number, remaining: number) =>
+				`${progress}% de progresso, ${remaining} minutos restantes`,
 		},
 		postValidation: {
 			imageRequired: "A imagem é obrigatória.",
@@ -1527,6 +1547,7 @@ const dictionaries = {
 			preparingPage: "Preparando la página",
 			noItemsYet: "Todavía no hay elementos para mostrar.",
 			noDescriptionYet: "Todavía no hay descripción del perfil.",
+			percentComplete: (progress: number) => `${progress}% completado`,
 		},
 		language: {
 			label: "Idioma",
@@ -1865,7 +1886,7 @@ const dictionaries = {
 		login: {
 			eyebrow: "Acceso de miembro",
 			title: "Entrar",
-			email: "Email",
+			email: "Correo electrónico",
 			password: "Contraseña",
 			hidePassword: "Ocultar contraseña",
 			showPassword: "Mostrar contraseña",
@@ -1879,7 +1900,7 @@ const dictionaries = {
 			eyebrow: "Crear acceso",
 			title: "Registrarse",
 			name: "Nombre",
-			email: "Email",
+			email: "Correo electrónico",
 			password: "Contraseña",
 			confirmPassword: "Confirmar contraseña",
 			hidePassword: "Ocultar contraseña",
@@ -1904,7 +1925,7 @@ const dictionaries = {
 			viewedPosts: "Publicaciones vistas",
 			comments: "Comentarios",
 			handle: "Usuario",
-			email: "Email",
+			email: "Correo electrónico",
 			role: "Rol",
 			passwordLogin: "Inicio con contraseña",
 			configured: "Configurado",
@@ -2003,6 +2024,7 @@ const dictionaries = {
 			title: "Título",
 			titlePlaceholder: "Un título que merezca el clic",
 			slug: "Slug",
+			slugPlaceholder: "slug-de-la-url-del-post",
 			regenerate: "Regenerar",
 			finalUrl: (slug: string) => `URL final: /post/${slug}`,
 			description: "Descripción",
@@ -2117,6 +2139,8 @@ const dictionaries = {
 				`${count} ${count === 1 ? "imagen insertada" : "imágenes insertadas"} en el markdown.`,
 			imageDefaultAlt: "Imagen",
 			imageUploadError: "No se pudo subir la imagen.",
+			progressAria: (progress: number, remaining: number) =>
+				`${progress}% de progreso, ${remaining} minutos restantes`,
 		},
 		postValidation: {
 			imageRequired: "La imagen es obligatoria.",
@@ -2241,6 +2265,7 @@ const germanMessages = {
 		preparingPage: "Seite wird vorbereitet",
 		noItemsYet: "Noch keine Elemente zum Anzeigen.",
 		noDescriptionYet: "Noch keine Profilbeschreibung.",
+		percentComplete: (progress: number) => `${progress}% abgeschlossen`,
 	},
 	language: {
 		...dictionaries.en.language,
@@ -2596,6 +2621,7 @@ const germanMessages = {
 		...dictionaries.en.login,
 		eyebrow: "Mitgliederzugang",
 		title: "Anmelden",
+		email: "E-Mail",
 		password: "Passwort",
 		hidePassword: "Passwort verbergen",
 		showPassword: "Passwort anzeigen",
@@ -2610,6 +2636,7 @@ const germanMessages = {
 		eyebrow: "Zugang erstellen",
 		title: "Registrieren",
 		name: "Name",
+		email: "E-Mail",
 		password: "Passwort",
 		confirmPassword: "Passwort bestätigen",
 		hidePassword: "Passwort verbergen",
@@ -2635,6 +2662,7 @@ const germanMessages = {
 		viewedPosts: "Angesehene Beiträge",
 		comments: "Kommentare",
 		handle: "Handle",
+		email: "E-Mail",
 		role: "Rolle",
 		passwordLogin: "Passwort-Login",
 		configured: "Eingerichtet",
@@ -2736,6 +2764,7 @@ const germanMessages = {
 		title: "Titel",
 		titlePlaceholder: "Ein Titel, der den Klick verdient",
 		slug: "Slug",
+		slugPlaceholder: "beitrags-url-slug",
 		regenerate: "Neu erzeugen",
 		finalUrl: (slug: string) => `Endgültige URL: /post/${slug}`,
 		description: "Beschreibung",
@@ -2850,6 +2879,8 @@ const germanMessages = {
 			`${count} ${count === 1 ? "Bild" : "Bilder"} in das Markdown eingefügt.`,
 		imageDefaultAlt: "Bild",
 		imageUploadError: "Bild konnte nicht hochgeladen werden.",
+		progressAria: (progress: number, remaining: number) =>
+			`${progress}% Fortschritt, ${remaining} Minuten verbleibend`,
 	},
 	postValidation: {
 		...dictionaries.en.postValidation,
@@ -2977,6 +3008,7 @@ const russianMessages = {
 		preparingPage: "Подготовка страницы",
 		noItemsYet: "Пока нечего показывать.",
 		noDescriptionYet: "Описание профиля пока отсутствует.",
+		percentComplete: (progress: number) => `${progress}% завершено`,
 	},
 	language: {
 		...dictionaries.en.language,
@@ -3336,6 +3368,7 @@ const russianMessages = {
 		...dictionaries.en.login,
 		eyebrow: "Доступ для участников",
 		title: "Вход",
+		email: "Электронная почта",
 		password: "Пароль",
 		hidePassword: "Скрыть пароль",
 		showPassword: "Показать пароль",
@@ -3350,6 +3383,7 @@ const russianMessages = {
 		eyebrow: "Создать доступ",
 		title: "Регистрация",
 		name: "Имя",
+		email: "Электронная почта",
 		password: "Пароль",
 		confirmPassword: "Подтвердите пароль",
 		hidePassword: "Скрыть пароль",
@@ -3375,6 +3409,7 @@ const russianMessages = {
 		viewedPosts: "Просмотренные посты",
 		comments: "Комментарии",
 		handle: "Хэндл",
+		email: "Электронная почта",
 		role: "Роль",
 		passwordLogin: "Вход по паролю",
 		configured: "Настроено",
@@ -3479,6 +3514,7 @@ const russianMessages = {
 		title: "Заголовок",
 		titlePlaceholder: "Заголовок, достойный клика",
 		slug: "Slug",
+		slugPlaceholder: "slug-url-posta",
 		regenerate: "Сгенерировать заново",
 		finalUrl: (slug: string) => `Итоговый URL: /post/${slug}`,
 		description: "Описание",
@@ -3594,6 +3630,8 @@ const russianMessages = {
 			`${count} ${count === 1 ? "изображение вставлено" : "изображений вставлено"} в markdown.`,
 		imageDefaultAlt: "Изображение",
 		imageUploadError: "Не удалось загрузить изображение.",
+		progressAria: (progress: number, remaining: number) =>
+			`${progress}% прогресса, осталось ${remaining} мин.`,
 	},
 	postValidation: {
 		...dictionaries.en.postValidation,
@@ -3686,6 +3724,1481 @@ const russianMessages = {
 	},
 } as typeof dictionaries.en;
 
+const frenchMessages = {
+	...dictionaries.en,
+	common: {
+		...dictionaries.en.common,
+		home: "Accueil",
+		recent: "Récent",
+		trending: "Tendance",
+		tags: "Étiquettes",
+		about: "À propos",
+		playground: "Laboratoire",
+		profile: "Profil",
+		create: "Créer",
+		suggest: "Suggérer",
+		login: "Connexion",
+		logout: "Déconnexion",
+		search: "Rechercher",
+		close: "Fermer",
+		cancel: "Annuler",
+		results: "Résultats",
+		page: "Page",
+		views: "Vues",
+		bookmarks: "Favoris",
+		comments: "Commentaires",
+		author: "Auteur",
+		edited: "Modifié",
+		published: "Publié",
+		lastSaved: "Dernière sauvegarde",
+		readTime: "Temps de lecture",
+		minutesShort: "min",
+		previous: "Précédent",
+		next: "Suivant",
+		loadingProfile: "Chargement du profil",
+		preparingPage: "Préparation de la page",
+		noItemsYet: "Aucun élément à afficher pour le moment.",
+		noDescriptionYet: "Aucune description de profil pour le moment.",
+		percentComplete: (progress: number) => `${progress}% terminé`,
+	},
+	language: {
+		...dictionaries.en.language,
+		label: "Langue",
+		ariaLabel: "Changer la langue du site",
+		menuTitle: "Choisir la langue",
+	},
+	header: {
+		...dictionaries.en.header,
+		eyebrow: "Blog perso de développement",
+		description:
+			"Tutoriels, opinions, notes frontend et projets interactifs réunis au même endroit.",
+		suggestTitle: "Suggérer un article (avec relecture)",
+		homeAria: "Accueil",
+	},
+	nav: {
+		...dictionaries.en.nav,
+		navigation: "Navigation",
+		openMenu: "Ouvrir le menu de navigation",
+		closeMenu: "Fermer le menu de navigation",
+	},
+	footer: {
+		...dictionaries.en.footer,
+		title: "Articles, expériences, travail d'interface.",
+		description:
+			"Un blog personnel de développement avec des textes, des études d'interaction et un playground pour les idées plus faciles à montrer qu'à décrire.",
+		navigate: "Naviguer",
+		socials: "Réseaux",
+		closing: "Articles, expériences UI et projets interactifs secondaires.",
+	},
+	popover: {
+		...dictionaries.en.popover,
+		aria: "Actions du post",
+		save: "Enregistrer dans les favoris",
+		share: "Partager",
+		moreLikeThis: "Plus d'articles comme celui-ci",
+		lessLikeThis: "Moins d'articles comme celui-ci",
+	},
+	home: {
+		startHere: "Commencer ici",
+		title: "Un blog de développement personnel avec de la place pour explorer",
+		description:
+			"DevBlog est l'endroit où je publie des écrits sur le développement, des opinions, des tutoriels et des expériences. La page d'accueil met en avant les lectures phares, ce qui attire l'attention en ce moment et des chemins rapides vers le reste du blog.",
+		featuredPosts: "Articles à la une",
+		trendingPicks: "Sélection tendance",
+		recommended: "Recommandés",
+		trendingSnapshot: "Aperçu tendance",
+		trendingTitle: "Ce qui attire l'attention maintenant",
+		trendingDescription:
+			"Un aperçu rapide des articles qui attirent les lecteurs en ce moment, avec une structure de section plus claire.",
+		exploreFurther: "Aller plus loin",
+		exploreTitle: "Plus de portes d'entrée dans le blog",
+		exploreDescription:
+			"Utilisez ces sections pour passer de ce qui est nouveau à ce qui attire l'attention, puis aux articles à revisiter.",
+		editorPicks: "Choix de l'éditeur",
+		noRecommended:
+			"Aucun article recommandé pour le moment. Publiez quelques entrées et cette section se remplira automatiquement à partir de la base de données active.",
+		noPosts:
+			"Aucun article n'est encore publié. La page d'accueil est maintenant connectée à Prisma, donc les sections se rempliront dès que de vrais articles existeront.",
+		scrollToTrending: "Faire défiler jusqu'aux articles tendance",
+		noTrending:
+			"Aucun article tendance pour le moment. Dès que les articles publiés commenceront à accumuler des vues, ils apparaîtront ici automatiquement.",
+		explore: "Explorer",
+		trendingPosts: "Articles tendance",
+		trendingPostsDescription:
+			"Découvrez ce qui attire le plus l'attention en ce moment.",
+		recentPosts: "Articles récents",
+		recentPostsDescription:
+			"Commencez par les textes les plus récents puis remontez à partir de là.",
+		browseByTag: "Parcourir par tag",
+		browseByTagDescription:
+			"Filtrez le catalogue d'articles en direct par sujet et par tags secondaires.",
+		noSectionPost: "Aucun article n'est encore disponible pour cette section.",
+		noRecommendedCallouts:
+			"Les encarts recommandés apparaîtront ici après la publication de davantage d'articles.",
+		viewSection: "Voir la section",
+	},
+	notFound: {
+		...dictionaries.en.notFound,
+		description: "La page que vous recherchez est introuvable.",
+		backHome: "Retour à l'accueil",
+	},
+	searchBar: {
+		...dictionaries.en.searchBar,
+		placeholder: "Rechercher des articles",
+		ariaLabel: "Rechercher des articles",
+		openSearch: "Ouvrir la recherche",
+		searchSuggestions: "Suggestions de recherche",
+		viewAllResults: "Voir tous les résultats",
+	},
+	suggestModal: {
+		...dictionaries.en.suggestModal,
+		title: "Suggérer un article",
+		close: "Fermer la fenêtre de suggestion",
+		fieldTitle: "Titre",
+		titlePlaceholder:
+			"ex. Comprendre les React Server Components dans Next 14",
+		fieldIdea: "Quelle est l'idée ?",
+		ideaPlaceholder:
+			"Ajoutez un court plan, quelques points clés ou des liens de contexte (optionnel).",
+		reviewNote:
+			"Votre suggestion sera relue avant publication. Merci d'éviter les données sensibles ou personnelles.",
+		submitted: "Envoyé !",
+		submitting: "Envoi...",
+		submit: "Envoyer la suggestion",
+		titleTooShort: (min: number) =>
+			`Le titre doit contenir au moins ${min} caractères.`,
+		maxChars: (max: number) => `Maximum ${max} caractères.`,
+	},
+	about: {
+		...dictionaries.en.about,
+		eyebrow: "À propos de devblog",
+		title: "Un endroit pour écrire, expérimenter et continuer à publier",
+		description:
+			"Ce site rassemble écriture, travail d'interface et expériences parallèles dans un même cadre. L'idée est de rester utile, personnel et vivant au lieu de devenir un simple portfolio figé.",
+		storyCards: [
+			{
+				label: "Pourquoi il existe",
+				title: "Un blog que j'utilise vraiment",
+				text: "DevBlog est mon blog personnel sur le développement logiciel. J'y publie des tutoriels, des opinions, des expériences, des idées d'interface et les aspects du développement web que j'aime le plus affiner.",
+			},
+			{
+				label: "Comment il est construit",
+				title: "Une stack pratique avec de la place pour le visuel",
+				text: "La stack s'appuie sur Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser et quelques bibliothèques utiles pour les données et les expériences. L'objectif est de garder le projet pratique, simple et agréable à construire sans perdre sa dimension visuelle.",
+			},
+			{
+				label: "Ce qui vit aussi ici",
+				title: "Outils ludiques, esquisses et idées parallèles",
+				text: "Au-delà des articles, le site mise sur l'interactivité: découverte par tags, recommandations, outils pour les utilisateurs et un playground rempli de jeux et d'esquisses. Je ne suis pas développeur de jeux, mais ce playground est un bon terrain pour les projets hobby et une autre façon de montrer ce que je peux construire.",
+			},
+		],
+	},
+	playgroundPage: {
+		...dictionaries.en.playgroundPage,
+		title: "Jeux, esquisses et détours interactifs",
+		description:
+			"Cette page sert de maison aux expérimentations hobby. Je suis surtout développeur web, pas développeur de jeux, mais ces petits projets sont une bonne façon d'explorer l'interaction, le mouvement et le rendu dans le navigateur.",
+		totalProjects: "Total des projets",
+		projects: "Projets",
+		playableTitle: "Jouables",
+		playableDescription:
+			"Des expériences interactives que vous pouvez contrôler directement, des jeux aux petits systèmes.",
+		watchOnlyTitle: "À regarder",
+		watchOnlyDescription:
+			"Des pièces visuelles qui se lisent mieux comme des études de mouvement que comme des jeux à score.",
+		mode: "Mode",
+		loading: "Chargement...",
+		closeGame: "Fermer le jeu",
+		badges: {
+			playable: "Jouable",
+			watchOnly: "À regarder",
+		},
+		games: {
+			chess: { name: "Échecs", description: "Jeu d'échecs classique" },
+			snakeGame: {
+				name: "Snake",
+				description: "Jeu du serpent classique",
+			},
+			minesweeper: {
+				name: "Démineur",
+				description: "Démineur",
+			},
+			antSimulator: {
+				name: "Simulateur de fourmis",
+				description: "Course de colonies de fourmis",
+			},
+			solarSystem: {
+				name: "Système solaire",
+				description: "Danse planétaire",
+			},
+			terminal: { name: "Terminal", description: "Terminal Linux" },
+			tankShooter: {
+				name: "Tir de chars",
+				description: "Jeu de tir avec chars",
+			},
+			fallingSand: {
+				name: "Sable en chute",
+				description: "Sable en chute",
+			},
+			movingMountains: {
+				name: "Montagnes mouvantes",
+				description: "Montagnes en mouvement",
+			},
+			survivalShooter: {
+				name: "Tir de survie",
+				description: "Shooter de survie",
+			},
+			tetris: { name: "Tetris", description: "Tetris" },
+			binaryPong: {
+				name: "Pong binaire",
+				description: "Pong binaire",
+			},
+			sineWaves: {
+				name: "Ondes sinusoïdales",
+				description: "Ondes sinusoïdales",
+			},
+			voronoiWall: {
+				name: "Mur de Voronoï",
+				description: "Mur de Voronoï",
+			},
+			"2048": { name: "2048", description: "2048" },
+			pacman: { name: "Pac-Man", description: "Pac-Man" },
+			newtonCannon: {
+				name: "Canon de Newton",
+				description: "Canon de Newton",
+			},
+			flappyBird: {
+				name: "Flappy Bird",
+				description: "Flappy Bird",
+			},
+			labyrinthExplorer: {
+				name: "Explorateur de labyrinthe",
+				description: "Exploration de labyrinthe",
+			},
+		},
+	},
+	recent: {
+		eyebrow: "Derniers articles",
+		title: "Les articles les plus récents, dans l'ordre",
+		description:
+			"Cette page est la vue la plus nette du blog par ordre de publication. Elle garde les derniers textes au premier plan, avec la pagination et les repères de sujet à portée de main.",
+		postCount: "Nombre d'articles",
+		currentPage: "Page actuelle",
+		totalViews: "Total des vues",
+		latestArrival: "Dernière arrivée",
+		readingGuide: "Guide de lecture",
+		noPublished:
+			"Aucun article publié pour le moment. Créez votre premier article et il apparaîtra ici comme la dernière arrivée.",
+		stayOriented: "Garder le cap",
+		stayOrientedDescription:
+			"Parcourez le blog page par page, gardez un oeil sur l'entrée la plus récente et sautez vers les sujets qui reviennent le plus souvent dans le dernier lot de publications.",
+		showingNow: "Affichage actuel",
+		pageControls: "Contrôles de page",
+		freshTopics: "Sujets récents",
+		topicCountsLater:
+			"Les compteurs de sujets apparaîtront ici une fois des articles publiés.",
+		recentPosts: "Articles récents",
+		recentPostsTitle: "Les entrées les plus récentes de devblog",
+		recentPostsDescription:
+			"Classées strictement par date de publication afin que la page se comporte comme un vrai flux de nouveautés, et non comme un mélange aléatoire.",
+		noPosts:
+			"Aucun article n'est encore disponible. Cette page lit maintenant directement la base de données et se remplira dès qu'il y aura des entrées publiées.",
+		noPublishedShort: "Aucun article publié pour le moment",
+		relatedTags: (count: number) =>
+			`${count} ${count === 1 ? "tag connexe" : "tags connexes"}`,
+		visibleRange: (start: number, end: number, total: number) =>
+			`Articles ${start}-${end} sur ${total}`,
+		pageOf: (page: number, total: number) => `Page ${page} sur ${total}`,
+	},
+	trending: {
+		eyebrow: "En tendance",
+		title: "Ce que les lecteurs regardent en ce moment",
+		description:
+			"L'accordéon reste la signature de la page, mais le reste l'accompagne désormais: articles classés, signaux de sujet visibles et raisons plus claires de leur position.",
+		trackedPosts: "Articles suivis",
+		topPost: "Article principal",
+		totalViews: "Total des vues",
+		noTrending:
+			"Aucun article tendance n'est encore disponible. Cette section se remplira lorsque les articles publiés commenceront à accumuler des vues.",
+		trendSignals: "Signaux de tendance",
+		topicRadar: "Radar des sujets",
+		topicRadarDescription:
+			"Les sujets principaux les plus présents dans la sélection tendance actuelle. Utilisez-les pour basculer vers des articles liés sans perdre le contexte de ce qui fonctionne en ce moment.",
+		topicSignalsLater:
+			"Les signaux de sujet apparaîtront ici une fois des articles publiés.",
+		leadingPost: "Article en tête",
+		leadingPostEmpty:
+			"Aucun leader de tendance pour le moment. Publiez des articles et accumulez des vues pour construire ce classement.",
+		ranking: "Classement",
+		topMomentum: "Top articles par dynamique",
+		topMomentumDescription:
+			"Les articles les plus lus du moment, ordonnés par vues pour que la liste reflète réellement une tendance plutôt qu'un échantillon aléatoire.",
+		moreToWatch: "À surveiller aussi",
+		risingPosts: "Articles en progression",
+		risingPostsDescription:
+			"Des articles juste sous le sommet qui méritent quand même une présentation claire et lisible plutôt qu'une liste dense.",
+		notEnoughPosts:
+			"Il n'y a pas encore assez d'articles pour une seconde sélection mise en avant.",
+		readPost: "Lire l'article",
+		focusPost: (title: string) => `Mettre en avant ${title}`,
+		viewsSuffix: (count: string) => `${count} vues`,
+	},
+	search: {
+		eyebrow: "Rechercher des articles",
+		description:
+			"Parcourez les articles correspondants sur tout devblog. Les résultats utilisent les mêmes cartes que le reste du site, avec pagination si la requête dépasse une page.",
+		matches: "Correspondances",
+		noMatch: "Aucun résultat",
+		nothingFound: (query: string) => `Aucun résultat pour "${query}".`,
+		noMatchDescription:
+			"Essayez une requête plus courte, recherchez par tag ou par auteur, ou revenez aux derniers articles pour continuer à parcourir.",
+		seeRecentPosts: "Voir les articles récents",
+		resultsFor: (query: string) => `Résultats pour "${query}"`,
+	},
+	tag: {
+		eyebrow: "Parcourir par tag",
+		title: "Découvrir les articles par sujet",
+		description:
+			"Utilisez les tags pour filtrer rapidement le blog. Choisissez un sujet principal, ajoutez quelques tags secondaires et gardez la grille de résultats sous les yeux.",
+		totalTags: "Total des tags",
+		selected: "Sélectionnés",
+		visiblePosts: "Articles visibles",
+		mainTopics: "Sujets principaux",
+		mainTopicsDescription:
+			"Les grandes catégories qui structurent chaque article.",
+		supportingTags: "Tags secondaires",
+		supportingTagsDescription:
+			"Utilisez-les pour affiner la grille sans perdre le contexte.",
+		noPostsYet: "Pas encore d'articles",
+		unlockAfterFirstPost:
+			"La navigation par tags sera disponible après le premier article publié",
+		tagBrowsingDescription:
+			"La page tags lit maintenant la base de données réelle, elle restera donc vide tant qu'il n'y aura pas d'articles publiés et de tags à afficher.",
+		noMatches: "Aucun résultat",
+		noPostsFit: "Aucun article ne correspond à cette combinaison",
+		noPostsFitDescription:
+			"Essayez de retirer l'un des tags actifs ou revenez à un sujet principal plus large. Les choix rapides du panneau de filtres sont un bon point de réinitialisation.",
+		filterPosts: "Filtrer les articles",
+		findTopic: "Trouver un sujet",
+		filterDescription: (max: number) =>
+			`Recherchez des tags, combinez-en jusqu'à ${max}, et affinez la grille sans quitter la page.`,
+		searchTags: "Rechercher des tags",
+		selectedTags: "Tags sélectionnés",
+		selectedTagsHint:
+			"Ajoutez un autre tag pour affiner davantage, ou réinitialisez pour élargir les résultats.",
+		selectedTagsEmpty:
+			"Commencez par un sujet large, puis ajoutez des tags secondaires si vous avez besoin de resserrer les résultats.",
+		clearFilters: "Effacer les filtres",
+		quickPicks: "Choix rapides",
+		quickPicksDescription:
+			"Des tags populaires qui ouvrent rapidement la page.",
+		tagGroupMainDescription:
+			"Les catégories principales qui définissent l'article.",
+		tagGroupOtherDescription:
+			"Détails secondaires et sujets liés.",
+		noTagsMatch: "Aucun tag ne correspond à la recherche actuelle.",
+		resultsSummary: (resultsCount: number, tagCount: number) =>
+			`${resultsCount} ${resultsCount === 1 ? "article" : "articles"} correspondant à ${tagCount} ${tagCount === 1 ? "tag" : "tags"}`,
+		showingAll: (resultsCount: number) =>
+			`Affichage de tous les ${resultsCount} ${resultsCount === 1 ? "article" : "articles"}`,
+		resultsDescription:
+			"Retirez un tag pour élargir les résultats ou continuez à combiner des sujets proches pour rester ciblé.",
+		resultsDescriptionEmpty:
+			"Utilisez les choix rapides, les bandes défilantes ou le panneau de filtres pour entrer dans un thème précis.",
+		resetAll: "Tout réinitialiser",
+		removeTag: (label: string) => `Retirer ${label}`,
+		noActiveFilters: "Aucun filtre actif.",
+	},
+	login: {
+		...dictionaries.en.login,
+		eyebrow: "Accès membre",
+		title: "Connexion",
+		email: "E-mail",
+		password: "Mot de passe",
+		hidePassword: "Masquer le mot de passe",
+		showPassword: "Afficher le mot de passe",
+		continue: "Continuer",
+		noAccount: "Pas encore de compte ?",
+		register: "Créer un compte",
+		invalidCredentials: "Email ou mot de passe invalide.",
+		unableToLogin: "Connexion impossible pour le moment.",
+	},
+	register: {
+		...dictionaries.en.register,
+		eyebrow: "Créer un accès",
+		title: "Inscription",
+		name: "Nom",
+		email: "E-mail",
+		password: "Mot de passe",
+		confirmPassword: "Confirmer le mot de passe",
+		hidePassword: "Masquer le mot de passe",
+		showPassword: "Afficher le mot de passe",
+		createAccount: "Créer un compte",
+		haveAccount: "Vous avez déjà un compte ?",
+		login: "Connexion",
+		unableToCreate: "Impossible de créer le compte pour le moment.",
+		accountCreatedLoginFailed:
+			"Compte créé, mais la connexion automatique a échoué.",
+		unableToCreateShort: "Impossible de créer le compte.",
+	},
+	profile: {
+		overview: "Vue d'ensemble du profil",
+		yourProfile: "Votre profil",
+		description:
+			"Les données réelles du compte viennent maintenant de la base de données, avec le rôle, les fournisseurs connectés, les champs persistés et l'activité en direct.",
+		loadingTitle: "Préparation de la page",
+		unavailable: "Profil indisponible",
+		goToLogin: "Aller à la connexion",
+		bookmarks: "Favoris",
+		viewedPosts: "Articles vus",
+		comments: "Commentaires",
+		handle: "Identifiant",
+		email: "E-mail",
+		role: "Rôle",
+		passwordLogin: "Connexion par mot de passe",
+		configured: "Configuré",
+		notSet: "Non défini",
+		connectedAccounts: "Comptes connectés",
+		credentialsOnly: "Identifiants uniquement",
+		editProfile: "Modifier le profil",
+		logout: "Déconnexion",
+		profileAlt: (name: string) => `Profil de ${name}`,
+		recentActivity: "Activité récente sur le blog",
+		noCommentsYet: "Aucun commentaire à afficher pour le moment.",
+		editedOn: (date: string) => `Modifié ${date}`,
+		itemCount: (count: number) =>
+			`${count} ${count === 1 ? "élément" : "éléments"}`,
+		loadLoginRequired: "Veuillez vous connecter pour accéder à votre profil.",
+		loadNotFound: "Ce profil est introuvable.",
+		loadError: "Impossible de charger ce profil pour le moment.",
+		saveError: "Impossible d'enregistrer le profil.",
+	},
+	profileEdit: {
+		settingsEyebrow: "Réglages du profil",
+		title: "Modifier le profil",
+		closeModal: "Fermer la fenêtre d'édition du profil",
+		preview: "Aperçu",
+		previewAlt: "Aperçu du profil",
+		providerAvailable: "Photo du fournisseur disponible",
+		providerMissing: "Aucune photo de fournisseur enregistrée",
+		providerPhoto: "Photo du fournisseur",
+		generatedAvatar: "Avatar généré",
+		uploadPhoto: "Téléverser une photo",
+		uploadHint: "JPG, PNG ou WEBP jusqu'à 2 Mo.",
+		uploadedImageLabel: "Image téléversée",
+		uploaded: (name: string) => `Téléversé : ${name}`,
+		displayName: "Nom affiché",
+		profileUrl: (handle: string) => `URL du profil : \`/profile/${handle}\``,
+		description: "Description",
+		changePassword: "Changer le mot de passe",
+		createPassword: "Créer un mot de passe",
+		changePasswordDescription:
+			"Mettez à jour votre mot de passe email sans perdre la connexion sociale.",
+		createPasswordDescription:
+			"Ajoutez un mot de passe email à ce compte social.",
+		optional: "Optionnel",
+		currentPassword: "Mot de passe actuel",
+		newPassword: "Nouveau mot de passe",
+		confirmNewPassword: "Confirmer le nouveau mot de passe",
+		save: "Enregistrer le profil",
+		saving: "Enregistrement...",
+	},
+	profileValidation: {
+		nameRequired: "Le nom est requis.",
+		maxChars: (max: number) => `Maximum ${max} caractères.`,
+		handleRequired: "L'identifiant est requis.",
+		handleLettersNumbersOnly:
+			"Utilisez uniquement des lettres et des chiffres.",
+		handleMin: (min: number) =>
+			`L'identifiant doit contenir au moins ${min} caractères.`,
+		handleMax: (max: number) =>
+			`L'identifiant doit contenir au plus ${max} caractères.`,
+		uploadRequired: "Téléversez une image JPG, PNG ou WEBP.",
+		uploadAllowed:
+			"Seules les images JPG, PNG ou WEBP sont autorisées.",
+		uploadMaxSize: "La taille maximale de l'image est de 2 Mo.",
+		invalidProviderUrl: (provider: string) =>
+			`URL ${provider} invalide.`,
+		currentPasswordIncorrect: "Le mot de passe actuel est incorrect.",
+		handleTaken: "Cet identifiant est déjà pris.",
+		unableToSave: "Impossible d'enregistrer le profil.",
+	},
+	newPost: {
+		createPageEyebrow: "Nouveau post",
+		createPageTitle: "Créer un article prêt pour la production",
+		createPageDescription:
+			"Rédigez le vrai markdown, joignez de vrais médias et enregistrez directement dans le backend pour que la page de l'article affiche exactement ce contenu.",
+		accessRequiredTitle: "Accès auteur requis",
+		accessRequiredDescription:
+			"Cette page est réservée aux comptes contributeurs. Connectez-vous avec un profil autorisé à écrire pour rédiger, relire et publier des articles.",
+		editPageEyebrow: "Modifier le post",
+		editPageTitle: "Mettre à jour l'article",
+		editPageDescription:
+			"Affinez les métadonnées, le corps ou les médias et réenregistrez directement sur le même enregistrement persistant.",
+		editAccessDeniedTitle: "Accès refusé",
+		editAccessDeniedDescription:
+			"Seul l'auteur ou les administrateurs du site peuvent modifier ce post.",
+		role: "Rôle",
+		author: "Auteur",
+		defaultAuthor: "Auteur",
+		mode: "Mode",
+		modeCreating: "Création",
+		modeEditing: "Édition",
+		editorEyebrowCreate: "Nouveau post",
+		editorEyebrowEdit: "Modifier le post",
+		editorTitleCreate: "Construire le post avant sa mise en ligne",
+		editorTitleEdit: "Affiner la version publiée",
+		editorDescription:
+			"L'éditeur enregistre le vrai markdown, les vrais chemins média et les vraies métadonnées dans Prisma. Ce que vous prévisualisez ici est ce qui sera rendu sur la page du post.",
+		storySetupEyebrow: "Mise en place",
+		storySetupTitle: "Verrouiller d'abord les métadonnées",
+		title: "Titre",
+		titlePlaceholder: "Un titre qui mérite le clic",
+		slug: "Slug",
+		slugPlaceholder: "slug-url-du-post",
+		regenerate: "Régénérer",
+		finalUrl: (slug: string) => `URL finale : /post/${slug}`,
+		description: "Description",
+		generateFromContent: "Générer depuis le contenu",
+		descriptionPlaceholder:
+			"Que doit comprendre le lecteur avant d'ouvrir l'article ?",
+		visualsEyebrow: "Visuel",
+		visualsTitle: "Définir la miniature du post",
+		thumbnail: "Miniature",
+		thumbnailDescription:
+			"Elle pilote l'image principale sur la page du post et la miniature des cartes ailleurs sur le site.",
+		upload: "Téléverser",
+		uploading: "Téléversement...",
+		thumbnailPreviewAlt: "Miniature du post",
+		thumbnailEmpty:
+			"Téléversez l'image qui doit représenter ce post.",
+		thumbnailUploaded: "Miniature téléversée.",
+		thumbnailUploadError: "Impossible de téléverser la miniature.",
+		thumbnailAlt: "Texte alternatif de la miniature",
+		thumbnailAltPlaceholder:
+			"Décrivez la miniature pour l'accessibilité et les aperçus",
+		bodyEyebrow: "Corps",
+		bodyTitle: "Écrire et relire au même endroit",
+		bodyDescription:
+			"Écrivez en markdown, téléversez des images intégrées et vérifiez le rendu final avant d'enregistrer.",
+		readTime: "Temps de lecture",
+		taxonomyEyebrow: "Taxonomie",
+		taxonomyTitle: "Positionner l'article",
+		mainTag: "Tag principal",
+		tags: "Étiquettes",
+		readinessEyebrow: "Prêt à publier",
+		readinessTitle: "Vérifier l'essentiel",
+		checklistTitleSet: "Titre défini",
+		checklistThumbnailUploaded: "Miniature téléversée",
+		checklistMainTagChosen: "Tag principal choisi",
+		checklistSupportingTagsAdded: "Tags secondaires ajoutés",
+		checklistDescriptionReady: "Description prête",
+		checklistBodyHasSubstance: "Le corps a de la substance",
+		ready: "Prêt",
+		missing: "Manquant",
+		wordCount: (count: number) => `${count} mots`,
+		tagCount: (count: number) =>
+			`${count} tag${count === 1 ? "" : "s"} attaché${count === 1 ? "" : "s"}`,
+		currentTarget: (status: string) => `Cible actuelle : ${status}`,
+		publishEyebrow: "Publication",
+		publishTitle: "Choisir la prochaine étape",
+		statusDraftLabel: "Enregistrer le brouillon",
+		statusDraftDescription:
+			"Gardez le post privé pendant que vous façonnez le contenu.",
+		statusPendingReviewLabel: "Envoyer en relecture",
+		statusPendingReviewDescription:
+			"Marquez le brouillon comme prêt pour une relecture éditoriale.",
+		statusPublishedLabel: "Publier maintenant",
+		statusPublishedDescription:
+			"Rendre le post visible immédiatement sur le site.",
+		saving: "Enregistrement...",
+		clearForm: "Vider le formulaire",
+		submitError:
+			"Impossible d'enregistrer le post pour le moment. Veuillez réessayer.",
+		submitSuccessPublished: "Post publié.",
+		submitSuccessReview: "Post envoyé en relecture.",
+		submitSuccessDraft: "Brouillon enregistré.",
+		mainTagPlaceholder:
+			"Choisissez un sujet existant ou définissez un nouveau tag principal",
+		mainTagHelp:
+			"Les tags principaux regroupent le post dans les listes et recommandations.",
+		tagsPlaceholder: "Ajoutez des tags puis appuyez sur Entrée",
+		tagsLimitReached: "Limite de tags atteinte",
+		tagSlotsLeft: (count: number) =>
+			`Il reste ${count} emplacements de tags. Utilisez des libellés précis et faciles à rechercher.`,
+		editorControlsEyebrow: "Contrôles de l'éditeur",
+		editorControlsTitle: "Façonner le markdown avec intention",
+		editorControlsDescription:
+			"Les images intégrées restent là où vous les insérez et se rendent centrées à la fois dans l'aperçu et dans le post final.",
+		modeWrite: "Écrire",
+		modeWriteDescription: "Se concentrer sur le markdown.",
+		modePreview: "Aperçu",
+		modePreviewDescription: "Lire le rendu final.",
+		modeSplit: "Divisé",
+		modeSplitDescription: "Écrire et prévisualiser ensemble.",
+		toolbarInline: "En ligne",
+		toolbarBlocks: "Blocs",
+		toolbarBold: "Gras",
+		toolbarItalic: "Italique",
+		toolbarCode: "Code",
+		toolbarLink: "Lien",
+		toolbarCodeBlock: "Bloc de code",
+		toolbarHeading: "Titre",
+		toolbarQuote: "Citation",
+		toolbarList: "Liste",
+		toolbarNumbered: "Numérotée",
+		toolbarDivider: "Séparateur",
+		insertImage: "Insérer une image",
+		dualPanel: "Double panneau",
+		modeBadge: (mode: string) => `Mode ${mode}`,
+		markdownEyebrow: "Markdown",
+		markdownDescription:
+			"Écrivez en pur markdown et gardez le contrôle de l'endroit où chaque bloc et image se placent.",
+		editableSource: "Source modifiable",
+		markdownPlaceholder:
+			"Rédigez l'article en Markdown.\n\nExemple:\n## Titre de section\n\nUn paragraphe avec **mise en valeur** et un [lien](https://example.com).\n",
+		previewEyebrow: "Aperçu",
+		previewDescription:
+			"L'aperçu utilise le même moteur de rendu que la page du post publié.",
+		finalRendering: "Rendu final",
+		emptyPreview:
+			"Commencez à écrire pour voir le rendu final du post.",
+		editorWordCount: (count: number) => `${count} mots`,
+		editorReadTime: (count: number) => `${count} min de lecture`,
+		editorCharacters: (used: number, max: number) =>
+			`${used}/${max} caractères`,
+		imagesInserted: (count: number) =>
+			`${count} ${count === 1 ? "image insérée" : "images insérées"} dans le markdown.`,
+		imageDefaultAlt: "Image",
+		imageUploadError: "Impossible de téléverser l'image.",
+		progressAria: (progress: number, remaining: number) =>
+			`${progress}% de progression, ${remaining} minutes restantes`,
+	},
+	postValidation: {
+		imageRequired: "L'image est requise.",
+		imageInvalid:
+			"L'image doit être un chemin de fichier téléversé ou une URL valide.",
+		tagEmpty: "Les tags ne peuvent pas être vides.",
+		tagMaxLength: (max: number) =>
+			`Les tags doivent contenir au plus ${max} caractères.`,
+		titleMin: "Le titre doit contenir au moins 3 caractères.",
+		titleMax: (max: number) =>
+			`Le titre doit contenir au plus ${max} caractères.`,
+		slugMax: (max: number) =>
+			`Le slug doit contenir au plus ${max} caractères.`,
+		slugInvalid:
+			"Le slug ne peut contenir que des lettres minuscules, des chiffres et des tirets.",
+		contentMin: "Le contenu doit contenir au moins 30 caractères.",
+		contentMax: (max: number) =>
+			`Le contenu doit contenir au plus ${max} caractères.`,
+		thumbnailAltMax: (max: number) =>
+			`Le texte alternatif de la miniature doit contenir au plus ${max} caractères.`,
+		mainTagRequired: "Un tag principal est requis.",
+		tagsRequired: "Au moins un tag est requis.",
+		tagsMaxItems: (max: number) =>
+			`Les tags doivent contenir au plus ${max} éléments.`,
+		tagsUnique: "Les tags doivent être uniques.",
+		descriptionMax: (max: number) =>
+			`La description doit contenir au plus ${max} caractères.`,
+	},
+	post: {
+		relatedReading: "Lecture liée",
+		moreFromThisLane: "Plus dans cette veine",
+		statusPublished: "Publié",
+		statusPendingReview: "En relecture",
+		statusDraft: "Brouillon",
+		writtenBy: "Écrit par",
+		editPost: "Modifier le post",
+		edit: "Modifier",
+		authorProfile: "Profil de l'auteur",
+		moreIn: (tag: string) => `Plus dans ${tag}`,
+		authorDescription: (
+			name: string,
+			mainTag: string,
+			relatedTopics: string[],
+		) =>
+			relatedTopics.length > 0
+				? `${name} écrit autour de ${mainTag}, avec des thèmes récurrents comme ${relatedTopics.join(" et ")}.`
+				: `${name} écrit autour de ${mainTag}.`,
+		commentSection: "Section des commentaires",
+		commentPlaceholder: "Ajouter un commentaire",
+		commentAs: (name: string) => `Commenter en tant que ${name}`,
+		loginRequiredToComment: "Connexion requise pour commenter",
+		comment: "Commenter",
+		postedOn: (date: string) => `Publié ${date}`,
+		reportComment: "Signaler le commentaire",
+		loginModalTitle: "Vous devez être connecté pour faire cela.",
+		loginModalDescription:
+			"Connectez-vous pour profiter d'une meilleure expérience et rejoindre la conversation.",
+		reportCommentTitle: "Signaler le commentaire",
+		reportingCommentBy: (author: string) =>
+			`Signalement du commentaire de ${author} :`,
+		reason: "Motif",
+		chooseReason: "Choisir un motif...",
+		details: "Détails",
+		detailsOptional: "Détails (optionnel)",
+		detailsMin: (min: number) => `Détails (min. ${min} caractères)`,
+		describeIssue: "Décrivez le problème...",
+		addContext: "Ajouter du contexte (optionnel)...",
+		submitReport: "Envoyer le signalement",
+		submitting: "Envoi...",
+		reportValidation: "Veuillez remplir tous les champs obligatoires.",
+	},
+	authValidation: {
+		emailRequired: "L'email est requis.",
+		emailInvalid: "Saisissez une adresse email valide.",
+		passwordTooLong: (max: number) =>
+			`Le mot de passe doit contenir au plus ${max} caractères.`,
+		passwordRequired: "Le mot de passe est requis.",
+		passwordTooShort: "Le mot de passe doit contenir au moins 8 caractères.",
+		nameTooShort: "Le nom doit contenir au moins 2 caractères.",
+		nameTooLong: "Le nom doit contenir au plus 60 caractères.",
+		confirmPasswordRequired: "Veuillez confirmer votre mot de passe.",
+		passwordsDoNotMatch: "Les mots de passe ne correspondent pas.",
+		currentPasswordRequired: "Le mot de passe actuel est requis.",
+		newPasswordRequired: "Le nouveau mot de passe est requis.",
+		confirmNewPasswordRequired:
+			"Veuillez confirmer votre nouveau mot de passe.",
+	},
+} as typeof dictionaries.en;
+
+const japaneseMessages = {
+	...dictionaries.en,
+	common: {
+		...dictionaries.en.common,
+		home: "ホーム",
+		recent: "最新",
+		trending: "注目",
+		tags: "タグ",
+		about: "概要",
+		playground: "プレイグラウンド",
+		profile: "プロフィール",
+		create: "作成",
+		suggest: "提案",
+		login: "ログイン",
+		logout: "ログアウト",
+		search: "検索",
+		close: "閉じる",
+		cancel: "キャンセル",
+		results: "結果",
+		page: "ページ",
+		views: "閲覧数",
+		bookmarks: "ブックマーク",
+		comments: "コメント",
+		author: "著者",
+		edited: "更新済み",
+		published: "公開済み",
+		lastSaved: "最終保存",
+		readTime: "読了時間",
+		minutesShort: "分",
+		previous: "前へ",
+		next: "次へ",
+		loadingProfile: "プロフィールを読み込み中",
+		preparingPage: "ページを準備中",
+		noItemsYet: "まだ表示できる項目はありません。",
+		noDescriptionYet: "プロフィール説明はまだありません。",
+		percentComplete: (progress: number) => `${progress}% 完了`,
+	},
+	language: {
+		...dictionaries.en.language,
+		label: "言語",
+		ariaLabel: "サイトの言語を変更",
+		menuTitle: "言語を選択",
+	},
+	header: {
+		...dictionaries.en.header,
+		eyebrow: "個人開発ブログ",
+		description:
+			"チュートリアル、意見、フロントエンドのメモ、インタラクティブなサイドプロジェクトをひとつの場所にまとめています。",
+		suggestTitle: "記事を提案する（確認が必要）",
+		homeAria: "ホーム",
+	},
+	nav: {
+		...dictionaries.en.nav,
+		navigation: "ナビゲーション",
+		openMenu: "ナビゲーションメニューを開く",
+		closeMenu: "ナビゲーションメニューを閉じる",
+	},
+	footer: {
+		...dictionaries.en.footer,
+		title: "記事、実験、インターフェース制作。",
+		description:
+			"文章、インタラクションの試作、そして説明するより見せたほうが早いアイデアのためのプレイグラウンドを備えた個人開発ブログです。",
+		navigate: "移動",
+		socials: "SNS",
+		closing: "記事、UI実験、インタラクティブなサイドワーク。",
+	},
+	popover: {
+		...dictionaries.en.popover,
+		aria: "投稿アクション",
+		save: "ブックマークに保存",
+		share: "共有",
+		moreLikeThis: "似た投稿をもっと見る",
+		lessLikeThis: "似た投稿を減らす",
+	},
+	home: {
+		startHere: "ここから始める",
+		title: "探索の余地がある個人開発ブログ",
+		description:
+			"DevBlog は、開発に関する文章、意見、チュートリアル、実験を公開する場所です。トップページでは注目の読み物、今読まれているもの、そしてブログ全体へ広がる導線をまとめています。",
+		featuredPosts: "注目の記事",
+		trendingPicks: "トレンド選出",
+		recommended: "おすすめ",
+		trendingSnapshot: "トレンド概要",
+		trendingTitle: "今注目を集めているもの",
+		trendingDescription:
+			"今まさに読者を引きつけている投稿をすばやく確認できる一覧です。以前と同じ場所に置きつつ、セクション構成をより明確にしています。",
+		exploreFurther: "さらに探索",
+		exploreTitle: "ブログに入る別の道",
+		exploreDescription:
+			"新着、注目、そして再読する価値のある投稿の間をこのセクションで行き来できます。",
+		editorPicks: "編集部のおすすめ",
+		noRecommended:
+			"おすすめの記事はまだありません。いくつか投稿を公開すると、このセクションはライブデータベースから自動で埋まります。",
+		noPosts:
+			"公開済みの投稿はまだありません。トップページはすでに Prisma に接続されているため、実際の投稿が存在すれば各セクションに表示されます。",
+		scrollToTrending: "注目記事までスクロール",
+		noTrending:
+			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、ここに自動で表示されます。",
+		explore: "探索",
+		trendingPosts: "注目記事",
+		trendingPostsDescription:
+			"今いちばん注目を集めている投稿を確認できます。",
+		recentPosts: "新着記事",
+		recentPostsDescription:
+			"いちばん新しい文章から読み始めて、そこからさかのぼれます。",
+		browseByTag: "タグで探す",
+		browseByTagDescription:
+			"公開中の投稿カタログをトピックと補助タグで絞り込みます。",
+		noSectionPost: "このセクションに表示できる投稿はまだありません。",
+		noRecommendedCallouts:
+			"おすすめの注目枠は、さらに投稿が公開されるとここに表示されます。",
+		viewSection: "セクションを見る",
+	},
+	notFound: {
+		...dictionaries.en.notFound,
+		description: "お探しのページは見つかりませんでした。",
+		backHome: "ホームに戻る",
+	},
+	searchBar: {
+		...dictionaries.en.searchBar,
+		placeholder: "投稿を検索",
+		ariaLabel: "投稿を検索",
+		openSearch: "検索を開く",
+		searchSuggestions: "検索候補",
+		viewAllResults: "すべての結果を見る",
+	},
+	suggestModal: {
+		...dictionaries.en.suggestModal,
+		title: "記事を提案する",
+		close: "提案モーダルを閉じる",
+		fieldTitle: "タイトル",
+		titlePlaceholder:
+			"例: Next 14 の React Server Components を理解する",
+		fieldIdea: "どんな案ですか？",
+		ideaPlaceholder:
+			"短い構成案、箇条書き、参考リンクなどを追加してください（任意）。",
+		reviewNote:
+			"提案内容は公開前に確認されます。機密情報や個人情報は含めないでください。",
+		submitted: "送信しました",
+		submitting: "送信中...",
+		submit: "提案を送信",
+		titleTooShort: (min: number) =>
+			`タイトルは ${min} 文字以上である必要があります。`,
+		maxChars: (max: number) => `最大 ${max} 文字です。`,
+	},
+	about: {
+		...dictionaries.en.about,
+		eyebrow: "devblog について",
+		title: "書き、試し、出し続けるための場所",
+		description:
+			"このサイトは、文章、インターフェース制作、サイド実験が同じフレームに収まる場所です。静的なポートフォリオ保管庫ではなく、実用的で個人的で、動き続けるものとして保つことを目指しています。",
+		storyCards: [
+			{
+				label: "なぜ存在するのか",
+				title: "実際に使い続けているブログ",
+				text: "DevBlog は、私個人のソフトウェア開発ブログです。ここでチュートリアル、意見、実験、インターフェースのアイデア、そして特に磨くのが好きな Web 開発の領域について公開しています。",
+			},
+			{
+				label: "どう作られているか",
+				title: "視覚表現の余地を残した実用的なスタック",
+				text: "このスタックは Next.js、React、Tailwind CSS、Prisma、NextAuth、Phaser、そしてデータ整理や実験向けのいくつかの補助ライブラリを中心に組み立てています。目標は、視覚面を損なわずに、実用的でシンプルかつ作っていて気持ちのいいプロジェクトに保つことです。",
+			},
+			{
+				label: "ここにある他のもの",
+				title: "遊び心のあるツール、スケッチ、脇道のアイデア",
+				text: "投稿以外にも、このサイトはインタラクティブ性を重視しています。タグベースの探索、レコメンド、ユーザーツール、そしてゲームやスケッチを集めたプレイグラウンドがあります。私はゲーム開発者ではありませんが、このプレイグラウンドは趣味のプロジェクトを置くのにちょうどよく、自分が作れるものを別の形で見せる場にもなっています。",
+			},
+		],
+	},
+	playgroundPage: {
+		...dictionaries.en.playgroundPage,
+		title: "ゲーム、スケッチ、遊べる寄り道",
+		description:
+			"このページは趣味の実験のための場所です。私は主に Web 開発者でゲーム開発者ではありませんが、こうした小さな作品はインタラクション、動き、ブラウザ描画の考え方を試すのに役立ちます。",
+		totalProjects: "総プロジェクト数",
+		projects: "プロジェクト",
+		playableTitle: "操作可能",
+		playableDescription:
+			"ゲームや小さなシステムなど、直接操作できる体験型の実験です。",
+		watchOnlyTitle: "鑑賞用",
+		watchOnlyDescription:
+			"スコアを競うゲームというより、動きのスタディとして見るほうが合うビジュアル作品です。",
+		mode: "モード",
+		loading: "読み込み中...",
+		closeGame: "ゲームを閉じる",
+		badges: {
+			playable: "操作可能",
+			watchOnly: "鑑賞用",
+		},
+		games: {
+			chess: { name: "チェス", description: "クラシックなチェスゲーム" },
+			snakeGame: {
+				name: "スネークゲーム",
+				description: "クラシックなスネークゲーム",
+			},
+			minesweeper: {
+				name: "マインスイーパー",
+				description: "マインスイーパー",
+			},
+			antSimulator: {
+				name: "アリシミュレーター",
+				description: "アリのコロニー競争",
+			},
+			solarSystem: {
+				name: "太陽系",
+				description: "惑星のダンス",
+			},
+			terminal: { name: "ターミナル", description: "Linux ターミナル" },
+			tankShooter: {
+				name: "タンクシューター",
+				description: "戦車シューティング",
+			},
+			fallingSand: {
+				name: "落ちる砂",
+				description: "落ちる砂",
+			},
+			movingMountains: {
+				name: "動く山々",
+				description: "動く山々",
+			},
+			survivalShooter: {
+				name: "サバイバルシューター",
+				description: "サバイバルシューティング",
+			},
+			tetris: { name: "テトリス", description: "テトリス" },
+			binaryPong: {
+				name: "バイナリーポン",
+				description: "バイナリーポン",
+			},
+			sineWaves: {
+				name: "正弦波",
+				description: "正弦波",
+			},
+			voronoiWall: {
+				name: "ボロノイウォール",
+				description: "ボロノイの壁",
+			},
+			"2048": { name: "2048", description: "2048" },
+			pacman: { name: "パックマン", description: "パックマン" },
+			newtonCannon: {
+				name: "ニュートンキャノン",
+				description: "ニュートン砲",
+			},
+			flappyBird: {
+				name: "フラッピーバード",
+				description: "フラッピーバード",
+			},
+			labyrinthExplorer: {
+				name: "迷宮探検",
+				description: "迷宮探検ゲーム",
+			},
+		},
+	},
+	recent: {
+		eyebrow: "最新の投稿",
+		title: "新しい投稿を順番に",
+		description:
+			"このページは公開順でブログを見る最も分かりやすい一覧です。新しい文章を前面に置きつつ、ページ移動やトピックの手がかりも近くに保っています。",
+		postCount: "投稿数",
+		currentPage: "現在のページ",
+		totalViews: "総閲覧数",
+		latestArrival: "最新追加",
+		noPublished:
+			"公開済みの投稿はまだありません。最初の投稿を作成すると、ここに最新の追加として表示されます。",
+		readingGuide: "読書ガイド",
+		stayOriented: "見失わない",
+		stayOrientedDescription:
+			"ページごとにブログをたどり、最新エントリーを把握しながら、直近の投稿群でよく現れるトピックへ飛べます。",
+		showingNow: "現在の表示範囲",
+		pageControls: "ページ操作",
+		freshTopics: "新しいトピック",
+		topicCountsLater:
+			"投稿が公開されると、トピックの件数がここに表示されます。",
+		recentPosts: "新着投稿",
+		recentPostsTitle: "devblog の最新エントリー",
+		recentPostsDescription:
+			"公開日順に厳密に並べているため、ランダムな寄せ集めではなく本当の新着フィードとして機能します。",
+		noPosts:
+			"まだ利用可能な投稿はありません。このページは現在データベースを直接参照しており、公開済みエントリーができ次第表示されます。",
+		noPublishedShort: "公開済みの投稿はまだありません",
+		relatedTags: (count: number) =>
+			`${count} 件の関連${count === 1 ? "タグ" : "タグ"}`,
+		visibleRange: (start: number, end: number, total: number) =>
+			`投稿 ${start}-${end} / ${total}`,
+		pageOf: (page: number, total: number) => `${page} / ${total} ページ`,
+	},
+	trending: {
+		eyebrow: "現在の注目",
+		title: "読者が注目しているもの",
+		description:
+			"このページの特徴であるアコーディオンはそのままに、ランキング、トピックの気配、なぜ上位なのかがより分かりやすくなりました。",
+		trackedPosts: "追跡中の投稿",
+		topPost: "トップ投稿",
+		totalViews: "総閲覧数",
+		noTrending:
+			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、このセクションに表示されます。",
+		trendSignals: "トレンド指標",
+		topicRadar: "トピックレーダー",
+		topicRadarDescription:
+			"現在のトレンド群で特に存在感の強い主要トピックです。今熱いものの文脈を保ったまま、関連投稿へ分岐できます。",
+		topicSignalsLater:
+			"投稿が公開されると、トピック指標がここに表示されます。",
+		leadingPost: "先頭の投稿",
+		leadingPostEmpty:
+			"まだトレンドの先頭記事はありません。投稿を公開して閲覧数を積み上げると、このランキングが形成されます。",
+		ranking: "ランキング",
+		topMomentum: "勢いのある投稿",
+		topMomentumDescription:
+			"現在もっとも読まれている投稿を閲覧数順に並べ、トレンドが実際に反映されるようにしています。",
+		moreToWatch: "あわせて注目",
+		risingPosts: "上昇中の投稿",
+		risingPostsDescription:
+			"最上位のすぐ下にいる投稿も、密なリストではなく読みやすい形で把握できます。",
+		notEnoughPosts:
+			"二次的な注目リストを作るには、まだ投稿数が足りません。",
+		readPost: "投稿を読む",
+		focusPost: (title: string) => `${title} に注目する`,
+		viewsSuffix: (count: string) => `${count} 閲覧`,
+	},
+	search: {
+		eyebrow: "投稿を検索",
+		description:
+			"devblog 全体から一致する投稿を探します。結果は他ページと同じカードで表示され、必要ならページ分割されます。",
+		matches: "一致",
+		noMatch: "一致なし",
+		nothingFound: (query: string) => `「${query}」に一致するものは見つかりませんでした。`,
+		noMatchDescription:
+			"より短いクエリを試すか、タグや著者で検索するか、最新投稿に戻って閲覧を続けてください。",
+		seeRecentPosts: "新着投稿を見る",
+		resultsFor: (query: string) => `「${query}」の検索結果`,
+	},
+	tag: {
+		eyebrow: "タグで探す",
+		title: "トピックごとに投稿を見つける",
+		description:
+			"タグを使ってブログを素早く絞り込みます。大きなトピックを選び、補助タグを重ね、結果グリッドを見ながら調整できます。",
+		totalTags: "タグ総数",
+		selected: "選択済み",
+		visiblePosts: "表示中の投稿",
+		mainTopics: "主要トピック",
+		mainTopicsDescription:
+			"各投稿の軸になる大きなカテゴリです。",
+		supportingTags: "補助タグ",
+		supportingTagsDescription:
+			"文脈を失わずに結果グリッドを絞り込むために使います。",
+		noPostsYet: "まだ投稿がありません",
+		unlockAfterFirstPost:
+			"タグ閲覧は最初の公開投稿の後に利用可能になります",
+		tagBrowsingDescription:
+			"タグページは現在実際のデータベースを読んでいるため、公開済み投稿と表示可能なタグができるまでは空のままです。",
+		noMatches: "一致なし",
+		noPostsFit: "この組み合わせに合う投稿はありません",
+		noPostsFitDescription:
+			"有効なタグをひとつ外すか、もっと広い主要トピックに切り替えてみてください。フィルターパネルのクイック選択がよいリセット地点です。",
+		filterPosts: "投稿を絞り込む",
+		findTopic: "トピックを探す",
+		filterDescription: (max: number) =>
+			`タグを検索し、最大 ${max} 個まで組み合わせて、ページを離れずに投稿グリッドを絞り込めます。`,
+		searchTags: "タグを検索",
+		selectedTags: "選択中のタグ",
+		selectedTagsHint:
+			"さらに絞り込むには別のタグを追加するか、結果を広げるにはリセットしてください。",
+		selectedTagsEmpty:
+			"まずは広いトピックから始め、必要なら補助タグを重ねて結果を絞り込んでください。",
+		clearFilters: "フィルターをクリア",
+		quickPicks: "クイック選択",
+		quickPicksDescription:
+			"ページをすばやく開く人気タグです。",
+		tagGroupMainDescription:
+			"投稿を定義する主要カテゴリです。",
+		tagGroupOtherDescription:
+			"副次的な詳細や関連テーマです。",
+		noTagsMatch: "現在の検索に一致するタグはありません。",
+		resultsSummary: (resultsCount: number, tagCount: number) =>
+			`${tagCount} 個のタグに一致する ${resultsCount} 件の${resultsCount === 1 ? "投稿" : "投稿"}`,
+		showingAll: (resultsCount: number) =>
+			`全 ${resultsCount} 件の${resultsCount === 1 ? "投稿" : "投稿"}を表示中`,
+		resultsDescription:
+			"タグを外して結果を広げるか、関連トピックをさらに組み合わせて焦点を保ってください。",
+		resultsDescriptionEmpty:
+			"クイック選択、流れる行、またはフィルターパネルを使って特定のテーマに入っていけます。",
+		resetAll: "すべてリセット",
+		removeTag: (label: string) => `${label} を外す`,
+		noActiveFilters: "有効なタグフィルターはありません。",
+	},
+	login: {
+		...dictionaries.en.login,
+		eyebrow: "メンバーアクセス",
+		title: "ログイン",
+		email: "メールアドレス",
+		password: "パスワード",
+		hidePassword: "パスワードを隠す",
+		showPassword: "パスワードを表示",
+		continue: "続ける",
+		noAccount: "アカウントをお持ちでないですか？",
+		register: "登録",
+		invalidCredentials: "メールアドレスまたはパスワードが無効です。",
+		unableToLogin: "現在ログインできません。",
+	},
+	register: {
+		...dictionaries.en.register,
+		eyebrow: "アクセスを作成",
+		title: "登録",
+		name: "名前",
+		email: "メールアドレス",
+		password: "パスワード",
+		confirmPassword: "パスワードを確認",
+		hidePassword: "パスワードを隠す",
+		showPassword: "パスワードを表示",
+		createAccount: "アカウントを作成",
+		haveAccount: "すでにアカウントをお持ちですか？",
+		login: "ログイン",
+		unableToCreate: "現在アカウントを作成できません。",
+		accountCreatedLoginFailed:
+			"アカウントは作成されましたが、自動ログインに失敗しました。",
+		unableToCreateShort: "アカウントを作成できませんでした。",
+	},
+	profile: {
+		overview: "プロフィール概要",
+		yourProfile: "あなたのプロフィール",
+		description:
+			"実際のアカウントデータは現在データベースから取得され、役割、連携プロバイダー、保存済みプロフィール項目、ライブな活動数を含みます。",
+		loadingTitle: "ページを準備中",
+		unavailable: "プロフィールを利用できません",
+		goToLogin: "ログインへ移動",
+		bookmarks: "ブックマーク",
+		viewedPosts: "閲覧した投稿",
+		comments: "コメント",
+		handle: "ハンドル",
+		email: "メール",
+		role: "役割",
+		passwordLogin: "パスワードログイン",
+		configured: "設定済み",
+		notSet: "未設定",
+		connectedAccounts: "連携アカウント",
+		credentialsOnly: "認証情報のみ",
+		editProfile: "プロフィールを編集",
+		logout: "ログアウト",
+		profileAlt: (name: string) => `${name} のプロフィール`,
+		recentActivity: "ブログ全体での最近の活動",
+		loadLoginRequired: "プロフィールにアクセスするにはログインしてください。",
+		loadNotFound: "このプロフィールは見つかりませんでした。",
+		loadError: "現在このプロフィールを読み込めません。",
+		saveError: "プロフィールを保存できません。",
+		noCommentsYet: "表示できるコメントはまだありません。",
+		editedOn: (date: string) => `${date} に編集`,
+		itemCount: (count: number) => `${count} 件`,
+	},
+	profileEdit: {
+		settingsEyebrow: "プロフィール設定",
+		title: "プロフィールを編集",
+		closeModal: "プロフィール編集モーダルを閉じる",
+		preview: "プレビュー",
+		previewAlt: "プロフィールプレビュー",
+		providerAvailable: "プロバイダー写真あり",
+		providerMissing: "プロバイダー写真は未登録です",
+		providerPhoto: "プロバイダー写真",
+		generatedAvatar: "生成アバター",
+		uploadPhoto: "写真をアップロード",
+		uploadHint: "JPG、PNG、WEBP を 2MB まで。",
+		uploadedImageLabel: "アップロード済み画像",
+		uploaded: (name: string) => `アップロード済み: ${name}`,
+		displayName: "表示名",
+		profileUrl: (handle: string) => `プロフィール URL: \`/profile/${handle}\``,
+		description: "説明",
+		changePassword: "パスワードを変更",
+		createPassword: "パスワードを作成",
+		changePasswordDescription:
+			"ソーシャルログインを失わずに、メールログイン用のパスワードを更新します。",
+		createPasswordDescription:
+			"このソーシャルアカウントにメールログイン用パスワードを追加します。",
+		optional: "任意",
+		currentPassword: "現在のパスワード",
+		newPassword: "新しいパスワード",
+		confirmNewPassword: "新しいパスワードを確認",
+		save: "プロフィールを保存",
+		saving: "保存中...",
+	},
+	profileValidation: {
+		nameRequired: "名前は必須です。",
+		maxChars: (max: number) => `最大 ${max} 文字です。`,
+		handleRequired: "ハンドルは必須です。",
+		handleLettersNumbersOnly:
+			"英字と数字のみを使用してください。",
+		handleMin: (min: number) =>
+			`ハンドルは ${min} 文字以上である必要があります。`,
+		handleMax: (max: number) =>
+			`ハンドルは ${max} 文字以下である必要があります。`,
+		uploadRequired: "JPG、PNG、WEBP 画像をアップロードしてください。",
+		uploadAllowed:
+			"使用できる画像形式は JPG、PNG、WEBP のみです。",
+		uploadMaxSize: "画像の最大サイズは 2MB です。",
+		invalidProviderUrl: (provider: string) =>
+			`${provider} の URL が無効です。`,
+		currentPasswordIncorrect:
+			"現在のパスワードが正しくありません。",
+		handleTaken: "そのハンドルはすでに使用されています。",
+		unableToSave: "プロフィールを保存できません。",
+	},
+	newPost: {
+		createPageEyebrow: "新規投稿",
+		createPageTitle: "本番向けの記事を作成",
+		createPageDescription:
+			"実際の Markdown を書き、実際のメディアを添付し、バックエンドへ直接保存して、投稿ページに同じ内容を表示します。",
+		accessRequiredTitle: "著者権限が必要です",
+		accessRequiredDescription:
+			"このページは寄稿者アカウント専用です。下書き、レビュー、公開ができる書き込み権限付きプロフィールでログインしてください。",
+		editPageEyebrow: "投稿を編集",
+		editPageTitle: "記事を更新",
+		editPageDescription:
+			"メタデータ、本文、メディアを調整し、同じ永続的な投稿レコードへ保存し直します。",
+		editAccessDeniedTitle: "アクセス拒否",
+		editAccessDeniedDescription:
+			"この投稿を編集できるのは著者またはサイト管理者のみです。",
+		role: "役割",
+		author: "著者",
+		defaultAuthor: "著者",
+		mode: "モード",
+		modeCreating: "作成中",
+		modeEditing: "編集中",
+		editorEyebrowCreate: "新規投稿",
+		editorEyebrowEdit: "投稿を編集",
+		editorTitleCreate: "公開前に投稿を組み立てる",
+		editorTitleEdit: "公開済みの形を整える",
+		editorDescription:
+			"エディターは実際の markdown、実際のメディアパス、実際の投稿メタデータを Prisma に保存します。ここで見るプレビューがそのまま投稿ページで表示されます。",
+		storySetupEyebrow: "記事設定",
+		storySetupTitle: "まずメタデータを固める",
+		title: "タイトル",
+		titlePlaceholder: "クリックしたくなるタイトル",
+		slug: "スラッグ",
+		slugPlaceholder: "post-url-slug",
+		regenerate: "再生成",
+		finalUrl: (slug: string) => `最終 URL: /post/${slug}`,
+		description: "説明",
+		generateFromContent: "本文から生成",
+		descriptionPlaceholder:
+			"記事を開く前に読者に理解してほしいことは何ですか？",
+		visualsEyebrow: "ビジュアル",
+		visualsTitle: "投稿サムネイルを設定",
+		thumbnail: "サムネイル",
+		thumbnailDescription:
+			"投稿ページのヒーロー画像と、他の一覧に出るカードサムネイルに使われます。",
+		upload: "アップロード",
+		uploading: "アップロード中...",
+		thumbnailPreviewAlt: "投稿サムネイル",
+		thumbnailEmpty:
+			"この投稿を表す画像をアップロードしてください。",
+		thumbnailUploaded: "サムネイルをアップロードしました。",
+		thumbnailUploadError: "サムネイルをアップロードできません。",
+		thumbnailAlt: "サムネイル代替テキスト",
+		thumbnailAltPlaceholder:
+			"アクセシビリティとプレビューのためにサムネイルを説明してください",
+		bodyEyebrow: "本文",
+		bodyTitle: "ひとつの場所で書いて確認する",
+		bodyDescription:
+			"Markdown で書き、インライン画像をアップロードし、保存前に最終レンダリングを確認できます。",
+		readTime: "読了時間",
+		taxonomyEyebrow: "分類",
+		taxonomyTitle: "記事を配置する",
+		mainTag: "メインタグ",
+		tags: "タグ",
+		readinessEyebrow: "準備状況",
+		readinessTitle: "基本項目を確認する",
+		checklistTitleSet: "タイトル設定済み",
+		checklistThumbnailUploaded: "サムネイルアップロード済み",
+		checklistMainTagChosen: "メインタグ選択済み",
+		checklistSupportingTagsAdded: "補助タグ追加済み",
+		checklistDescriptionReady: "説明文準備完了",
+		checklistBodyHasSubstance: "本文に十分な内容がある",
+		ready: "準備完了",
+		missing: "不足",
+		wordCount: (count: number) => `${count} 語`,
+		tagCount: (count: number) => `${count} 個のタグを設定`,
+		currentTarget: (status: string) => `現在の対象: ${status}`,
+		publishEyebrow: "公開",
+		publishTitle: "次のステップを選ぶ",
+		statusDraftLabel: "下書きを保存",
+		statusDraftDescription:
+			"内容を整えている間は投稿を非公開に保ちます。",
+		statusPendingReviewLabel: "レビューに送る",
+		statusPendingReviewDescription:
+			"下書きを編集レビュー準備完了としてマークします。",
+		statusPublishedLabel: "今すぐ公開",
+		statusPublishedDescription:
+			"投稿をすぐにサイト上で見える状態にします。",
+		saving: "保存中...",
+		clearForm: "フォームをクリア",
+		submitError:
+			"現在投稿を保存できません。もう一度お試しください。",
+		submitSuccessPublished: "投稿を公開しました。",
+		submitSuccessReview: "投稿をレビューに送りました。",
+		submitSuccessDraft: "下書きを保存しました。",
+		mainTagPlaceholder:
+			"既存のトピックを選ぶか、新しいメインタグを定義してください",
+		mainTagHelp:
+			"メインタグは一覧やおすすめ全体で投稿をまとめます。",
+		tagsPlaceholder: "タグを追加して Enter を押してください",
+		tagsLimitReached: "タグ上限に達しました",
+		tagSlotsLeft: (count: number) =>
+			`残り ${count} 枠です。検索しやすく焦点の合ったラベルを使ってください。`,
+		editorControlsEyebrow: "エディター操作",
+		editorControlsTitle: "意図をもって markdown を整える",
+		editorControlsDescription:
+			"インライン画像は挿入した場所に残り、プレビューでも最終投稿でも中央にレンダリングされます。",
+		modeWrite: "執筆",
+		modeWriteDescription: "Markdown に集中する。",
+		modePreview: "プレビュー",
+		modePreviewDescription: "最終レンダリングを読む。",
+		modeSplit: "分割",
+		modeSplitDescription: "書きながら同時に確認する。",
+		toolbarInline: "インライン",
+		toolbarBlocks: "ブロック",
+		toolbarBold: "太字",
+		toolbarItalic: "斜体",
+		toolbarCode: "コード",
+		toolbarLink: "リンク",
+		toolbarCodeBlock: "コードブロック",
+		toolbarHeading: "見出し",
+		toolbarQuote: "引用",
+		toolbarList: "リスト",
+		toolbarNumbered: "番号付き",
+		toolbarDivider: "区切り線",
+		insertImage: "画像を挿入",
+		dualPanel: "2画面",
+		modeBadge: (mode: string) => `${mode} モード`,
+		markdownEyebrow: "Markdown",
+		markdownDescription:
+			"プレーンな Markdown で書き、各ブロックや画像の配置を自分で管理できます。",
+		editableSource: "編集可能なソース",
+		markdownPlaceholder:
+			"Markdown で記事を書いてください。\n\n例:\n## セクション見出し\n\n**強調** と [リンク](https://example.com) を含む段落。\n",
+		previewEyebrow: "プレビュー",
+		previewDescription:
+			"プレビューは公開済み投稿ページと同じレンダラーを使用します。",
+		finalRendering: "最終レンダリング",
+		emptyPreview:
+			"書き始めると、最終的な投稿レンダリングがここに表示されます。",
+		editorWordCount: (count: number) => `${count} 語`,
+		editorReadTime: (count: number) => `${count} 分で読了`,
+		editorCharacters: (used: number, max: number) =>
+			`${used}/${max} 文字`,
+		imagesInserted: (count: number) =>
+			`${count} ${count === 1 ? "枚の画像を" : "枚の画像を"} markdown に挿入しました。`,
+		imageDefaultAlt: "画像",
+		imageUploadError: "画像をアップロードできません。",
+		progressAria: (progress: number, remaining: number) =>
+			`${progress}% 進行中、残り ${remaining} 分`,
+	},
+	postValidation: {
+		imageRequired: "画像は必須です。",
+		imageInvalid:
+			"画像はアップロード済みファイルパスまたは有効な URL である必要があります。",
+		tagEmpty: "タグを空にはできません。",
+		tagMaxLength: (max: number) =>
+			`タグは ${max} 文字以下である必要があります。`,
+		titleMin: "タイトルは 3 文字以上必要です。",
+		titleMax: (max: number) =>
+			`タイトルは ${max} 文字以下である必要があります。`,
+		slugMax: (max: number) =>
+			`Slug は ${max} 文字以下である必要があります。`,
+		slugInvalid:
+			"Slug に使えるのは小文字、数字、ハイフンのみです。",
+		contentMin: "本文は 30 文字以上必要です。",
+		contentMax: (max: number) =>
+			`本文は ${max} 文字以下である必要があります。`,
+		thumbnailAltMax: (max: number) =>
+			`サムネイル代替テキストは ${max} 文字以下である必要があります。`,
+		mainTagRequired: "メインタグは必須です。",
+		tagsRequired: "少なくとも 1 つのタグが必要です。",
+		tagsMaxItems: (max: number) =>
+			`タグは最大 ${max} 個までです。`,
+		tagsUnique: "タグは重複できません。",
+		descriptionMax: (max: number) =>
+			`説明は ${max} 文字以下である必要があります。`,
+	},
+	post: {
+		relatedReading: "関連する読み物",
+		moreFromThisLane: "この系統の続きを見る",
+		statusPublished: "公開済み",
+		statusPendingReview: "レビュー待ち",
+		statusDraft: "下書き",
+		writtenBy: "著者",
+		editPost: "投稿を編集",
+		edit: "編集",
+		authorProfile: "著者プロフィール",
+		moreIn: (tag: string) => `${tag} の続きを読む`,
+		authorDescription: (
+			name: string,
+			mainTag: string,
+			relatedTopics: string[],
+		) =>
+			relatedTopics.length > 0
+				? `${name} は ${mainTag} を中心に書き、${relatedTopics.join(" と ")} にも繰り返し触れています。`
+				: `${name} は ${mainTag} を中心に書いています。`,
+		commentSection: "コメント欄",
+		commentPlaceholder: "コメントを追加",
+		commentAs: (name: string) => `${name} としてコメント`,
+		loginRequiredToComment: "コメントするにはログインが必要です",
+		comment: "コメントする",
+		postedOn: (date: string) => `${date} に投稿`,
+		reportComment: "コメントを報告",
+		loginModalTitle: "この操作にはログインが必要です。",
+		loginModalDescription:
+			"ログインするとより良い体験になります。会話に参加しましょう。",
+		reportCommentTitle: "コメントを報告",
+		reportingCommentBy: (author: string) =>
+			`${author} のコメントを報告中:`,
+		reason: "理由",
+		chooseReason: "理由を選択...",
+		details: "詳細",
+		detailsOptional: "詳細（任意）",
+		detailsMin: (min: number) => `詳細（最低 ${min} 文字）`,
+		describeIssue: "問題を説明してください...",
+		addContext: "補足を追加（任意）...",
+		submitReport: "報告を送信",
+		submitting: "送信中...",
+		reportValidation: "必須項目をすべて入力してください。",
+	},
+	authValidation: {
+		emailRequired: "メールアドレスは必須です。",
+		emailInvalid: "有効なメールアドレスを入力してください。",
+		passwordTooLong: (max: number) =>
+			`パスワードは ${max} 文字以下である必要があります。`,
+		passwordRequired: "パスワードは必須です。",
+		passwordTooShort: "パスワードは8文字以上必要です。",
+		nameTooShort: "名前は2文字以上必要です。",
+		nameTooLong: "名前は 60 文字以下である必要があります。",
+		confirmPasswordRequired: "パスワード確認を入力してください。",
+		passwordsDoNotMatch: "パスワードが一致しません。",
+		currentPasswordRequired: "現在のパスワードは必須です。",
+		newPasswordRequired: "新しいパスワードは必須です。",
+		confirmNewPasswordRequired:
+			"新しいパスワードの確認を入力してください。",
+	},
+} as typeof dictionaries.en;
+
 export function getMessages(locale: Locale): MessageDictionary {
 	if (locale === "de") {
 		return germanMessages as MessageDictionary;
@@ -3693,6 +5206,14 @@ export function getMessages(locale: Locale): MessageDictionary {
 
 	if (locale === "ru") {
 		return russianMessages as MessageDictionary;
+	}
+
+	if (locale === "fr") {
+		return frenchMessages as MessageDictionary;
+	}
+
+	if (locale === "ja") {
+		return japaneseMessages as MessageDictionary;
 	}
 
 	return dictionaries[locale];

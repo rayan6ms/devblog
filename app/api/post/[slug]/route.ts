@@ -45,7 +45,7 @@ export async function GET(
 					post.author.name ||
 					post.author.username ||
 					post.author.slug ||
-					"Unknown author",
+					post.author.id,
 				slug: post.author.slug || post.author.id,
 			},
 		});

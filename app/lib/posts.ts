@@ -134,7 +134,7 @@ function resolveAuthorName(author: PostWithAuthor["author"]) {
 		author.name?.trim() ||
 		author.username?.trim() ||
 		author.slug?.trim() ||
-		"Unknown author"
+		author.id
 	);
 }
 

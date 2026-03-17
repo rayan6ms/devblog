@@ -13,7 +13,6 @@ export const FALLBACK_POST_IMAGE =
   <rect x="148" y="474" width="492" height="18" rx="9" fill="#a1a1aa" fill-opacity="0.48"/>
   <rect x="148" y="510" width="428" height="18" rx="9" fill="#71717a" fill-opacity="0.58"/>
   <text x="148" y="238" fill="#f4f4f5" font-family="Arial, sans-serif" font-size="58" font-weight="700">DevBlog</text>
-  <text x="148" y="300" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="28">Post thumbnail pending</text>
 </svg>
 `);
 

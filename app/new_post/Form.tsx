@@ -435,10 +435,12 @@ export default function Form({
 									})}
 									maxLength={MAX_POST_SLUG}
 									className="mt-2 h-12 w-full rounded-2xl border border-zinc-700/50 bg-darkBg/55 px-4 text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
-									placeholder="post-url-slug"
+									placeholder={messages.newPost.slugPlaceholder}
 								/>
 								<p className="mt-2 text-sm text-zinc-500">
-									{messages.newPost.finalUrl(slug || "post-url-slug")}
+									{messages.newPost.finalUrl(
+										slug || messages.newPost.slugPlaceholder,
+									)}
 								</p>
 								<p className="mt-1 text-sm text-red-400">{errors.slug?.message}</p>
 							</label>

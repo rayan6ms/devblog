@@ -1,3 +1,5 @@
+import { useI18n } from "@/components/LocaleProvider";
+
 interface CircleProgressProps {
 	size: number;
 	progress: number;
@@ -9,6 +11,7 @@ const CircleProgress: React.FC<CircleProgressProps> = ({
 	progress,
 	remaining,
 }) => {
+	const { messages } = useI18n();
 	const strokeWidth = 4;
 	const radius = (size - strokeWidth) / 2;
 	const circumference = 2 * Math.PI * radius;
@@ -20,7 +23,10 @@ const CircleProgress: React.FC<CircleProgressProps> = ({
 			height={size}
 			className="mt-1 mr-0.5"
 			role="img"
-			aria-label={`${Math.round(progress * 100)}% progress, ${remaining} minutes remaining`}
+			aria-label={messages.newPost.progressAria(
+				Math.round(progress * 100),
+				remaining,
+			)}
 		>
 			<circle
 				r={radius}

@@ -1,4 +1,5 @@
 import ProgressRing from "./ProgressRing";
+import { useI18n } from "./LocaleProvider";
 
 interface CircleProgressProps {
 	radius: number;
@@ -11,6 +12,7 @@ export default function CircleProgress({
 	stroke,
 	progress,
 }: CircleProgressProps) {
+	const { messages } = useI18n();
 	const normalizedRadius = radius - stroke;
 	const circumference = normalizedRadius * 2 * Math.PI;
 	const strokeDashoffset = circumference - (progress / 100) * circumference;
@@ -24,7 +26,7 @@ export default function CircleProgress({
 			height={radius * 2}
 			width={radius * 2}
 			role="img"
-			aria-label={`${progress}% complete`}
+			aria-label={messages.common.percentComplete(progress)}
 		>
 			<ProgressRing
 				radius={radius}
