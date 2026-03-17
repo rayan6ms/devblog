@@ -1,36 +1,39 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type React from "react";
 import type { IconType } from "react-icons";
 import { FaBookmark, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import type { ProfilePost } from "@/profile/types";
 
 type SliderProps = {
 	title: string;
+	iconKey: "bookmarks" | "viewedPosts";
 	items?: ProfilePost[] | null;
 };
 
-const icons: Record<string, IconType> = {
-	"viewed posts": FaEye,
+const icons: Record<SliderProps["iconKey"], IconType> = {
+	viewedPosts: FaEye,
 	bookmarks: FaBookmark,
 };
 
 function SliderItem({ item }: { item: ProfilePost }) {
-	const router = useRouter();
+	const { push } = useLocaleNavigation();
+	const { messages } = useI18n();
 
 	const onTagClick = (event: React.MouseEvent<HTMLButtonElement>) => {
 		event.preventDefault();
 		event.stopPropagation();
-		router.push(
+		push(
 			`/tag?selected=${slugify(item.mainTag, { lower: true, strict: true })}`,
 		);
 	};
 
 	return (
-		<Link
+		<LocalizedLink
 			href={`/post/${item.slug}`}
 			className="group w-[280px] shrink-0 rounded-[24px] border border-zinc-700/50 bg-greyBg/65 p-3 shadow-lg shadow-zinc-950/10 transition-transform hover:-translate-y-1"
 		>
@@ -52,7 +55,7 @@ function SliderItem({ item }: { item: ProfilePost }) {
 
 			<div className="pt-4">
 				<p className="line-clamp-3 text-sm leading-7 text-zinc-300">
-					{item.description || "No post summary saved for this entry yet."}
+					{item.description || messages.common.noItemsYet}
 				</p>
 				<div className="mt-3 flex flex-wrap gap-2">
 					{item.tags.slice(0, 3).map((tag) => (
@@ -65,13 +68,14 @@ function SliderItem({ item }: { item: ProfilePost }) {
 					))}
 				</div>
 			</div>
-		</Link>
+		</LocalizedLink>
 	);
 }
 
-export default function Slider({ title, items = [] }: SliderProps) {
+export default function Slider({ title, iconKey, items = [] }: SliderProps) {
 	const list: ProfilePost[] = Array.isArray(items) ? items : [];
-	const Icon = icons[title.toLowerCase()];
+	const { messages } = useI18n();
+	const Icon = icons[iconKey];
 
 	return (
 		<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 sm:p-6">
@@ -82,7 +86,7 @@ export default function Slider({ title, items = [] }: SliderProps) {
 				<div>
 					<h3 className="font-somerton text-2xl uppercase">{title}</h3>
 					<p className="text-sm text-zinc-400">
-						{list.length} {list.length === 1 ? "item" : "items"}
+						{messages.profile.itemCount(list.length)}
 					</p>
 				</div>
 			</div>
@@ -93,7 +97,7 @@ export default function Slider({ title, items = [] }: SliderProps) {
 				))}
 				{list.length === 0 ? (
 					<div className="rounded-2xl border border-dashed border-zinc-700/60 bg-greyBg/45 px-4 py-6 text-sm text-zinc-400">
-						No items to show yet.
+						{messages.common.noItemsYet}
 					</div>
 				) : null}
 			</div>

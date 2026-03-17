@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAuthorHref,
 	getPostHref,
@@ -24,6 +26,7 @@ function formatViews(views: number) {
 }
 
 export default function Accordion({ posts }: AccordionProps) {
+	const { locale, messages } = useI18n();
 	const [activePanel, setActivePanel] = useState(0);
 	const [windowWidth, setWindowWidth] = useState(0);
 	const [isPaused, setIsPaused] = useState(false);
@@ -118,7 +121,7 @@ export default function Accordion({ posts }: AccordionProps) {
 							<button
 								type="button"
 								className="absolute inset-0 z-20"
-								aria-label={`Focus ${post.title}`}
+								aria-label={messages.trending.focusPost(post.title)}
 								onClick={() => setActivePanel(index)}
 							/>
 						)}
@@ -135,7 +138,7 @@ export default function Accordion({ posts }: AccordionProps) {
 										{index + 1}
 									</span>
 								</span>
-								<Link
+								<LocalizedLink
 									href={`/tag?selected=${normalizeValue(post.mainTag)}`}
 									className={`inline-flex w-fit overflow-hidden rounded-full border bg-black/35 text-xs uppercase tracking-[0.16em] text-zinc-100 transition-all duration-500 hover:border-zinc-300 hover:text-wheat ${isActive
 										? "max-w-[12rem] border-zinc-500/80 px-4 py-2 opacity-100"
@@ -143,7 +146,7 @@ export default function Accordion({ posts }: AccordionProps) {
 										}`}
 								>
 									<span className="whitespace-nowrap">{post.mainTag}</span>
-								</Link>
+								</LocalizedLink>
 							</div>
 
 							<div
@@ -153,7 +156,7 @@ export default function Accordion({ posts }: AccordionProps) {
 									}`}
 							>
 								<p className="text-xs uppercase tracking-[0.18em] text-zinc-300/90">
-									Views
+									{messages.common.views}
 								</p>
 								<p className="mt-1 flex items-center justify-end gap-1 text-sm font-medium text-wheat drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]">
 									<FaEye className="text-xs" />
@@ -175,28 +178,28 @@ export default function Accordion({ posts }: AccordionProps) {
 								</p>
 
 								<div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-zinc-200/85">
-									<Link
+									<LocalizedLink
 										href={getAuthorHref(post)}
 										className="transition-colors hover:text-wheat"
 									>
 										{post.author}
-									</Link>
+									</LocalizedLink>
 									<span className="h-1 w-1 rounded-full bg-zinc-500/80" />
 									<time dateTime={post.date}>
-										{new Intl.DateTimeFormat("en-US", {
+										{new Intl.DateTimeFormat(getIntlLocale(locale), {
 											month: "short",
 											day: "numeric",
 										}).format(new Date(post.date))}
 									</time>
 								</div>
 
-								<Link
+								<LocalizedLink
 									href={postHref}
 									className="mt-6 inline-flex items-center gap-2 rounded-full border border-zinc-400/80 bg-darkBg/80 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:border-zinc-200 hover:bg-black/40"
 								>
-									Read post
+									{messages.trending.readPost}
 									<FaArrowRight className="text-xs" />
-								</Link>
+								</LocalizedLink>
 							</div>
 						</div>
 					</article>

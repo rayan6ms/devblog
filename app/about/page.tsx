@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import Footer from "@/components/Footer";
+import { getMessages } from "@/lib/i18n";
+import { getRequestLocale } from "@/lib/request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -19,24 +21,6 @@ type Palette = {
 type AboutStyle = CSSProperties & {
 	[key: `--${string}`]: string | number;
 };
-
-const storyCards = [
-	{
-		label: "Why it exists",
-		title: "A blog I actually keep using",
-		text: "DevBlog is my personal software development blog. It is where I publish tutorials, opinions, experiments, interface ideas, and the parts of web development I enjoy refining the most.",
-	},
-	{
-		label: "How it is built",
-		title: "A practical stack with room for visual work",
-		text: "The stack centers on Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser, and a few supporting libraries for data shaping and experiments. The goal is to keep the project practical, simple, and enjoyable to build without losing the visual side of the work.",
-	},
-	{
-		label: "What else lives here",
-		title: "Playful tools, sketches, and side ideas",
-		text: "Beyond posts, the site leans into interactivity: tag-driven discovery, recommendations, user tools, and a playground full of games and sketches. I am not a game developer, but the playground is a good home for hobby projects and another way to show what I can build.",
-	},
-];
 
 const horizontalVariants = [
 	"lg:-translate-x-6",
@@ -164,10 +148,10 @@ function buildPatternStyle(palette: Palette): CSSProperties {
 	};
 }
 
-function buildCardStyles(palette: Palette) {
+function buildCardStyles(palette: Palette, count: number) {
 	const accents = shuffle(palette.accents);
 
-	return storyCards.map((_, index) => {
+	return Array.from({ length: count }, (_, index) => {
 		const accent = accents[index % accents.length];
 		const contrast = accents[(index + 1) % accents.length];
 		const originA = {
@@ -248,13 +232,16 @@ function buildDecorations(palette: Palette) {
 	});
 }
 
-export default function Page() {
+export default async function Page() {
+	const locale = await getRequestLocale();
+	const messages = getMessages(locale);
+	const storyCards = messages.about.storyCards;
 	const palette = pickPalette();
 	const shuffledOffsets = shuffle(horizontalVariants);
 	const frameStyle = buildFrameStyle(palette);
 	const panelStyle = buildPanelStyle(palette);
 	const patternStyle = buildPatternStyle(palette);
-	const cardStyles = buildCardStyles(palette);
+	const cardStyles = buildCardStyles(palette, storyCards.length);
 	const decorations = buildDecorations(palette);
 
 	return (
@@ -290,16 +277,13 @@ export default function Page() {
 								<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
 									<div className="max-w-3xl">
 										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											About the project
+											{messages.about.eyebrow}
 										</p>
 										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-											A personal <span className="lowercase">blog</span> that also shows my work
+											{messages.about.title}
 										</h1>
 										<p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
-											This project is a writing space first, but it also works as a
-											portfolio piece. The point is to show how I think about UI,
-											frontend systems, and interactive work inside something I
-											would actually keep using.
+											{messages.about.description}
 										</p>
 									</div>
 								</div>

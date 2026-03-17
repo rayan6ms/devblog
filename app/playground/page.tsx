@@ -5,12 +5,32 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaXmark } from "react-icons/fa6";
 import Footer from "@/components/Footer";
+import { useI18n } from "@/components/LocaleProvider";
 
 type Importer = () => Promise<{ default: React.ComponentType<any> }>;
+type GameId =
+	| "chess"
+	| "snakeGame"
+	| "minesweeper"
+	| "antSimulator"
+	| "solarSystem"
+	| "terminal"
+	| "tankShooter"
+	| "fallingSand"
+	| "movingMountains"
+	| "survivalShooter"
+	| "tetris"
+	| "binaryPong"
+	| "sineWaves"
+	| "voronoiWall"
+	| "2048"
+	| "pacman"
+	| "newtonCannon"
+	| "flappyBird"
+	| "labyrinthExplorer";
 
 type GameBase = {
-	name: string;
-	description: string;
+	id: GameId;
 	img: string;
 	importer: Importer;
 };
@@ -21,134 +41,115 @@ type Game = PlayableGame | WatchGame;
 
 const games: Game[] = [
 	{
-		name: "Chess",
-		description: "Classic Chess Game",
+		id: "chess",
 		img: "playground/chess.png",
 		mode: "play",
 		importer: () => import("./chess/ChessPhaser"),
 	},
 	{
-		name: "SnakeGame",
-		description: "Classic Snake Game",
+		id: "snakeGame",
 		img: "playground/snake.png",
 		mode: "play",
 		importer: () => import("./snake-game/SnakePhaser"),
 	},
 	{
-		name: "Minesweeper",
-		description: "Minesweeper",
+		id: "minesweeper",
 		img: "playground/mine-sweeper.png",
 		mode: "play",
 		importer: () => import("./minesweeper/MineSweeper"),
 	},
 	{
-		name: "AntSimulator",
-		description: "Ant colony race",
+		id: "antSimulator",
 		img: "playground/ant-simulator.png",
 		mode: "watch",
 		importer: () => import("./ant-simulator/AntSimulator"),
 	},
 	{
-		name: "SolarSystem",
-		description: "Planetary dance",
+		id: "solarSystem",
 		img: "playground/solar-system.png",
 		mode: "watch",
 		importer: () => import("./solar-system/SolarSystem"),
 	},
 	{
-		name: "Terminal",
-		description: "Terminal Linux",
+		id: "terminal",
 		img: "playground/terminal.png",
 		mode: "play",
 		importer: () => import("./terminal/Terminal"),
 	},
 	{
-		name: "Tank Shooter",
-		description: "Tank Shooter",
+		id: "tankShooter",
 		img: "playground/tank-shooter.png",
 		mode: "play",
 		importer: () => import("./tank-shooter/TankShooter"),
 	},
 	{
-		name: "Falling Sand",
-		description: "Falling Sand",
+		id: "fallingSand",
 		img: "playground/falling-sand.png",
 		mode: "play",
 		importer: () => import("./falling-sand/FallingSand"),
 	},
 	{
-		name: "Moving Mountains",
-		description: "Moving Mountains",
+		id: "movingMountains",
 		img: "playground/moving-mountains.png",
 		mode: "watch",
 		importer: () => import("./moving-mountains/MovinMountains"),
 	},
 	{
-		name: "Survival Shooter",
-		description: "Survival Shooter",
+		id: "survivalShooter",
 		img: "playground/survival-shooter.png",
 		mode: "play",
 		importer: () => import("./survival-shooter/SurvivalShooter"),
 	},
 	{
-		name: "Tetris",
-		description: "Tetris",
+		id: "tetris",
 		img: "playground/tetris.png",
 		mode: "play",
 		importer: () => import("./tetris/Tetris"),
 	},
 	{
-		name: "Binary Pong",
-		description: "Binary Pong",
+		id: "binaryPong",
 		img: "playground/binary-pong.png",
 		mode: "watch",
 		importer: () => import("./binary-pong/BinaryPong"),
 	},
 	{
-		name: "Sine Waves",
-		description: "Sine Waves",
+		id: "sineWaves",
 		img: "playground/sine-waves.png",
 		mode: "play",
 		importer: () => import("./sine-waves/SineWaves"),
 	},
 	{
-		name: "Voronoi Wall",
-		description: "Voronoi Wall",
+		id: "voronoiWall",
 		img: "playground/voronoi-wall.png",
 		mode: "watch",
 		importer: () => import("./voronoi-wall/VoronoiWall"),
 	},
 	{
-		name: "2048",
-		description: "2048",
+		id: "2048",
 		img: "playground/2048.png",
 		mode: "play",
 		importer: () => import("./2048/2048"),
 	},
 	{
-		name: "Pacman",
-		description: "Pacman",
+		id: "pacman",
 		img: "playground/pacman.png",
 		mode: "play",
 		importer: () => import("./pacman/Pacman"),
 	},
 	{
-		name: "Newton Cannon",
-		description: "Newton Cannon",
+		id: "newtonCannon",
 		img: "playground/newton-cannon.png",
 		mode: "play",
 		importer: () => import("./newton-cannon/NewtonCannon"),
 	},
 	{
-		name: "Flappy Bird",
-		description: "Flappy Bird",
+		id: "flappyBird",
 		img: "playground/flappy-bird.png",
 		mode: "play",
 		importer: () => import("./flappy-bird/FlappyBird"),
 	},
 	{
-		name: "Labyrinth Explorer",
-		description: "Labyrinth Explorer",
+		id: "labyrinthExplorer",
 		img: "playground/labyrinth-explorer.png",
 		mode: "play",
 		importer: () => import("./labyrinth-explorer/LabyrinthExplorer"),
@@ -195,13 +196,21 @@ const GameCard: React.FC<{
 	game: Game;
 	onClick: (g: Game) => void;
 }> = ({ game, onClick }) => {
+	const { messages } = useI18n();
 	const { containerRef, innerRef, handlePointerMove, handlePointerLeave } =
 		useCardTilt(16, 1.06);
+	const gameText = messages.playgroundPage.games[game.id];
 
 	const badge =
 		game.mode === "play"
-			? { text: "Playable", cls: "bg-emerald-600/80" }
-			: { text: "Watch-Only", cls: "bg-sky-600/80" };
+			? {
+					text: messages.playgroundPage.badges.playable,
+					cls: "bg-emerald-600/80",
+				}
+			: {
+					text: messages.playgroundPage.badges.watchOnly,
+					cls: "bg-sky-600/80",
+				};
 
 	return (
 		<div
@@ -219,7 +228,7 @@ const GameCard: React.FC<{
 			>
 				<img
 					src={game.img}
-					alt={game.name}
+					alt={gameText.name}
 					className="absolute inset-0 h-full w-full object-cover"
 					style={{
 						transform: "translateZ(30px) scale(1.06)",
@@ -230,10 +239,10 @@ const GameCard: React.FC<{
 				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
 				<div className="absolute bottom-0 left-0 right-0 p-4">
 					<h3 className="text-lg font-semibold text-white drop-shadow-sm">
-						{game.name}
+						{gameText.name}
 					</h3>
 					<p className="mt-1 text-xs leading-5 text-zinc-200/90">
-						{game.description}
+						{gameText.description}
 					</p>
 				</div>
 				<div
@@ -252,12 +261,14 @@ const GameShelf: React.FC<{
 	games: Game[];
 	onOpen: (g: Game) => void;
 }> = ({ title, description, games, onOpen }) => {
+	const { messages } = useI18n();
+
 	return (
 		<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
 			<div className="flex flex-col gap-4 border-b border-zinc-700/50 pb-6 sm:flex-row sm:items-end sm:justify-between">
 				<div className="max-w-2xl">
 					<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-						Playground
+						{messages.common.playground}
 					</p>
 					<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
 						{title}
@@ -268,7 +279,7 @@ const GameShelf: React.FC<{
 				</div>
 				<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 					<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-						Projects
+						{messages.playgroundPage.projects}
 					</p>
 					<p className="mt-2 text-3xl font-semibold text-wheat">
 						{games.length}
@@ -277,7 +288,7 @@ const GameShelf: React.FC<{
 			</div>
 			<div className="mt-8 flex flex-wrap justify-center gap-6 xl:justify-start">
 				{games.map((game) => (
-					<GameCard key={game.name} game={game} onClick={onOpen} />
+					<GameCard key={game.id} game={game} onClick={onOpen} />
 				))}
 			</div>
 		</section>
@@ -285,6 +296,7 @@ const GameShelf: React.FC<{
 };
 
 const Playground: React.FC = () => {
+	const { messages } = useI18n();
 	const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 	const [SelectedComponent, setSelectedComponent] =
 		useState<React.ComponentType | null>(null);
@@ -300,7 +312,9 @@ const Playground: React.FC = () => {
 		if (selectedGame) {
 			const Dyn = dynamic(selectedGame.importer, {
 				ssr: false,
-				loading: () => <p className="text-zinc-200">Loading...</p>,
+				loading: () => (
+					<p className="text-zinc-200">{messages.playgroundPage.loading}</p>
+				),
 			});
 			if (!cancelled) setSelectedComponent(() => Dyn);
 		} else {
@@ -317,6 +331,9 @@ const Playground: React.FC = () => {
 		setSelectedGame(null);
 		setSelectedComponent(null);
 	}, []);
+	const selectedGameText = selectedGame
+		? messages.playgroundPage.games[selectedGame.id]
+		: null;
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -404,22 +421,19 @@ const Playground: React.FC = () => {
 							<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-2xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Playground
+										{messages.common.playground}
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										Games, sketches, and playable detours
+										{messages.playgroundPage.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										This page is a home for hobby experiments. I am primarily a
-										web developer, not a game developer, but these small projects
-										are a useful way to explore interaction, motion, and browser
-										rendering ideas.
+										{messages.playgroundPage.description}
 									</p>
 								</div>
 								<div className="flex flex-wrap gap-3 lg:justify-end">
 									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Total projects
+											{messages.playgroundPage.totalProjects}
 										</p>
 										<p className="mt-2 text-2xl font-semibold text-wheat">
 											{games.length}
@@ -427,7 +441,7 @@ const Playground: React.FC = () => {
 									</div>
 									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Playable
+											{messages.playgroundPage.badges.playable}
 										</p>
 										<p className="mt-2 text-2xl font-semibold text-wheat">
 											{playable.length}
@@ -435,7 +449,7 @@ const Playground: React.FC = () => {
 									</div>
 									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Watch-only
+											{messages.playgroundPage.badges.watchOnly}
 										</p>
 										<p className="mt-2 text-2xl font-semibold text-wheat">
 											{watchOnly.length}
@@ -447,15 +461,15 @@ const Playground: React.FC = () => {
 
 						<div className="grid gap-4 px-6 py-8 sm:px-8">
 							<GameShelf
-								title="Playable"
-								description="Hands-on experiments you can control directly, from games to toy systems."
+								title={messages.playgroundPage.playableTitle}
+								description={messages.playgroundPage.playableDescription}
 								games={playable}
 								onOpen={openGame}
 							/>
 							{watchOnly.length > 0 && (
 								<GameShelf
-									title="Watch-only"
-									description="Visual pieces that are better treated like motion studies than score-based games."
+									title={messages.playgroundPage.watchOnlyTitle}
+									description={messages.playgroundPage.watchOnlyDescription}
 									games={watchOnly}
 									onOpen={openGame}
 								/>
@@ -498,22 +512,24 @@ const Playground: React.FC = () => {
 								<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
 									<div className="min-w-0">
 										<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-											Playground
+											{messages.common.playground}
 										</p>
 										<h3
 											id="game-title"
 											className="mt-1 truncate font-somerton text-lg uppercase tracking-[0.08em] text-wheat md:text-xl"
-											title={selectedGame?.name}
+											title={selectedGameText?.name}
 										>
-											{selectedGame?.name}
+											{selectedGameText?.name}
 										</h3>
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-3 py-2">
 										<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-											Mode
+											{messages.playgroundPage.mode}
 										</p>
 										<p className="mt-1 text-sm font-semibold text-wheat">
-											{selectedGame?.mode === "play" ? "Playable" : "Watch-only"}
+											{selectedGame?.mode === "play"
+												? messages.playgroundPage.badges.playable
+												: messages.playgroundPage.badges.watchOnly}
 										</p>
 									</div>
 								</div>
@@ -522,7 +538,7 @@ const Playground: React.FC = () => {
 							<button
 								className="absolute right-3 top-3 z-30 md:right-4 md:top-4"
 								onClick={closeGame}
-								aria-label="Close Game"
+								aria-label={messages.playgroundPage.closeGame}
 							>
 								<FaXmark className="h-9 w-9 rounded-xl border border-zinc-700/60 bg-greyBg/80 p-1.5 text-wheat transition-colors hover:border-zinc-500/70 hover:bg-zinc-800/90 hover:text-purpleContrast" />
 							</button>
@@ -531,7 +547,9 @@ const Playground: React.FC = () => {
 								{SelectedComponent ? (
 									<SelectedComponent />
 								) : (
-									<p className="p-6 text-zinc-200">Loading...</p>
+									<p className="p-6 text-zinc-200">
+										{messages.playgroundPage.loading}
+									</p>
 								)}
 							</div>
 						</div>

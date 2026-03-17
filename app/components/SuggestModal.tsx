@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "./LocaleProvider";
 
 type SuggestModalProps = {
 	isOpen: boolean;
@@ -38,6 +39,7 @@ function SuggestModalBody({
 	onClose: () => void;
 	authorId: string;
 }) {
+	const { messages } = useI18n();
 	const [title, setTitle] = useState("");
 	const [details, setDetails] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -60,11 +62,11 @@ function SuggestModalBody({
 	function validate() {
 		const e: Record<string, string> = {};
 		if (title.trim().length < MIN_TITLE)
-			e.title = `Title must be at least ${MIN_TITLE} characters.`;
+			e.title = messages.suggestModal.titleTooShort(MIN_TITLE);
 		if (title.trim().length > MAX_TITLE)
-			e.title = `Max ${MAX_TITLE} characters.`;
+			e.title = messages.suggestModal.maxChars(MAX_TITLE);
 		if (details.trim().length > MAX_DETAILS)
-			e.details = `Max ${MAX_DETAILS} characters.`;
+			e.details = messages.suggestModal.maxChars(MAX_DETAILS);
 		setErrors(e);
 		return Object.keys(e).length === 0;
 	}
@@ -104,7 +106,7 @@ function SuggestModalBody({
 			<button
 				type="button"
 				className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-				aria-label="Close suggest post modal"
+				aria-label={messages.suggestModal.close}
 				onClick={onClose}
 			/>
 			<div className="relative flex min-h-full items-start justify-center sm:items-center">
@@ -119,13 +121,13 @@ function SuggestModalBody({
 						id="suggest-post-title-heading"
 						className="text-lg font-semibold text-zinc-100"
 					>
-						Suggest a post
+						{messages.suggestModal.title}
 					</h3>
 					<button
 						type="button"
 						className="text-zinc-300 hover:text-white"
 						onClick={onClose}
-						aria-label="Close"
+						aria-label={messages.common.close}
 					>
 						✕
 					</button>
@@ -137,14 +139,14 @@ function SuggestModalBody({
 							htmlFor="suggest-post-title"
 							className="block text-sm text-zinc-300 mb-1"
 						>
-							Title
+							{messages.suggestModal.fieldTitle}
 						</label>
 						<input
 							id="suggest-post-title"
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
 							maxLength={MAX_TITLE}
-							placeholder="e.g. Understanding React Server Components in Next 14"
+							placeholder={messages.suggestModal.titlePlaceholder}
 							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
 						/>
 						<div className="flex justify-between">
@@ -162,7 +164,7 @@ function SuggestModalBody({
 							htmlFor="suggest-post-details"
 							className="block text-sm text-zinc-300 mb-1"
 						>
-							What’s the idea?
+							{messages.suggestModal.fieldIdea}
 						</label>
 						<textarea
 							id="suggest-post-details"
@@ -170,7 +172,7 @@ function SuggestModalBody({
 							onChange={(e) => setDetails(e.target.value)}
 							maxLength={MAX_DETAILS}
 							rows={5}
-							placeholder="Add a short outline, bullet points, or links for context (optional)."
+							placeholder={messages.suggestModal.ideaPlaceholder}
 							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
 						/>
 						<div className="flex justify-between">
@@ -184,8 +186,7 @@ function SuggestModalBody({
 					</div>
 
 					<p className="text-xs text-zinc-400">
-						Your suggestion will be reviewed before publishing. Please avoid
-						sensitive data or personal info.
+						{messages.suggestModal.reviewNote}
 					</p>
 				</div>
 
@@ -196,7 +197,7 @@ function SuggestModalBody({
 						onClick={onClose}
 						disabled={saving}
 					>
-						Cancel
+						{messages.common.cancel}
 					</button>
 					<button
 						type="button"
@@ -205,10 +206,10 @@ function SuggestModalBody({
 						disabled={saving || !dirty}
 					>
 						{submitted
-							? "Submitted!"
+							? messages.suggestModal.submitted
 							: saving
-								? "Submitting…"
-								: "Submit suggestion"}
+								? messages.suggestModal.submitting
+								: messages.suggestModal.submit}
 					</button>
 				</div>
 				</div>

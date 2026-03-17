@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "react-icons";
 import {
@@ -9,13 +8,15 @@ import {
 	FaSquareTwitter,
 	FaSquareYoutube,
 } from "react-icons/fa6";
+import LocalizedLink from "./LocalizedLink";
+import { useI18n } from "./LocaleProvider";
 
 const coreLinks = [
-	{ href: "/", label: "Home" },
-	{ href: "/recent", label: "Recent" },
-	{ href: "/trending", label: "Trending" },
-	{ href: "/tag", label: "Tags" },
-	{ href: "/about", label: "About" },
+	{ href: "/", key: "home" },
+	{ href: "/recent", key: "recent" },
+	{ href: "/trending", key: "trending" },
+	{ href: "/tag", key: "tags" },
+	{ href: "/about", key: "about" },
 ];
 
 const socialLinks: { href: string; icon: IconType; label: string }[] = [
@@ -43,9 +44,14 @@ const socialLinks: { href: string; icon: IconType; label: string }[] = [
 
 export default function Footer() {
 	const pathname = usePathname();
-	const filteredLinks = coreLinks.filter((item) => item.href !== pathname);
+	const { messages } = useI18n();
+	const localizedLinks = coreLinks.map((item) => ({
+		...item,
+		label: messages.common[item.key as keyof typeof messages.common] as string,
+	}));
+	const filteredLinks = localizedLinks.filter((item) => item.href !== pathname);
 	const visibleLinks =
-		filteredLinks.length === 4 ? filteredLinks : coreLinks.slice(0, 4);
+		filteredLinks.length === 4 ? filteredLinks : localizedLinks.slice(0, 4);
 
 	return (
 		<footer className="bg-darkBg px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -57,35 +63,34 @@ export default function Footer() {
 								devblog
 							</p>
 							<h2 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
-								Posts, experiments, interface work.
+								{messages.footer.title}
 							</h2>
 							<p className="mt-4 max-w-xl text-sm leading-7 text-zinc-400 sm:text-base">
-								A personal development blog with writing, interaction studies,
-								and a playground for ideas that are easier to show than describe.
+								{messages.footer.description}
 							</p>
 						</div>
 
 						<div className="grid gap-6 sm:grid-cols-2">
 							<div>
 								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									Navigate
+									{messages.footer.navigate}
 								</p>
 								<div className="mt-4 grid gap-2">
 									{visibleLinks.map((item) => (
-										<Link
+										<LocalizedLink
 											key={item.href}
 											href={item.href}
 											className="rounded-2xl border border-zinc-700/60 bg-greyBg/70 px-4 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 										>
 											{item.label}
-										</Link>
+										</LocalizedLink>
 									))}
 								</div>
 							</div>
 
 							<div>
 								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									Socials
+									{messages.footer.socials}
 								</p>
 								<div className="mt-4 grid gap-2">
 									{socialLinks.map(({ href, icon: Icon, label }) => (
@@ -108,7 +113,7 @@ export default function Footer() {
 
 				<div className="flex flex-col gap-3 px-6 py-4 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
 					<p>&copy; {new Date().getFullYear()} devblog.</p>
-					<p>Articles, UI experiments, and interactive side work.</p>
+					<p>{messages.footer.closing}</p>
 				</div>
 			</div>
 		</footer>

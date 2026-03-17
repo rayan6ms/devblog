@@ -1,11 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useDeferredValue, useEffect, useMemo, useState } from "react";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAllPosts,
 	getAuthorHref,
@@ -20,12 +23,6 @@ import SelectedTags from "./SelectedTags";
 import Sidebar, { type TagOption } from "./Sidebar";
 
 const MAX_SELECTED_TAGS = 5;
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-	month: "short",
-	day: "numeric",
-	year: "numeric",
-});
-
 function normalizeTagValue(value: string) {
 	return slugify(value, { lower: true, strict: true });
 }
@@ -56,11 +53,24 @@ function TagPostCard({
 	post: IPost;
 	onSelectTag: (tag: string) => void;
 }) {
+	const { locale, messages } = useI18n();
 	const postHref = getPostHref(post);
+	const dateFormatter = useMemo(
+		() =>
+			new Intl.DateTimeFormat(getIntlLocale(locale), {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			}),
+		[locale],
+	);
 
 	return (
 		<article className="group flex h-full flex-col overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20 transition-colors hover:border-zinc-500/70">
-			<Link href={postHref} className="relative block aspect-[16/10] overflow-hidden">
+			<LocalizedLink
+				href={postHref}
+				className="relative block aspect-[16/10] overflow-hidden"
+			>
 				<Image
 					fill
 					src={post.image}
@@ -68,7 +78,7 @@ function TagPostCard({
 					className="object-cover transition-transform duration-700 group-hover:scale-105"
 					sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
 				/>
-			</Link>
+			</LocalizedLink>
 
 			<div className="flex flex-1 flex-col p-5">
 				<div className="flex items-start justify-between gap-3">
@@ -80,24 +90,27 @@ function TagPostCard({
 						{post.mainTag}
 					</button>
 					<span className="pt-1 text-xs uppercase tracking-[0.18em] text-zinc-500">
-						{formatViews(post.views)} views
+						{messages.tag.viewsSuffix(formatViews(post.views))}
 					</span>
 				</div>
 
-				<Link href={postHref} className="mt-4 block">
+				<LocalizedLink href={postHref} className="mt-4 block">
 					<h3 className="text-xl font-semibold leading-8 text-wheat transition-colors group-hover:text-zinc-100">
 						{post.title}
 					</h3>
-				</Link>
+				</LocalizedLink>
 
 				<p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-400">
 					{post.description}
 				</p>
 
 				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-					<Link href={getAuthorHref(post)} className="transition-colors hover:text-wheat">
+					<LocalizedLink
+						href={getAuthorHref(post)}
+						className="transition-colors hover:text-wheat"
+					>
 						{post.author}
-					</Link>
+					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
 					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
 				</div>
@@ -120,7 +133,8 @@ function TagPostCard({
 }
 
 function TagsPageContent() {
-	const router = useRouter();
+	const { messages } = useI18n();
+	const { push } = useLocaleNavigation();
 	const searchParams = useSearchParams();
 	const [tagCatalog, setTagCatalog] = useState<TagCatalog>({
 		mainTags: [],
@@ -166,9 +180,8 @@ function TagsPageContent() {
 	const selectedTagsKey = selectedTags.join(",");
 
 	const updateSelectedTags = (nextTags: string[]) => {
-		router.push(
+		push(
 			nextTags.length > 0 ? `/tag?selected=${nextTags.join(",")}` : "/tag",
-			{ scroll: false },
 		);
 	};
 
@@ -275,22 +288,20 @@ function TagsPageContent() {
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Browse by tag
+										{messages.tag.eyebrow}
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										Discover posts by topic
+										{messages.tag.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										Use tags to narrow the blog quickly. Pick a main topic, layer
-										a few supporting tags, and keep the results grid in view while
-										you refine.
+										{messages.tag.description}
 									</p>
 								</div>
 
 								<div className="grid gap-3 sm:grid-cols-3">
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Total tags
+											{messages.tag.totalTags}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{allTags.length}
@@ -298,7 +309,7 @@ function TagsPageContent() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Selected
+											{messages.tag.selected}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{selectedTags.length}
@@ -306,7 +317,7 @@ function TagsPageContent() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Visible posts
+											{messages.tag.visiblePosts}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{posts.length}
@@ -320,16 +331,16 @@ function TagsPageContent() {
 							<InfiniteScroller
 								tags={marqueeMainTags}
 								direction="left"
-								label="Main topics"
-								description="The broad categories that shape each post."
+								label={messages.tag.mainTopics}
+								description={messages.tag.mainTopicsDescription}
 								selectedTags={selectedTags}
 								onSelectTag={handleSelectTag}
 							/>
 							<InfiniteScroller
 								tags={marqueeOtherTags}
 								direction="right"
-								label="Supporting tags"
-								description="Use these to narrow the grid without losing context."
+								label={messages.tag.supportingTags}
+								description={messages.tag.supportingTagsDescription}
 								selectedTags={selectedTags}
 								onSelectTag={handleSelectTag}
 							/>
@@ -371,14 +382,13 @@ function TagsPageContent() {
 							) : !hasCatalogData ? (
 								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-lessDarkBg/80 px-6 py-10 text-center shadow-lg shadow-zinc-950/10">
 									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										No posts yet
+										{messages.tag.noPostsYet}
 									</p>
 									<h2 className="mt-3 text-3xl font-somerton uppercase text-wheat">
-										Tag browsing will unlock after the first published post
+										{messages.tag.unlockAfterFirstPost}
 									</h2>
 									<p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-400">
-										The tag page is now reading the real database, so it will stay
-										empty until there are published posts and tags to show.
+										{messages.tag.tagBrowsingDescription}
 									</p>
 								</div>
 							) : posts.length > 0 ? (
@@ -394,15 +404,13 @@ function TagsPageContent() {
 							) : (
 								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-lessDarkBg/80 px-6 py-10 text-center shadow-lg shadow-zinc-950/10">
 									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										No matches
+										{messages.tag.noMatches}
 									</p>
 									<h2 className="mt-3 text-3xl font-somerton uppercase text-wheat">
-										No posts fit this combination
+										{messages.tag.noPostsFit}
 									</h2>
 									<p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-400">
-										Try removing one of the active tags or switch to a broader
-										main topic. The quick picks in the filter panel are a good
-										reset point.
+										{messages.tag.noPostsFitDescription}
 									</p>
 								</div>
 							)}

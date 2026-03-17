@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useI18n } from "@/components/LocaleProvider";
 import { useClientAuth } from "@/components/useClientAuth";
 import Comment from "./Comment";
 import LoginModal from "./LoginModal";
@@ -39,6 +40,7 @@ type CommentReportPayload = {
 };
 
 export default function CommentSection() {
+	const { messages } = useI18n();
 	const { isAuthed, profile } = useClientAuth();
 	const [isLoginOpen, setIsLoginOpen] = useState(false);
 
@@ -131,7 +133,7 @@ export default function CommentSection() {
 	return (
 		<section className="mt-10">
 			<h2 className="text-2xl font-somerton uppercase text-wheat">
-				Comment section
+				{messages.post.commentSection}
 			</h2>
 
 			<div className="mb-12 mt-5 flex items-start gap-4">
@@ -144,21 +146,23 @@ export default function CommentSection() {
 						name="Comment input area"
 						cols={5}
 						rows={2}
-						placeholder="Adicione um comentário"
+						placeholder={messages.post.commentPlaceholder}
 						onClick={() => {
 							if (!isAuthed) setIsLoginOpen(true);
 						}}
 					/>
 					<div className="flex items-center justify-between px-4 py-3">
 						<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-							{isAuthed ? `Commenting as ${currentUser}` : "Login required to comment"}
+							{isAuthed
+								? messages.post.commentAs(currentUser)
+								: messages.post.loginRequiredToComment}
 						</p>
 						<button
 							type="button"
 							onClick={handleComment}
 							className="rounded-full bg-purpleContrast/80 px-4 py-2 text-sm font-semibold text-gray-100 transition-colors hover:bg-purpleContrast"
 						>
-							Comentar
+							{messages.post.comment}
 						</button>
 					</div>
 				</div>

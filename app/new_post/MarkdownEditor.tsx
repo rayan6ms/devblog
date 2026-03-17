@@ -20,12 +20,18 @@ import {
 } from "react-icons/fa6";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useI18n } from "@/components/LocaleProvider";
 import { markdownComponents, MARKDOWN_ARTICLE_CLASS } from "@/lib/markdown";
 import { getReadingTimeMinutes, stripMarkdown } from "@/lib/post-shared";
 
 type UploadedImage = {
 	name: string;
 	url: string;
+};
+
+type FeedbackState = {
+	tone: "error" | "success";
+	message: string;
 };
 
 type MarkdownEditorProps = {
@@ -44,32 +50,6 @@ type ToolbarAction = {
 	action: () => void;
 };
 
-const MODE_OPTIONS: Array<{
-	value: EditorMode;
-	label: string;
-	description: string;
-	icon: IconType;
-}> = [
-	{
-		value: "write",
-		label: "Write",
-		description: "Focus on the markdown.",
-		icon: FaPenNib,
-	},
-	{
-		value: "preview",
-		label: "Preview",
-		description: "Read the final render.",
-		icon: FaEye,
-	},
-	{
-		value: "split",
-		label: "Split",
-		description: "Write and preview together.",
-		icon: FaTableColumns,
-	},
-];
-
 function fileNameToAlt(name: string) {
 	return name
 		.replace(/\.[^.]+$/, "")
@@ -84,8 +64,9 @@ export default function MarkdownEditor({
 	disabled = false,
 	onUploadImage,
 }: MarkdownEditorProps) {
+	const { messages } = useI18n();
 	const [mode, setMode] = useState<EditorMode>("split");
-	const [feedback, setFeedback] = useState<string | null>(null);
+	const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -152,18 +133,21 @@ export default function MarkdownEditor({
 			const markdownBlock = uploads
 				.map(
 					(upload) =>
-						`\n\n![${fileNameToAlt(upload.name) || "Image"}](${upload.url})\n`,
+						`\n\n![${fileNameToAlt(upload.name) || messages.newPost.imageDefaultAlt}](${upload.url})\n`,
 				)
 				.join("");
 
 			insertAtSelection(markdownBlock);
-			setFeedback(
-				`${uploads.length} image${uploads.length === 1 ? "" : "s"} inserted into the markdown.`,
-			);
+			setFeedback({
+				tone: "success",
+				message: messages.newPost.imagesInserted(uploads.length),
+			});
 		} catch (error) {
-			setFeedback(
-				error instanceof Error ? error.message : "Unable to upload image.",
-			);
+			setFeedback({
+				tone: "error",
+				message:
+					error instanceof Error ? error.message : messages.newPost.imageUploadError,
+			});
 		} finally {
 			setIsUploading(false);
 			event.target.value = "";
@@ -174,58 +158,91 @@ export default function MarkdownEditor({
 	const wordCount = plainText ? plainText.split(" ").filter(Boolean).length : 0;
 	const readingTime = getReadingTimeMinutes(value);
 	const remaining = maxLength - value.length;
+	const modeOptions: Array<{
+		value: EditorMode;
+		label: string;
+		description: string;
+		icon: IconType;
+	}> = [
+		{
+			value: "write",
+			label: messages.newPost.modeWrite,
+			description: messages.newPost.modeWriteDescription,
+			icon: FaPenNib,
+		},
+		{
+			value: "preview",
+			label: messages.newPost.modePreview,
+			description: messages.newPost.modePreviewDescription,
+			icon: FaEye,
+		},
+		{
+			value: "split",
+			label: messages.newPost.modeSplit,
+			description: messages.newPost.modeSplitDescription,
+			icon: FaTableColumns,
+		},
+	];
 	const toolbarSections: Array<{
 		title: string;
 		actions: ToolbarAction[];
 	}> = [
 		{
-			title: "Inline",
+			title: messages.newPost.toolbarInline,
 			actions: [
-				{ label: "Bold", icon: FaBold, action: () => wrapSelection("**", "**") },
 				{
-					label: "Italic",
+					label: messages.newPost.toolbarBold,
+					icon: FaBold,
+					action: () => wrapSelection("**", "**"),
+				},
+				{
+					label: messages.newPost.toolbarItalic,
 					icon: FaItalic,
 					action: () => wrapSelection("_", "_"),
 				},
-				{ label: "Code", icon: FaCode, action: () => wrapSelection("`", "`") },
 				{
-					label: "Link",
+					label: messages.newPost.toolbarCode,
+					icon: FaCode,
+					action: () => wrapSelection("`", "`"),
+				},
+				{
+					label: messages.newPost.toolbarLink,
 					icon: FaLink,
 					action: () => wrapSelection("[", "](https://example.com)"),
 				},
 			],
 		},
 		{
-			title: "Blocks",
+			title: messages.newPost.toolbarBlocks,
 			actions: [
 				{
-					label: "Code Block",
+					label: messages.newPost.toolbarCodeBlock,
 					icon: FaCode,
 					action: () => insertAtSelection("\n```ts\n\n```\n", -5),
 				},
 				{
-					label: "Heading",
+					label: messages.newPost.toolbarHeading,
 					icon: FaHeading,
 					action: () => insertAtSelection("\n\n## Heading\n\n"),
 				},
 				{
-					label: "Quote",
+					label: messages.newPost.toolbarQuote,
 					icon: FaQuoteLeft,
 					action: () => insertAtSelection("\n\n> Pull quote\n\n"),
 				},
 				{
-					label: "List",
+					label: messages.newPost.toolbarList,
 					icon: FaListUl,
 					action: () => insertAtSelection("\n\n- First item\n- Second item\n\n"),
 				},
 				{
-					label: "Numbered",
+					label: messages.newPost.toolbarNumbered,
 					icon: FaListOl,
 					action: () =>
 						insertAtSelection("\n\n1. First step\n2. Second step\n\n"),
 				},
 				{
-					label: "Divider",
+					label: messages.newPost.toolbarDivider,
 					icon: FaGripLines,
 					action: () => insertAtSelection("\n\n---\n\n"),
 				},
@@ -248,21 +265,20 @@ export default function MarkdownEditor({
 							</div>
 							<div className="min-w-0">
 								<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-									Editor controls
+									{messages.newPost.editorControlsEyebrow}
 								</p>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									Shape the markdown with intent
+									{messages.newPost.editorControlsTitle}
 								</h3>
 							</div>
 						</div>
 						<p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-							Inline images stay where you insert them and render centered in both
-							preview and the final post.
+							{messages.newPost.editorControlsDescription}
 						</p>
 					</div>
 
 					<div className="grid gap-2 sm:grid-cols-3 xl:w-[26rem]">
-						{MODE_OPTIONS.map((option) => {
+						{modeOptions.map((option) => {
 							const Icon = option.icon;
 							const active = mode === option.value;
 							return (
@@ -325,10 +341,19 @@ export default function MarkdownEditor({
 							className="inline-flex items-center justify-center gap-2 rounded-full border border-purpleContrast/35 bg-purpleContrast/18 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/26 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<FaImage className="text-sm" />
-							<span>{isUploading ? "Uploading..." : "Insert image"}</span>
+							<span>
+								{isUploading
+									? messages.newPost.uploading
+									: messages.newPost.insertImage}
+							</span>
 						</button>
 						<div className="rounded-full border border-zinc-700/60 bg-darkBg/55 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
-							{mode === "split" ? "Dual panel" : `${mode} mode`}
+							{mode === "split"
+								? messages.newPost.dualPanel
+								: messages.newPost.modeBadge(
+										modeOptions.find((option) => option.value === mode)?.label ||
+											mode,
+									)}
 						</div>
 					</div>
 				</div>
@@ -341,15 +366,14 @@ export default function MarkdownEditor({
 							<div className="min-w-0">
 								<div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-zinc-500">
 									<FaPenNib />
-									<span>Markdown</span>
+									<span>{messages.newPost.markdownEyebrow}</span>
 								</div>
 								<p className="mt-2 max-w-xl text-sm leading-6 text-zinc-400">
-									Write with plain markdown and keep control of where every block
-									and image lands.
+									{messages.newPost.markdownDescription}
 								</p>
 							</div>
 							<div className="rounded-full border border-zinc-700/60 bg-greyBg/40 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
-								Editable source
+								{messages.newPost.editableSource}
 							</div>
 						</div>
 						<textarea
@@ -359,7 +383,7 @@ export default function MarkdownEditor({
 							disabled={disabled}
 							rows={20}
 							className="min-h-[32rem] w-full resize-y bg-transparent px-4 py-4 text-zinc-100 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
-							placeholder={`Write the article in Markdown.\n\nExample:\n## Section title\n\nA paragraph with **emphasis** and a [link](https://example.com).\n`}
+							placeholder={messages.newPost.markdownPlaceholder}
 						/>
 					</div>
 				) : null}
@@ -370,14 +394,14 @@ export default function MarkdownEditor({
 							<div className="min-w-0">
 								<div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-zinc-500">
 									<FaEye />
-									<span>Preview</span>
+									<span>{messages.newPost.previewEyebrow}</span>
 								</div>
 								<p className="mt-2 max-w-xl text-sm leading-6 text-zinc-400">
-									The preview uses the same renderer as the published post page.
+									{messages.newPost.previewDescription}
 								</p>
 							</div>
 							<div className="rounded-full border border-zinc-700/60 bg-greyBg/40 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
-								Final rendering
+								{messages.newPost.finalRendering}
 							</div>
 						</div>
 						<div className="min-h-[32rem] px-5 py-4">
@@ -392,7 +416,7 @@ export default function MarkdownEditor({
 								</div>
 							) : (
 								<div className="flex min-h-[28rem] items-center justify-center rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/30 px-6 text-center text-zinc-500">
-									Start writing to see the final post rendering.
+									{messages.newPost.emptyPreview}
 								</div>
 							)}
 						</div>
@@ -403,29 +427,24 @@ export default function MarkdownEditor({
 			<div className="flex flex-wrap items-center gap-3 rounded-[22px] border border-zinc-700/50 bg-darkBg/35 px-4 py-3 text-sm text-zinc-500">
 				<div className="inline-flex items-center gap-2">
 					<FaPenNib className="text-xs" />
-					<span>{wordCount} words</span>
+					<span>{messages.newPost.editorWordCount(wordCount)}</span>
 				</div>
 				<div className="inline-flex items-center gap-2">
 					<FaEye className="text-xs" />
-					<span>{readingTime} min read</span>
+					<span>{messages.newPost.editorReadTime(readingTime)}</span>
 				</div>
 				<div className={`inline-flex items-center gap-2 ${remaining < 0 ? "text-red-400" : ""}`}>
 					<FaTableColumns className="text-xs" />
-					<span>
-						{value.length}/{maxLength} characters
-					</span>
+					<span>{messages.newPost.editorCharacters(value.length, maxLength)}</span>
 				</div>
 				{feedback ? (
 					<span
 						className={`inline-flex items-center gap-2 ${
-							feedback.toLowerCase().includes("unable") ||
-							feedback.toLowerCase().includes("error")
-								? "text-red-400"
-								: "text-emerald-400"
+							feedback.tone === "error" ? "text-red-400" : "text-emerald-400"
 						}`}
 					>
 						<FaImage className="text-xs" />
-						<span>{feedback}</span>
+						<span>{feedback.message}</span>
 					</span>
 				) : null}
 			</div>

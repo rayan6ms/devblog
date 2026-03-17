@@ -1,12 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAuthorHref,
 	getPostHref,
@@ -17,11 +20,6 @@ import Skeleton from "./Skeleton";
 
 const ITEMS_PER_PAGE = 12;
 const MAX_PAGE_BUTTONS = 5;
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-	month: "short",
-	day: "numeric",
-	year: "numeric",
-});
 
 function normalizeValue(value: string) {
 	return slugify(value, { lower: true, strict: true });
@@ -51,6 +49,7 @@ function PaginationControls({
 	totalPages: number;
 	onPageChange: (page: number) => void;
 }) {
+	const { messages } = useI18n();
 	if (totalPages <= 1) {
 		return null;
 	}
@@ -66,7 +65,7 @@ function PaginationControls({
 				className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-45"
 			>
 				<FaArrowLeft className="text-xs" />
-				Previous
+				{messages.common.previous}
 			</button>
 
 			<div className="flex flex-wrap gap-2">
@@ -91,7 +90,7 @@ function PaginationControls({
 				disabled={currentPage === totalPages}
 				className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-45"
 			>
-				Next
+				{messages.common.next}
 				<FaArrowRight className="text-xs" />
 			</button>
 		</div>
@@ -99,11 +98,24 @@ function PaginationControls({
 }
 
 function RecentPostCard({ post }: { post: IPost }) {
+	const { locale, messages } = useI18n();
 	const postHref = getPostHref(post);
+	const dateFormatter = useMemo(
+		() =>
+			new Intl.DateTimeFormat(getIntlLocale(locale), {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			}),
+		[locale],
+	);
 
 	return (
 		<article className="group flex h-full flex-col overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20 transition-colors hover:border-zinc-500/70">
-			<Link href={postHref} className="relative block aspect-[16/10] overflow-hidden">
+			<LocalizedLink
+				href={postHref}
+				className="relative block aspect-[16/10] overflow-hidden"
+			>
 				<Image
 					fill
 					src={post.image}
@@ -111,7 +123,7 @@ function RecentPostCard({ post }: { post: IPost }) {
 					className="object-cover transition-transform duration-700 group-hover:scale-105"
 					sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
 				/>
-			</Link>
+			</LocalizedLink>
 
 			<div className="flex flex-1 flex-col p-5">
 				<div className="flex items-start justify-between gap-3">
@@ -122,12 +134,12 @@ function RecentPostCard({ post }: { post: IPost }) {
 						>
 							{dateFormatter.format(new Date(post.date))}
 						</time>
-						<Link
+						<LocalizedLink
 							href={`/tag?selected=${normalizeValue(post.mainTag)}`}
 							className="mt-2 block text-xs uppercase tracking-[0.16em] text-zinc-400 transition-colors hover:text-wheat"
 						>
 							{post.mainTag}
-						</Link>
+						</LocalizedLink>
 					</div>
 					<span className="flex items-center gap-1 text-sm text-zinc-400">
 						<FaEye />
@@ -135,36 +147,36 @@ function RecentPostCard({ post }: { post: IPost }) {
 					</span>
 				</div>
 
-				<Link href={postHref} className="mt-4 block">
+				<LocalizedLink href={postHref} className="mt-4 block">
 					<h3 className="text-xl font-semibold leading-8 text-wheat transition-colors group-hover:text-zinc-100">
 						{post.title}
 					</h3>
-				</Link>
+				</LocalizedLink>
 
 				<p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-400">
 					{post.description}
 				</p>
 
 				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-					<Link
+					<LocalizedLink
 						href={getAuthorHref(post)}
 						className="transition-colors hover:text-wheat"
 					>
 						{post.author}
-					</Link>
+					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
-					<span>{post.tags.length} related tags</span>
+					<span>{messages.recent.relatedTags(post.tags.length)}</span>
 				</div>
 
 				<div className="mt-5 flex flex-wrap gap-2">
 					{post.tags.slice(0, 4).map((tag) => (
-						<Link
+						<LocalizedLink
 							key={tag}
 							href={`/tag?selected=${normalizeValue(tag)}`}
 							className="capitalize rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-wheat"
 						>
 							{tag}
-						</Link>
+						</LocalizedLink>
 					))}
 				</div>
 			</div>
@@ -173,12 +185,22 @@ function RecentPostCard({ post }: { post: IPost }) {
 }
 
 function RecentPageContent() {
-	const router = useRouter();
+	const { locale, messages } = useI18n();
+	const { push, replace } = useLocaleNavigation();
 	const searchParams = useSearchParams();
 	const [posts, setPosts] = useState<IPost[]>([]);
 	const [loading, setLoading] = useState(true);
 	const rawPage = Number.parseInt(searchParams.get("page") || "1", 10);
 	const currentPage = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage);
+	const dateFormatter = useMemo(
+		() =>
+			new Intl.DateTimeFormat(getIntlLocale(locale), {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			}),
+		[locale],
+	);
 
 	useEffect(() => {
 		let active = true;
@@ -208,8 +230,8 @@ function RecentPageContent() {
 	const visiblePosts = posts.slice(pageStart, pageEnd);
 	const visibleRangeLabel =
 		posts.length > 0
-			? `Posts ${pageStart + 1}-${pageEnd} of ${posts.length}`
-			: "No published posts yet";
+			? messages.recent.visibleRange(pageStart + 1, pageEnd, posts.length)
+			: messages.recent.noPublishedShort;
 	const newestPost = posts[0];
 	const totalViews = useMemo(
 		() => posts.reduce((sum, post) => sum + post.views, 0),
@@ -235,8 +257,8 @@ function RecentPageContent() {
 
 		const params = new URLSearchParams(searchParams.toString());
 		params.set("page", String(safeCurrentPage));
-		router.replace(`?${params.toString()}`, { scroll: false });
-	}, [currentPage, router, safeCurrentPage, searchParams]);
+		replace(`?${params.toString()}`, { scroll: false });
+	}, [currentPage, replace, safeCurrentPage, searchParams]);
 
 	const handlePageChange = (page: number) => {
 		if (page < 1 || page > totalPages || page === safeCurrentPage) {
@@ -245,7 +267,7 @@ function RecentPageContent() {
 
 		const params = new URLSearchParams(searchParams.toString());
 		params.set("page", String(page));
-		router.push(`?${params.toString()}`);
+		push(`?${params.toString()}`);
 	};
 
 	if (loading) {
@@ -261,31 +283,28 @@ function RecentPageContent() {
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Latest posts
+										{messages.recent.eyebrow}
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										The newest posts, in order
+										{messages.recent.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										This page is the clearest view of the blog in publishing
-										order. It keeps the newest writing front and center, with
-										pagination and topic cues close by when you want to keep
-										browsing.
+										{messages.recent.description}
 									</p>
 								</div>
 
 								<div className="grid gap-3 sm:grid-cols-3">
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
-									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-										Post count
-									</p>
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											{messages.recent.postCount}
+										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{posts.length}
 										</p>
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Current page
+											{messages.recent.currentPage}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{safeCurrentPage}/{totalPages}
@@ -293,7 +312,7 @@ function RecentPageContent() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Total views
+											{messages.recent.totalViews}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{formatViews(totalViews)}
@@ -305,7 +324,7 @@ function RecentPageContent() {
 
 						{newestPost ? (
 							<div className="grid gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-								<Link
+								<LocalizedLink
 									href={getPostHref(newestPost)}
 									className="relative block aspect-[16/10] overflow-hidden rounded-[26px]"
 								>
@@ -316,34 +335,34 @@ function RecentPageContent() {
 										className="object-cover transition-transform duration-700 hover:scale-105"
 										sizes="(max-width: 1024px) 100vw, 60vw"
 									/>
-								</Link>
+								</LocalizedLink>
 
 								<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-5">
 									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										Latest arrival
+										{messages.recent.latestArrival}
 									</p>
-									<Link
+									<LocalizedLink
 										href={`/tag?selected=${normalizeValue(newestPost.mainTag)}`}
 										className="mt-3 inline-flex rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 									>
 										{newestPost.mainTag}
-									</Link>
-									<Link
+									</LocalizedLink>
+									<LocalizedLink
 										href={getPostHref(newestPost)}
 										className="mt-4 block text-2xl font-semibold text-wheat transition-colors hover:text-zinc-100"
 									>
 										{newestPost.title}
-									</Link>
+									</LocalizedLink>
 									<p className="mt-3 line-clamp-4 text-sm leading-7 text-zinc-400">
 										{newestPost.description}
 									</p>
 									<div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-										<Link
+										<LocalizedLink
 											href={getAuthorHref(newestPost)}
 											className="transition-colors hover:text-wheat"
 										>
 											{newestPost.author}
-										</Link>
+										</LocalizedLink>
 										<span className="h-1 w-1 rounded-full bg-zinc-700" />
 										<time dateTime={newestPost.date}>
 											{dateFormatter.format(new Date(newestPost.date))}
@@ -359,8 +378,7 @@ function RecentPageContent() {
 						) : (
 							<div className="px-4 py-5 sm:px-6">
 								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
-									No published posts yet. Create your first post and it will show
-									up here as the latest arrival.
+									{messages.recent.noPublished}
 								</div>
 							</div>
 						)}
@@ -371,32 +389,30 @@ function RecentPageContent() {
 					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
 						<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
 							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								Reading guide
+								{messages.recent.readingGuide}
 							</p>
 							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-								Stay oriented
+								{messages.recent.stayOriented}
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">
-								Move through the blog page by page, keep an eye on the newest
-								entry, and jump into the topics showing up most often in the
-								latest batch of posts.
+								{messages.recent.stayOrientedDescription}
 							</p>
 
 							<div className="mt-6 rounded-2xl border border-zinc-700/50 bg-greyBg/75 p-4">
 								<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-									Showing now
+									{messages.recent.showingNow}
 								</p>
 								<p className="mt-2 text-lg font-semibold text-wheat">
 									{visibleRangeLabel}
 								</p>
 								<p className="mt-2 text-sm text-zinc-500">
-									Page {safeCurrentPage} of {totalPages}
+									{messages.recent.pageOf(safeCurrentPage, totalPages)}
 								</p>
 							</div>
 
 							<div className="mt-6">
 								<p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300">
-									Page controls
+									{messages.recent.pageControls}
 								</p>
 								<div className="mt-3">
 									<PaginationControls
@@ -409,24 +425,24 @@ function RecentPageContent() {
 
 							<div className="mt-6">
 								<p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300">
-									Fresh topics
+									{messages.recent.freshTopics}
 								</p>
 								{recentTopics.length > 0 ? (
 									<div className="mt-3 flex flex-wrap gap-2">
 										{recentTopics.map((topic) => (
-											<Link
+											<LocalizedLink
 												key={topic.label}
 												href={`/tag?selected=${normalizeValue(topic.label)}`}
 												className="capitalize rounded-full border border-zinc-700/60 bg-greyBg px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 											>
 												{topic.label}
 												<span className="ml-2 text-zinc-500">{topic.count}</span>
-											</Link>
+											</LocalizedLink>
 										))}
 									</div>
 								) : (
 									<p className="mt-3 text-sm text-zinc-500">
-										Topic counts will appear here after posts are published.
+										{messages.recent.topicCountsLater}
 									</p>
 								)}
 							</div>
@@ -437,14 +453,13 @@ function RecentPageContent() {
 								<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 									<div>
 										<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-											Recent posts
+											{messages.recent.recentPosts}
 										</p>
 										<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-											Newest entries on devblog
+											{messages.recent.recentPostsTitle}
 										</h2>
 										<p className="mt-2 text-sm leading-6 text-zinc-400">
-											Ordered strictly by publish date so the page behaves like a
-											true recent-post feed, not a mixed grab bag.
+											{messages.recent.recentPostsDescription}
 										</p>
 									</div>
 
@@ -463,9 +478,7 @@ function RecentPageContent() {
 									</div>
 								) : (
 									<div className="mt-6 rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
-										No posts are available yet. This page now reads straight from
-										the database and will populate as soon as published entries
-										exist.
+										{messages.recent.noPosts}
 									</div>
 								)}
 							</section>

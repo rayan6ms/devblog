@@ -19,6 +19,7 @@ import {
 	PROFILE_UPLOAD_MAX_BYTES,
 } from "@/lib/validation/profile";
 import type { ProfileAvatarMode, ProfileUser } from "@/profile/types";
+import { useI18n } from "@/components/LocaleProvider";
 
 type ProfileUpdatePayload = {
 	name: string;
@@ -62,6 +63,7 @@ function ProfileEditModalBody({
 	initialUser,
 	onSave,
 }: Omit<Props, "isOpen">) {
+	const { messages } = useI18n();
 	const [name, setName] = useState(initialUser.name);
 	const [handle, setHandle] = useState(initialUser.slug);
 	const [description, setDescription] = useState(initialUser.description);
@@ -78,7 +80,7 @@ function ProfileEditModalBody({
 	const [uploadedAvatarName, setUploadedAvatarName] = useState(
 		initialUser.avatarMode === "custom" &&
 			initialUser.profilePicture.startsWith("data:image/")
-			? "Uploaded image"
+			? messages.profileEdit.uploadedImageLabel
 			: "",
 	);
 	const [saving, setSaving] = useState(false);
@@ -148,33 +150,38 @@ function ProfileEditModalBody({
 		const nextErrors: Record<string, string> = {};
 
 		if (!name.trim()) {
-			nextErrors.name = "Name is required.";
+			nextErrors.name = messages.profileValidation.nameRequired;
 		} else if (name.trim().length > MAX_NAME) {
-			nextErrors.name = `Max ${MAX_NAME} characters.`;
+			nextErrors.name = messages.profileValidation.maxChars(MAX_NAME);
 		}
 
-		const handleError = getHandleError(handle);
+		const handleError = getHandleError(handle, messages.profileValidation);
 		if (handleError) {
 			nextErrors.handle = handleError;
 		}
 
 		if (description.trim().length > MAX_DESC) {
-			nextErrors.description = `Max ${MAX_DESC} characters.`;
+			nextErrors.description = messages.profileValidation.maxChars(MAX_DESC);
 		}
 
 		if (avatarMode === "custom" && uploadedAvatarData) {
-			const uploadError = getProfileUploadError(uploadedAvatarData);
+			const uploadError = getProfileUploadError(
+				uploadedAvatarData,
+				messages.profileValidation,
+			);
 			if (uploadError) {
 				nextErrors.profilePicture = uploadError;
 			}
 		} else if (avatarMode === "custom") {
-			nextErrors.profilePicture = "Upload a JPG, PNG, or WEBP image.";
+			nextErrors.profilePicture = messages.profileValidation.uploadRequired;
 		}
 
 		for (const provider of SOCIAL_PROVIDERS) {
 			const value = links[provider];
 			if (value && !hostOkFor(provider, value)) {
-				nextErrors[provider] = `Invalid ${provider} URL.`;
+				nextErrors[provider] = messages.profileValidation.invalidProviderUrl(
+					getProviderLabel(provider),
+				);
 			}
 		}
 
@@ -189,6 +196,7 @@ function ProfileEditModalBody({
 				{
 					requireCurrentPassword: initialUser.hasPassword,
 				},
+				messages.authValidation,
 			),
 		);
 
@@ -205,7 +213,7 @@ function ProfileEditModalBody({
 		if (!PROFILE_UPLOAD_ACCEPT.includes(file.type as (typeof PROFILE_UPLOAD_ACCEPT)[number])) {
 			setErrors((current) => ({
 				...current,
-				profilePicture: "Only JPG, PNG, or WEBP images are allowed.",
+				profilePicture: messages.profileValidation.uploadAllowed,
 			}));
 			return;
 		}
@@ -213,7 +221,7 @@ function ProfileEditModalBody({
 		if (file.size > PROFILE_UPLOAD_MAX_BYTES) {
 			setErrors((current) => ({
 				...current,
-				profilePicture: "Max image size is 2MB.",
+				profilePicture: messages.profileValidation.uploadMaxSize,
 			}));
 			return;
 		}
@@ -274,11 +282,18 @@ function ProfileEditModalBody({
 			if (fieldErrors) {
 				setErrors((current) => ({
 					...current,
-					...fieldErrors,
+					...Object.fromEntries(
+						Object.entries(fieldErrors).map(([field, message]) => [
+							field,
+							translateProfileFieldError(message, messages),
+						]),
+					),
 				}));
 			}
 			setSubmitError(
-				error instanceof Error ? error.message : "Unable to save profile.",
+				error instanceof Error
+					? translateProfileFieldError(error.message, messages)
+					: messages.profileValidation.unableToSave,
 			);
 		} finally {
 			setSaving(false);
@@ -290,7 +305,7 @@ function ProfileEditModalBody({
 			<button
 				type="button"
 				className="fixed inset-0 bg-black/75 backdrop-blur-xl"
-				aria-label="Close edit profile modal"
+				aria-label={messages.profileEdit.closeModal}
 				onClick={onClose}
 			/>
 			<div className="relative flex min-h-full items-start justify-center sm:items-center">
@@ -304,71 +319,71 @@ function ProfileEditModalBody({
 				<div className="relative flex items-center justify-between border-b border-zinc-700/50 px-6 py-5 sm:px-8">
 					<div>
 						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-							Profile settings
+							{messages.profileEdit.settingsEyebrow}
 						</p>
 						<h3
 							id="edit-profile-title"
 							className="mt-2 text-3xl font-somerton uppercase text-wheat"
 						>
-							Edit profile
+							{messages.profileEdit.title}
 						</h3>
 					</div>
 					<button
 						type="button"
 						className="rounded-full border border-zinc-600/50 bg-greyBg/70 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 						onClick={onClose}
-						aria-label="Close"
+						aria-label={messages.common.close}
 					>
-						Close
+						{messages.common.close}
 					</button>
 				</div>
 
 				<div className="relative grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-6 sm:px-8 xl:grid-cols-[320px_minmax(0,1fr)]">
 					<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-xl shadow-zinc-950/20">
 						<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-							Preview
+							{messages.profileEdit.preview}
 						</p>
 						<div className="mt-5 mx-auto h-36 w-36 overflow-hidden rounded-[28px] border border-zinc-200/70 shadow-xl shadow-zinc-950/30">
-						<img
-							src={avatarPreview}
-							alt="Profile preview"
-							className="h-full w-full object-cover"
-						/>
-					</div>
+							<img
+								src={avatarPreview}
+								alt={messages.profileEdit.previewAlt}
+								className="h-full w-full object-cover"
+							/>
+						</div>
 
 						<p className="mt-4 text-center text-sm text-zinc-300">
 							{normalizedHandle ? `@${normalizedHandle}` : "@handle"}
 						</p>
 						<p className="mt-1 text-center text-xs uppercase tracking-[0.18em] text-zinc-500">
 							{initialUser.providerPicture
-								? "Provider photo available"
-								: "No provider photo on file"}
+								? messages.profileEdit.providerAvailable
+								: messages.profileEdit.providerMissing}
 						</p>
 
 						<div className="mt-6 grid gap-2">
 							{initialUser.providerPicture ? (
+								<AvatarOption
+									label={messages.profileEdit.providerPhoto}
+									active={avatarMode === "provider"}
+									onClick={() => setAvatarMode("provider")}
+								/>
+							) : null}
 							<AvatarOption
-								label="Provider photo"
-								active={avatarMode === "provider"}
-								onClick={() => setAvatarMode("provider")}
+								label={messages.profileEdit.generatedAvatar}
+								active={avatarMode === "generated"}
+								onClick={() => setAvatarMode("generated")}
 							/>
-						) : null}
-						<AvatarOption
-							label="Generated avatar"
-							active={avatarMode === "generated"}
-							onClick={() => setAvatarMode("generated")}
-						/>
-						<AvatarOption
-							label="Upload photo"
-							active={avatarMode === "custom"}
-							onClick={() => setAvatarMode("custom")}
-						/>
-					</div>
+							<AvatarOption
+								label={messages.profileEdit.uploadPhoto}
+								active={avatarMode === "custom"}
+								onClick={() => setAvatarMode("custom")}
+							/>
+						</div>
 
 					{avatarMode === "custom" ? (
 						<div className="mt-5 space-y-3">
 							<label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat">
-								Upload photo
+								{messages.profileEdit.uploadPhoto}
 								<input
 									type="file"
 									accept={PROFILE_UPLOAD_ACCEPT.join(",")}
@@ -377,11 +392,11 @@ function ProfileEditModalBody({
 								/>
 							</label>
 							<p className="text-xs leading-5 text-zinc-400">
-								JPG, PNG, or WEBP up to 2MB.
+								{messages.profileEdit.uploadHint}
 							</p>
 							{uploadedAvatarName ? (
 								<p className="rounded-2xl border border-zinc-700/50 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-200">
-									Uploaded: {uploadedAvatarName}
+									{messages.profileEdit.uploaded(uploadedAvatarName)}
 								</p>
 							) : null}
 							{errors.profilePicture ? (
@@ -402,60 +417,62 @@ function ProfileEditModalBody({
 
 					<div className="grid gap-5 lg:grid-cols-2">
 						<div>
-						<label
-							htmlFor="profile-name"
-							className="mb-2 block text-sm text-zinc-300"
-						>
-							Display name
-						</label>
-						<input
-							id="profile-name"
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-							maxLength={MAX_NAME}
-							className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
-						/>
-						<div className="flex justify-between">
-							{errors.name ? (
-								<p className="mt-1 text-xs text-red-400">{errors.name}</p>
-							) : null}
-							<span className="ml-auto mt-1 text-xs text-zinc-400">
-								{name.length}/{MAX_NAME}
-							</span>
-						</div>
-					</div>
-
-					<div>
-						<label
-							htmlFor="profile-handle"
-							className="mb-2 block text-sm text-zinc-300"
-						>
-							Handle
-						</label>
-						<div className="rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 transition-colors focus-within:border-purpleContrast">
-							<div className="flex items-center gap-2">
-								<span className="text-zinc-500">@</span>
-								<input
-									id="profile-handle"
-									value={handle}
-									onChange={(event) => setHandle(event.target.value)}
-									className="w-full bg-transparent text-zinc-100 outline-none"
-									autoCapitalize="none"
-									autoCorrect="off"
-									spellCheck={false}
-								/>
+							<label
+								htmlFor="profile-name"
+								className="mb-2 block text-sm text-zinc-300"
+							>
+								{messages.profileEdit.displayName}
+							</label>
+							<input
+								id="profile-name"
+								value={name}
+								onChange={(event) => setName(event.target.value)}
+								maxLength={MAX_NAME}
+								className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+							/>
+							<div className="flex justify-between">
+								{errors.name ? (
+									<p className="mt-1 text-xs text-red-400">{errors.name}</p>
+								) : null}
+								<span className="ml-auto mt-1 text-xs text-zinc-400">
+									{name.length}/{MAX_NAME}
+								</span>
 							</div>
 						</div>
-						<div className="flex justify-between gap-3">
-							{errors.handle ? (
-								<p className="mt-1 text-xs text-red-400">{errors.handle}</p>
-							) : (
-								<p className="mt-1 text-xs text-zinc-500">
-									Profile URL: `/profile/{normalizedHandle || "handle"}`
-								</p>
-							)}
+
+						<div>
+							<label
+								htmlFor="profile-handle"
+								className="mb-2 block text-sm text-zinc-300"
+							>
+								{messages.profile.handle}
+							</label>
+							<div className="rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 transition-colors focus-within:border-purpleContrast">
+								<div className="flex items-center gap-2">
+									<span className="text-zinc-500">@</span>
+									<input
+										id="profile-handle"
+										value={handle}
+										onChange={(event) => setHandle(event.target.value)}
+										className="w-full bg-transparent text-zinc-100 outline-none"
+										autoCapitalize="none"
+										autoCorrect="off"
+										spellCheck={false}
+									/>
+								</div>
+							</div>
+							<div className="flex justify-between gap-3">
+								{errors.handle ? (
+									<p className="mt-1 text-xs text-red-400">{errors.handle}</p>
+								) : (
+									<p className="mt-1 text-xs text-zinc-500">
+										{messages.profileEdit.profileUrl(
+											normalizedHandle || "handle",
+										)}
+									</p>
+								)}
+							</div>
 						</div>
-					</div>
 					</div>
 
 					<div>
@@ -463,7 +480,7 @@ function ProfileEditModalBody({
 							htmlFor="profile-description"
 							className="mb-2 block text-sm text-zinc-300"
 						>
-							Description
+							{messages.profileEdit.description}
 						</label>
 						<textarea
 							id="profile-description"
@@ -492,7 +509,7 @@ function ProfileEditModalBody({
 									htmlFor={`profile-social-${provider}`}
 									className="mb-2 block text-sm capitalize text-zinc-300"
 								>
-									{provider}
+									{getProviderLabel(provider)}
 								</label>
 								<input
 									id={`profile-social-${provider}`}
@@ -520,16 +537,20 @@ function ProfileEditModalBody({
 						<div className="flex items-start justify-between gap-4">
 							<div>
 								<h4 className="text-sm font-semibold text-zinc-100">
-									{initialUser.hasPassword ? "Change password" : "Create password"}
+									{initialUser.hasPassword
+										? messages.profileEdit.changePassword
+										: messages.profileEdit.createPassword}
 								</h4>
 								<p className="mt-1 text-xs leading-5 text-zinc-400">
 									{initialUser.hasPassword
-										? "Update your email login password without losing your social sign-in."
-										: "Add an email login password to this social account."}
+										? messages.profileEdit.changePasswordDescription
+										: messages.profileEdit.createPasswordDescription}
 								</p>
 							</div>
 							<span className="rounded-full border border-zinc-600/50 bg-zinc-800/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-zinc-300">
-								{initialUser.hasPassword ? "Configured" : "Optional"}
+								{initialUser.hasPassword
+									? messages.profile.configured
+									: messages.profileEdit.optional}
 							</span>
 						</div>
 
@@ -540,7 +561,7 @@ function ProfileEditModalBody({
 										htmlFor="profile-current-password"
 										className="mb-1 block text-sm text-zinc-300"
 									>
-										Current password
+										{messages.profileEdit.currentPassword}
 									</label>
 									<input
 										id="profile-current-password"
@@ -562,7 +583,7 @@ function ProfileEditModalBody({
 									htmlFor="profile-new-password"
 									className="mb-1 block text-sm text-zinc-300"
 								>
-									New password
+									{messages.profileEdit.newPassword}
 								</label>
 								<input
 									id="profile-new-password"
@@ -583,7 +604,7 @@ function ProfileEditModalBody({
 									htmlFor="profile-confirm-password"
 									className="mb-1 block text-sm text-zinc-300"
 								>
-									Confirm new password
+									{messages.profileEdit.confirmNewPassword}
 								</label>
 								<input
 									id="profile-confirm-password"
@@ -611,7 +632,7 @@ function ProfileEditModalBody({
 						onClick={onClose}
 						disabled={saving}
 					>
-						Cancel
+						{messages.common.cancel}
 					</button>
 					<button
 						type="button"
@@ -619,7 +640,7 @@ function ProfileEditModalBody({
 						onClick={handleSave}
 						disabled={saving || !dirty}
 					>
-						{saving ? "Saving…" : "Save profile"}
+						{saving ? messages.profileEdit.saving : messages.profileEdit.save}
 					</button>
 				</div>
 				</div>
@@ -662,4 +683,72 @@ function hostForPlaceholder(provider: SocialProvider) {
 	}
 
 	return `${provider}.com`;
+}
+
+function getProviderLabel(provider: SocialProvider) {
+	if (provider === "github") {
+		return "GitHub";
+	}
+
+	if (provider === "linkedin") {
+		return "LinkedIn";
+	}
+
+	if (provider === "youtube") {
+		return "YouTube";
+	}
+
+	if (provider === "twitter") {
+		return "X";
+	}
+
+	return provider;
+}
+
+function translateProfileFieldError(
+	message: string,
+	messages: ReturnType<typeof useI18n>["messages"],
+) {
+	switch (message) {
+		case "Handle is required.":
+			return messages.profileValidation.handleRequired;
+		case "Use letters and numbers only.":
+			return messages.profileValidation.handleLettersNumbersOnly;
+		case "Current password is incorrect.":
+			return messages.profileValidation.currentPasswordIncorrect;
+		case "That handle is already taken.":
+			return messages.profileValidation.handleTaken;
+		case "Unable to save profile.":
+		case "Unable to change password.":
+		case "Unable to set password.":
+			return messages.profileValidation.unableToSave;
+		case "Upload a JPG, PNG, or WEBP image.":
+			return messages.profileValidation.uploadRequired;
+		case "Only JPG, PNG, or WEBP images are allowed.":
+			return messages.profileValidation.uploadAllowed;
+		case "Max image size is 2MB.":
+			return messages.profileValidation.uploadMaxSize;
+		default: {
+			const handleMin = message.match(/^Handle must be at least (\d+) characters\.$/);
+			if (handleMin) {
+				return messages.profileValidation.handleMin(Number(handleMin[1]));
+			}
+
+			const handleMax = message.match(
+				/^Handle must be (\d+) characters or fewer\.$/,
+			);
+			if (handleMax) {
+				return messages.profileValidation.handleMax(Number(handleMax[1]));
+			}
+
+			const invalidProviderUrl = message.match(/^Invalid (.+) URL\.$/);
+			if (invalidProviderUrl) {
+				return messages.profileValidation.invalidProviderUrl(
+					invalidProviderUrl[1],
+				);
+			}
+
+			return message;
+		}
+	}
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAuthorHref,
 	getPostHref,
@@ -54,15 +54,23 @@ function highlight(text: string, term?: string) {
 }
 
 export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
-	const router = useRouter();
+	const { locale } = useI18n();
+	const { push } = useLocaleNavigation();
 
 	const formattedDate = (date: string) =>
-		format(parseISO(date), "dd MMM yyyy", { locale: ptBR });
+		new Date(date).toLocaleDateString(getIntlLocale(locale), {
+			day: "2-digit",
+			month: "short",
+			year: "numeric",
+		});
 
-	const fullFormattedDate = (date: string) => {
-		const s = format(parseISO(date), "EEEE, dd MMMM yyyy", { locale: ptBR });
-		return s.charAt(0).toUpperCase() + s.slice(1);
-	};
+	const fullFormattedDate = (date: string) =>
+		new Date(date).toLocaleDateString(getIntlLocale(locale), {
+			weekday: "long",
+			day: "2-digit",
+			month: "long",
+			year: "numeric",
+		});
 
 	const pushTo = (
 		type: "author" | "tag",
@@ -75,7 +83,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 			type === "author"
 				? getAuthorHref(post || { author: value, authorSlug: "" })
 				: `/tag?selected=${slugify(value, { lower: true, strict: true })}`;
-		router.push(url);
+		push(url);
 	};
 
 	return (
@@ -86,7 +94,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 
 			<div className="col-start-1 row-start-2 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-1">
 				{posts.map((post) => (
-					<Link
+					<LocalizedLink
 						key={post.id}
 						className="bg-greyBg border border-t-0 border-zinc-700/30 rounded-lg overflow-hidden shadow-lg group"
 						href={getPostHref(post)}
@@ -140,7 +148,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 								</time>
 							</div>
 						</div>
-					</Link>
+					</LocalizedLink>
 				))}
 			</div>
 		</>

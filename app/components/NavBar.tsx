@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,22 +10,24 @@ import {
 	FaRightToBracket,
 	FaUser,
 } from "react-icons/fa6";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import HamburgerMenu from "./HamburgerMenu";
 import Icons from "./Icons";
+import LanguageSwitcher from "./LanguageSwitcher";
+import LocalizedLink from "./LocalizedLink";
+import { useI18n } from "./LocaleProvider";
 import SearchBar from "./SearchBar";
 import SuggestModal from "./SuggestModal";
 import { useClientAuth } from "./useClientAuth";
 
 const NAV_LINKS = [
-	{ href: "/", label: "Home" },
-	{ href: "/recent", label: "Recent" },
-	{ href: "/trending", label: "Trending" },
-	{ href: "/tag", label: "Tags" },
-	{ href: "/about", label: "About" },
-	{ href: "/playground", label: "Playground" },
+	{ href: "/", key: "home" },
+	{ href: "/recent", key: "recent" },
+	{ href: "/trending", key: "trending" },
+	{ href: "/tag", key: "tags" },
+	{ href: "/about", key: "about" },
+	{ href: "/playground", key: "playground" },
 ];
-
-const SCROLLED_NAV_LINKS = NAV_LINKS.filter((item) => item.href !== "/");
 
 function LinkPill({
 	active,
@@ -42,7 +43,7 @@ function LinkPill({
 	compact?: boolean;
 }) {
 	return (
-		<Link
+		<LocalizedLink
 			href={href}
 			onClick={onClick}
 			className={`border font-semibold uppercase transition-colors ${compact
@@ -54,7 +55,7 @@ function LinkPill({
 				}`}
 		>
 			{label}
-		</Link>
+		</LocalizedLink>
 	);
 }
 
@@ -66,6 +67,8 @@ export default function NavBar() {
 		pathname === "/not-found";
 	const inPost = pathname.includes("/post/");
 	const { activeUser, canWrite, isAuthed } = useClientAuth();
+	const { messages } = useI18n();
+	const { localizeHref } = useLocaleNavigation();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isScrolled, setIsScrolled] = useState(false);
 	const [progress, setProgress] = useState(0);
@@ -124,6 +127,12 @@ export default function NavBar() {
 
 	if (hideNav) return null;
 
+	const navLinks = NAV_LINKS.map((item) => ({
+		...item,
+		label: messages.common[item.key as keyof typeof messages.common] as string,
+	}));
+	const scrolledNavLinks = navLinks.filter((item) => item.href !== "/");
+
 	return (
 		<>
 			<div className="bg-darkBg px-4 pb-4 sm:px-6 lg:px-8">
@@ -139,7 +148,7 @@ export default function NavBar() {
 							</div>
 
 							<ul className="hidden flex-1 flex-wrap items-center gap-2 lg:flex">
-								{NAV_LINKS.map((item) => (
+								{navLinks.map((item) => (
 									<li
 										key={`main-${item.href}`}
 										className={
@@ -179,7 +188,7 @@ export default function NavBar() {
 							<div className="flex items-center justify-between gap-4">
 								<div>
 									<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-										Navigation
+										{messages.nav.navigation}
 									</p>
 									<h2 className="mt-2 text-4xl font-somerton text-wheat">
 										devblog
@@ -196,8 +205,8 @@ export default function NavBar() {
 						<div className="grid gap-6 px-6 py-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px]">
 							<div>
 								<div className="grid gap-3 sm:grid-cols-2">
-									{NAV_LINKS.map((item) => (
-										<Link
+									{navLinks.map((item) => (
+										<LocalizedLink
 											key={item.href}
 											href={item.href}
 											onClick={() => setIsMenuOpen(false)}
@@ -207,7 +216,7 @@ export default function NavBar() {
 												}`}
 										>
 											{item.label}
-										</Link>
+										</LocalizedLink>
 									))}
 								</div>
 
@@ -217,27 +226,31 @@ export default function NavBar() {
 							</div>
 
 							<div className="grid gap-3">
+								<div className="min-[340px]:hidden">
+									<LanguageSwitcher />
+								</div>
+
 								{isAuthed && activeUser ? (
-									<Link
+									<LocalizedLink
 										href={`/profile/${activeUser}`}
 										onClick={() => setIsMenuOpen(false)}
 										className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 									>
 										<FaUser className="text-xs" />
-										Profile
-									</Link>
+										{messages.common.profile}
+									</LocalizedLink>
 								) : null}
 
 								{isAuthed ? (
 									canWrite ? (
-										<Link
+										<LocalizedLink
 											href="/new_post"
 											onClick={() => setIsMenuOpen(false)}
 											className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
 										>
 											<FaPlus className="text-xs" />
-											Create
-										</Link>
+											{messages.common.create}
+										</LocalizedLink>
 									) : (
 										<button
 											type="button"
@@ -248,28 +261,30 @@ export default function NavBar() {
 											className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 										>
 											<FaLightbulb className="text-xs" />
-											Suggest
+											{messages.common.suggest}
 										</button>
 									)
 								) : (
-									<Link
+									<LocalizedLink
 										href="/login"
 										onClick={() => setIsMenuOpen(false)}
 										className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 									>
 										<FaRightToBracket className="text-xs" />
-										Login
-									</Link>
+										{messages.common.login}
+									</LocalizedLink>
 								)}
 
 								{isAuthed ? (
 									<button
 										type="button"
-										onClick={() => signOut({ callbackUrl: "/" })}
+										onClick={() =>
+											signOut({ callbackUrl: localizeHref("/") })
+										}
 										className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 									>
 										<FaArrowRightFromBracket className="text-xs" />
-										Logout
+										{messages.common.logout}
 									</button>
 								) : null}
 
@@ -298,15 +313,15 @@ export default function NavBar() {
 									/>
 								</div>
 
-								<Link
+								<LocalizedLink
 									href="/"
 									className="hidden text-3xl font-somerton text-wheat xl:block"
 								>
 									devblog
-								</Link>
+								</LocalizedLink>
 
 								<ul className="hidden flex-1 flex-wrap items-center gap-2 xl:flex">
-									{SCROLLED_NAV_LINKS.map((item) => (
+									{scrolledNavLinks.map((item) => (
 										<li key={`fixed-${item.href}`}>
 											<LinkPill
 												active={pathname === item.href}
@@ -336,24 +351,24 @@ export default function NavBar() {
 									</div>
 
 									{isAuthed && activeUser ? (
-										<Link
+										<LocalizedLink
 											href={`/profile/${activeUser}`}
 											className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat md:inline-flex"
 										>
 											<FaUser className="text-xs" />
-											Profile
-										</Link>
+											{messages.common.profile}
+										</LocalizedLink>
 									) : null}
 
 									{isAuthed ? (
 										canWrite ? (
-											<Link
+											<LocalizedLink
 												href="/new_post"
 												className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat md:inline-flex"
 											>
 												<FaPlus className="text-xs" />
-												Create
-											</Link>
+												{messages.common.create}
+											</LocalizedLink>
 										) : (
 											<button
 												type="button"
@@ -361,27 +376,29 @@ export default function NavBar() {
 												className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat md:inline-flex"
 											>
 												<FaLightbulb className="text-xs" />
-												Suggest
+												{messages.common.suggest}
 											</button>
 										)
 									) : (
-										<Link
+										<LocalizedLink
 											href="/login"
 											className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat md:inline-flex"
 										>
 											<FaRightToBracket className="text-xs" />
-											Login
-										</Link>
+											{messages.common.login}
+										</LocalizedLink>
 									)}
 
 									{isAuthed ? (
 										<button
 											type="button"
-											onClick={() => signOut({ callbackUrl: "/" })}
+											onClick={() =>
+												signOut({ callbackUrl: localizeHref("/") })
+											}
 											className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat md:inline-flex"
 										>
 											<FaArrowRightFromBracket className="text-xs" />
-											Logout
+											{messages.common.logout}
 										</button>
 									) : null}
 								</div>

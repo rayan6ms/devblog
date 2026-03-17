@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getSearchSuggestions, type IPost } from "@/lib/posts-client";
+import { useI18n } from "./LocaleProvider";
 
 export default function SearchBar({
 	tabIndex,
@@ -23,7 +24,8 @@ export default function SearchBar({
 
 	const searchInput = useRef<HTMLInputElement>(null);
 	const containerRef = useRef<HTMLFormElement>(null);
-	const router = useRouter();
+	const { messages } = useI18n();
+	const { push } = useLocaleNavigation();
 
 	const goToResults = useCallback(
 		(nextQuery: string) => {
@@ -32,9 +34,9 @@ export default function SearchBar({
 			setSuggestions([]);
 			setActiveIndex(-1);
 			setIsSearchOpen(false);
-			router.push(`/search?q=${queryString}&page=1`);
+			push(`/search?q=${queryString}&page=1`);
 		},
-		[router],
+		[push],
 	);
 
 	const closeSearch = useCallback(() => {
@@ -168,12 +170,12 @@ export default function SearchBar({
 						value={query}
 						onChange={(event) => setQuery(event.target.value)}
 						onKeyDown={handleKeyDown}
-						placeholder="Search posts"
+						placeholder={messages.searchBar.placeholder}
 						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${searchExpanded
 								? "pl-4 pr-3 opacity-100"
 								: "pointer-events-none w-0 px-0 opacity-0"
 							}`}
-						aria-label="Search posts"
+						aria-label={messages.searchBar.ariaLabel}
 					/>
 				</div>
 				<div className="flex h-full w-[48px] shrink-0 items-center justify-center">
@@ -182,7 +184,11 @@ export default function SearchBar({
 						onClick={handleButtonClick}
 						tabIndex={tabIndex}
 						className="flex h-[38px] w-[38px] items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 text-zinc-100 transition-colors hover:bg-purpleContrast/25"
-						aria-label={searchExpanded ? "Search" : "Open search"}
+						aria-label={
+							searchExpanded
+								? messages.common.search
+								: messages.searchBar.openSearch
+						}
 					>
 						<FaMagnifyingGlass className="text-sm" />
 					</button>
@@ -192,7 +198,7 @@ export default function SearchBar({
 			{suggestions.length > 0 ? (
 				<ul
 					className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] w-full overflow-hidden rounded-[22px] border border-zinc-700/60 bg-lessDarkBg/98 shadow-2xl shadow-zinc-950/40"
-					aria-label="Search suggestions"
+					aria-label={messages.searchBar.searchSuggestions}
 				>
 					{suggestions.map((suggestion, index) => {
 						const isActive = index === activeIndex;
@@ -226,7 +232,7 @@ export default function SearchBar({
 							}}
 							className="text-xs uppercase tracking-[0.16em] text-zinc-400 transition-colors hover:text-wheat"
 						>
-							View all results
+							{messages.searchBar.viewAllResults}
 						</button>
 					</li>
 				</ul>

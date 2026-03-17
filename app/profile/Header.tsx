@@ -14,6 +14,8 @@ import {
 	FaStar,
 	FaUser,
 } from "react-icons/fa6";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { useI18n } from "@/components/LocaleProvider";
 import type { ProfileUser } from "@/profile/types";
 import SocialLinks from "./SocialLinks";
 
@@ -26,6 +28,33 @@ const roleStyles: Record<string, { color: string; icon: IconType }> = {
 	owner: { color: "bg-indigo-600", icon: FaBolt },
 };
 
+const roleLabels = {
+	en: {
+		member: "Member",
+		volunteer: "Volunteer",
+		writer: "Writer",
+		vip: "VIP",
+		admin: "Admin",
+		owner: "Owner",
+	},
+	"pt-BR": {
+		member: "Membro",
+		volunteer: "Voluntário",
+		writer: "Autor",
+		vip: "VIP",
+		admin: "Admin",
+		owner: "Dono",
+	},
+	es: {
+		member: "Miembro",
+		volunteer: "Voluntario",
+		writer: "Autor",
+		vip: "VIP",
+		admin: "Admin",
+		owner: "Propietario",
+	},
+} as const;
+
 export default function Header({
 	user,
 	onEdit,
@@ -33,8 +62,13 @@ export default function Header({
 	user: ProfileUser;
 	onEdit?: () => void;
 }) {
+	const { locale, messages } = useI18n();
+	const { localizeHref } = useLocaleNavigation();
 	const role = (user.role || "member").toLowerCase();
 	const { color, icon: RoleIcon } = roleStyles[role] || roleStyles.member;
+	const roleLabel =
+		roleLabels[locale][role as keyof (typeof roleLabels)[typeof locale]] ||
+		user.role;
 
 	return (
 		<div className="relative overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
@@ -48,15 +82,15 @@ export default function Header({
 							className="flex items-center gap-2 rounded-full border border-zinc-500/40 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:bg-greyBg"
 						>
 							<FaPenToSquare />
-							Edit profile
+							{messages.profile.editProfile}
 						</button>
 						<button
 							type="button"
-							onClick={() => signOut({ callbackUrl: "/" })}
+							onClick={() => signOut({ callbackUrl: localizeHref("/") })}
 							className="flex items-center gap-2 rounded-full border border-zinc-500/40 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:bg-greyBg"
 						>
 							<FaArrowRightFromBracket />
-							Logout
+							{messages.profile.logout}
 						</button>
 					</div>
 				) : null}
@@ -66,7 +100,7 @@ export default function Header({
 						<img
 							className="h-full w-full object-cover"
 							src={user.profilePicture}
-							alt={`${user.name} profile`}
+							alt={messages.profile.profileAlt(user.name)}
 						/>
 					</div>
 					<div className="flex flex-col gap-5">
@@ -81,7 +115,7 @@ export default function Header({
 									>
 										<RoleIcon className="text-xs" />
 										<span className={role === "vip" ? "uppercase" : "capitalize"}>
-											{user.role}
+											{roleLabel}
 										</span>
 									</div>
 								</div>
@@ -89,7 +123,7 @@ export default function Header({
 									@{user.slug}
 								</p>
 								<p className="mx-auto mt-4 max-w-3xl text-center text-sm leading-7 text-zinc-300 lg:mx-0 lg:text-left sm:text-base">
-									{user.description || "No profile description yet."}
+									{user.description || messages.common.noDescriptionYet}
 								</p>
 							</div>
 							<div className="lg:max-w-[360px]">

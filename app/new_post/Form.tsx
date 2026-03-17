@@ -4,7 +4,6 @@ import type React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import {
 	FaArrowsRotate,
 	FaCircleCheck,
@@ -21,8 +20,10 @@ import CircleProgress from "./CircleProgress";
 import MainTagInput from "./MainTagInput";
 import MarkdownEditor from "./MarkdownEditor";
 import TagsInput from "./TagsInput";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import {
-	createPostSchema,
+	buildPostSchema,
 	MAX_POST_CONTENT,
 	MAX_POST_DESCRIPTION,
 	MAX_POST_SLUG,
@@ -35,7 +36,7 @@ import {
 	stripMarkdown,
 } from "@/lib/post-shared";
 
-type PostFormData = z.input<typeof createPostSchema>;
+type PostFormData = z.input<ReturnType<typeof buildPostSchema>>;
 type PostStatus = "draft" | "pending_review" | "published";
 type Mode = "create" | "edit";
 
@@ -59,31 +60,18 @@ type SubmitState = {
 	message: string;
 };
 
-const STATUS_DETAILS: Record<
-	PostStatus,
-	{ label: string; description: string }
-> = {
-	draft: {
-		label: "Save draft",
-		description: "Keep the post private while you shape the content.",
-	},
-	pending_review: {
-		label: "Send to review",
-		description: "Mark the draft as ready for editorial review.",
-	},
-	published: {
-		label: "Publish now",
-		description: "Make the post visible on the site immediately.",
-	},
-};
-
 export default function Form({
 	mainTagsOptions,
 	mode = "create",
 	initialValues,
 	existingSlug,
 }: FormProps) {
-	const router = useRouter();
+	const { messages } = useI18n();
+	const { push } = useLocaleNavigation();
+	const schema = useMemo(
+		() => buildPostSchema(messages.postValidation),
+		[messages],
+	);
 	const [submitState, setSubmitState] = useState<SubmitState>({
 		tone: null,
 		message: "",
@@ -105,7 +93,7 @@ export default function Form({
 		watch,
 		formState: { errors, isSubmitting },
 	} = useForm<PostFormData>({
-		resolver: zodResolver(createPostSchema),
+		resolver: zodResolver(schema),
 		defaultValues: {
 			title: initialValues?.title ?? "",
 			slug: initialValues?.slug ?? "",
@@ -136,6 +124,20 @@ export default function Form({
 		[content],
 	);
 	const readingTime = useMemo(() => getReadingTimeMinutes(content), [content]);
+	const statusDetails: Record<PostStatus, { label: string; description: string }> = {
+		draft: {
+			label: messages.newPost.statusDraftLabel,
+			description: messages.newPost.statusDraftDescription,
+		},
+		pending_review: {
+			label: messages.newPost.statusPendingReviewLabel,
+			description: messages.newPost.statusPendingReviewDescription,
+		},
+		published: {
+			label: messages.newPost.statusPublishedLabel,
+			description: messages.newPost.statusPublishedDescription,
+		},
+	};
 
 	useEffect(() => {
 		if (slugTouched) {
@@ -164,8 +166,8 @@ export default function Form({
 		if (!response.ok || !data || typeof data !== "object" || !("url" in data)) {
 			const message =
 				data && "error" in data && typeof data.error === "string"
-					? data.error
-					: "Unable to upload the image.";
+					? translatePostFieldError(data.error, messages)
+					: messages.newPost.imageUploadError;
 			throw new Error(
 				message,
 			);
@@ -196,14 +198,14 @@ export default function Form({
 					{ shouldValidate: true },
 				);
 			}
-			setThumbnailMessage("Thumbnail uploaded.");
+			setThumbnailMessage(messages.newPost.thumbnailUploaded);
 		} catch (error) {
 			setError("thumbnail", {
 				type: "manual",
 				message:
 					error instanceof Error
-						? error.message
-						: "Unable to upload thumbnail.",
+						? translatePostFieldError(error.message, messages)
+						: messages.newPost.thumbnailUploadError,
 			});
 			setThumbnailMessage("");
 		} finally {
@@ -219,14 +221,14 @@ export default function Form({
 			return;
 		}
 
-		for (const [fieldName, messages] of Object.entries(fields)) {
-			if (!messages?.length) {
+		for (const [fieldName, fieldMessages] of Object.entries(fields)) {
+			if (!fieldMessages?.length) {
 				continue;
 			}
 
 			setError(fieldName as FieldPath<PostFormData>, {
 				type: "server",
-				message: messages[0],
+				message: translatePostFieldError(fieldMessages[0], messages),
 			});
 		}
 	}
@@ -262,8 +264,10 @@ export default function Form({
 				setSubmitState({
 					tone: "error",
 					message:
-						result?.error ||
-						"Unable to save the post right now. Please try again.",
+						translatePostFieldError(
+							result?.error || messages.newPost.submitError,
+							messages,
+						),
 				});
 				return;
 			}
@@ -272,26 +276,40 @@ export default function Form({
 				tone: "success",
 				message:
 					nextStatus === "published"
-						? "Post published."
+						? messages.newPost.submitSuccessPublished
 						: nextStatus === "pending_review"
-							? "Post sent to review."
-							: "Draft saved.",
+							? messages.newPost.submitSuccessReview
+							: messages.newPost.submitSuccessDraft,
 			});
 
 			if (result?.slug) {
-				router.push(`/post/${result.slug}`);
-				router.refresh();
+				push(`/post/${result.slug}`);
 			}
 		})();
 	}
 
 	const checklist = [
-		{ label: "Title set", done: title.trim().length >= 3 },
-		{ label: "Thumbnail uploaded", done: Boolean(thumbnail) },
-		{ label: "Main tag chosen", done: Boolean(mainTag.trim()) },
-		{ label: "Supporting tags added", done: tags.length > 0 },
-		{ label: "Description ready", done: description.trim().length >= 20 },
-		{ label: "Body has substance", done: content.trim().length >= 120 },
+		{ label: messages.newPost.checklistTitleSet, done: title.trim().length >= 3 },
+		{
+			label: messages.newPost.checklistThumbnailUploaded,
+			done: Boolean(thumbnail),
+		},
+		{
+			label: messages.newPost.checklistMainTagChosen,
+			done: Boolean(mainTag.trim()),
+		},
+		{
+			label: messages.newPost.checklistSupportingTagsAdded,
+			done: tags.length > 0,
+		},
+		{
+			label: messages.newPost.checklistDescriptionReady,
+			done: description.trim().length >= 20,
+		},
+		{
+			label: messages.newPost.checklistBodyHasSubstance,
+			done: content.trim().length >= 120,
+		},
 	];
 
 	return (
@@ -307,31 +325,33 @@ export default function Form({
 									</div>
 									<div>
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											{mode === "edit" ? "Edit post" : "New post"}
+											{mode === "edit"
+												? messages.newPost.editorEyebrowEdit
+												: messages.newPost.editorEyebrowCreate}
 										</p>
 										<h2 className="mt-2 text-3xl font-somerton text-wheat">
 											{mode === "edit"
-												? "Refine the published shape"
-												: "Build the post before it ships"}
+												? messages.newPost.editorTitleEdit
+												: messages.newPost.editorTitleCreate}
 										</h2>
 									</div>
 								</div>
 								<p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">
-									The editor persists real markdown, real media paths, and real
-									post metadata to Prisma. What you preview here is what renders
-									on the post page.
+									{messages.newPost.editorDescription}
 								</p>
 							</div>
 
 							<div className="rounded-[24px] border border-zinc-700/60 bg-darkBg/45 px-4 py-3 text-right">
 								<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-									Mode
+									{messages.newPost.mode}
 								</p>
 								<p className="mt-1 text-lg font-semibold text-zinc-100">
-									{mode === "edit" ? "Editing" : "Creating"}
+									{mode === "edit"
+										? messages.newPost.modeEditing
+										: messages.newPost.modeCreating}
 								</p>
 								<p className="mt-1 text-sm text-zinc-500">
-									{initialValues?.authorName || "Author"}
+									{initialValues?.authorName || messages.newPost.defaultAuthor}
 								</p>
 							</div>
 						</div>
@@ -356,10 +376,10 @@ export default function Form({
 							</div>
 							<div>
 								<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-									Story setup
+									{messages.newPost.storySetupEyebrow}
 								</p>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									Lock the metadata first
+									{messages.newPost.storySetupTitle}
 								</h3>
 							</div>
 						</div>
@@ -367,14 +387,14 @@ export default function Form({
 							<label className="block">
 								<div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
 									<FaPenNib className="text-xs text-zinc-500" />
-									<span>Title</span>
+									<span>{messages.newPost.title}</span>
 								</div>
 								<input
 									type="text"
 									{...register("title")}
 									maxLength={MAX_POST_TITLE}
 									className="mt-2 h-12 w-full rounded-2xl border border-zinc-700/50 bg-darkBg/55 px-4 text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
-									placeholder="A title that deserves the click"
+									placeholder={messages.newPost.titlePlaceholder}
 								/>
 								<div className="mt-2 flex items-center justify-between">
 									<p className="text-sm text-red-400">{errors.title?.message}</p>
@@ -390,7 +410,7 @@ export default function Form({
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
 										<FaLink className="text-xs text-zinc-500" />
-										<span>Slug</span>
+										<span>{messages.newPost.slug}</span>
 									</div>
 									<button
 										type="button"
@@ -405,7 +425,7 @@ export default function Form({
 										className="inline-flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-wheat"
 									>
 										<FaArrowsRotate className="text-xs" />
-										Regenerate
+										{messages.newPost.regenerate}
 									</button>
 								</div>
 								<input
@@ -418,7 +438,7 @@ export default function Form({
 									placeholder="post-url-slug"
 								/>
 								<p className="mt-2 text-sm text-zinc-500">
-									Final URL: <span className="text-zinc-300">/post/{slug || "post-url-slug"}</span>
+									{messages.newPost.finalUrl(slug || "post-url-slug")}
 								</p>
 								<p className="mt-1 text-sm text-red-400">{errors.slug?.message}</p>
 							</label>
@@ -427,7 +447,7 @@ export default function Form({
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
 										<FaFileLines className="text-xs text-zinc-500" />
-										<span>Description</span>
+										<span>{messages.newPost.description}</span>
 									</div>
 									<button
 										type="button"
@@ -438,7 +458,7 @@ export default function Form({
 										className="inline-flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-wheat"
 									>
 										<FaArrowsRotate className="text-xs" />
-										Generate from content
+										{messages.newPost.generateFromContent}
 									</button>
 								</div>
 								<textarea
@@ -446,7 +466,7 @@ export default function Form({
 									maxLength={MAX_POST_DESCRIPTION}
 									rows={3}
 									className="mt-2 w-full rounded-[24px] border border-zinc-700/50 bg-darkBg/55 px-4 py-3 text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
-									placeholder="What should the reader understand before opening the article?"
+									placeholder={messages.newPost.descriptionPlaceholder}
 								/>
 								<div className="mt-2 flex items-center justify-between">
 									<p className="text-sm text-red-400">
@@ -467,10 +487,10 @@ export default function Form({
 							</div>
 							<div>
 								<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-									Visuals
+									{messages.newPost.visualsEyebrow}
 								</p>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									Set the post thumbnail
+									{messages.newPost.visualsTitle}
 								</h3>
 							</div>
 						</div>
@@ -480,11 +500,10 @@ export default function Form({
 									<div className="min-w-0">
 										<p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
 											<FaImage className="text-xs text-zinc-500" />
-											<span>Thumbnail</span>
+											<span>{messages.newPost.thumbnail}</span>
 										</p>
 										<p className="mt-2 text-sm leading-6 text-zinc-500">
-											This drives the hero image on the post page and the card
-											thumbnail everywhere else.
+											{messages.newPost.thumbnailDescription}
 										</p>
 									</div>
 
@@ -496,7 +515,9 @@ export default function Form({
 											onChange={handleThumbnailSelected}
 										/>
 										<FaImage className="text-sm" />
-										{isThumbnailUploading ? "Uploading..." : "Upload"}
+										{isThumbnailUploading
+											? messages.newPost.uploading
+											: messages.newPost.upload}
 									</label>
 								</div>
 
@@ -505,13 +526,15 @@ export default function Form({
 									<div className="mt-4 overflow-hidden rounded-[24px] border border-zinc-700/50 bg-darkBg/45">
 										<img
 											src={thumbnail}
-											alt={thumbnailAlt || "Post thumbnail"}
+											alt={
+												thumbnailAlt || messages.newPost.thumbnailPreviewAlt
+											}
 											className="aspect-[16/10] w-full object-cover"
 										/>
 									</div>
 								) : (
 									<div className="mt-4 flex aspect-[16/10] items-center justify-center rounded-[24px] border border-dashed border-zinc-700/60 bg-darkBg/30 text-center text-zinc-500">
-										Upload the image that should represent the post.
+										{messages.newPost.thumbnailEmpty}
 									</div>
 								)}
 								<p className="mt-3 text-sm text-red-400">{errors.thumbnail?.message}</p>
@@ -523,14 +546,14 @@ export default function Form({
 							<label className="block">
 								<div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
 									<FaLink className="text-xs text-zinc-500" />
-									<span>Thumbnail Alt Text</span>
+									<span>{messages.newPost.thumbnailAlt}</span>
 								</div>
 								<textarea
 									{...register("thumbnailAlt")}
 									maxLength={MAX_POST_THUMBNAIL_ALT}
 									rows={5}
 									className="mt-2 w-full rounded-[24px] border border-zinc-700/50 bg-darkBg/55 px-4 py-3 text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
-									placeholder="Describe the thumbnail for accessibility and previews"
+									placeholder={messages.newPost.thumbnailAltPlaceholder}
 								/>
 								<div className="mt-2 flex items-center justify-between">
 									<p className="text-sm text-red-400">
@@ -553,25 +576,24 @@ export default function Form({
 									</div>
 									<div>
 										<p className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
-											Body
+											{messages.newPost.bodyEyebrow}
 										</p>
 										<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-											Write and review in one place
+											{messages.newPost.bodyTitle}
 										</h3>
 									</div>
 								</div>
 								<p className="mt-2 text-sm leading-6 text-zinc-500">
-									Write in markdown, upload inline images, and verify the final
-									render before saving.
+									{messages.newPost.bodyDescription}
 								</p>
 							</div>
 							<div className="rounded-[22px] border border-zinc-700/60 bg-darkBg/45 px-4 py-3 text-right sm:shrink-0">
 								<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
 									<FaClock className="mr-2 inline text-xs" />
-									Read time
+									{messages.newPost.readTime}
 								</p>
 								<p className="mt-1 text-lg font-semibold text-zinc-100">
-									{readingTime} min
+									{messages.newPost.editorReadTime(readingTime)}
 								</p>
 							</div>
 						</div>
@@ -611,10 +633,10 @@ export default function Form({
 							</div>
 							<div>
 								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									Taxonomy
+									{messages.newPost.taxonomyEyebrow}
 								</p>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									Place the article
+									{messages.newPost.taxonomyTitle}
 								</h3>
 							</div>
 						</div>
@@ -622,7 +644,7 @@ export default function Form({
 						<div className="mt-5 grid gap-5">
 							<div>
 								<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
-									Main tag
+									{messages.newPost.mainTag}
 								</span>
 								<Controller
 									control={control}
@@ -644,7 +666,7 @@ export default function Form({
 
 							<div>
 								<span className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
-									Tags
+									{messages.newPost.tags}
 								</span>
 								<Controller
 									control={control}
@@ -667,10 +689,10 @@ export default function Form({
 							</div>
 							<div>
 								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									Readiness
+									{messages.newPost.readinessEyebrow}
 								</p>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									Check the essentials
+									{messages.newPost.readinessTitle}
 								</h3>
 							</div>
 						</div>
@@ -686,16 +708,20 @@ export default function Form({
 											item.done ? "text-emerald-400" : "text-zinc-500"
 										}
 									>
-										{item.done ? "Ready" : "Missing"}
+										{item.done
+											? messages.newPost.ready
+											: messages.newPost.missing}
 									</span>
 								</div>
 							))}
 						</div>
 
 						<div className="mt-5 rounded-[22px] border border-zinc-700/50 bg-darkBg/45 p-4 text-sm text-zinc-400">
-							<p>{wordCount} words</p>
-							<p className="mt-2">{tags.length} tags attached</p>
-							<p className="mt-2 capitalize">Current target: {status.replace("_", " ")}</p>
+							<p>{messages.newPost.wordCount(wordCount)}</p>
+							<p className="mt-2">{messages.newPost.tagCount(tags.length)}</p>
+							<p className="mt-2 capitalize">
+								{messages.newPost.currentTarget(statusDetails[status].label)}
+							</p>
 						</div>
 					</section>
 
@@ -706,16 +732,16 @@ export default function Form({
 							</div>
 							<div>
 								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									Publish
+									{messages.newPost.publishEyebrow}
 								</p>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									Choose the next step
+									{messages.newPost.publishTitle}
 								</h3>
 							</div>
 						</div>
 						<div className="mt-5 grid gap-3">
-							{(Object.entries(STATUS_DETAILS) as Array<
-								[PostStatus, (typeof STATUS_DETAILS)[PostStatus]]
+							{(Object.entries(statusDetails) as Array<
+								[PostStatus, (typeof statusDetails)[PostStatus]]
 							>).map(([nextStatus, details]) => (
 								<button
 									key={nextStatus}
@@ -730,7 +756,7 @@ export default function Form({
 								>
 									<p className="text-sm font-semibold text-zinc-100">
 										{isSubmitting && status === nextStatus
-											? "Saving..."
+											? messages.newPost.saving
 											: details.label}
 									</p>
 									<p className="mt-1 text-sm leading-6 text-zinc-400">
@@ -751,7 +777,7 @@ export default function Form({
 								}}
 								className="mt-4 w-full rounded-full border border-zinc-700/60 bg-darkBg/55 px-4 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 							>
-								Clear form
+								{messages.newPost.clearForm}
 							</button>
 						) : null}
 					</section>
@@ -759,4 +785,93 @@ export default function Form({
 			</div>
 		</form>
 	);
+}
+
+function translatePostFieldError(
+	message: string,
+	messages: ReturnType<typeof useI18n>["messages"],
+) {
+	switch (message) {
+		case "Image is required.":
+			return messages.postValidation.imageRequired;
+		case "Image must be an uploaded file path or a valid URL.":
+			return messages.postValidation.imageInvalid;
+		case "Tags cannot be empty.":
+			return messages.postValidation.tagEmpty;
+		case "Title must be at least 3 characters.":
+			return messages.postValidation.titleMin;
+		case "Slug can only contain lowercase letters, numbers, and hyphens.":
+			return messages.postValidation.slugInvalid;
+		case "Content must be at least 30 characters.":
+			return messages.postValidation.contentMin;
+		case "Main tag is required.":
+			return messages.postValidation.mainTagRequired;
+		case "At least one tag is required.":
+			return messages.postValidation.tagsRequired;
+		case "Tags must be unique.":
+			return messages.postValidation.tagsUnique;
+		case "Please correct the post fields.":
+		case "Unable to save the post right now. Please try again.":
+		case "Unable to create post right now.":
+		case "Unable to update post right now.":
+			return messages.newPost.submitError;
+		case "Unable to upload thumbnail.":
+			return messages.newPost.thumbnailUploadError;
+		case "Unable to upload image.":
+		case "Unable to upload image right now.":
+		case "Image file is required.":
+		case "Only JPG, PNG, WEBP, and GIF files are supported.":
+		case "Images must be 4MB or smaller.":
+		case "Unauthorized":
+		case "You do not have permission to upload images.":
+			return messages.newPost.imageUploadError;
+		default: {
+			const titleMax = message.match(/^Title must be (\d+) characters or fewer\.$/);
+			if (titleMax) {
+				return messages.postValidation.titleMax(Number(titleMax[1]));
+			}
+
+			const slugMax = message.match(/^Slug must be (\d+) characters or fewer\.$/);
+			if (slugMax) {
+				return messages.postValidation.slugMax(Number(slugMax[1]));
+			}
+
+			const contentMax = message.match(
+				/^Content must be (\d+) characters or fewer\.$/,
+			);
+			if (contentMax) {
+				return messages.postValidation.contentMax(Number(contentMax[1]));
+			}
+
+			const tagMax = message.match(/^Tags must be (\d+) characters or fewer\.$/);
+			if (tagMax) {
+				return messages.postValidation.tagMaxLength(Number(tagMax[1]));
+			}
+
+			const thumbAltMax = message.match(
+				/^Thumbnail alt text must be (\d+) characters or fewer\.$/,
+			);
+			if (thumbAltMax) {
+				return messages.postValidation.thumbnailAltMax(Number(thumbAltMax[1]));
+			}
+
+			const tagsMaxItems = message.match(
+				/^Tags must contain (\d+) items or fewer\.$/,
+			);
+			if (tagsMaxItems) {
+				return messages.postValidation.tagsMaxItems(Number(tagsMaxItems[1]));
+			}
+
+			const descriptionMax = message.match(
+				/^Description must be (\d+) characters or fewer\.$/,
+			);
+			if (descriptionMax) {
+				return messages.postValidation.descriptionMax(
+					Number(descriptionMax[1]),
+				);
+			}
+
+			return message;
+		}
+	}
 }

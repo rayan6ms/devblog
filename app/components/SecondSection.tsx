@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FaArrowRight } from "react-icons/fa6";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import type { IPost } from "@/lib/posts-client";
+import { useI18n } from "./LocaleProvider";
 import RecentItem from "./RecentItem";
 import TrendingItem from "./TrendingItem";
 
@@ -14,7 +15,8 @@ interface SecondSectionProps {
 }
 
 export default function SecondSection({ posts }: SecondSectionProps) {
-	const router = useRouter();
+	const { messages } = useI18n();
+	const { push } = useLocaleNavigation();
 
 	function handleRouteButtonClick(
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -22,24 +24,24 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 	) {
 		e.preventDefault();
 		e.stopPropagation();
-		router.push(path);
+		push(path);
 	}
 
 	const sections = [
 		{
-			title: "Trending Posts",
+			title: messages.home.trendingPosts,
 			path: "/trending",
-			description: "See what is pulling the most attention right now.",
+			description: messages.home.trendingPostsDescription,
 		},
 		{
-			title: "Recent Posts",
+			title: messages.home.recentPosts,
 			path: "/recent",
-			description: "Start with the newest writing and work backward from there.",
+			description: messages.home.recentPostsDescription,
 		},
 		{
-			title: "Browse by Tag",
+			title: messages.home.browseByTag,
 			path: "/tag",
-			description: "Filter the live post catalog by topic and supporting tags.",
+			description: messages.home.browseByTagDescription,
 		},
 	];
 
@@ -59,7 +61,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 					>
 						<div className="w-full">
 							<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-								Explore
+								{messages.home.explore}
 							</p>
 							<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
 								{section.title}
@@ -72,7 +74,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 							<RecentItem post={featuredPost} fluid compact />
 						) : (
 							<div className="rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/35 px-4 py-6 text-sm leading-7 text-zinc-400">
-								No post is available for this section yet.
+								{messages.home.noSectionPost}
 							</div>
 						)}
 						{posts.recommended.length > 0 ? (
@@ -88,7 +90,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 							</div>
 						) : (
 							<div className="rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/35 px-4 py-6 text-sm leading-7 text-zinc-400">
-								Recommended callouts will appear here after more posts are published.
+								{messages.home.noRecommendedCallouts}
 							</div>
 						)}
 						<button
@@ -96,7 +98,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 							onClick={(e) => handleRouteButtonClick(e, section.path)}
 							className="group mt-auto flex w-full items-center gap-2 self-start rounded-full border border-zinc-700/60 bg-lessDarkBg px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 						>
-							View section
+							{messages.home.viewSection}
 							<FaArrowRight className="transition-transform delay-200 ease-in-out transform group-hover:translate-x-2" />
 						</button>
 					</div>

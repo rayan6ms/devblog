@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import Link from "next/link";
 import { FaBookmark, FaClock, FaEye } from "react-icons/fa6";
+import LocalizedLink from "@/components/LocalizedLink";
+import { getIntlLocale, getMessages } from "@/lib/i18n";
 import {
 	getReadingTimeMinutes,
 	slugifyPostValue,
 	type PostPageData,
 } from "@/lib/post-shared";
+import { getRequestLocale } from "@/lib/request-locale";
 
 function formatViews(value: number) {
 	return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${value}`;
@@ -21,24 +21,34 @@ function getInitials(name: string) {
 		.join("");
 }
 
-export default function PostHeader({
+export default async function PostHeader({
 	post,
 	editAction,
 }: {
 	post: PostPageData;
 	editAction?: ReactNode;
 }) {
-	const formattedDate = format(parseISO(post.postedAt), "dd MMM yyyy", {
-		locale: ptBR,
-	}).replace(/ (\w)/, (_match, letter) => ` ${letter.toUpperCase()}`);
+	const locale = await getRequestLocale();
+	const messages = getMessages(locale);
+	const formattedDate = new Date(post.postedAt).toLocaleDateString(
+		getIntlLocale(locale),
+		{
+			day: "2-digit",
+			month: "short",
+			year: "numeric",
+		},
+	);
 	const statusLabel =
 		post.status === "published"
-			? "Published"
+			? messages.post.statusPublished
 			: post.status === "pending_review"
-				? "Pending review"
-				: "Draft";
+				? messages.post.statusPendingReview
+				: messages.post.statusDraft;
 	const readTime = getReadingTimeMinutes(post.content);
-	const dateLabel = post.status === "published" ? "Published" : "Last saved";
+	const dateLabel =
+		post.status === "published"
+			? messages.common.published
+			: messages.common.lastSaved;
 
 	return (
 		<section className="overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg/80 shadow-lg shadow-zinc-950/10">
@@ -46,20 +56,20 @@ export default function PostHeader({
 				<div>
 					<div className="flex flex-wrap items-start justify-between gap-3">
 						<div className="flex flex-wrap gap-2">
-							<Link
+							<LocalizedLink
 								href={`/tag?selected=${slugifyPostValue(post.mainTag)}`}
 								className="rounded-full border border-purpleContrast/40 bg-purpleContrast/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-wheat transition-colors hover:bg-purpleContrast/25"
 							>
 								{post.mainTag}
-							</Link>
+							</LocalizedLink>
 							{post.tags.map((tag) => (
-								<Link
+								<LocalizedLink
 									key={tag}
 									href={`/tag?selected=${slugifyPostValue(tag)}`}
 									className="rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 								>
 									{tag}
-								</Link>
+								</LocalizedLink>
 							))}
 							<span className="rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-400">
 								{statusLabel}
@@ -92,14 +102,14 @@ export default function PostHeader({
 						)}
 						<div>
 							<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-								Written by
+								{messages.post.writtenBy}
 							</p>
-							<Link
+							<LocalizedLink
 								href={`/profile/${post.author.slug}`}
 								className="mt-1 block text-lg font-semibold text-zinc-100 transition-colors hover:text-wheat"
 							>
 								{post.author.name}
-							</Link>
+							</LocalizedLink>
 						</div>
 					</div>
 
@@ -111,31 +121,38 @@ export default function PostHeader({
 						<div className="flex items-center justify-between">
 							<span className="inline-flex items-center gap-2">
 								<FaClock />
-								Read time
+								{messages.common.readTime}
 							</span>
-							<span>{readTime} min</span>
+							<span>
+								{readTime} {messages.common.minutesShort}
+							</span>
 						</div>
 						<div className="flex items-center justify-between">
 							<span className="inline-flex items-center gap-2">
 								<FaEye />
-								Views
+								{messages.common.views}
 							</span>
 							<span>{formatViews(post.views)}</span>
 						</div>
 						<div className="flex items-center justify-between">
 							<span className="inline-flex items-center gap-2">
 								<FaBookmark />
-								Bookmarks
+								{messages.common.bookmarks}
 							</span>
 							<span>{formatViews(post.bookmarks)}</span>
 						</div>
 						{post.edited && post.lastEditedAt ? (
 							<div className="flex items-center justify-between">
-								<span>Edited</span>
+								<span>{messages.common.edited}</span>
 								<time dateTime={post.lastEditedAt}>
-									{format(parseISO(post.lastEditedAt), "dd MMM yyyy", {
-										locale: ptBR,
-									})}
+									{new Date(post.lastEditedAt).toLocaleDateString(
+										getIntlLocale(locale),
+										{
+											day: "2-digit",
+											month: "short",
+											year: "numeric",
+										},
+									)}
 								</time>
 							</div>
 						) : null}

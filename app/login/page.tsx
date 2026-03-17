@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getProviders, signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -15,7 +14,9 @@ import {
 } from "react-icons/fa6";
 import PhaserBackground from "@/PhaserBackground";
 import { emitClientAuthChange } from "@/components/useClientAuth";
-import { type LoginFormValues, loginSchema } from "@/lib/validation/auth";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { createLoginSchema, type LoginFormValues } from "@/lib/validation/auth";
 import SocialAuthButton from "./SocialAuthButton";
 
 const SOCIAL_AUTH_OPTIONS = [
@@ -34,11 +35,16 @@ const SOCIAL_AUTH_OPTIONS = [
 ] as const;
 
 export default function LoginForm() {
+	const { messages } = useI18n();
 	const [showPassword, setShowPassword] = useState(false);
 	const [submissionError, setSubmissionError] = useState("");
 	const [providerIds, setProviderIds] = useState<string[]>([]);
-	const router = useRouter();
+	const { push, replace, localizeHref } = useLocaleNavigation();
 	const { status } = useSession();
+	const loginSchema = useMemo(
+		() => createLoginSchema(messages.authValidation),
+		[messages.authValidation],
+	);
 	const {
 		register,
 		handleSubmit,
@@ -53,9 +59,9 @@ export default function LoginForm() {
 
 	useEffect(() => {
 		if (status === "authenticated") {
-			router.replace("/profile/me");
+			replace("/profile/me");
 		}
-	}, [router, status]);
+	}, [replace, status]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -94,20 +100,19 @@ export default function LoginForm() {
 				email: values.email,
 				password: values.password,
 				redirect: false,
-				callbackUrl: "/profile/me",
+				callbackUrl: localizeHref("/profile/me"),
 			});
 
 			if (result?.error) {
-				setSubmissionError("Invalid email or password.");
+				setSubmissionError(messages.login.invalidCredentials);
 				return;
 			}
 
 			emitClientAuthChange();
-			router.push(result?.url || "/profile/me");
-			router.refresh();
+			push(result?.url || "/profile/me");
 		} catch (submissionError) {
 			console.error(submissionError);
-			setSubmissionError("Unable to login right now.");
+			setSubmissionError(messages.login.unableToLogin);
 		}
 	}
 
@@ -125,10 +130,10 @@ export default function LoginForm() {
 				>
 					<div className="mb-6 text-center">
 						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-							Member access
+							{messages.login.eyebrow}
 						</p>
 						<h1 className="mt-3 text-3xl font-somerton uppercase text-wheat">
-							Login
+							{messages.login.title}
 						</h1>
 					</div>
 
@@ -138,7 +143,7 @@ export default function LoginForm() {
 								htmlFor="email"
 								className="mb-2 block text-sm text-zinc-300"
 							>
-								Email
+								{messages.login.email}
 							</label>
 							<input
 								type="email"
@@ -159,7 +164,7 @@ export default function LoginForm() {
 								htmlFor="password"
 								className="mb-2 block text-sm text-zinc-300"
 							>
-								Password
+								{messages.login.password}
 							</label>
 							<div className="relative flex items-center rounded-xl border border-zinc-500/45 bg-darkBg/75">
 								<input
@@ -173,7 +178,11 @@ export default function LoginForm() {
 									type="button"
 									onClick={() => setShowPassword((value) => !value)}
 									className="absolute right-3 text-zinc-400 transition-colors hover:text-zinc-200"
-									aria-label={showPassword ? "Hide password" : "Show password"}
+									aria-label={
+										showPassword
+											? messages.login.hidePassword
+											: messages.login.showPassword
+									}
 								>
 									{showPassword ? <FaEye /> : <FaEyeSlash />}
 								</button>
@@ -215,16 +224,16 @@ export default function LoginForm() {
 							) : (
 								<FaArrowRight className="text-lg" />
 							)}
-							Continue
+							{messages.login.continue}
 						</button>
 						<p className="text-center text-sm text-zinc-300">
-							Don&apos;t have an account?
+							{messages.login.noAccount}
 							<button
 								type="button"
 								className="ml-1 underline underline-offset-4 transition-colors hover:text-wheat"
-								onClick={() => router.push("/register")}
+								onClick={() => push("/register")}
 							>
-								Register
+								{messages.login.register}
 							</button>
 						</p>
 					</div>

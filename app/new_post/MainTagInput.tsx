@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/LocaleProvider";
+
 type MainTagInputProps = {
 	suggestions: string[];
 	value: string;
@@ -11,6 +13,8 @@ export default function MainTagInput({
 	value,
 	onChange,
 }: MainTagInputProps) {
+	const { messages } = useI18n();
+
 	return (
 		<div className="grid gap-2">
 			<input
@@ -19,7 +23,7 @@ export default function MainTagInput({
 				value={value}
 				onChange={(event) => onChange(event.target.value)}
 				className="h-12 w-full rounded-2xl border border-zinc-700/50 bg-darkBg/55 px-4 text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
-				placeholder="Pick an existing topic or define a new main tag"
+				placeholder={messages.newPost.mainTagPlaceholder}
 			/>
 			<datalist id="main-tag-suggestions">
 				{suggestions.map((tag) => (
@@ -27,7 +31,7 @@ export default function MainTagInput({
 				))}
 			</datalist>
 			<p className="text-sm text-zinc-500">
-				Main tags group the post across listings and recommendations.
+				{messages.newPost.mainTagHelp}
 			</p>
 		</div>
 	);

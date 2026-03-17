@@ -1,12 +1,12 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAuthorHref,
 	getPostHref,
@@ -28,6 +28,8 @@ export default function RecentItem({
 	fluid = false,
 	compact = false,
 }: RecentItemProps) {
+	const { locale } = useI18n();
+	const { push } = useLocaleNavigation();
 	const {
 		image,
 		imageAlt,
@@ -40,21 +42,27 @@ export default function RecentItem({
 		percentRead,
 	} = post;
 
-	const formattedDate = format(parseISO(date), "dd MMM yyyy");
+	const formattedDate = new Date(date).toLocaleDateString(getIntlLocale(locale), {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+	});
 	let formattedAuthor =
 		author.length > 20 ? `${author.slice(0, 20)}...` : author;
 	formattedAuthor = formattedAuthor
 		.toLowerCase()
 		.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
 
-	const fullFormattedDate = (date: string) => {
-		const s = format(parseISO(date), "EEEE, dd MMMM yyyy", { locale: ptBR });
-		return s.charAt(0).toUpperCase() + s.slice(1);
-	};
+	const fullFormattedDate = (value: string) =>
+		new Date(value).toLocaleDateString(getIntlLocale(locale), {
+			weekday: "long",
+			day: "2-digit",
+			month: "long",
+			year: "numeric",
+		});
 
 	const formattedViews = (num: number) =>
 		num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
-	const router = useRouter();
 
 	function handleRouteButtonClick(
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -62,11 +70,11 @@ export default function RecentItem({
 	) {
 		e.preventDefault();
 		e.stopPropagation();
-		router.push(path);
+		push(path);
 	}
 
 	return (
-		<Link
+		<LocalizedLink
 			href={getPostHref(post)}
 			className={`group flex h-fit flex-col ${compact ? "rounded-[24px]" : "rounded-lg"} ${
 				fluid
@@ -167,12 +175,7 @@ export default function RecentItem({
 			>
 				<button
 					type="button"
-					onClick={(e) =>
-						handleRouteButtonClick(
-							e,
-							getAuthorHref(post),
-						)
-					}
+					onClick={(e) => handleRouteButtonClick(e, getAuthorHref(post))}
 					className="text-wheat text-sm hover:text-purpleContrast transition-all ease-in-out"
 				>
 					{formattedAuthor}
@@ -184,6 +187,6 @@ export default function RecentItem({
 					<FaEye /> <span>{formattedViews(views)}</span>
 				</p>
 			</div>
-		</Link>
+		</LocalizedLink>
 	);
 }

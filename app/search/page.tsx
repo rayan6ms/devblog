@@ -1,15 +1,18 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import Footer from "@/components/Footer";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import PostsGrid from "@/components/PostsGrid";
 import type { IPost } from "@/lib/posts-client";
 import { getPostsByQueryPaginated } from "@/lib/posts-client";
 import Skeleton from "../components/PostGridSkeleton";
 
 function SearchPageContent() {
+	const { messages } = useI18n();
 	const [posts, setPosts] = useState<IPost[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [totalPages, setTotalPages] = useState(0);
@@ -19,14 +22,14 @@ function SearchPageContent() {
 	const itemsPerPage = 24;
 	const maxPageButtons = 5;
 
-	const router = useRouter();
+	const { push, replace } = useLocaleNavigation();
 	const searchParams = useSearchParams();
 	const q = (searchParams.get("q") || "").trim();
 	const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
 	useEffect(() => {
-		if (!q) router.replace("/recent");
-	}, [q, router]);
+		if (!q) replace("/recent");
+	}, [q, replace]);
 
 	useEffect(() => {
 		if (!q) return;
@@ -53,7 +56,7 @@ function SearchPageContent() {
 			const params = new URLSearchParams();
 			params.set("q", q);
 			params.set("page", String(page));
-			router.push(`?${params.toString()}`);
+			push(`?${params.toString()}`);
 		}
 	};
 
@@ -76,7 +79,7 @@ function SearchPageContent() {
 	};
 
 	const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
-	const heading = q ? `Results for “${q}”` : "Search";
+	const heading = q ? messages.search.resultsFor(q) : messages.common.search;
 
 	if (loading) {
 		return (
@@ -95,22 +98,20 @@ function SearchPageContent() {
 						<div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.15fr)_auto] lg:items-end">
 							<div>
 								<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-									Search posts
+									{messages.search.eyebrow}
 								</p>
 								<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
 									{heading}
 								</h1>
 								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-									Browse matching posts across devblog. Results use the same post
-									cards as the rest of the site, with paging when a query spans
-									more than one screen.
+									{messages.search.description}
 								</p>
 							</div>
 
 							<div className="flex flex-wrap gap-3 lg:justify-end">
 								<div className="rounded-2xl border border-zinc-700/60 bg-greyBg/70 px-4 py-3">
 									<p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-										Matches
+										{messages.search.matches}
 									</p>
 									<p className="mt-1 text-lg font-semibold text-zinc-100">
 										{totalResults}
@@ -118,7 +119,7 @@ function SearchPageContent() {
 								</div>
 								<div className="rounded-2xl border border-zinc-700/60 bg-greyBg/70 px-4 py-3">
 									<p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-										Page
+										{messages.common.page}
 									</p>
 									<p className="mt-1 text-lg font-semibold text-zinc-100">
 										{currentPage} / {Math.max(totalPages, 1)}
@@ -132,21 +133,20 @@ function SearchPageContent() {
 						{q && posts.length === 0 ? (
 							<div className="rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-12 text-center">
 								<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-									No Match
+									{messages.search.noMatch}
 								</p>
 								<h2 className="mt-3 text-3xl font-somerton text-wheat">
-									Nothing showed up for “{q}”.
+									{messages.search.nothingFound(q)}
 								</h2>
 								<p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-zinc-400 sm:text-base">
-									Try a shorter query, search by tag or author, or jump back to
-									the latest posts to keep browsing.
+									{messages.search.noMatchDescription}
 								</p>
 								<button
 									type="button"
 									className="mt-6 inline-flex items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/80 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/80 hover:text-wheat"
-									onClick={() => router.push("/recent")}
+									onClick={() => push("/recent")}
 								>
-									See recent posts
+									{messages.search.seeRecentPosts}
 								</button>
 							</div>
 						) : (
@@ -162,7 +162,7 @@ function SearchPageContent() {
 									className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/70 px-4 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-45"
 								>
 									<FaArrowLeft className="text-xs" />
-									Previous
+									{messages.common.previous}
 								</button>
 
 								{[...Array(endPage - startPage + 1)].map((_, index) => {
@@ -191,7 +191,7 @@ function SearchPageContent() {
 									disabled={currentPage === totalPages}
 									className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/70 px-4 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-45"
 								>
-									Next
+									{messages.common.next}
 									<FaArrowRight className="text-xs" />
 								</button>
 							</div>

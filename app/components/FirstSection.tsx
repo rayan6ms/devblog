@@ -1,4 +1,7 @@
+"use client";
+
 import type { IPost } from "@/lib/posts-client";
+import { useI18n } from "./LocaleProvider";
 import TrendingItem from "./TrendingItem";
 
 interface FirstSectionProps {
@@ -6,6 +9,7 @@ interface FirstSectionProps {
 }
 
 export default function FirstSection({ posts }: FirstSectionProps) {
+	const { messages } = useI18n();
 	return (
 		<section id="home-trending">
 			{posts.length > 0 ? (
@@ -16,8 +20,7 @@ export default function FirstSection({ posts }: FirstSectionProps) {
 				</div>
 			) : (
 				<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
-					No trending posts yet. Once published posts start collecting views, they
-					will appear here automatically.
+					{messages.home.noTrending}
 				</div>
 			)}
 		</section>

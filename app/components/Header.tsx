@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -12,7 +11,11 @@ import {
 	FaRightToBracket,
 	FaUser,
 } from "react-icons/fa6";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import Icons from "./Icons";
+import LanguageSwitcher from "./LanguageSwitcher";
+import LocalizedLink from "./LocalizedLink";
+import { useI18n } from "./LocaleProvider";
 import SuggestModal from "./SuggestModal";
 import { useClientAuth } from "./useClientAuth";
 
@@ -23,6 +26,8 @@ export default function Header() {
 		pathname === "/register" ||
 		pathname === "/not-found";
 	const { activeUser, canWrite, isAuthed } = useClientAuth();
+	const { messages } = useI18n();
+	const { localizeHref } = useLocaleNavigation();
 	const [isSuggestOpen, setIsSuggestOpen] = useState(false);
 
 	if (hideHeader) return null;
@@ -31,22 +36,25 @@ export default function Header() {
 		<>
 			<header className="bg-darkBg px-4 pt-8 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-[1440px] rounded-t-[30px] border border-b-0 border-zinc-700/50 bg-lessDarkBg/90">
-					<div className="border-b border-zinc-700/50 px-6 py-6 sm:px-8">
+					<div className="relative border-b border-zinc-700/50 px-6 py-6 sm:px-8">
+						<LanguageSwitcher className="absolute right-6 top-3.5 z-10 hidden min-[340px]:block sm:right-8" />
 						<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-							<div className="max-w-3xl">
+							<div className="max-w-3xl pr-16 sm:pr-20">
 								<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-									Personal dev blog
+									{messages.header.eyebrow}
 								</p>
 								<div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
 									<div>
-										<Link href="/" aria-label="Home">
+										<LocalizedLink
+											href="/"
+											aria-label={messages.header.homeAria}
+										>
 											<h1 className="text-5xl font-somerton text-wheat sm:text-6xl">
 												devblog
 											</h1>
-										</Link>
+										</LocalizedLink>
 										<p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-											Tutorials, opinions, frontend notes, and interactive side
-											projects collected in one place.
+											{messages.header.description}
 										</p>
 									</div>
 								</div>
@@ -56,58 +64,60 @@ export default function Header() {
 								<Icons className="hidden md:flex" />
 
 								{isAuthed && activeUser ? (
-									<Link
+									<LocalizedLink
 										href={`/profile/${activeUser}`}
 										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-										aria-label="Profile"
+										aria-label={messages.common.profile}
 									>
 										<FaUser className="text-xs" />
-										Profile
-									</Link>
+										{messages.common.profile}
+									</LocalizedLink>
 								) : null}
 
 								{isAuthed ? (
 									canWrite ? (
-										<Link
+										<LocalizedLink
 											href="/new_post"
 											className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
-											aria-label="Create new post"
+											aria-label={messages.common.create}
 										>
 											<FaPlus className="text-xs" />
-											Create
-										</Link>
+											{messages.common.create}
+										</LocalizedLink>
 									) : (
 										<button
 											type="button"
 											onClick={() => setIsSuggestOpen(true)}
 											className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-											aria-label="Suggest a post"
-											title="Suggest a post (requires review)"
+											aria-label={messages.common.suggest}
+											title={messages.header.suggestTitle}
 										>
 											<FaLightbulb className="text-xs" />
-											Suggest
+											{messages.common.suggest}
 										</button>
 									)
 								) : (
-									<Link
+									<LocalizedLink
 										href="/login"
 										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-										aria-label="Login"
+										aria-label={messages.common.login}
 									>
 										<FaRightToBracket className="text-xs" />
-										Login
-									</Link>
+										{messages.common.login}
+									</LocalizedLink>
 								)}
 
 								{isAuthed ? (
 									<button
 										type="button"
-										onClick={() => signOut({ callbackUrl: "/" })}
+										onClick={() =>
+											signOut({ callbackUrl: localizeHref("/") })
+										}
 										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-										aria-label="Logout"
+										aria-label={messages.common.logout}
 									>
 										<FaArrowRightFromBracket className="text-xs" />
-										Logout
+										{messages.common.logout}
 									</button>
 								) : null}
 
@@ -118,7 +128,7 @@ export default function Header() {
 									className="inline-flex items-center gap-2 rounded-full border border-purpleContrast/50 bg-purpleContrast/15 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/25"
 								>
 									<FaPaperPlane className="text-xs" />
-									Telegram
+									{messages.common.telegram}
 								</a>
 							</div>
 						</div>

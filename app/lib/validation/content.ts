@@ -9,25 +9,48 @@ export const MAX_POST_TAG_LENGTH = 24;
 export const MAX_POST_THUMBNAIL_ALT = 140;
 const MAX_COMMENT_LENGTH = 2000;
 
+export type PostValidationMessages = {
+	imageRequired: string;
+	imageInvalid: string;
+	tagEmpty: string;
+	tagMaxLength: (max: number) => string;
+	titleMin: string;
+	titleMax: (max: number) => string;
+	slugMax: (max: number) => string;
+	slugInvalid: string;
+	contentMin: string;
+	contentMax: (max: number) => string;
+	thumbnailAltMax: (max: number) => string;
+	mainTagRequired: string;
+	tagsRequired: string;
+	tagsMaxItems: (max: number) => string;
+	tagsUnique: string;
+	descriptionMax: (max: number) => string;
+};
+
+const defaultPostValidationMessages: PostValidationMessages = {
+	imageRequired: "Image is required.",
+	imageInvalid: "Image must be an uploaded file path or a valid URL.",
+	tagEmpty: "Tags cannot be empty.",
+	tagMaxLength: (max) => `Tags must be ${max} characters or fewer.`,
+	titleMin: "Title must be at least 3 characters.",
+	titleMax: (max) => `Title must be ${max} characters or fewer.`,
+	slugMax: (max) => `Slug must be ${max} characters or fewer.`,
+	slugInvalid:
+		"Slug can only contain lowercase letters, numbers, and hyphens.",
+	contentMin: "Content must be at least 30 characters.",
+	contentMax: (max) => `Content must be ${max} characters or fewer.`,
+	thumbnailAltMax: (max) =>
+		`Thumbnail alt text must be ${max} characters or fewer.`,
+	mainTagRequired: "Main tag is required.",
+	tagsRequired: "At least one tag is required.",
+	tagsMaxItems: (max) => `Tags must contain ${max} items or fewer.`,
+	tagsUnique: "Tags must be unique.",
+	descriptionMax: (max) => `Description must be ${max} characters or fewer.`,
+};
+
 const nonEmptyString = (requiredMessage: string) =>
 	z.string().trim().min(1, requiredMessage);
-
-const imageSourceSchema = nonEmptyString("Image is required.").refine(
-	(value) =>
-		value.startsWith("/") ||
-		value.startsWith("http://") ||
-		value.startsWith("https://"),
-	"Image must be an uploaded file path or a valid URL.",
-);
-
-const tagSchema = z
-	.string()
-	.trim()
-	.min(1, "Tags cannot be empty.")
-	.max(
-		MAX_POST_TAG_LENGTH,
-		`Tags must be ${MAX_POST_TAG_LENGTH} characters or fewer.`,
-	);
 
 export const createCommentSchema = z.object({
 	postId: nonEmptyString("Post ID is required."),
@@ -41,66 +64,75 @@ export const createCommentSchema = z.object({
 	),
 });
 
-export const createPostSchema = z.object({
-	title: z
+export function buildPostSchema(
+	messages: PostValidationMessages = defaultPostValidationMessages,
+) {
+	const imageSourceSchema = nonEmptyString(messages.imageRequired).refine(
+		(value) =>
+			value.startsWith("/") ||
+			value.startsWith("http://") ||
+			value.startsWith("https://"),
+		messages.imageInvalid,
+	);
+
+	const tagSchema = z
 		.string()
 		.trim()
-		.min(3, "Title must be at least 3 characters.")
-		.max(
-			MAX_POST_TITLE,
-			`Title must be ${MAX_POST_TITLE} characters or fewer.`,
-		),
-	slug: z
-		.string()
-		.trim()
-		.max(
-			MAX_POST_SLUG,
-			`Slug must be ${MAX_POST_SLUG} characters or fewer.`,
-		)
-		.regex(
-			/^(|[a-z0-9]+(?:-[a-z0-9]+)*)$/,
-			"Slug can only contain lowercase letters, numbers, and hyphens.",
-		)
-		.optional()
-		.default(""),
-	content: z
-		.string()
-		.trim()
-		.min(30, "Content must be at least 30 characters.")
-		.max(
-			MAX_POST_CONTENT,
-			`Content must be ${MAX_POST_CONTENT} characters or fewer.`,
-		),
-	thumbnail: imageSourceSchema,
-	thumbnailAlt: z
-		.string()
-		.trim()
-		.max(
-			MAX_POST_THUMBNAIL_ALT,
-			`Thumbnail alt text must be ${MAX_POST_THUMBNAIL_ALT} characters or fewer.`,
-		)
-		.optional()
-		.default(""),
-	mainTag: nonEmptyString("Main tag is required."),
-	tags: z
-		.array(tagSchema)
-		.min(1, "At least one tag is required.")
-		.max(MAX_POST_TAGS, `Tags must contain ${MAX_POST_TAGS} items or fewer.`)
-		.refine(
-			(tags) => new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
-			"Tags must be unique.",
-		),
-	description: z
-		.string()
-		.trim()
-		.max(
-			MAX_POST_DESCRIPTION,
-			`Description must be ${MAX_POST_DESCRIPTION} characters or fewer.`,
-		)
-		.optional()
-		.default(""),
-	status: z.enum(["draft", "pending_review", "published"]).default("draft"),
-});
+		.min(1, messages.tagEmpty)
+		.max(MAX_POST_TAG_LENGTH, messages.tagMaxLength(MAX_POST_TAG_LENGTH));
+
+	return z.object({
+		title: z
+			.string()
+			.trim()
+			.min(3, messages.titleMin)
+			.max(MAX_POST_TITLE, messages.titleMax(MAX_POST_TITLE)),
+		slug: z
+			.string()
+			.trim()
+			.max(MAX_POST_SLUG, messages.slugMax(MAX_POST_SLUG))
+			.regex(
+				/^(|[a-z0-9]+(?:-[a-z0-9]+)*)$/,
+				messages.slugInvalid,
+			)
+			.optional()
+			.default(""),
+		content: z
+			.string()
+			.trim()
+			.min(30, messages.contentMin)
+			.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT)),
+		thumbnail: imageSourceSchema,
+		thumbnailAlt: z
+			.string()
+			.trim()
+			.max(
+				MAX_POST_THUMBNAIL_ALT,
+				messages.thumbnailAltMax(MAX_POST_THUMBNAIL_ALT),
+			)
+			.optional()
+			.default(""),
+		mainTag: nonEmptyString(messages.mainTagRequired),
+		tags: z
+			.array(tagSchema)
+			.min(1, messages.tagsRequired)
+			.max(MAX_POST_TAGS, messages.tagsMaxItems(MAX_POST_TAGS))
+			.refine(
+				(tags) =>
+					new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
+				messages.tagsUnique,
+			),
+		description: z
+			.string()
+			.trim()
+			.max(MAX_POST_DESCRIPTION, messages.descriptionMax(MAX_POST_DESCRIPTION))
+			.optional()
+			.default(""),
+		status: z.enum(["draft", "pending_review", "published"]).default("draft"),
+	});
+}
+
+export const createPostSchema = buildPostSchema();
 
 export const createFeedbackSchema = z.object({
 	userId: nonEmptyString("User ID is required."),

@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getPostHref, type IPost } from "@/lib/posts-client";
 import Popover from "./Popover";
 
@@ -21,7 +21,7 @@ export default function TrendingItem({
 	const { image, imageAlt, mainTag, title } = post;
 
 	const tagId = slugify(mainTag, { lower: true, strict: true });
-	const router = useRouter();
+	const { push } = useLocaleNavigation();
 
 	function handleRouteButtonClick(
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -29,11 +29,11 @@ export default function TrendingItem({
 	) {
 		e.preventDefault();
 		e.stopPropagation();
-		router.push(path);
+		push(path);
 	}
 
 	return (
-		<Link
+		<LocalizedLink
 			href={getPostHref(post)}
 			className={`group flex gap-6
         ${
@@ -81,6 +81,6 @@ export default function TrendingItem({
 					{title}
 				</h3>
 			</div>
-		</Link>
+		</LocalizedLink>
 	);
 }

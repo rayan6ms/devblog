@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FaPenToSquare } from "react-icons/fa6";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { useClientAuth } from "@/components/useClientAuth";
 
 const canEditByRole = (role?: string) => {
@@ -19,7 +20,8 @@ export default function PostEditButton({
 	authorName: string;
 	authorSlug: string;
 }) {
-	const router = useRouter();
+	const { messages } = useI18n();
+	const { push } = useLocaleNavigation();
 	const { activeUser, isAuthed, isLoading, profile, role } = useClientAuth();
 	const normalize = (value?: string | null) => value?.trim().toLowerCase() || "";
 	const matchesAuthor =
@@ -34,13 +36,13 @@ export default function PostEditButton({
 	return (
 		<button
 			type="button"
-			aria-label="Edit post"
-			title="Edit post"
-			onClick={() => router.push(`/post/${slug}/edit`)}
+			aria-label={messages.post.editPost}
+			title={messages.post.editPost}
+			onClick={() => push(`/post/${slug}/edit`)}
 			className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 		>
 			<FaPenToSquare className="text-sm text-zinc-100" />
-			<span>Edit</span>
+			<span>{messages.post.edit}</span>
 		</button>
 	);
 }

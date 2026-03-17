@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
+import { useI18n } from "@/components/LocaleProvider";
 
 type TagsInputProps = {
 	value: string[];
@@ -14,6 +15,7 @@ export default function TagsInput({
 	onChange,
 	maxTags = 6,
 }: TagsInputProps) {
+	const { messages } = useI18n();
 	const [input, setInput] = useState("");
 
 	const addTag = (rawTag: string) => {
@@ -77,13 +79,13 @@ export default function TagsInput({
 					className="min-w-[14rem] flex-1 bg-transparent px-2 py-1.5 text-zinc-100 outline-none placeholder:text-zinc-500"
 					placeholder={
 						value.length < maxTags
-							? "Add tags and press Enter"
-							: "Tag limit reached"
+							? messages.newPost.tagsPlaceholder
+							: messages.newPost.tagsLimitReached
 					}
 				/>
 			</div>
 			<p className="text-sm text-zinc-500">
-				{maxTags - value.length} tag slots left. Use focused, searchable labels.
+				{messages.newPost.tagSlotsLeft(maxTags - value.length)}
 			</p>
 		</div>
 	);

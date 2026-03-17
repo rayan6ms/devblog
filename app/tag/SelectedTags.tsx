@@ -1,3 +1,5 @@
+import { useI18n } from "@/components/LocaleProvider";
+
 interface SelectedTag {
 	label: string;
 	slug: string;
@@ -16,23 +18,24 @@ export default function SelectedTags({
 	onRemoveTag,
 	onReset,
 }: SelectedTagsProps) {
+	const { messages } = useI18n();
 	const hasTags = tags.length > 0;
 	const title = hasTags
-		? `${resultsCount} ${resultsCount === 1 ? "post" : "posts"} matching ${tags.length} ${tags.length === 1 ? "tag" : "tags"}`
-		: `Showing all ${resultsCount} ${resultsCount === 1 ? "post" : "posts"}`;
+		? messages.tag.resultsSummary(resultsCount, tags.length)
+		: messages.tag.showingAll(resultsCount);
 
 	return (
 		<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-						Results
+						{messages.common.results}
 					</p>
 					<h2 className="mt-2 text-2xl font-semibold text-wheat">{title}</h2>
 					<p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
 						{hasTags
-							? "Remove a tag to broaden the results or keep combining related topics to stay focused."
-							: "Use the quick picks, marquee rows, or the filter panel to drill into a specific theme."}
+							? messages.tag.resultsDescription
+							: messages.tag.resultsDescriptionEmpty}
 					</p>
 				</div>
 				{hasTags && (
@@ -41,7 +44,7 @@ export default function SelectedTags({
 						className="inline-flex items-center rounded-full border border-zinc-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-300 transition-colors hover:border-zinc-400 hover:text-wheat"
 						onClick={onReset}
 					>
-						Reset all
+						{messages.tag.resetAll}
 					</button>
 				)}
 			</div>
@@ -58,7 +61,7 @@ export default function SelectedTags({
 								type="button"
 								className="rounded-full bg-darkBg px-1.5 py-0.5 text-xs text-zinc-400 transition-colors hover:text-wheat"
 								onClick={() => onRemoveTag(tag.slug)}
-								aria-label={`Remove ${tag.label}`}
+								aria-label={messages.tag.removeTag(tag.label)}
 							>
 								✕
 							</button>
@@ -66,7 +69,7 @@ export default function SelectedTags({
 					))
 				) : (
 					<p className="rounded-2xl border border-dashed border-zinc-700/60 bg-greyBg/60 px-4 py-3 text-sm text-zinc-500">
-						No active tag filters.
+						{messages.tag.noActiveFilters}
 					</p>
 				)}
 			</div>

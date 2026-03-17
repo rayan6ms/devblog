@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
 import Footer from "@/components/Footer";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { emitClientAuthChange } from "@/components/useClientAuth";
 import type { ProfileAvatarMode, ProfileUser } from "@/profile/types";
 import Comments from "../Comments";
@@ -32,7 +34,7 @@ function MetaCard({
 }: {
 	label: string;
 	value?: string | null;
-	children?: React.ReactNode;
+	children?: ReactNode;
 }) {
 	return (
 		<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
@@ -45,12 +47,13 @@ function MetaCard({
 }
 
 export default function Profile() {
+	const { messages } = useI18n();
 	const [user, setUser] = useState<ProfileUser | null>(null);
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const params = useParams<{ id: string }>();
-	const router = useRouter();
+	const { replace } = useLocaleNavigation();
 	const profileId = params.id;
 
 	useEffect(() => {
@@ -71,11 +74,11 @@ export default function Profile() {
 
 				if (!response.ok) {
 					if (response.status === 401) {
-						setError("Please login to access your profile.");
+						setError(messages.profile.loadLoginRequired);
 					} else if (response.status === 404) {
-						setError("This profile could not be found.");
+						setError(messages.profile.loadNotFound);
 					} else {
-						setError("Unable to load this profile right now.");
+						setError(messages.profile.loadError);
 					}
 					setUser(null);
 					return;
@@ -87,7 +90,7 @@ export default function Profile() {
 				}
 			} catch {
 				if (!cancelled) {
-					setError("Unable to load this profile right now.");
+					setError(messages.profile.loadError);
 					setUser(null);
 				}
 			} finally {
@@ -102,7 +105,7 @@ export default function Profile() {
 		return () => {
 			cancelled = true;
 		};
-	}, [profileId]);
+	}, [messages.profile.loadError, messages.profile.loadLoginRequired, messages.profile.loadNotFound, profileId]);
 
 	async function handleSaveProfile(updated: ProfileUpdatePayload) {
 		const response = await fetch("/api/user", {
@@ -120,7 +123,9 @@ export default function Profile() {
 						fields?: Record<string, string>;
 				  }
 				| null;
-			const error = new Error(result?.error || "Unable to save profile.") as Error & {
+			const error = new Error(
+				result?.error || messages.profile.saveError,
+			) as Error & {
 				fieldErrors?: Record<string, string>;
 			};
 			error.fieldErrors = result?.fields;
@@ -132,7 +137,7 @@ export default function Profile() {
 		emitClientAuthChange();
 
 		if (profileId !== "me" && profileId !== nextUser.slug) {
-			router.replace(`/profile/${nextUser.slug}`);
+			replace(`/profile/${nextUser.slug}`);
 		}
 	}
 
@@ -143,27 +148,27 @@ export default function Profile() {
 					{isLoading ? (
 						<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-16 text-center shadow-xl shadow-zinc-950/20 sm:px-8">
 							<p className="text-sm uppercase tracking-[0.22em] text-zinc-500">
-								Loading profile
+								{messages.common.loadingProfile}
 							</p>
 							<h1 className="mt-4 text-3xl font-somerton uppercase text-wheat">
-								Preparing the page
+								{messages.common.preparingPage}
 							</h1>
 						</div>
 					) : error || !user ? (
 						<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-16 text-center shadow-xl shadow-zinc-950/20 sm:px-8">
 							<p className="text-sm uppercase tracking-[0.22em] text-zinc-500">
-								Profile unavailable
+								{messages.profile.unavailable}
 							</p>
 							<h1 className="mt-4 text-3xl font-somerton uppercase text-wheat">
-								{error || "Unable to load this profile."}
+								{error || messages.profile.loadError}
 							</h1>
 							{profileId === "me" ? (
-								<Link
+								<LocalizedLink
 									href="/login"
 									className="mt-6 inline-flex rounded-full border border-zinc-600/60 bg-greyBg/75 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 								>
-									Go to login
-								</Link>
+									{messages.profile.goToLogin}
+								</LocalizedLink>
 							) : null}
 						</div>
 					) : (
@@ -172,21 +177,19 @@ export default function Profile() {
 								<div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
 									<div className="max-w-3xl">
 										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											Profile overview
+											{messages.profile.overview}
 										</p>
 										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-											{user.isCurrentUser ? "Your profile" : user.name}
+											{user.isCurrentUser ? messages.profile.yourProfile : user.name}
 										</h1>
 										<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-											Real account data is now backed by the database, including
-											role, connected providers, persisted profile fields, and live
-											activity counts.
+											{messages.profile.description}
 										</p>
 									</div>
 									<div className="grid gap-3 sm:grid-cols-3">
-										<MetaCard label="Bookmarks" value={`${user.stats.bookmarks}`} />
-										<MetaCard label="Viewed posts" value={`${user.stats.views}`} />
-										<MetaCard label="Comments" value={`${user.stats.comments}`} />
+										<MetaCard label={messages.profile.bookmarks} value={`${user.stats.bookmarks}`} />
+										<MetaCard label={messages.profile.viewedPosts} value={`${user.stats.views}`} />
+										<MetaCard label={messages.profile.comments} value={`${user.stats.comments}`} />
 									</div>
 								</div>
 
@@ -201,19 +204,19 @@ export default function Profile() {
 									user.isCurrentUser ? "lg:grid-cols-4" : "lg:grid-cols-3"
 								}`}
 							>
-								<MetaCard label="Handle" value={`@${user.slug}`} />
+								<MetaCard label={messages.profile.handle} value={`@${user.slug}`} />
 								{user.isCurrentUser ? (
-									<MetaCard label="Email" value={user.email || "Not set"} />
+									<MetaCard label={messages.profile.email} value={user.email || messages.profile.notSet} />
 								) : (
-									<MetaCard label="Role" value={user.role} />
+									<MetaCard label={messages.profile.role} value={user.role} />
 								)}
 								{user.isCurrentUser ? (
 									<MetaCard
-										label="Password login"
-										value={user.hasPassword ? "Configured" : "Not set"}
+										label={messages.profile.passwordLogin}
+										value={user.hasPassword ? messages.profile.configured : messages.profile.notSet}
 									/>
 								) : null}
-								<MetaCard label="Connected accounts">
+								<MetaCard label={messages.profile.connectedAccounts}>
 									<div className="mt-2 flex flex-wrap gap-2">
 										{user.connectedAccounts.length > 0 ? (
 											user.connectedAccounts.map((account) => (
@@ -226,7 +229,7 @@ export default function Profile() {
 											))
 										) : (
 											<p className="mt-2 text-sm text-zinc-400">
-												Credentials only
+												{messages.profile.credentialsOnly}
 											</p>
 										)}
 									</div>
@@ -234,8 +237,16 @@ export default function Profile() {
 							</div>
 
 							<div className="grid gap-6 xl:grid-cols-2">
-								<Slider title="Bookmarks" items={user.bookmarks} />
-								<Slider title="Viewed Posts" items={user.viewedPosts} />
+								<Slider
+									title={messages.profile.bookmarks}
+									iconKey="bookmarks"
+									items={user.bookmarks}
+								/>
+								<Slider
+									title={messages.profile.viewedPosts}
+									iconKey="viewedPosts"
+									items={user.viewedPosts}
+								/>
 							</div>
 
 							<Comments comments={user.comments} />

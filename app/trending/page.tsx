@@ -2,11 +2,13 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAuthorHref,
 	getPostHref,
@@ -16,12 +18,6 @@ import {
 import Skeleton from "./Skeleton";
 
 const Accordion = dynamic(() => import("@/trending/Accordion"), { ssr: false });
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-	month: "short",
-	day: "numeric",
-	year: "numeric",
-});
 
 function formatViews(views: number) {
 	return views >= 1000 ? `${(views / 1000).toFixed(1)}k` : `${views}`;
@@ -46,8 +42,9 @@ function TopicPill({
 	label: string;
 	count: number;
 }) {
+	const { messages } = useI18n();
 	return (
-		<Link
+		<LocalizedLink
 			href={`/tag?selected=${normalizeTag(label)}`}
 			className="flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-greyBg/80 px-4 py-3 text-sm text-zinc-300 font-semibold transition-colors hover:border-zinc-500 hover:text-wheat"
 		>
@@ -55,7 +52,7 @@ function TopicPill({
 			<span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-darkBg/70 px-2.5 text-xs text-zinc-400">
 				{count}
 			</span>
-		</Link>
+		</LocalizedLink>
 	);
 }
 
@@ -66,7 +63,17 @@ function RankedPostRow({
 	post: IPost;
 	index: number;
 }) {
+	const { locale } = useI18n();
 	const postHref = getPostHref(post);
+	const dateFormatter = useMemo(
+		() =>
+			new Intl.DateTimeFormat(getIntlLocale(locale), {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			}),
+		[locale],
+	);
 
 	return (
 		<article className="grid gap-4 rounded-[24px] border border-zinc-700/50 bg-greyBg/85 p-4 shadow-lg shadow-zinc-950/10 sm:grid-cols-[auto_112px_1fr] sm:items-center">
@@ -75,16 +82,16 @@ function RankedPostRow({
 					{index + 1}
 				</span>
 				<div className="sm:hidden">
-					<Link
+					<LocalizedLink
 						href={`/tag?selected=${normalizeTag(post.mainTag)}`}
 						className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
 					>
 						{post.mainTag}
-					</Link>
+					</LocalizedLink>
 				</div>
 			</div>
 
-			<Link
+			<LocalizedLink
 				href={postHref}
 				className="relative block aspect-[7/5] overflow-hidden rounded-2xl"
 			>
@@ -95,39 +102,39 @@ function RankedPostRow({
 					className="object-cover transition-transform duration-700 hover:scale-105"
 					sizes="112px"
 				/>
-			</Link>
+			</LocalizedLink>
 
 			<div className="min-w-0">
 				<div className="hidden sm:flex sm:items-center sm:justify-between sm:gap-3">
-					<Link
+					<LocalizedLink
 						href={`/tag?selected=${normalizeTag(post.mainTag)}`}
 						className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
 					>
 						{post.mainTag}
-					</Link>
+					</LocalizedLink>
 					<span className="flex items-center gap-1 text-sm text-zinc-400">
 						<FaEye />
 						{formatViews(post.views)}
 					</span>
 				</div>
 
-				<Link href={postHref} className="mt-2 block">
+				<LocalizedLink href={postHref} className="mt-2 block">
 					<h3 className="line-clamp-2 text-lg font-semibold text-wheat transition-colors hover:text-zinc-100">
 						{post.title}
 					</h3>
-				</Link>
+				</LocalizedLink>
 
 				<p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">
 					{post.description}
 				</p>
 
 				<div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-					<Link
+					<LocalizedLink
 						href={getAuthorHref(post)}
 						className="transition-colors hover:text-wheat"
 					>
 						{post.author}
-					</Link>
+					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
 					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
 					<span className="flex items-center gap-1 sm:hidden">
@@ -141,11 +148,24 @@ function RankedPostRow({
 }
 
 function SpotlightPostCard({ post }: { post: IPost }) {
+	const { locale } = useI18n();
 	const postHref = getPostHref(post);
+	const dateFormatter = useMemo(
+		() =>
+			new Intl.DateTimeFormat(getIntlLocale(locale), {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			}),
+		[locale],
+	);
 
 	return (
 		<article className="overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20">
-			<Link href={postHref} className="relative block aspect-[16/10] overflow-hidden">
+			<LocalizedLink
+				href={postHref}
+				className="relative block aspect-[16/10] overflow-hidden"
+			>
 				<Image
 					fill
 					src={post.image}
@@ -153,35 +173,35 @@ function SpotlightPostCard({ post }: { post: IPost }) {
 					className="object-cover transition-transform duration-700 hover:scale-105"
 					sizes="(max-width: 1024px) 100vw, 50vw"
 				/>
-			</Link>
+			</LocalizedLink>
 			<div className="p-5">
 				<div className="flex items-center justify-between gap-3">
-					<Link
+					<LocalizedLink
 						href={`/tag?selected=${normalizeTag(post.mainTag)}`}
 						className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
 					>
 						{post.mainTag}
-					</Link>
+					</LocalizedLink>
 					<span className="flex items-center gap-1 text-sm text-zinc-400">
 						<FaEye />
 						{formatViews(post.views)}
 					</span>
 				</div>
-				<Link href={postHref} className="mt-3 block">
+				<LocalizedLink href={postHref} className="mt-3 block">
 					<h3 className="line-clamp-2 text-xl font-semibold text-wheat transition-colors hover:text-zinc-100">
 						{post.title}
 					</h3>
-				</Link>
+				</LocalizedLink>
 				<p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-400">
 					{post.description}
 				</p>
 				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-					<Link
+					<LocalizedLink
 						href={getAuthorHref(post)}
 						className="transition-colors hover:text-wheat"
 					>
 						{post.author}
-					</Link>
+					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
 					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
 				</div>
@@ -191,6 +211,7 @@ function SpotlightPostCard({ post }: { post: IPost }) {
 }
 
 export default function TrendingPage() {
+	const { messages } = useI18n();
 	const [loading, setLoading] = useState(true);
 	const [posts, setPosts] = useState<IPost[]>([]);
 
@@ -247,22 +268,20 @@ export default function TrendingPage() {
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Trending now
+										{messages.trending.eyebrow}
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										What readers are paying attention to
+										{messages.trending.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										The accordion stays as the page signature, but the rest of
-										the page now supports it: ranked posts, visible topic signals,
-										and clearer reasons for why a post is near the top.
+										{messages.trending.description}
 									</p>
 								</div>
 
 								<div className="grid gap-3 sm:grid-cols-3">
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Tracked posts
+											{messages.trending.trackedPosts}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{posts.length}
@@ -270,7 +289,7 @@ export default function TrendingPage() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Top post
+											{messages.trending.topPost}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{leadingPost ? formatViews(leadingPost.views) : "0"}
@@ -278,7 +297,7 @@ export default function TrendingPage() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Total views
+											{messages.trending.totalViews}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{formatViews(totalViews)}
@@ -293,8 +312,7 @@ export default function TrendingPage() {
 								<Accordion posts={accordionPosts} />
 							) : (
 								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
-									No trending posts are available yet. This section will populate
-									once published posts start collecting views.
+									{messages.trending.noTrending}
 								</div>
 							)}
 						</div>
@@ -305,15 +323,13 @@ export default function TrendingPage() {
 					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
 						<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
 							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								Trend signals
+								{messages.trending.trendSignals}
 							</p>
 							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-								Topic radar
+								{messages.trending.topicRadar}
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">
-								Main topics with the strongest presence in the current trending
-								stack. Use them to branch into related posts without losing the
-								context of what is hot right now.
+								{messages.trending.topicRadarDescription}
 							</p>
 
 							{topTopics.length > 0 ? (
@@ -328,31 +344,34 @@ export default function TrendingPage() {
 								</div>
 							) : (
 								<p className="mt-6 text-sm text-zinc-500">
-									Topic signals will appear here after posts are published.
+									{messages.trending.topicSignalsLater}
 								</p>
 							)}
 
 							{leadingPost ? (
 								<div className="mt-6 rounded-2xl border border-zinc-700/50 bg-greyBg/75 p-4">
 									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-										Leading post
+										{messages.trending.leadingPost}
 									</p>
-									<Link
+									<LocalizedLink
 										href={getPostHref(leadingPost)}
 										className="mt-3 block text-lg font-semibold text-wheat transition-colors hover:text-zinc-100"
 									>
 										{leadingPost.title}
-									</Link>
+									</LocalizedLink>
 									<div className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
 										<span>{leadingPost.author}</span>
 										<span className="h-1 w-1 rounded-full bg-zinc-700" />
-										<span>{formatViews(leadingPost.views)} views</span>
+										<span>
+											{messages.trending.viewsSuffix(
+												formatViews(leadingPost.views),
+											)}
+										</span>
 									</div>
 								</div>
 							) : (
 								<div className="mt-6 rounded-2xl border border-dashed border-zinc-700/60 bg-greyBg/55 p-4 text-sm leading-7 text-zinc-400">
-									No trending leader yet. Publish posts and accumulate views to
-									build this ranking.
+									{messages.trending.leadingPostEmpty}
 								</div>
 							)}
 						</aside>
@@ -362,14 +381,13 @@ export default function TrendingPage() {
 								<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 									<div>
 										<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-											Ranking
+											{messages.trending.ranking}
 										</p>
 										<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-											Top posts by momentum
+											{messages.trending.topMomentum}
 										</h2>
 										<p className="mt-2 text-sm leading-6 text-zinc-400">
-											The most-read posts right now, ordered by views so the list
-											actually reflects a trend instead of a random sample.
+											{messages.trending.topMomentumDescription}
 										</p>
 									</div>
 								</div>
@@ -386,7 +404,7 @@ export default function TrendingPage() {
 									</div>
 								) : (
 									<div className="mt-6 rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
-										No trending posts are available yet.
+										{messages.trending.noTrending}
 									</div>
 								)}
 							</section>
@@ -394,14 +412,13 @@ export default function TrendingPage() {
 							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
 								<div>
 									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										More to watch
+										{messages.trending.moreToWatch}
 									</p>
 									<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-										Rising posts
+										{messages.trending.risingPosts}
 									</h2>
 									<p className="mt-2 text-sm leading-6 text-zinc-400">
-										Posts just below the top tier that still deserve a clear,
-										readable presentation instead of another dense list.
+										{messages.trending.risingPostsDescription}
 									</p>
 								</div>
 
@@ -413,7 +430,7 @@ export default function TrendingPage() {
 									</div>
 								) : (
 									<div className="mt-6 rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
-										There are not enough posts yet for a secondary spotlight list.
+										{messages.trending.notEnoughPosts}
 									</div>
 								)}
 							</section>

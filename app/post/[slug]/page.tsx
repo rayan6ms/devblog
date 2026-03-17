@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
+import LocalizedLink from "@/components/LocalizedLink";
 import { auth } from "@/lib/auth";
+import { getMessages } from "@/lib/i18n";
 import { canViewPost, slugifyPostValue } from "@/lib/post-shared";
+import { getRequestLocale } from "@/lib/request-locale";
 import {
 	getPostBySlugWithAuthor,
 	getRelatedPosts,
@@ -18,6 +20,8 @@ type PostPageProps = PageProps<"/post/[slug]">;
 
 export default async function Page({ params }: PostPageProps) {
 	const { slug } = await params;
+	const locale = await getRequestLocale();
+	const messages = getMessages(locale);
 	const session = await auth();
 	const postRecord = await getPostBySlugWithAuthor(slug);
 
@@ -56,10 +60,10 @@ export default async function Page({ params }: PostPageProps) {
 								{relatedPosts.length > 0 ? (
 									<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/85 p-5 shadow-lg shadow-zinc-950/10">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Related reading
+											{messages.post.relatedReading}
 										</p>
 										<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
-											More from this lane
+											{messages.post.moreFromThisLane}
 										</h2>
 
 										<div className="mt-5 grid gap-4">
@@ -68,7 +72,7 @@ export default async function Page({ params }: PostPageProps) {
 													key={item.id}
 													className="overflow-hidden rounded-[24px] border border-zinc-700/50 bg-darkBg/45"
 												>
-													<Link
+													<LocalizedLink
 														href={`/post/${item.slug}`}
 														className="block overflow-hidden"
 													>
@@ -79,20 +83,20 @@ export default async function Page({ params }: PostPageProps) {
 																className="aspect-[16/10] w-full object-cover transition-transform duration-700 hover:scale-105"
 															/>
 														) : null}
-													</Link>
+													</LocalizedLink>
 													<div className="p-4">
-														<Link
+														<LocalizedLink
 															href={`/tag?selected=${slugifyPostValue(item.mainTag)}`}
 															className="text-xs uppercase tracking-[0.16em] text-zinc-500 transition-colors hover:text-wheat"
 														>
 															{item.mainTag}
-														</Link>
-														<Link
+														</LocalizedLink>
+														<LocalizedLink
 															href={`/post/${item.slug}`}
 															className="mt-3 block text-lg font-semibold leading-7 text-wheat transition-colors hover:text-zinc-100"
 														>
 															{item.title}
-														</Link>
+														</LocalizedLink>
 														<p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-400">
 															{item.description}
 														</p>

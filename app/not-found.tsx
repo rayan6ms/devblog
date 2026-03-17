@@ -1,13 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
 
 const PhaserBackground = dynamic(() => import("@/PhaserBackground"), {
 	ssr: false,
 });
 
 export default function NotFound() {
+	const { messages } = useI18n();
+
 	return (
 		<>
 			<div className="fixed top-0 left-0 w-full h-full z-0">
@@ -23,14 +26,14 @@ export default function NotFound() {
 					</h2>
 				</div>
 				<p className="text-center sm:text-lg md:text-xl mt-5 z-10">
-					A página que você está procurando não foi encontrada.
+					{messages.notFound.description}
 				</p>
-				<Link
+				<LocalizedLink
 					href="/"
 					className="mt-5 px-4 py-2 bg-blue-500 text-zinc-200 rounded hover:bg-blue-700 transition duration-200 z-10"
 				>
-					Voltar para a Página Inicial
-				</Link>
+					{messages.notFound.backHome}
+				</LocalizedLink>
 			</div>
 		</>
 	);

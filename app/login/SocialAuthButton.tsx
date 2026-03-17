@@ -1,5 +1,8 @@
+"use client";
+
 import { signIn } from "next-auth/react";
 import type { IconType } from "react-icons";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 
 type SocialAuthButtonProps = {
 	provider: string;
@@ -16,10 +19,12 @@ export default function SocialAuthButton({
 	hoverBgColor,
 	callbackUrl = "/profile/me",
 }: SocialAuthButtonProps) {
+	const { localizeHref } = useLocaleNavigation();
+
 	return (
 		<button
 			type="button"
-			onClick={() => signIn(provider, { callbackUrl })}
+			onClick={() => signIn(provider, { callbackUrl: localizeHref(callbackUrl) })}
 			className={`flex h-12 w-full items-center justify-center rounded-2xl shadow-md ${bgColor} ${hoverBgColor} text-white transition-colors duration-300`}
 		>
 			<Icon />

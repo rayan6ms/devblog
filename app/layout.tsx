@@ -1,9 +1,12 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
+import type { ReactNode } from "react";
 import AuthProvider from "@/components/AuthProvider";
 import Header from "@/components/Header";
+import LocaleProvider from "@/components/LocaleProvider";
 import NavBar from "@/components/NavBar";
 import { auth } from "@/lib/auth";
+import { getRequestLocale } from "@/lib/request-locale";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,12 +18,13 @@ export const metadata = {
 export default async function RootLayout({
 	children,
 }: {
-	children: React.ReactNode;
+	children: ReactNode;
 }) {
 	const session = await auth();
+	const locale = await getRequestLocale();
 
 	return (
-		<html lang="pt-BR">
+		<html lang={locale}>
 			<head>
 				<link
 					href="https://fonts.cdnfonts.com/css/somerton-dense"
@@ -32,11 +36,13 @@ export default async function RootLayout({
 				/>
 			</head>
 			<body className={inter.className}>
-				<AuthProvider session={session}>
-					<Header />
-					<NavBar />
-					{children}
-				</AuthProvider>
+				<LocaleProvider initialLocale={locale}>
+					<AuthProvider session={session}>
+						<Header />
+						<NavBar />
+						{children}
+					</AuthProvider>
+				</LocaleProvider>
 			</body>
 		</html>
 	);

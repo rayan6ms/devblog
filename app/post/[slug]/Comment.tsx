@@ -1,11 +1,11 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import Image from "next/image";
-import Link from "next/link";
 import { FaChevronDown, FaChevronUp, FaFlag } from "react-icons/fa6";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useI18n } from "@/components/LocaleProvider";
+import { getIntlLocale } from "@/lib/i18n";
 
 interface CommentProps {
 	id: number;
@@ -32,14 +32,21 @@ export default function Comment({
 	onVote,
 	onFlag,
 }: CommentProps) {
+	const { locale, messages } = useI18n();
 	const formattedDate = (d: string) =>
-		format(parseISO(d), "dd MMM yyyy", { locale: ptBR }).replace(
-			/ (\w)/,
-			(_m, p1) => ` ${p1.toUpperCase()}`,
-		);
+		new Date(d).toLocaleDateString(getIntlLocale(locale), {
+			day: "2-digit",
+			month: "short",
+			year: "numeric",
+		});
 
 	const fullFormattedDate = (d: string) =>
-		format(parseISO(d), "EEEE, dd MMMM yyyy", { locale: ptBR });
+		new Date(d).toLocaleDateString(getIntlLocale(locale), {
+			weekday: "long",
+			day: "2-digit",
+			month: "long",
+			year: "numeric",
+		});
 
 	function formattedAuthor(a: string) {
 		const result = a.length > 20 ? `${a.slice(0, 20)}...` : a;
@@ -51,18 +58,18 @@ export default function Comment({
 	return (
 		<div className="flex mt-7 items-start">
 			<div className="flex flex-col mr-3">
-				<Link
+				<LocalizedLink
 					href={`/profile/${slugify(author, { lower: true, strict: true })}`}
 				>
 					<Image
 						className="w-10 h-10 object-cover rounded-full"
 						src={avatar}
-						alt={`Avatar de ${author}`}
-						title={`Avatar de ${author}`}
+						alt={author}
+						title={author}
 						width={40}
 						height={40}
 					/>
-				</Link>
+				</LocalizedLink>
 				<div className="flex flex-col items-center mt-2">
 					<button
 						type="button"
@@ -85,16 +92,16 @@ export default function Comment({
 			<div className="flex flex-col w-full h-full px-4">
 				<div className="flex justify-between items-center mb-2">
 					<div>
-						<Link
+						<LocalizedLink
 							href={`/profile/${slugify(author, { lower: true, strict: true })}`}
 							rel="author"
 							className="text-gray-100 font-bold text-lg hover:text-purpleContrast transition-all ease-in-out"
 						>
 							{formattedAuthor(author)}
-						</Link>
+						</LocalizedLink>
 						<p className="flex gap-1 font-europa text-zinc-300 text-sm">
 							<span title={capitalize(fullFormattedDate(date))}>
-								Postado <time dateTime={date}>{formattedDate(date)}</time>
+								{messages.post.postedOn(formattedDate(date))}
 							</span>
 						</p>
 					</div>
@@ -103,8 +110,8 @@ export default function Comment({
 						type="button"
 						onClick={() => onFlag(id)}
 						className="hover:text-purpleContrast transition-all ease-in-out"
-						aria-label="Reportar comentário"
-						title="Reportar comentário"
+						aria-label={messages.post.reportComment}
+						title={messages.post.reportComment}
 					>
 						<FaFlag />
 					</button>

@@ -1,4 +1,5 @@
 import { FaMagnifyingGlass } from "react-icons/fa6";
+import { useI18n } from "@/components/LocaleProvider";
 
 export interface TagOption {
 	count: number;
@@ -33,6 +34,8 @@ function TagGroup({
 	selectedTags,
 	onSelectTag,
 }: TagGroupProps) {
+	const { messages } = useI18n();
+
 	return (
 		<section>
 			<div className="mb-3">
@@ -68,7 +71,7 @@ function TagGroup({
 				</div>
 			) : (
 				<p className="rounded-xl border border-dashed border-zinc-700/60 bg-greyBg/60 px-3 py-4 text-sm text-zinc-500">
-					No tags match the current search.
+					{messages.tag.noTagsMatch}
 				</p>
 			)}
 		</section>
@@ -86,18 +89,19 @@ export default function Sidebar({
 	onReset,
 	onTagQueryChange,
 }: SidebarProps) {
+	const { messages } = useI18n();
+
 	return (
 		<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
 			<div className="border-b border-zinc-700/50 p-5">
 				<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-					Filter Posts
+					{messages.tag.filterPosts}
 				</p>
 				<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-					Find a topic
+					{messages.tag.findTopic}
 				</h2>
 				<p className="mt-2 text-sm leading-6 text-zinc-400">
-					Search tags, combine up to {maxSelectedTags}, and narrow the post grid
-					without leaving the page.
+					{messages.tag.filterDescription(maxSelectedTags)}
 				</p>
 				<label className="mt-4 flex items-center gap-3 rounded-2xl border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-zinc-400 focus-within:border-zinc-500 focus-within:text-zinc-300">
 					<FaMagnifyingGlass className="shrink-0 text-sm" />
@@ -105,7 +109,7 @@ export default function Sidebar({
 						type="text"
 						value={tagQuery}
 						onChange={(event) => onTagQueryChange(event.target.value)}
-						placeholder="Search tags"
+						placeholder={messages.tag.searchTags}
 						className="w-full bg-transparent text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none"
 					/>
 				</label>
@@ -114,15 +118,15 @@ export default function Sidebar({
 			<div className="space-y-6 p-5">
 				<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 p-4">
 					<div className="flex items-center justify-between text-sm text-zinc-400">
-						<span>Selected tags</span>
+						<span>{messages.tag.selectedTags}</span>
 						<span>
 							{selectedTags.length}/{maxSelectedTags}
 						</span>
 					</div>
 					<p className="mt-2 text-sm text-zinc-500">
 						{selectedTags.length > 0
-							? "Add another tag to refine further, or reset to broaden the results."
-							: "Start with a broad topic, then layer supporting tags if you need to focus the results."}
+							? messages.tag.selectedTagsHint
+							: messages.tag.selectedTagsEmpty}
 					</p>
 					{selectedTags.length > 0 && (
 						<button
@@ -130,7 +134,7 @@ export default function Sidebar({
 							className="mt-4 inline-flex items-center rounded-full border border-zinc-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-300 transition-colors hover:border-zinc-400 hover:text-wheat"
 							onClick={onReset}
 						>
-							Clear filters
+							{messages.tag.clearFilters}
 						</button>
 					)}
 				</div>
@@ -139,10 +143,10 @@ export default function Sidebar({
 					<section>
 						<div className="mb-3">
 							<h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300">
-								Quick picks
+								{messages.tag.quickPicks}
 							</h3>
 							<p className="mt-1 text-sm text-zinc-500">
-								Popular tags that open the page up fast.
+								{messages.tag.quickPicksDescription}
 							</p>
 						</div>
 						<div className="flex flex-wrap gap-2">
@@ -168,16 +172,16 @@ export default function Sidebar({
 				)}
 
 				<TagGroup
-					title="Main topics"
-					description="Primary categories that define the post."
+					title={messages.tag.mainTopics}
+					description={messages.tag.tagGroupMainDescription}
 					tags={mainTags}
 					selectedTags={selectedTags}
 					onSelectTag={onSelectTag}
 				/>
 
 				<TagGroup
-					title="Supporting tags"
-					description="Secondary details and related subjects."
+					title={messages.tag.supportingTags}
+					description={messages.tag.tagGroupOtherDescription}
 					tags={otherTags}
 					selectedTags={selectedTags}
 					onSelectTag={onSelectTag}

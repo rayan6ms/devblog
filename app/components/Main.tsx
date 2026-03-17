@@ -1,5 +1,8 @@
+"use client";
+
 import { FaAnglesDown } from "react-icons/fa6";
 import type { IPost } from "@/lib/posts-client";
+import { useI18n } from "./LocaleProvider";
 import RecentItem from "./RecentItem";
 import RecommendedItem from "./RecommendedItem";
 
@@ -11,6 +14,7 @@ interface MainProps {
 }
 
 export default function Main({ posts }: MainProps) {
+	const { messages } = useI18n();
 	const recentHighlights = posts.recent.slice(0, 2);
 	const featuredRecent = posts.recent[2];
 	const recommendedPosts = posts.recommended.slice(0, 4);
@@ -49,10 +53,10 @@ export default function Main({ posts }: MainProps) {
 					<div className="h-fit rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-4 shadow-lg shadow-zinc-950/10 lg:p-5">
 						<div className="mb-6">
 							<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-								Recommended
+								{messages.home.recommended}
 							</p>
 							<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
-								Editor picks
+								{messages.home.editorPicks}
 							</h2>
 						</div>
 						{recommendedPosts.length > 0 ? (
@@ -63,16 +67,14 @@ export default function Main({ posts }: MainProps) {
 							</div>
 						) : (
 							<div className="rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/40 px-4 py-6 text-sm leading-7 text-zinc-400">
-								No recommended posts yet. Publish a few entries and this section
-								will fill itself from the live database.
+								{messages.home.noRecommended}
 							</div>
 						)}
 					</div>
 				</div>
 				{recentHighlights.length === 0 && !featuredRecent && recommendedPosts.length === 0 ? (
 					<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400 xl:col-span-2 xxl:col-span-3">
-						No posts are published yet. The homepage is connected to Prisma now, so
-						sections will populate as soon as real posts exist.
+						{messages.home.noPosts}
 					</div>
 				) : null}
 			</main>
@@ -81,7 +83,7 @@ export default function Main({ posts }: MainProps) {
 				<button
 					type="button"
 					onClick={handleScrollDown}
-					aria-label="Scroll to trending posts"
+					aria-label={messages.home.scrollToTrending}
 				>
 					<FaAnglesDown className="animate-bounce w-6 h-6 mx-4 text-zinc-300/80" />
 				</button>

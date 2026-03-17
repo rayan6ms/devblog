@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getProviders, signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -15,9 +14,11 @@ import {
 } from "react-icons/fa6";
 import PhaserBackground from "@/PhaserBackground";
 import { emitClientAuthChange } from "@/components/useClientAuth";
+import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import {
+	createRegisterFormSchema,
 	type RegisterFormValues,
-	registerFormSchema,
 } from "@/lib/validation/auth";
 import SocialAuthButton from "../login/SocialAuthButton";
 
@@ -37,11 +38,16 @@ const SOCIAL_AUTH_OPTIONS = [
 ] as const;
 
 export default function RegisterForm() {
+	const { messages } = useI18n();
 	const [showPassword, setShowPassword] = useState(false);
 	const [submissionError, setSubmissionError] = useState("");
 	const [providerIds, setProviderIds] = useState<string[]>([]);
-	const router = useRouter();
+	const { push, replace, localizeHref } = useLocaleNavigation();
 	const { status } = useSession();
+	const registerFormSchema = useMemo(
+		() => createRegisterFormSchema(messages.authValidation),
+		[messages.authValidation],
+	);
 	const {
 		register,
 		handleSubmit,
@@ -59,9 +65,9 @@ export default function RegisterForm() {
 
 	useEffect(() => {
 		if (status === "authenticated") {
-			router.replace("/profile/me");
+			replace("/profile/me");
 		}
-	}, [router, status]);
+	}, [replace, status]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -126,7 +132,9 @@ export default function RegisterForm() {
 					}
 				}
 
-				setSubmissionError(result?.error || "Unable to create account.");
+				setSubmissionError(
+					result?.error || messages.register.unableToCreateShort,
+				);
 				return;
 			}
 
@@ -134,21 +142,20 @@ export default function RegisterForm() {
 				email: values.email,
 				password: values.password,
 				redirect: false,
-				callbackUrl: "/profile/me",
+				callbackUrl: localizeHref("/profile/me"),
 			});
 
 			if (signInResult?.error) {
-				setSubmissionError("Account created, but automatic login failed.");
-				router.push("/login");
+				setSubmissionError(messages.register.accountCreatedLoginFailed);
+				push("/login");
 				return;
 			}
 
 			emitClientAuthChange();
-			router.push(signInResult?.url || "/profile/me");
-			router.refresh();
+			push(signInResult?.url || "/profile/me");
 		} catch (submissionError) {
 			console.error(submissionError);
-			setSubmissionError("Unable to create account right now.");
+			setSubmissionError(messages.register.unableToCreate);
 		}
 	}
 
@@ -166,10 +173,10 @@ export default function RegisterForm() {
 				>
 					<div className="mb-6 text-center">
 						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-							Create access
+							{messages.register.eyebrow}
 						</p>
 						<h1 className="mt-3 text-3xl font-somerton uppercase text-wheat">
-							Register
+							{messages.register.title}
 						</h1>
 					</div>
 
@@ -179,7 +186,7 @@ export default function RegisterForm() {
 								htmlFor="name"
 								className="mb-2 block text-sm text-zinc-300"
 							>
-								Name
+								{messages.register.name}
 							</label>
 							<input
 								type="text"
@@ -200,7 +207,7 @@ export default function RegisterForm() {
 								htmlFor="email"
 								className="mb-2 block text-sm text-zinc-300"
 							>
-								Email
+								{messages.register.email}
 							</label>
 							<input
 								type="email"
@@ -221,7 +228,7 @@ export default function RegisterForm() {
 								htmlFor="password"
 								className="mb-2 block text-sm text-zinc-300"
 							>
-								Password
+								{messages.register.password}
 							</label>
 							<div className="relative flex items-center rounded-xl border border-zinc-500/45 bg-darkBg/75">
 								<input
@@ -235,7 +242,11 @@ export default function RegisterForm() {
 									type="button"
 									onClick={() => setShowPassword((value) => !value)}
 									className="absolute right-3 text-zinc-400 transition-colors hover:text-zinc-200"
-									aria-label={showPassword ? "Hide password" : "Show password"}
+									aria-label={
+										showPassword
+											? messages.register.hidePassword
+											: messages.register.showPassword
+									}
 								>
 									{showPassword ? <FaEye /> : <FaEyeSlash />}
 								</button>
@@ -252,7 +263,7 @@ export default function RegisterForm() {
 								htmlFor="confirm-password"
 								className="mb-2 block text-sm text-zinc-300"
 							>
-								Confirm password
+								{messages.register.confirmPassword}
 							</label>
 							<input
 								type={showPassword ? "text" : "password"}
@@ -298,16 +309,16 @@ export default function RegisterForm() {
 							) : (
 								<FaArrowRight className="text-lg" />
 							)}
-							Create account
+							{messages.register.createAccount}
 						</button>
 						<p className="text-center text-sm text-zinc-300">
-							Already have an account?
+							{messages.register.haveAccount}
 							<button
 								type="button"
 								className="ml-1 underline underline-offset-4 transition-colors hover:text-wheat"
-								onClick={() => router.push("/login")}
+								onClick={() => push("/login")}
 							>
-								Login
+								{messages.register.login}
 							</button>
 						</p>
 					</div>

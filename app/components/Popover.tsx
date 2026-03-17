@@ -9,6 +9,7 @@ import {
 	FaThumbsDown,
 	FaThumbsUp,
 } from "react-icons/fa6";
+import { useI18n } from "./LocaleProvider";
 
 type PopoverProps = {
 	iconSize?: "lg" | "xl" | number;
@@ -19,6 +20,7 @@ export default function Popover({
 	iconSize,
 	hoverBg = "greyBg",
 }: PopoverProps) {
+	const { messages } = useI18n();
 	const [isOpen, setIsOpen] = useState(false);
 	const ref = useRef<HTMLDivElement>(null);
 	const menuId = useId();
@@ -75,22 +77,22 @@ export default function Popover({
 	}[] = [
 		{
 			icon: FaBookmark,
-			text: "Salvar nos Bookmarks",
+			text: messages.popover.save,
 			onClick: handleBookmark,
 		},
 		{
 			icon: FaShareNodes,
-			text: "Compartilhar",
+			text: messages.popover.share,
 			onClick: handleShare,
 		},
 		{
 			icon: FaThumbsUp,
-			text: "Mais posts como este",
+			text: messages.popover.moreLikeThis,
 			onClick: handleShowMore,
 		},
 		{
 			icon: FaThumbsDown,
-			text: "Menos posts como este",
+			text: messages.popover.lessLikeThis,
 			onClick: handleShowLess,
 		},
 	];
@@ -144,7 +146,7 @@ export default function Popover({
 					className="absolute right-0 z-20 mt-2 w-[15.5rem] origin-top-right overflow-hidden rounded-[20px] border border-zinc-700/70 bg-lessDarkBg/95 shadow-2xl shadow-black/35 backdrop-blur-xl"
 					role="menu"
 					aria-orientation="vertical"
-					aria-label="Post actions"
+					aria-label={messages.popover.aria}
 				>
 					<div className="pointer-events-none absolute inset-0 overflow-hidden">
 						<div className="absolute -right-10 top-0 h-28 w-28 rounded-full bg-purpleContrast/12 blur-3xl" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useI18n } from "@/components/LocaleProvider";
 
 type ReportPayload = {
 	commentId: number;
@@ -34,11 +35,14 @@ export default function ReportCommentModal({
 	comment,
 	onSubmit,
 }: Props) {
+	const { messages } = useI18n();
+
 	if (!isOpen || !comment) return null;
 
 	return (
 		<ReportCommentModalBody
 			comment={comment}
+			messages={messages}
 			onClose={onClose}
 			onSubmit={onSubmit}
 		/>
@@ -49,8 +53,10 @@ function ReportCommentModalBody({
 	onClose,
 	comment,
 	onSubmit,
+	messages,
 }: Omit<Props, "isOpen"> & {
 	comment: NonNullable<Props["comment"]>;
+	messages: ReturnType<typeof useI18n>["messages"];
 }) {
 	const [reason, setReason] = useState<string>("");
 	const [details, setDetails] = useState("");
@@ -71,7 +77,7 @@ function ReportCommentModalBody({
 	function handleSubmit() {
 		if (!comment) return;
 		if (!valid) {
-			setError("Please complete all required fields.");
+			setError(messages.post.reportValidation);
 			return;
 		}
 		setSaving(true);
@@ -90,7 +96,7 @@ function ReportCommentModalBody({
 			<button
 				type="button"
 				className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-				aria-label="Close report comment modal"
+				aria-label={messages.common.close}
 				onClick={onClose}
 			/>
 			<div className="relative flex min-h-full items-start justify-center sm:items-center">
@@ -105,13 +111,13 @@ function ReportCommentModalBody({
 						id="report-comment-title"
 						className="text-lg font-semibold text-zinc-100"
 					>
-						Report comment
+						{messages.post.reportCommentTitle}
 					</h3>
 					<button
 						type="button"
 						className="text-zinc-300 hover:text-white"
 						onClick={onClose}
-						aria-label="Close"
+						aria-label={messages.common.close}
 					>
 						✕
 					</button>
@@ -120,11 +126,7 @@ function ReportCommentModalBody({
 				<div className="space-y-4 overflow-y-auto px-5 py-4">
 					<div className="bg-zinc-800/60 border border-zinc-600/40 rounded-md p-3">
 						<p className="text-sm text-zinc-300">
-							Reporting comment by{" "}
-							<span className="font-medium text-zinc-100">
-								{comment.author}
-							</span>
-							:
+							{messages.post.reportingCommentBy(comment.author)}
 						</p>
 						<p className="mt-2 text-sm text-zinc-400 line-clamp-3">
 							{comment.text}
@@ -136,7 +138,7 @@ function ReportCommentModalBody({
 							htmlFor="report-comment-reason"
 							className="block text-sm text-zinc-300 mb-1"
 						>
-							Reason
+							{messages.post.reason}
 						</label>
 						<select
 							id="report-comment-reason"
@@ -145,7 +147,7 @@ function ReportCommentModalBody({
 							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
 						>
 							<option value="" disabled>
-								Choose a reason…
+								{messages.post.chooseReason}
 							</option>
 							{REASONS.map((r) => (
 								<option key={r} value={r}>
@@ -160,10 +162,9 @@ function ReportCommentModalBody({
 							htmlFor="report-comment-details"
 							className="block text-sm text-zinc-300 mb-1"
 						>
-							Details{" "}
 							{reason === "Other"
-								? `(min ${MIN_DETAILS_IF_OTHER} chars)`
-								: "(optional)"}
+								? messages.post.detailsMin(MIN_DETAILS_IF_OTHER)
+								: messages.post.detailsOptional}
 						</label>
 						<textarea
 							id="report-comment-details"
@@ -174,8 +175,8 @@ function ReportCommentModalBody({
 							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
 							placeholder={
 								reason === "Other"
-									? "Describe the issue…"
-									: "Add context (optional)…"
+									? messages.post.describeIssue
+									: messages.post.addContext
 							}
 						/>
 						<div className="flex justify-end">
@@ -194,7 +195,7 @@ function ReportCommentModalBody({
 						onClick={onClose}
 						disabled={saving}
 					>
-						Cancel
+						{messages.common.cancel}
 					</button>
 					<button
 						type="button"
@@ -202,7 +203,7 @@ function ReportCommentModalBody({
 						onClick={handleSubmit}
 						disabled={saving || !valid}
 					>
-						{saving ? "Submitting…" : "Submit report"}
+						{saving ? messages.post.submitting : messages.post.submitReport}
 					</button>
 				</div>
 				</div>

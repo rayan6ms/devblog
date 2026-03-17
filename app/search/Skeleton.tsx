@@ -1,4 +1,9 @@
+"use client";
+
+import { useI18n } from "@/components/LocaleProvider";
+
 export default function SkeletonRecentPage() {
+	const { messages } = useI18n();
 	const skeletonItems = Array.from(
 		{ length: 24 },
 		(_, index) => `search-skeleton-post-${index + 1}`,
@@ -8,7 +13,7 @@ export default function SkeletonRecentPage() {
 		<div className="w-full flex flex-col items-center my-6">
 			<div className="xxl:w-[90%] w-full">
 				<div className="grid grid-cols-1 gap-5 px-2">
-					<h2 className="sr-only">Loading search results</h2>
+					<h2 className="sr-only">{messages.common.preparingPage}</h2>
 					<div className="ml-2 col-start-1 row-start-1 text-xl font-somerton uppercase bg-gray-300 h-8 w-40 rounded-md animate-pulse"></div>
 					<div className="col-start-1 row-start-2 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
 						{skeletonItems.map((itemKey) => (

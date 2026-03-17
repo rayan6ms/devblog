@@ -11,11 +11,13 @@ import {
 	getTrendingPosts,
 	type IPost,
 } from "@/lib/posts-client";
+import { useI18n } from "@/components/LocaleProvider";
 import SkeletonFirstSection from "./components/SkeletonFirstSection";
 import SkeletonMain from "./components/SkeletonMain";
 import SkeletonSecondSection from "./components/SkeletonSecondSection";
 
 export default function Home() {
+	const { messages } = useI18n();
 	const [recentPosts, setRecentPosts] = useState<IPost[]>([]);
 	const [trendingPosts, setTrendingPosts] = useState<IPost[]>([]);
 	const [recommendedPosts, setRecommendedPosts] = useState<IPost[]>([]);
@@ -109,22 +111,19 @@ export default function Home() {
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
 									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										Start here
+										{messages.home.startHere}
 									</p>
 									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										A personal dev blog with room to explore
+										{messages.home.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										DevBlog is where I publish development writing, opinions,
-										tutorials, and experiments. The front page highlights featured
-										reading, what is trending now, and quick ways to branch into
-										the rest of the blog.
+										{messages.home.description}
 									</p>
 								</div>
 								<div className="grid gap-3 sm:grid-cols-3">
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Featured posts
+											{messages.home.featuredPosts}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{Math.min(recentPosts.length, 3)}
@@ -132,7 +131,7 @@ export default function Home() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Trending picks
+											{messages.home.trendingPicks}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{Math.min(trendingPosts.length, 4)}
@@ -140,7 +139,7 @@ export default function Home() {
 									</div>
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Recommended
+											{messages.home.recommended}
 										</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{Math.min(recommendedPosts.length, 5)}
@@ -159,14 +158,13 @@ export default function Home() {
 					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
 						<div className="mb-6 max-w-3xl">
 							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								Trending snapshot
+								{messages.home.trendingSnapshot}
 							</p>
 							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-								What is getting attention now
+								{messages.home.trendingTitle}
 							</h2>
 							<p className="mt-3 text-sm leading-7 text-zinc-400">
-								A fast scan of the posts currently pulling readers in, kept in the
-								same place as before but with stronger section framing.
+								{messages.home.trendingDescription}
 							</p>
 						</div>
 						<FirstSection posts={trendingPosts} />
@@ -177,14 +175,13 @@ export default function Home() {
 					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
 						<div className="mb-6 max-w-3xl">
 							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								Explore further
+								{messages.home.exploreFurther}
 							</p>
 							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-								More ways into the blog
+								{messages.home.exploreTitle}
 							</h2>
 							<p className="mt-3 text-sm leading-7 text-zinc-400">
-								Use these sections to move between what is new, what is getting
-								attention, and the posts worth revisiting.
+								{messages.home.exploreDescription}
 							</p>
 						</div>
 						<SecondSection

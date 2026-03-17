@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import slugify from "slugify";
+import LocalizedLink from "@/components/LocalizedLink";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getPostHref, type IPost } from "@/lib/posts-client";
 import Popover from "./Popover";
 
@@ -20,7 +20,7 @@ export default function RecommendedItem({
 	const { image, imageAlt, mainTag, title } = post;
 
 	const tagId = slugify(mainTag, { lower: true, strict: true });
-	const router = useRouter();
+	const { push } = useLocaleNavigation();
 
 	function handleRouteButtonClick(
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -28,11 +28,11 @@ export default function RecommendedItem({
 	) {
 		e.preventDefault();
 		e.stopPropagation();
-		router.push(path);
+		push(path);
 	}
 
 	return (
-		<Link
+		<LocalizedLink
 			href={getPostHref(post)}
 			className={`group flex
         h-[92px] w-full
@@ -70,6 +70,6 @@ export default function RecommendedItem({
 					className="w-full h-full rounded-lg object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out"
 				/>
 			</div>
-		</Link>
+		</LocalizedLink>
 	);
 }
