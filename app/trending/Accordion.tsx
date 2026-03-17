@@ -67,21 +67,20 @@ export default function Accordion({ posts }: AccordionProps) {
 
 	const trackStyle = isMobile
 		? {
-				gridTemplateRows: visiblePosts
-					.map((_, index) => (index === activePanel ? "3.4fr" : "1fr"))
-					.join(" "),
-			}
+			gridTemplateRows: visiblePosts
+				.map((_, index) => (index === currentPanel ? "3.4fr" : "1fr"))
+				.join(" "),
+		}
 		: {
-				gridTemplateColumns: visiblePosts
-					.map((_, index) => (index === activePanel ? "3.4fr" : "1fr"))
-					.join(" "),
-			};
+			gridTemplateColumns: visiblePosts
+				.map((_, index) => (index === currentPanel ? "3.4fr" : "1fr"))
+				.join(" "),
+		};
 
 	return (
 		<div
-			className={`grid gap-4 transition-[grid-template-columns,grid-template-rows] duration-700 ${
-				isMobile ? "h-[720px]" : "h-[520px]"
-			}`}
+			className={`grid gap-4 transition-[grid-template-columns,grid-template-rows] duration-700 ${isMobile ? "h-[720px]" : "h-[520px]"
+				}`}
 			style={trackStyle}
 			onMouseEnter={() => setIsPaused(true)}
 			onMouseLeave={() => setIsPaused(false)}
@@ -95,23 +94,20 @@ export default function Accordion({ posts }: AccordionProps) {
 				return (
 					<article
 						key={`${post.title}-${post.author}-${index}`}
-						className={`group relative overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg shadow-lg shadow-zinc-950/20 transition-all duration-500 ${
-							isActive ? "shadow-zinc-950/30" : "hover:border-zinc-500/60"
-						}`}
+						className={`group relative overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg shadow-lg shadow-zinc-950/20 transition-all duration-500 ${isActive ? "shadow-zinc-950/30" : "hover:border-zinc-500/60"
+							}`}
 					>
 						<Image
 							fill
 							src={post.image}
 							alt={post.title}
-							className={`object-cover transition-transform duration-700 ${
-								isActive ? "scale-100" : "scale-105"
-							}`}
+							className={`object-cover transition-[filter,transform] duration-700 ${isActive ? "scale-100 brightness-[0.74]" : "scale-105 brightness-[0.80]"
+								}`}
 							sizes="(max-width: 960px) 100vw, 30vw"
 						/>
 						<div
-							className={`absolute inset-0 bg-gradient-to-t from-darkBg via-darkBg/55 to-darkBg/10 transition-opacity duration-500 ${
-								isActive ? "opacity-100" : "opacity-90"
-							}`}
+							className={`absolute inset-0 bg-gradient-to-t from-darkBg/95 via-darkBg/65 to-darkBg/5 transition-opacity duration-500 ${isActive ? "opacity-100" : "opacity-0"
+								}`}
 						/>
 
 						{!isActive && (
@@ -123,59 +119,65 @@ export default function Accordion({ posts }: AccordionProps) {
 							/>
 						)}
 
-						<div className="relative z-10 flex h-full flex-col justify-between p-5">
-							<div className="flex items-start justify-between gap-3">
-								<div className="space-y-3">
-									<span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-purpleContrast/40 bg-purpleContrast/20 text-sm font-semibold text-wheat">
+						<div className="relative z-10 h-full p-5">
+							<div
+								className={`absolute top-5 z-20 flex items-center transition-all duration-500 ${isActive
+									? "left-5 translate-x-0 gap-3"
+									: "left-1/2 -translate-x-1/2 gap-0"
+									}`}
+							>
+								<span className="inline-flex h-[50px] w-[50px] items-center justify-center rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 backdrop-blur-sm">
+									<span className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 px-2 text-sm font-semibold text-zinc-100">
 										{index + 1}
 									</span>
-									<Link
-										href={`/tag?selected=${normalizeValue(post.mainTag)}`}
-										className={`inline-flex w-fit rounded-full border border-zinc-600/80 bg-black/35 px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-zinc-200 transition-all hover:border-zinc-400 hover:text-wheat ${
-											isActive ? "opacity-100" : "opacity-0 pointer-events-none"
+								</span>
+								<Link
+									href={`/tag?selected=${normalizeValue(post.mainTag)}`}
+									className={`inline-flex w-fit overflow-hidden rounded-full border bg-black/35 text-xs uppercase tracking-[0.16em] text-zinc-100 transition-all duration-500 hover:border-zinc-300 hover:text-wheat ${isActive
+										? "max-w-[12rem] border-zinc-500/80 px-4 py-2 opacity-100"
+										: "pointer-events-none max-w-0 border-transparent px-0 py-2 opacity-0"
 										}`}
-									>
-										{post.mainTag}
-									</Link>
-								</div>
-
-								<div
-									className={`text-right transition-opacity duration-300 ${
-										isActive ? "opacity-100" : "opacity-0"
-									}`}
 								>
-									<p className="text-xs uppercase tracking-[0.18em] text-zinc-400">
-										Views
-									</p>
-									<p className="mt-1 flex items-center justify-end gap-1 text-sm text-zinc-200">
-										<FaEye />
-										{formatViews(post.views)}
-									</p>
-								</div>
+									<span className="whitespace-nowrap">{post.mainTag}</span>
+								</Link>
 							</div>
 
 							<div
-								className={`transition-all duration-500 ${
-									isActive
-										? "translate-y-0 opacity-100"
-										: "translate-y-6 opacity-0 pointer-events-none"
-								}`}
+								className={`absolute right-5 top-5 z-20 text-right transition-all duration-300 ${isActive
+									? "translate-y-0 opacity-100"
+									: "pointer-events-none -translate-y-2 opacity-0"
+									}`}
 							>
-								<h2 className="max-w-xl text-2xl font-semibold leading-tight text-wheat sm:text-3xl">
+								<p className="text-xs uppercase tracking-[0.18em] text-zinc-300/90">
+									Views
+								</p>
+								<p className="mt-1 flex items-center justify-end gap-1 text-sm font-medium text-wheat drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]">
+									<FaEye className="text-xs" />
+									{formatViews(post.views)}
+								</p>
+							</div>
+
+							<div
+								className={`absolute inset-x-5 bottom-5 transition-all duration-500 ${isActive
+									? "translate-y-0 opacity-100"
+									: "pointer-events-none translate-y-8 opacity-0"
+									}`}
+							>
+								<h2 className="max-w-xl text-2xl font-semibold leading-tight text-wheat drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)] sm:text-3xl">
 									{post.title}
 								</h2>
-								<p className="mt-3 max-w-2xl line-clamp-4 text-sm leading-7 text-zinc-300 sm:text-base">
+								<p className="mt-3 max-w-2xl line-clamp-4 text-sm leading-7 text-zinc-100/90 drop-shadow-[0_4px_14px_rgba(0,0,0,0.7)] sm:text-base">
 									{post.description}
 								</p>
 
-								<div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-zinc-400">
+								<div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-zinc-200/85">
 									<Link
 										href={`/profile/${normalizeValue(post.author)}`}
 										className="transition-colors hover:text-wheat"
 									>
 										{post.author}
 									</Link>
-									<span className="h-1 w-1 rounded-full bg-zinc-700" />
+									<span className="h-1 w-1 rounded-full bg-zinc-500/80" />
 									<time dateTime={post.date}>
 										{new Intl.DateTimeFormat("en-US", {
 											month: "short",
@@ -186,24 +188,11 @@ export default function Accordion({ posts }: AccordionProps) {
 
 								<Link
 									href={postHref}
-									className="mt-6 inline-flex items-center gap-2 rounded-full border border-zinc-500/80 bg-black/35 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:border-zinc-300 hover:bg-black/45"
+									className="mt-6 inline-flex items-center gap-2 rounded-full border border-zinc-400/80 bg-darkBg/80 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:border-zinc-200 hover:bg-black/40"
 								>
 									Read post
 									<FaArrowRight className="text-xs" />
 								</Link>
-							</div>
-
-							<div
-								className={`flex items-end justify-between transition-opacity duration-300 ${
-									isActive ? "opacity-0 pointer-events-none" : "opacity-100"
-								}`}
-							>
-								<div className="[writing-mode:vertical-rl] rotate-180 text-xs uppercase tracking-[0.22em] text-zinc-300">
-									{post.mainTag}
-								</div>
-								<p className="line-clamp-3 max-w-[14rem] text-right text-sm font-medium text-zinc-100">
-									{post.title}
-								</p>
 							</div>
 						</div>
 					</article>

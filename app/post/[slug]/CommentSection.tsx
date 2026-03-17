@@ -27,7 +27,7 @@ const comments = [
 		upvotes: 25,
 		downvotes: 26,
 		avatar:
-			"https://revolucaonerd.com/wordpress/wp-content/files/revolucaonerd.com/2023/04/batman-animacao-1024x683.webp",
+			"https://imageio.forbes.com/specials-images/imageserve/5db83d5a38073500062a7fc0/-Joker-/0x0.jpg?format=jpg&crop=902,507,x370,y188,safe&width=960",
 	},
 ];
 
@@ -183,10 +183,10 @@ export default function CommentSection() {
 				comment={
 					reportTarget
 						? {
-								id: reportTarget.id,
-								author: reportTarget.author,
-								text: reportTarget.commentText,
-							}
+							id: reportTarget.id,
+							author: reportTarget.author,
+							text: reportTarget.commentText,
+						}
 						: undefined
 				}
 				onSubmit={handleSubmitReport}

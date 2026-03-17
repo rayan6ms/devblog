@@ -26,6 +26,14 @@ function normalizeTag(tag: string) {
 	return slugify(tag, { lower: true, strict: true });
 }
 
+function formatTagLabel(tag: string) {
+	if (!tag) {
+		return tag;
+	}
+
+	return `${tag.charAt(0).toUpperCase()}${tag.slice(1)}`;
+}
+
 function sortByTrending(posts: IPost[]) {
 	return [...posts].sort((a, b) => b.views - a.views || b.date.localeCompare(a.date));
 }
@@ -40,10 +48,10 @@ function TopicPill({
 	return (
 		<Link
 			href={`/tag?selected=${normalizeTag(label)}`}
-			className="flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-greyBg/80 px-4 py-3 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
+			className="flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-greyBg/80 px-4 py-3 text-sm text-zinc-300 font-semibold transition-colors hover:border-zinc-500 hover:text-wheat"
 		>
-			<span>{label}</span>
-			<span className="rounded-full bg-darkBg px-2 py-1 text-xs text-zinc-500">
+			<span>{formatTagLabel(label)}</span>
+			<span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-darkBg/70 px-2.5 text-xs text-zinc-400">
 				{count}
 			</span>
 		</Link>
@@ -62,7 +70,7 @@ function RankedPostRow({
 	return (
 		<article className="grid gap-4 rounded-[24px] border border-zinc-700/50 bg-greyBg/85 p-4 shadow-lg shadow-zinc-950/10 sm:grid-cols-[auto_112px_1fr] sm:items-center">
 			<div className="flex items-center gap-3">
-				<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-purpleContrast/40 bg-purpleContrast/15 text-sm font-semibold text-wheat">
+				<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 px-2 text-sm font-semibold text-zinc-100 shadow-lg shadow-zinc-950/20">
 					{index + 1}
 				</span>
 				<div className="sm:hidden">
