@@ -12,12 +12,7 @@ export type IPost = PostListItem;
 export type GetRecentPostsResponse = PostCatalogResponse;
 export type TagCatalog = PostTagCatalogResponse;
 
-export {
-	FALLBACK_POST_IMAGE,
-	getAuthorHref,
-	getPostHref,
-	getPostSlug,
-};
+export { FALLBACK_POST_IMAGE, getAuthorHref, getPostHref, getPostSlug };
 
 async function fetchJson<T>(input: string): Promise<T> {
 	const response = await fetch(input, { cache: "no-store" });
@@ -41,8 +36,7 @@ function normalizePost(post: IPost): IPost {
 		views: typeof post.views === "number" ? post.views : 0,
 		bookmarks: typeof post.bookmarks === "number" ? post.bookmarks : 0,
 		hasStartedReading: Boolean(post.hasStartedReading),
-		percentRead:
-			typeof post.percentRead === "number" ? post.percentRead : 0,
+		percentRead: typeof post.percentRead === "number" ? post.percentRead : 0,
 	};
 }
 

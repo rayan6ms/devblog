@@ -2,8 +2,8 @@
 
 import { FaPenToSquare } from "react-icons/fa6";
 import { useI18n } from "@/components/LocaleProvider";
-import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { useClientAuth } from "@/components/useClientAuth";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 
 const canEditByRole = (role?: string) => {
 	if (!role) return false;
@@ -23,7 +23,8 @@ export default function PostEditButton({
 	const { messages } = useI18n();
 	const { push } = useLocaleNavigation();
 	const { activeUser, isAuthed, isLoading, profile, role } = useClientAuth();
-	const normalize = (value?: string | null) => value?.trim().toLowerCase() || "";
+	const normalize = (value?: string | null) =>
+		value?.trim().toLowerCase() || "";
 	const matchesAuthor =
 		normalize(activeUser) === normalize(authorSlug) ||
 		normalize(profile?.username) === normalize(authorSlug) ||

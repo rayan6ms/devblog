@@ -5,23 +5,21 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import prisma from "@/database/prisma";
-import { loginSchema } from "@/lib/validation/auth";
+import { verifyPassword } from "@/lib/password";
 import {
 	ensureUserIdentityFields,
 	normalizeEmail,
 	resolveProfilePicture,
 	resolveUserRole,
 } from "@/lib/user-profile";
-import { verifyPassword } from "@/lib/password";
+import { loginSchema } from "@/lib/validation/auth";
 
-async function syncAuthenticatedUser(
-	user: {
-		id: string;
-		name?: string | null;
-		email?: string | null;
-		image?: string | null;
-	},
-) {
+async function syncAuthenticatedUser(user: {
+	id: string;
+	name?: string | null;
+	email?: string | null;
+	image?: string | null;
+}) {
 	const { username, slug } = await ensureUserIdentityFields({
 		id: user.id,
 		name: user.name ?? null,

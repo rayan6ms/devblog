@@ -156,11 +156,12 @@ export default function SearchBar({
 				reserveSpace
 					? `w-full min-w-[50px] ${widthClass || "max-w-[340px]"}`
 					: "w-full"
-				}`}
+			}`}
 		>
 			<div
-				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${searchExpanded ? "w-full" : "w-[50px]"
-					}`}
+				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${
+					searchExpanded ? "w-full" : "w-[50px]"
+				}`}
 			>
 				<div className="flex min-w-0 flex-1 items-center overflow-hidden">
 					<input
@@ -171,10 +172,11 @@ export default function SearchBar({
 						onChange={(event) => setQuery(event.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder={messages.searchBar.placeholder}
-						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${searchExpanded
+						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${
+							searchExpanded
 								? "pl-4 pr-3 opacity-100"
 								: "pointer-events-none w-0 px-0 opacity-0"
-							}`}
+						}`}
 						aria-label={messages.searchBar.ariaLabel}
 					/>
 				</div>
@@ -212,10 +214,9 @@ export default function SearchBar({
 										setQuery(suggestion.title);
 										goToResults(suggestion.title);
 									}}
-									className={`w-full px-4 py-3 text-left text-sm leading-6 text-zinc-200 transition-colors ${isActive
-										? "bg-purpleContrast/18"
-										: "hover:bg-greyBg/80"
-										}`}
+									className={`w-full px-4 py-3 text-left text-sm leading-6 text-zinc-200 transition-colors ${
+										isActive ? "bg-purpleContrast/18" : "hover:bg-greyBg/80"
+									}`}
 								>
 									{suggestion.title}
 								</button>

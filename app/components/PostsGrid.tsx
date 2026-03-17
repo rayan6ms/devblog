@@ -4,15 +4,11 @@ import Image from "next/image";
 import React from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getIntlLocale } from "@/lib/i18n";
-import {
-	getAuthorHref,
-	getPostHref,
-	type IPost,
-} from "@/lib/posts-client";
+import { getAuthorHref, getPostHref, type IPost } from "@/lib/posts-client";
 
 type Props = {
 	posts: IPost[];

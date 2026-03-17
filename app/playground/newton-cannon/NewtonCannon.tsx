@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { type MutableRefObject, useEffect, useRef, useState } from "react";
 
 type PhaserModule = typeof import("phaser");
 type PhaserGame = import("phaser").Game;

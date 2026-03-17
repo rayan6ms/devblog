@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 
 const PhaserBackground = dynamic(() => import("@/PhaserBackground"), {
 	ssr: false,

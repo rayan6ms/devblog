@@ -169,7 +169,10 @@ function buildCardStyles(palette: Palette, count: number) {
 				`radial-gradient(circle at ${originA.x}% ${originA.y}%, ${color(accent, 0.16)}, transparent 34%)`,
 				`radial-gradient(circle at ${originB.x}% ${originB.y}%, ${color(contrast, 0.1)}, transparent 28%)`,
 			].join(", "),
-			borderColor: color(shiftTone(accent, { saturation: -38, lightness: 8 }), 0.26),
+			borderColor: color(
+				shiftTone(accent, { saturation: -38, lightness: 8 }),
+				0.26,
+			),
 			boxShadow: `0 28px 60px ${color({ hue: 0, saturation: 0, lightness: 0 }, 0.14)}`,
 		} satisfies CSSProperties;
 	});
@@ -205,9 +208,9 @@ function buildDecorations(palette: Palette) {
 				? "none"
 				: kind === "tile"
 					? [
-						`linear-gradient(140deg, ${color(accent, 0.18)}, ${color(shiftTone(accent, { lightness: -14, saturation: -24 }), 0.05)})`,
-						`repeating-linear-gradient(90deg, ${color(shiftTone(accent, { lightness: 6 }), 0.32)} 0 1px, transparent 1px 7px)`,
-					].join(", ")
+							`linear-gradient(140deg, ${color(accent, 0.18)}, ${color(shiftTone(accent, { lightness: -14, saturation: -24 }), 0.05)})`,
+							`repeating-linear-gradient(90deg, ${color(shiftTone(accent, { lightness: 6 }), 0.32)} 0 1px, transparent 1px 7px)`,
+						].join(", ")
 					: `linear-gradient(140deg, ${color(accent, 0.18)}, ${color(shiftTone(accent, { lightness: -12, saturation: -20 }), 0.04)})`,
 			border: `1px solid ${color(shiftTone(accent, { saturation: -34, lightness: 10 }), 0.24)}`,
 			boxShadow: isRing

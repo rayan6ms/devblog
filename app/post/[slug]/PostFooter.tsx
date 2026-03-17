@@ -2,7 +2,7 @@ import type { IconType } from "react-icons";
 import { FaGithub, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa6";
 import LocalizedLink from "@/components/LocalizedLink";
 import { getMessages } from "@/lib/i18n";
-import { slugifyPostValue, type PostPageData } from "@/lib/post-shared";
+import { type PostPageData, slugifyPostValue } from "@/lib/post-shared";
 import { getRequestLocale } from "@/lib/request-locale";
 
 const SOCIAL_ICON_MAP: Record<string, IconType> = {

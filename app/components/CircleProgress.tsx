@@ -1,5 +1,5 @@
-import ProgressRing from "./ProgressRing";
 import { useI18n } from "./LocaleProvider";
+import ProgressRing from "./ProgressRing";
 
 interface CircleProgressProps {
 	radius: number;

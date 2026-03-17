@@ -71,13 +71,16 @@ export function stripMarkdown(markdown: string) {
 	return markdown
 		.replace(/!\[([^\]]*)\]\([^)]+\)/g, " $1 ")
 		.replace(/\[([^\]]+)\]\([^)]+\)/g, " $1 ")
-		.replace(/[`#>*_~\-]/g, " ")
+		.replace(/[`#>*_~-]/g, " ")
 		.replace(/\n+/g, " ")
 		.replace(/\s+/g, " ")
 		.trim();
 }
 
-export function buildPostDescription(content: string, description?: string | null) {
+export function buildPostDescription(
+	content: string,
+	description?: string | null,
+) {
 	const trimmedDescription = description?.trim();
 	if (trimmedDescription) {
 		return trimmedDescription;
@@ -92,9 +95,7 @@ export function buildPostDescription(content: string, description?: string | nul
 }
 
 export function getReadingTimeMinutes(markdown: string) {
-	const wordCount = stripMarkdown(markdown)
-		.split(" ")
-		.filter(Boolean).length;
+	const wordCount = stripMarkdown(markdown).split(" ").filter(Boolean).length;
 
 	return Math.max(1, Math.round(wordCount / 220));
 }

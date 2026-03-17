@@ -31,9 +31,7 @@ export default function Popover({
 				? "hover:bg-greyBg/95"
 				: "";
 	const baseBgClass =
-		hoverBg === "[#34373d]"
-			? "bg-[#34373d]/80"
-			: "bg-lessDarkBg/85";
+		hoverBg === "[#34373d]" ? "bg-[#34373d]/80" : "bg-lessDarkBg/85";
 
 	function handleMenuClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
 		e.preventDefault();

@@ -36,8 +36,7 @@ const defaultPostValidationMessages: PostValidationMessages = {
 	titleMin: "Title must be at least 3 characters.",
 	titleMax: (max) => `Title must be ${max} characters or fewer.`,
 	slugMax: (max) => `Slug must be ${max} characters or fewer.`,
-	slugInvalid:
-		"Slug can only contain lowercase letters, numbers, and hyphens.",
+	slugInvalid: "Slug can only contain lowercase letters, numbers, and hyphens.",
 	contentMin: "Content must be at least 30 characters.",
 	contentMax: (max) => `Content must be ${max} characters or fewer.`,
 	thumbnailAltMax: (max) =>
@@ -61,7 +60,7 @@ export const createCommentSchema = z.object({
 		.max(
 			MAX_COMMENT_LENGTH,
 			`Comment must be ${MAX_COMMENT_LENGTH} characters or fewer.`,
-	),
+		),
 });
 
 export function buildPostSchema(
@@ -91,10 +90,7 @@ export function buildPostSchema(
 			.string()
 			.trim()
 			.max(MAX_POST_SLUG, messages.slugMax(MAX_POST_SLUG))
-			.regex(
-				/^(|[a-z0-9]+(?:-[a-z0-9]+)*)$/,
-				messages.slugInvalid,
-			)
+			.regex(/^(|[a-z0-9]+(?:-[a-z0-9]+)*)$/, messages.slugInvalid)
 			.optional()
 			.default(""),
 		content: z
@@ -141,7 +137,6 @@ export const createFeedbackSchema = z.object({
 });
 
 export const createProgressSchema = z.object({
-	user: nonEmptyString("User ID is required."),
 	post: nonEmptyString("Post ID is required."),
 	percentageRead: z.number().int().min(0).max(100),
 });

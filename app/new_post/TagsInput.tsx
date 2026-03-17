@@ -42,11 +42,7 @@ export default function TagsInput({
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-		if (
-			event.key === "Enter" ||
-			event.key === "Tab" ||
-			event.key === ","
-		) {
+		if (event.key === "Enter" || event.key === "Tab" || event.key === ",") {
 			event.preventDefault();
 			addTag(input);
 		}

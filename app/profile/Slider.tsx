@@ -4,8 +4,8 @@ import type React from "react";
 import type { IconType } from "react-icons";
 import { FaBookmark, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import type { ProfilePost } from "@/profile/types";
 

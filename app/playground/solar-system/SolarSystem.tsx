@@ -2,7 +2,7 @@
 
 import { OrbitControls, Stars, useTexture } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, type CSSProperties, useRef, useState } from "react";
+import { type CSSProperties, Suspense, useRef, useState } from "react";
 import { BackSide, type Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { moon, planets } from "./data";

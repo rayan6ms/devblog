@@ -6,8 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAuthorHref,
@@ -35,13 +35,7 @@ function formatTagLabel(tag: string) {
 	return `${tag.charAt(0).toUpperCase()}${tag.slice(1)}`;
 }
 
-function TopicPill({
-	label,
-	count,
-}: {
-	label: string;
-	count: number;
-}) {
+function TopicPill({ label, count }: { label: string; count: number }) {
 	const { messages } = useI18n();
 	return (
 		<LocalizedLink
@@ -56,13 +50,7 @@ function TopicPill({
 	);
 }
 
-function RankedPostRow({
-	post,
-	index,
-}: {
-	post: IPost;
-	index: number;
-}) {
+function RankedPostRow({ post, index }: { post: IPost; index: number }) {
 	const { locale } = useI18n();
 	const postHref = getPostHref(post);
 	const dateFormatter = useMemo(
@@ -136,7 +124,9 @@ function RankedPostRow({
 						{post.author}
 					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
-					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
+					<time dateTime={post.date}>
+						{dateFormatter.format(new Date(post.date))}
+					</time>
 					<span className="flex items-center gap-1 sm:hidden">
 						<FaEye />
 						{formatViews(post.views)}
@@ -203,7 +193,9 @@ function SpotlightPostCard({ post }: { post: IPost }) {
 						{post.author}
 					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
-					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
+					<time dateTime={post.date}>
+						{dateFormatter.format(new Date(post.date))}
+					</time>
 				</div>
 			</div>
 		</article>
@@ -395,11 +387,7 @@ export default function TrendingPage() {
 								{rankedPosts.length > 0 ? (
 									<div className="mt-6 grid gap-4">
 										{rankedPosts.map((post, index) => (
-											<RankedPostRow
-												key={post.id}
-												post={post}
-												index={index}
-											/>
+											<RankedPostRow key={post.id} post={post} index={index} />
 										))}
 									</div>
 								) : (

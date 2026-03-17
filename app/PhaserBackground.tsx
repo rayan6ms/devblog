@@ -43,10 +43,7 @@ type GridSurface = {
 };
 
 class PerlinNoise {
-	private perlin = Array.from(
-		{ length: PERLIN_SIZE + 1 },
-		() => Math.random(),
-	);
+	private perlin = Array.from({ length: PERLIN_SIZE + 1 }, () => Math.random());
 
 	private readonly octaves = 4;
 
@@ -78,18 +75,14 @@ class PerlinNoise {
 			let n1 = this.perlin[offset & PERLIN_SIZE];
 			n1 += rxf * (this.perlin[(offset + 1) & PERLIN_SIZE] - n1);
 			let n2 = this.perlin[(offset + PERLIN_YWRAP) & PERLIN_SIZE];
-			n2 +=
-				rxf *
-				(this.perlin[(offset + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n2);
+			n2 += rxf * (this.perlin[(offset + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n2);
 			n1 += ryf * (n2 - n1);
 
 			offset += PERLIN_ZWRAP;
 			n2 = this.perlin[offset & PERLIN_SIZE];
 			n2 += rxf * (this.perlin[(offset + 1) & PERLIN_SIZE] - n2);
 			let n3 = this.perlin[(offset + PERLIN_YWRAP) & PERLIN_SIZE];
-			n3 +=
-				rxf *
-				(this.perlin[(offset + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n3);
+			n3 += rxf * (this.perlin[(offset + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n3);
 			n2 += ryf * (n3 - n2);
 
 			n1 += this.scaledCosine(zf) * (n2 - n1);
@@ -281,7 +274,10 @@ function viewportSize(): { width: number; height: number } {
 	};
 }
 
-function mountBackground(host: HTMLDivElement, PhaserLib: PhaserModule): () => void {
+function mountBackground(
+	host: HTMLDivElement,
+	PhaserLib: PhaserModule,
+): () => void {
 	const palette = selectColors();
 	const noise = new PerlinNoise();
 	let game: PhaserGame | null = null;
@@ -299,7 +295,13 @@ function mountBackground(host: HTMLDivElement, PhaserLib: PhaserModule): () => v
 		context.fillStyle = `rgba(255, 255, 255, ${FADE_ALPHA})`;
 		context.fillRect(0, 0, size.width, size.height);
 		drawGrid(surface, frameTime, palette, noise);
-		context.drawImage(surface.canvas, 0, 0, surface.drawWidth, surface.drawHeight);
+		context.drawImage(
+			surface.canvas,
+			0,
+			0,
+			surface.drawWidth,
+			surface.drawHeight,
+		);
 		frameTime += 0.001;
 	};
 
@@ -363,9 +365,9 @@ export default function PhaserBackground(): ReactElement {
 			const phaserModule = await import("phaser");
 			if (cancelled || !hostRef.current) return;
 
-			const PhaserLib = ("default" in phaserModule
-				? phaserModule.default
-				: phaserModule) as PhaserModule;
+			const PhaserLib = (
+				"default" in phaserModule ? phaserModule.default : phaserModule
+			) as PhaserModule;
 
 			cleanup = mountBackground(hostRef.current, PhaserLib);
 		})();

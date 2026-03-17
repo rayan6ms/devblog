@@ -1,12 +1,12 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import Footer from "@/components/Footer";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
-import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import LocalizedLink from "@/components/LocalizedLink";
 import { emitClientAuthChange } from "@/components/useClientAuth";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import type { ProfileAvatarMode, ProfileUser } from "@/profile/types";
 import Comments from "../Comments";
 import Header from "../Header";
@@ -38,10 +38,14 @@ function MetaCard({
 }) {
 	return (
 		<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
-			<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{label}</p>
+			<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+				{label}
+			</p>
 			{value ? (
 				<p className="mt-2 text-sm font-semibold text-zinc-100">{value}</p>
-			) : children}
+			) : (
+				children
+			)}
 		</div>
 	);
 }
@@ -105,7 +109,12 @@ export default function Profile() {
 		return () => {
 			cancelled = true;
 		};
-	}, [messages.profile.loadError, messages.profile.loadLoginRequired, messages.profile.loadNotFound, profileId]);
+	}, [
+		messages.profile.loadError,
+		messages.profile.loadLoginRequired,
+		messages.profile.loadNotFound,
+		profileId,
+	]);
 
 	async function handleSaveProfile(updated: ProfileUpdatePayload) {
 		const response = await fetch("/api/user", {
@@ -117,12 +126,10 @@ export default function Profile() {
 		});
 
 		if (!response.ok) {
-			const result = (await response.json().catch(() => null)) as
-				| {
-						error?: string;
-						fields?: Record<string, string>;
-				  }
-				| null;
+			const result = (await response.json().catch(() => null)) as {
+				error?: string;
+				fields?: Record<string, string>;
+			} | null;
 			const error = new Error(
 				result?.error || messages.profile.saveError,
 			) as Error & {
@@ -180,22 +187,35 @@ export default function Profile() {
 											{messages.profile.overview}
 										</p>
 										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-											{user.isCurrentUser ? messages.profile.yourProfile : user.name}
+											{user.isCurrentUser
+												? messages.profile.yourProfile
+												: user.name}
 										</h1>
 										<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
 											{messages.profile.description}
 										</p>
 									</div>
 									<div className="grid gap-3 sm:grid-cols-3">
-										<MetaCard label={messages.profile.bookmarks} value={`${user.stats.bookmarks}`} />
-										<MetaCard label={messages.profile.viewedPosts} value={`${user.stats.views}`} />
-										<MetaCard label={messages.profile.comments} value={`${user.stats.comments}`} />
+										<MetaCard
+											label={messages.profile.bookmarks}
+											value={`${user.stats.bookmarks}`}
+										/>
+										<MetaCard
+											label={messages.profile.viewedPosts}
+											value={`${user.stats.views}`}
+										/>
+										<MetaCard
+											label={messages.profile.comments}
+											value={`${user.stats.comments}`}
+										/>
 									</div>
 								</div>
 
 								<Header
 									user={user}
-									onEdit={user.isCurrentUser ? () => setIsEditOpen(true) : undefined}
+									onEdit={
+										user.isCurrentUser ? () => setIsEditOpen(true) : undefined
+									}
 								/>
 							</div>
 
@@ -204,16 +224,26 @@ export default function Profile() {
 									user.isCurrentUser ? "lg:grid-cols-4" : "lg:grid-cols-3"
 								}`}
 							>
-								<MetaCard label={messages.profile.handle} value={`@${user.slug}`} />
+								<MetaCard
+									label={messages.profile.handle}
+									value={`@${user.slug}`}
+								/>
 								{user.isCurrentUser ? (
-									<MetaCard label={messages.profile.email} value={user.email || messages.profile.notSet} />
+									<MetaCard
+										label={messages.profile.email}
+										value={user.email || messages.profile.notSet}
+									/>
 								) : (
 									<MetaCard label={messages.profile.role} value={user.role} />
 								)}
 								{user.isCurrentUser ? (
 									<MetaCard
 										label={messages.profile.passwordLogin}
-										value={user.hasPassword ? messages.profile.configured : messages.profile.notSet}
+										value={
+											user.hasPassword
+												? messages.profile.configured
+												: messages.profile.notSet
+										}
 									/>
 								) : null}
 								<MetaCard label={messages.profile.connectedAccounts}>

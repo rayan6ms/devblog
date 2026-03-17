@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/database/prisma";
 import { auth } from "@/lib/auth";
+import { buildPostDescription, canWriteRole } from "@/lib/post-shared";
 import {
 	ensureUniquePostSlug,
 	getPostCatalog,
 	getRecommendedPostCatalog,
 } from "@/lib/posts";
-import { buildPostDescription, canWriteRole } from "@/lib/post-shared";
 import { createPostSchema } from "@/lib/validation/content";
 
 function parsePositiveInt(
@@ -26,6 +26,7 @@ function parsePositiveInt(
 }
 
 export async function GET(request: Request) {
+	const session = await auth();
 	const { searchParams } = new URL(request.url);
 	const sort = searchParams.get("sort");
 	const query = searchParams.get("q")?.trim() || undefined;
@@ -38,7 +39,6 @@ export async function GET(request: Request) {
 
 	try {
 		if (sort === "recommended") {
-			const session = await auth();
 			const recommendations = await getRecommendedPostCatalog({
 				userId: session?.user?.id ?? null,
 				limit,
@@ -53,6 +53,7 @@ export async function GET(request: Request) {
 			query,
 			tagSlugs: tags,
 			sort: sort === "trending" ? "trending" : "recent",
+			userId: session?.user?.id ?? null,
 		});
 
 		return NextResponse.json(posts);
@@ -98,7 +99,8 @@ export async function POST(req: Request) {
 				slug,
 				content: parsed.data.content.trim(),
 				thumbnail: parsed.data.thumbnail.trim(),
-				thumbnailAlt: parsed.data.thumbnailAlt.trim() || parsed.data.title.trim(),
+				thumbnailAlt:
+					parsed.data.thumbnailAlt.trim() || parsed.data.title.trim(),
 				authorId: session.user.id,
 				mainTag: parsed.data.mainTag.trim(),
 				tags: parsed.data.tags.map((tag) => tag.trim()),
@@ -107,8 +109,7 @@ export async function POST(req: Request) {
 					parsed.data.description,
 				),
 				status: parsed.data.status,
-				postedAt:
-					parsed.data.status === "published" ? new Date() : undefined,
+				postedAt: parsed.data.status === "published" ? new Date() : undefined,
 			},
 		});
 

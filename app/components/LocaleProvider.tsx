@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 import {
-	LOCALE_QUERY_PARAM,
 	getMessages,
-	resolveLocale,
+	LOCALE_QUERY_PARAM,
 	type Locale,
+	resolveLocale,
 } from "@/lib/i18n";
 
 type LocaleContextValue = {

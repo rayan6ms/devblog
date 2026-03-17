@@ -79,14 +79,16 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 						)}
 						{posts.recommended.length > 0 ? (
 							<div className="flex flex-col gap-5">
-								{posts.recommended.slice(0, 2).map((post: IPost, postIndex: number) => (
-									<TrendingItem
-										key={`${section.path}-${post.id}`}
-										post={post}
-										section
-										addSeparation={postIndex > 0}
-									/>
-								))}
+								{posts.recommended
+									.slice(0, 2)
+									.map((post: IPost, postIndex: number) => (
+										<TrendingItem
+											key={`${section.path}-${post.id}`}
+											post={post}
+											section
+											addSeparation={postIndex > 0}
+										/>
+									))}
 							</div>
 						) : (
 							<div className="rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/35 px-4 py-6 text-sm leading-7 text-zinc-400">

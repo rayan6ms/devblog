@@ -25,9 +25,7 @@ export default function HamburgerMenu({
 			type="button"
 			onClick={() => setIsMenuOpen(!isMenuOpen)}
 			className={`block h-fit w-fit rounded-2xl border border-zinc-700/60 bg-darkBg/70 p-1.5 shadow-lg shadow-zinc-950/10 transition-colors hover:border-zinc-500/70 hover:bg-greyBg/80 ${isMenuOpen ? "" : hideClass}`}
-			aria-label={
-				isMenuOpen ? messages.nav.closeMenu : messages.nav.openMenu
-			}
+			aria-label={isMenuOpen ? messages.nav.closeMenu : messages.nav.openMenu}
 		>
 			<svg
 				className="h-8 w-8 -translate-y-[1px] fill-wheat transition-colors duration-200 hover:fill-purpleContrast sm:h-9 sm:w-9"

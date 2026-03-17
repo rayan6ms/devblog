@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { forwardRef, type ComponentProps } from "react";
+import { type ComponentProps, forwardRef } from "react";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 
 type LocalizedLinkProps = Omit<ComponentProps<typeof Link>, "href"> & {

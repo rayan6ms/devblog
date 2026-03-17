@@ -1,13 +1,13 @@
 "use client";
 
 import {
-	startTransition,
 	type CSSProperties,
+	type FormEvent,
+	type KeyboardEvent,
+	startTransition,
 	useEffect,
 	useRef,
 	useState,
-	type FormEvent,
-	type KeyboardEvent,
 } from "react";
 import {
 	cloneShellState,
@@ -15,8 +15,8 @@ import {
 	executeLine,
 	getCommandNames,
 	getPrompt,
-	welcomeMessage,
 	type ShellState,
+	welcomeMessage,
 } from "./commands";
 import { getNodeAtPath, isDirectory, resolvePath, tokenizeInput } from "./utils";
 

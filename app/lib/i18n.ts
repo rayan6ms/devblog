@@ -212,8 +212,7 @@ const dictionaries = {
 			title: "Suggest a post",
 			close: "Close suggest post modal",
 			fieldTitle: "Title",
-			titlePlaceholder:
-				"e.g. Understanding React Server Components in Next 14",
+			titlePlaceholder: "e.g. Understanding React Server Components in Next 14",
 			fieldIdea: "What is the idea?",
 			ideaPlaceholder:
 				"Add a short outline, bullet points, or links for context (optional).",
@@ -222,7 +221,8 @@ const dictionaries = {
 			submitted: "Submitted!",
 			submitting: "Submitting...",
 			submit: "Submit suggestion",
-			titleTooShort: (min: number) => `Title must be at least ${min} characters.`,
+			titleTooShort: (min: number) =>
+				`Title must be at least ${min} characters.`,
 			maxChars: (max: number) => `Max ${max} characters.`,
 		},
 		about: {
@@ -349,7 +349,8 @@ const dictionaries = {
 			showingNow: "Showing now",
 			pageControls: "Page controls",
 			freshTopics: "Fresh topics",
-			topicCountsLater: "Topic counts will appear here after posts are published.",
+			topicCountsLater:
+				"Topic counts will appear here after posts are published.",
 			recentPosts: "Recent posts",
 			recentPostsTitle: "Newest entries on devblog",
 			recentPostsDescription:
@@ -377,7 +378,8 @@ const dictionaries = {
 			topicRadar: "Topic radar",
 			topicRadarDescription:
 				"Main topics with the strongest presence in the current trending stack. Use them to branch into related posts without losing the context of what is hot right now.",
-			topicSignalsLater: "Topic signals will appear here after posts are published.",
+			topicSignalsLater:
+				"Topic signals will appear here after posts are published.",
 			leadingPost: "Leading post",
 			leadingPostEmpty:
 				"No trending leader yet. Publish posts and accumulate views to build this ranking.",
@@ -484,8 +486,7 @@ const dictionaries = {
 			haveAccount: "Already have an account?",
 			login: "Login",
 			unableToCreate: "Unable to create account right now.",
-			accountCreatedLoginFailed:
-				"Account created, but automatic login failed.",
+			accountCreatedLoginFailed: "Account created, but automatic login failed.",
 			unableToCreateShort: "Unable to create account.",
 		},
 		profile: {
@@ -513,7 +514,8 @@ const dictionaries = {
 			recentActivity: "Recent activity across the blog",
 			noCommentsYet: "No comments to show yet.",
 			editedOn: (date: string) => `Edited ${date}`,
-			itemCount: (count: number) => `${count} ${count === 1 ? "item" : "items"}`,
+			itemCount: (count: number) =>
+				`${count} ${count === 1 ? "item" : "items"}`,
 			loadLoginRequired: "Please login to access your profile.",
 			loadNotFound: "This profile could not be found.",
 			loadError: "Unable to load this profile right now.",
@@ -554,10 +556,8 @@ const dictionaries = {
 			maxChars: (max: number) => `Max ${max} characters.`,
 			handleRequired: "Handle is required.",
 			handleLettersNumbersOnly: "Use letters and numbers only.",
-			handleMin: (min: number) =>
-				`Handle must be at least ${min} characters.`,
-			handleMax: (max: number) =>
-				`Handle must be ${max} characters or fewer.`,
+			handleMin: (min: number) => `Handle must be at least ${min} characters.`,
+			handleMax: (max: number) => `Handle must be ${max} characters or fewer.`,
 			uploadRequired: "Upload a JPG, PNG, or WEBP image.",
 			uploadAllowed: "Only JPG, PNG, or WEBP images are allowed.",
 			uploadMaxSize: "Max image size is 2MB.",
@@ -659,8 +659,7 @@ const dictionaries = {
 			submitSuccessPublished: "Post published.",
 			submitSuccessReview: "Post sent to review.",
 			submitSuccessDraft: "Draft saved.",
-			mainTagPlaceholder:
-				"Pick an existing topic or define a new main tag",
+			mainTagPlaceholder: "Pick an existing topic or define a new main tag",
 			mainTagHelp:
 				"Main tags group the post across listings and recommendations.",
 			tagsPlaceholder: "Add tags and press Enter",
@@ -718,13 +717,10 @@ const dictionaries = {
 			imageRequired: "Image is required.",
 			imageInvalid: "Image must be an uploaded file path or a valid URL.",
 			tagEmpty: "Tags cannot be empty.",
-			tagMaxLength: (max: number) =>
-				`Tags must be ${max} characters or fewer.`,
+			tagMaxLength: (max: number) => `Tags must be ${max} characters or fewer.`,
 			titleMin: "Title must be at least 3 characters.",
-			titleMax: (max: number) =>
-				`Title must be ${max} characters or fewer.`,
-			slugMax: (max: number) =>
-				`Slug must be ${max} characters or fewer.`,
+			titleMax: (max: number) => `Title must be ${max} characters or fewer.`,
+			slugMax: (max: number) => `Slug must be ${max} characters or fewer.`,
 			slugInvalid:
 				"Slug can only contain lowercase letters, numbers, and hyphens.",
 			contentMin: "Content must be at least 30 characters.",
@@ -734,8 +730,7 @@ const dictionaries = {
 				`Thumbnail alt text must be ${max} characters or fewer.`,
 			mainTagRequired: "Main tag is required.",
 			tagsRequired: "At least one tag is required.",
-			tagsMaxItems: (max: number) =>
-				`Tags must contain ${max} items or fewer.`,
+			tagsMaxItems: (max: number) => `Tags must contain ${max} items or fewer.`,
 			tagsUnique: "Tags must be unique.",
 			descriptionMax: (max: number) =>
 				`Description must be ${max} characters or fewer.`,
@@ -892,8 +887,7 @@ const dictionaries = {
 				"Ainda não há posts em alta. Quando os posts publicados começarem a acumular visualizações, eles aparecerão aqui automaticamente.",
 			explore: "Explorar",
 			trendingPosts: "Posts em alta",
-			trendingPostsDescription:
-				"Veja o que está chamando mais atenção agora.",
+			trendingPostsDescription: "Veja o que está chamando mais atenção agora.",
 			recentPosts: "Posts recentes",
 			recentPostsDescription:
 				"Comece pelos textos mais novos e volte a partir deles.",
@@ -920,8 +914,7 @@ const dictionaries = {
 			title: "Sugerir um post",
 			close: "Fechar modal de sugestão",
 			fieldTitle: "Título",
-			titlePlaceholder:
-				"ex.: Entendendo React Server Components no Next 14",
+			titlePlaceholder: "ex.: Entendendo React Server Components no Next 14",
 			fieldIdea: "Qual é a ideia?",
 			ideaPlaceholder:
 				"Adicione um pequeno esboço, tópicos ou links para contexto (opcional).",
@@ -930,7 +923,8 @@ const dictionaries = {
 			submitted: "Enviado!",
 			submitting: "Enviando...",
 			submit: "Enviar sugestão",
-			titleTooShort: (min: number) => `O título deve ter pelo menos ${min} caracteres.`,
+			titleTooShort: (min: number) =>
+				`O título deve ter pelo menos ${min} caracteres.`,
 			maxChars: (max: number) => `Máximo de ${max} caracteres.`,
 		},
 		about: {
@@ -1194,8 +1188,7 @@ const dictionaries = {
 			haveAccount: "Já tem uma conta?",
 			login: "Entrar",
 			unableToCreate: "Não foi possível criar a conta agora.",
-			accountCreatedLoginFailed:
-				"Conta criada, mas o login automático falhou.",
+			accountCreatedLoginFailed: "Conta criada, mas o login automático falhou.",
 			unableToCreateShort: "Não foi possível criar a conta.",
 		},
 		profile: {
@@ -1363,12 +1356,10 @@ const dictionaries = {
 			statusPendingReviewDescription:
 				"Marque o rascunho como pronto para revisão editorial.",
 			statusPublishedLabel: "Publicar agora",
-			statusPublishedDescription:
-				"Torne o post visível no site imediatamente.",
+			statusPublishedDescription: "Torne o post visível no site imediatamente.",
 			saving: "Salvando...",
 			clearForm: "Limpar formulário",
-			submitError:
-				"Não foi possível salvar o post agora. Tente novamente.",
+			submitError: "Não foi possível salvar o post agora. Tente novamente.",
 			submitSuccessPublished: "Post publicado.",
 			submitSuccessReview: "Post enviado para revisão.",
 			submitSuccessDraft: "Rascunho salvo.",
@@ -1437,10 +1428,8 @@ const dictionaries = {
 			titleMin: "O título deve ter pelo menos 3 caracteres.",
 			titleMax: (max: number) =>
 				`O título deve ter ${max} caracteres ou menos.`,
-			slugMax: (max: number) =>
-				`O slug deve ter ${max} caracteres ou menos.`,
-			slugInvalid:
-				"O slug só pode conter letras minúsculas, números e hífens.",
+			slugMax: (max: number) => `O slug deve ter ${max} caracteres ou menos.`,
+			slugInvalid: "O slug só pode conter letras minúsculas, números e hífens.",
 			contentMin: "O conteúdo deve ter pelo menos 30 caracteres.",
 			contentMax: (max: number) =>
 				`O conteúdo deve ter ${max} caracteres ou menos.`,
@@ -1615,7 +1604,8 @@ const dictionaries = {
 			browseByTag: "Explorar por tag",
 			browseByTagDescription:
 				"Filtra el catálogo en vivo por tema y tags de apoyo.",
-			noSectionPost: "Todavía no hay una publicación disponible para esta sección.",
+			noSectionPost:
+				"Todavía no hay una publicación disponible para esta sección.",
 			noRecommendedCallouts:
 				"Los destacados recomendados aparecerán aquí después de que se publiquen más publicaciones.",
 			viewSection: "Ver sección",
@@ -1635,8 +1625,7 @@ const dictionaries = {
 			title: "Sugerir una publicación",
 			close: "Cerrar modal de sugerencia",
 			fieldTitle: "Título",
-			titlePlaceholder:
-				"p. ej. Entendiendo React Server Components en Next 14",
+			titlePlaceholder: "p. ej. Entendiendo React Server Components en Next 14",
 			fieldIdea: "¿Cuál es la idea?",
 			ideaPlaceholder:
 				"Añade un pequeño esquema, viñetas o enlaces para contexto (opcional).",
@@ -1645,7 +1634,8 @@ const dictionaries = {
 			submitted: "Enviado",
 			submitting: "Enviando...",
 			submit: "Enviar sugerencia",
-			titleTooShort: (min: number) => `El título debe tener al menos ${min} caracteres.`,
+			titleTooShort: (min: number) =>
+				`El título debe tener al menos ${min} caracteres.`,
 			maxChars: (max: number) => `Máximo ${max} caracteres.`,
 		},
 		about: {
@@ -1841,7 +1831,8 @@ const dictionaries = {
 			selected: "Seleccionados",
 			visiblePosts: "Publicaciones visibles",
 			mainTopics: "Temas principales",
-			mainTopicsDescription: "Las categorías amplias que dan forma a cada publicación.",
+			mainTopicsDescription:
+				"Las categorías amplias que dan forma a cada publicación.",
 			supportingTags: "Tags de apoyo",
 			supportingTagsDescription:
 				"Úsalos para acotar la cuadrícula sin perder contexto.",
@@ -1868,7 +1859,8 @@ const dictionaries = {
 			clearFilters: "Limpiar filtros",
 			quickPicks: "Selecciones rápidas",
 			quickPicksDescription: "Tags populares que abren la página rápidamente.",
-			tagGroupMainDescription: "Categorías principales que definen la publicación.",
+			tagGroupMainDescription:
+				"Categorías principales que definen la publicación.",
 			tagGroupOtherDescription: "Detalles secundarios y temas relacionados.",
 			noTagsMatch: "Ningún tag coincide con la búsqueda actual.",
 			resultsSummary: (resultsCount: number, tagCount: number) =>
@@ -2152,8 +2144,7 @@ const dictionaries = {
 			titleMin: "El título debe tener al menos 3 caracteres.",
 			titleMax: (max: number) =>
 				`El título debe tener ${max} caracteres o menos.`,
-			slugMax: (max: number) =>
-				`El slug debe tener ${max} caracteres o menos.`,
+			slugMax: (max: number) => `El slug debe tener ${max} caracteres o menos.`,
 			slugInvalid:
 				"El slug solo puede contener letras minúsculas, números y guiones.",
 			contentMin: "El contenido debe tener al menos 30 caracteres.",
@@ -2362,8 +2353,7 @@ const germanMessages = {
 		title: "Einen Beitrag vorschlagen",
 		close: "Dialog zum Vorschlagen eines Beitrags schließen",
 		fieldTitle: "Titel",
-		titlePlaceholder:
-			"z. B. React Server Components in Next 14 verstehen",
+		titlePlaceholder: "z. B. React Server Components in Next 14 verstehen",
 		fieldIdea: "Worum geht es?",
 		ideaPlaceholder:
 			"Füge eine kurze Gliederung, Stichpunkte oder Links als Kontext hinzu (optional).",
@@ -2873,8 +2863,7 @@ const germanMessages = {
 			"Beginne zu schreiben, um das finale Rendering des Beitrags zu sehen.",
 		editorWordCount: (count: number) => `${count} Wörter`,
 		editorReadTime: (count: number) => `${count} Min Lesezeit`,
-		editorCharacters: (used: number, max: number) =>
-			`${used}/${max} Zeichen`,
+		editorCharacters: (used: number, max: number) => `${used}/${max} Zeichen`,
 		imagesInserted: (count: number) =>
 			`${count} ${count === 1 ? "Bild" : "Bilder"} in das Markdown eingefügt.`,
 		imageDefaultAlt: "Bild",
@@ -2891,10 +2880,8 @@ const germanMessages = {
 		tagMaxLength: (max: number) =>
 			`Tags dürfen höchstens ${max} Zeichen lang sein.`,
 		titleMin: "Der Titel muss mindestens 3 Zeichen lang sein.",
-		titleMax: (max: number) =>
-			`Der Titel darf höchstens ${max} Zeichen haben.`,
-		slugMax: (max: number) =>
-			`Der Slug darf höchstens ${max} Zeichen haben.`,
+		titleMax: (max: number) => `Der Titel darf höchstens ${max} Zeichen haben.`,
+		slugMax: (max: number) => `Der Slug darf höchstens ${max} Zeichen haben.`,
 		slugInvalid:
 			"Der Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.",
 		contentMin: "Der Inhalt muss mindestens 30 Zeichen lang sein.",
@@ -2968,8 +2955,7 @@ const germanMessages = {
 		passwordsDoNotMatch: "Die Passwörter stimmen nicht überein.",
 		currentPasswordRequired: "Das aktuelle Passwort ist erforderlich.",
 		newPasswordRequired: "Das neue Passwort ist erforderlich.",
-		confirmNewPasswordRequired:
-			"Bitte bestätige dein neues Passwort.",
+		confirmNewPasswordRequired: "Bitte bestätige dein neues Passwort.",
 	},
 } as typeof dictionaries.en;
 
@@ -3105,8 +3091,7 @@ const russianMessages = {
 		title: "Предложить пост",
 		close: "Закрыть окно предложения поста",
 		fieldTitle: "Заголовок",
-		titlePlaceholder:
-			"например: Понимание React Server Components в Next 14",
+		titlePlaceholder: "например: Понимание React Server Components в Next 14",
 		fieldIdea: "В чём идея?",
 		ideaPlaceholder:
 			"Добавьте краткий план, пункты или ссылки для контекста (необязательно).",
@@ -3246,8 +3231,7 @@ const russianMessages = {
 		showingNow: "Сейчас показано",
 		pageControls: "Управление страницами",
 		freshTopics: "Свежие темы",
-		topicCountsLater:
-			"Счётчики тем появятся здесь после публикации постов.",
+		topicCountsLater: "Счётчики тем появятся здесь после публикации постов.",
 		recentPosts: "Недавние посты",
 		recentPostsTitle: "Самые новые записи на devblog",
 		recentPostsDescription:
@@ -3289,8 +3273,7 @@ const russianMessages = {
 		risingPosts: "Растущие посты",
 		risingPostsDescription:
 			"Посты чуть ниже верхнего уровня, которые всё равно заслуживают ясного и читаемого представления.",
-		notEnoughPosts:
-			"Пока недостаточно постов для второго списка с акцентом.",
+		notEnoughPosts: "Пока недостаточно постов для второго списка с акцентом.",
 		readPost: "Читать пост",
 		focusPost: (title: string) => `Фокус на ${title}`,
 		viewsSuffix: (count: string) => `${count} просмотров`,
@@ -3318,8 +3301,7 @@ const russianMessages = {
 		selected: "Выбрано",
 		visiblePosts: "Видимые посты",
 		mainTopics: "Основные темы",
-		mainTopicsDescription:
-			"Широкие категории, которые формируют каждый пост.",
+		mainTopicsDescription: "Широкие категории, которые формируют каждый пост.",
 		supportingTags: "Дополнительные теги",
 		supportingTagsDescription:
 			"Используйте их, чтобы сузить сетку, не теряя контекст.",
@@ -3347,10 +3329,8 @@ const russianMessages = {
 		quickPicks: "Быстрые подборки",
 		quickPicksDescription:
 			"Популярные теги, которые быстро открывают страницу.",
-		tagGroupMainDescription:
-			"Основные категории, определяющие пост.",
-		tagGroupOtherDescription:
-			"Вторичные детали и связанные темы.",
+		tagGroupMainDescription: "Основные категории, определяющие пост.",
+		tagGroupOtherDescription: "Вторичные детали и связанные темы.",
 		noTagsMatch: "Ни один тег не соответствует текущему поиску.",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${resultsCount} ${resultsCount === 1 ? "пост" : "постов"} по ${tagCount} ${tagCount === 1 ? "тегу" : "тегам"}`,
@@ -3465,15 +3445,13 @@ const russianMessages = {
 		nameRequired: "Имя обязательно.",
 		maxChars: (max: number) => `Максимум ${max} символов.`,
 		handleRequired: "Хэндл обязателен.",
-		handleLettersNumbersOnly:
-			"Используйте только буквы и цифры.",
+		handleLettersNumbersOnly: "Используйте только буквы и цифры.",
 		handleMin: (min: number) =>
 			`Хэндл должен содержать минимум ${min} символов.`,
 		handleMax: (max: number) =>
 			`Хэндл должен содержать не более ${max} символов.`,
 		uploadRequired: "Загрузите изображение JPG, PNG или WEBP.",
-		uploadAllowed:
-			"Разрешены только изображения JPG, PNG или WEBP.",
+		uploadAllowed: "Разрешены только изображения JPG, PNG или WEBP.",
 		uploadMaxSize: "Максимальный размер изображения 2 МБ.",
 		invalidProviderUrl: (provider: string) =>
 			`Некорректный URL для ${provider}.`,
@@ -3519,8 +3497,7 @@ const russianMessages = {
 		finalUrl: (slug: string) => `Итоговый URL: /post/${slug}`,
 		description: "Описание",
 		generateFromContent: "Сгенерировать из контента",
-		descriptionPlaceholder:
-			"Что читатель должен понять до открытия статьи?",
+		descriptionPlaceholder: "Что читатель должен понять до открытия статьи?",
 		visualsEyebrow: "Визуал",
 		visualsTitle: "Задайте миниатюру поста",
 		thumbnail: "Миниатюра",
@@ -3568,19 +3545,16 @@ const russianMessages = {
 		statusPendingReviewDescription:
 			"Пометьте черновик как готовый к редакторской проверке.",
 		statusPublishedLabel: "Опубликовать сейчас",
-		statusPublishedDescription:
-			"Сделать пост видимым на сайте немедленно.",
+		statusPublishedDescription: "Сделать пост видимым на сайте немедленно.",
 		saving: "Сохранение...",
 		clearForm: "Очистить форму",
-		submitError:
-			"Сейчас не удаётся сохранить пост. Попробуйте ещё раз.",
+		submitError: "Сейчас не удаётся сохранить пост. Попробуйте ещё раз.",
 		submitSuccessPublished: "Пост опубликован.",
 		submitSuccessReview: "Пост отправлен на проверку.",
 		submitSuccessDraft: "Черновик сохранён.",
 		mainTagPlaceholder:
 			"Выберите существующую тему или задайте новый основной тег",
-		mainTagHelp:
-			"Основные теги группируют пост в списках и рекомендациях.",
+		mainTagHelp: "Основные теги группируют пост в списках и рекомендациях.",
 		tagsPlaceholder: "Добавьте теги и нажмите Enter",
 		tagsLimitReached: "Достигнут лимит тегов",
 		tagSlotsLeft: (count: number) =>
@@ -3620,12 +3594,10 @@ const russianMessages = {
 		previewDescription:
 			"Предпросмотр использует тот же рендерер, что и опубликованная страница поста.",
 		finalRendering: "Финальный рендер",
-		emptyPreview:
-			"Начните писать, чтобы увидеть финальный рендер поста.",
+		emptyPreview: "Начните писать, чтобы увидеть финальный рендер поста.",
 		editorWordCount: (count: number) => `${count} слов`,
 		editorReadTime: (count: number) => `${count} мин чтения`,
-		editorCharacters: (used: number, max: number) =>
-			`${used}/${max} символов`,
+		editorCharacters: (used: number, max: number) => `${used}/${max} символов`,
 		imagesInserted: (count: number) =>
 			`${count} ${count === 1 ? "изображение вставлено" : "изображений вставлено"} в markdown.`,
 		imageDefaultAlt: "Изображение",
@@ -3644,10 +3616,8 @@ const russianMessages = {
 		titleMin: "Заголовок должен содержать минимум 3 символа.",
 		titleMax: (max: number) =>
 			`Заголовок должен содержать не более ${max} символов.`,
-		slugMax: (max: number) =>
-			`Slug должен содержать не более ${max} символов.`,
-		slugInvalid:
-			"Slug может содержать только строчные буквы, цифры и дефисы.",
+		slugMax: (max: number) => `Slug должен содержать не более ${max} символов.`,
+		slugInvalid: "Slug может содержать только строчные буквы, цифры и дефисы.",
 		contentMin: "Контент должен содержать минимум 30 символов.",
 		contentMax: (max: number) =>
 			`Контент должен содержать не более ${max} символов.`,
@@ -3719,8 +3689,7 @@ const russianMessages = {
 		passwordsDoNotMatch: "Пароли не совпадают.",
 		currentPasswordRequired: "Текущий пароль обязателен.",
 		newPasswordRequired: "Новый пароль обязателен.",
-		confirmNewPasswordRequired:
-			"Пожалуйста, подтвердите новый пароль.",
+		confirmNewPasswordRequired: "Пожалуйста, подтвердите новый пароль.",
 	},
 } as typeof dictionaries.en;
 
@@ -3855,8 +3824,7 @@ const frenchMessages = {
 		title: "Suggérer un article",
 		close: "Fermer la fenêtre de suggestion",
 		fieldTitle: "Titre",
-		titlePlaceholder:
-			"ex. Comprendre les React Server Components dans Next 14",
+		titlePlaceholder: "ex. Comprendre les React Server Components dans Next 14",
 		fieldIdea: "Quelle est l'idée ?",
 		ideaPlaceholder:
 			"Ajoutez un court plan, quelques points clés ou des liens de contexte (optionnel).",
@@ -4094,8 +4062,7 @@ const frenchMessages = {
 			"Des tags populaires qui ouvrent rapidement la page.",
 		tagGroupMainDescription:
 			"Les catégories principales qui définissent l'article.",
-		tagGroupOtherDescription:
-			"Détails secondaires et sujets liés.",
+		tagGroupOtherDescription: "Détails secondaires et sujets liés.",
 		noTagsMatch: "Aucun tag ne correspond à la recherche actuelle.",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${resultsCount} ${resultsCount === 1 ? "article" : "articles"} correspondant à ${tagCount} ${tagCount === 1 ? "tag" : "tags"}`,
@@ -4214,11 +4181,9 @@ const frenchMessages = {
 		handleMax: (max: number) =>
 			`L'identifiant doit contenir au plus ${max} caractères.`,
 		uploadRequired: "Téléversez une image JPG, PNG ou WEBP.",
-		uploadAllowed:
-			"Seules les images JPG, PNG ou WEBP sont autorisées.",
+		uploadAllowed: "Seules les images JPG, PNG ou WEBP sont autorisées.",
 		uploadMaxSize: "La taille maximale de l'image est de 2 Mo.",
-		invalidProviderUrl: (provider: string) =>
-			`URL ${provider} invalide.`,
+		invalidProviderUrl: (provider: string) => `URL ${provider} invalide.`,
 		currentPasswordIncorrect: "Le mot de passe actuel est incorrect.",
 		handleTaken: "Cet identifiant est déjà pris.",
 		unableToSave: "Impossible d'enregistrer le profil.",
@@ -4270,8 +4235,7 @@ const frenchMessages = {
 		upload: "Téléverser",
 		uploading: "Téléversement...",
 		thumbnailPreviewAlt: "Miniature du post",
-		thumbnailEmpty:
-			"Téléversez l'image qui doit représenter ce post.",
+		thumbnailEmpty: "Téléversez l'image qui doit représenter ce post.",
 		thumbnailUploaded: "Miniature téléversée.",
 		thumbnailUploadError: "Impossible de téléverser la miniature.",
 		thumbnailAlt: "Texte alternatif de la miniature",
@@ -4361,8 +4325,7 @@ const frenchMessages = {
 		previewDescription:
 			"L'aperçu utilise le même moteur de rendu que la page du post publié.",
 		finalRendering: "Rendu final",
-		emptyPreview:
-			"Commencez à écrire pour voir le rendu final du post.",
+		emptyPreview: "Commencez à écrire pour voir le rendu final du post.",
 		editorWordCount: (count: number) => `${count} mots`,
 		editorReadTime: (count: number) => `${count} min de lecture`,
 		editorCharacters: (used: number, max: number) =>
@@ -4562,8 +4525,7 @@ const japaneseMessages = {
 			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、ここに自動で表示されます。",
 		explore: "探索",
 		trendingPosts: "注目記事",
-		trendingPostsDescription:
-			"今いちばん注目を集めている投稿を確認できます。",
+		trendingPostsDescription: "今いちばん注目を集めている投稿を確認できます。",
 		recentPosts: "新着記事",
 		recentPostsDescription:
 			"いちばん新しい文章から読み始めて、そこからさかのぼれます。",
@@ -4593,8 +4555,7 @@ const japaneseMessages = {
 		title: "記事を提案する",
 		close: "提案モーダルを閉じる",
 		fieldTitle: "タイトル",
-		titlePlaceholder:
-			"例: Next 14 の React Server Components を理解する",
+		titlePlaceholder: "例: Next 14 の React Server Components を理解する",
 		fieldIdea: "どんな案ですか？",
 		ideaPlaceholder:
 			"短い構成案、箇条書き、参考リンクなどを追加してください（任意）。",
@@ -4762,8 +4723,7 @@ const japaneseMessages = {
 		topicRadar: "トピックレーダー",
 		topicRadarDescription:
 			"現在のトレンド群で特に存在感の強い主要トピックです。今熱いものの文脈を保ったまま、関連投稿へ分岐できます。",
-		topicSignalsLater:
-			"投稿が公開されると、トピック指標がここに表示されます。",
+		topicSignalsLater: "投稿が公開されると、トピック指標がここに表示されます。",
 		leadingPost: "先頭の投稿",
 		leadingPostEmpty:
 			"まだトレンドの先頭記事はありません。投稿を公開して閲覧数を積み上げると、このランキングが形成されます。",
@@ -4775,8 +4735,7 @@ const japaneseMessages = {
 		risingPosts: "上昇中の投稿",
 		risingPostsDescription:
 			"最上位のすぐ下にいる投稿も、密なリストではなく読みやすい形で把握できます。",
-		notEnoughPosts:
-			"二次的な注目リストを作るには、まだ投稿数が足りません。",
+		notEnoughPosts: "二次的な注目リストを作るには、まだ投稿数が足りません。",
 		readPost: "投稿を読む",
 		focusPost: (title: string) => `${title} に注目する`,
 		viewsSuffix: (count: string) => `${count} 閲覧`,
@@ -4787,7 +4746,8 @@ const japaneseMessages = {
 			"devblog 全体から一致する投稿を探します。結果は他ページと同じカードで表示され、必要ならページ分割されます。",
 		matches: "一致",
 		noMatch: "一致なし",
-		nothingFound: (query: string) => `「${query}」に一致するものは見つかりませんでした。`,
+		nothingFound: (query: string) =>
+			`「${query}」に一致するものは見つかりませんでした。`,
 		noMatchDescription:
 			"より短いクエリを試すか、タグや著者で検索するか、最新投稿に戻って閲覧を続けてください。",
 		seeRecentPosts: "新着投稿を見る",
@@ -4802,14 +4762,12 @@ const japaneseMessages = {
 		selected: "選択済み",
 		visiblePosts: "表示中の投稿",
 		mainTopics: "主要トピック",
-		mainTopicsDescription:
-			"各投稿の軸になる大きなカテゴリです。",
+		mainTopicsDescription: "各投稿の軸になる大きなカテゴリです。",
 		supportingTags: "補助タグ",
 		supportingTagsDescription:
 			"文脈を失わずに結果グリッドを絞り込むために使います。",
 		noPostsYet: "まだ投稿がありません",
-		unlockAfterFirstPost:
-			"タグ閲覧は最初の公開投稿の後に利用可能になります",
+		unlockAfterFirstPost: "タグ閲覧は最初の公開投稿の後に利用可能になります",
 		tagBrowsingDescription:
 			"タグページは現在実際のデータベースを読んでいるため、公開済み投稿と表示可能なタグができるまでは空のままです。",
 		noMatches: "一致なし",
@@ -4828,12 +4786,9 @@ const japaneseMessages = {
 			"まずは広いトピックから始め、必要なら補助タグを重ねて結果を絞り込んでください。",
 		clearFilters: "フィルターをクリア",
 		quickPicks: "クイック選択",
-		quickPicksDescription:
-			"ページをすばやく開く人気タグです。",
-		tagGroupMainDescription:
-			"投稿を定義する主要カテゴリです。",
-		tagGroupOtherDescription:
-			"副次的な詳細や関連テーマです。",
+		quickPicksDescription: "ページをすばやく開く人気タグです。",
+		tagGroupMainDescription: "投稿を定義する主要カテゴリです。",
+		tagGroupOtherDescription: "副次的な詳細や関連テーマです。",
 		noTagsMatch: "現在の検索に一致するタグはありません。",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${tagCount} 個のタグに一致する ${resultsCount} 件の${resultsCount === 1 ? "投稿" : "投稿"}`,
@@ -4944,20 +4899,16 @@ const japaneseMessages = {
 		nameRequired: "名前は必須です。",
 		maxChars: (max: number) => `最大 ${max} 文字です。`,
 		handleRequired: "ハンドルは必須です。",
-		handleLettersNumbersOnly:
-			"英字と数字のみを使用してください。",
+		handleLettersNumbersOnly: "英字と数字のみを使用してください。",
 		handleMin: (min: number) =>
 			`ハンドルは ${min} 文字以上である必要があります。`,
 		handleMax: (max: number) =>
 			`ハンドルは ${max} 文字以下である必要があります。`,
 		uploadRequired: "JPG、PNG、WEBP 画像をアップロードしてください。",
-		uploadAllowed:
-			"使用できる画像形式は JPG、PNG、WEBP のみです。",
+		uploadAllowed: "使用できる画像形式は JPG、PNG、WEBP のみです。",
 		uploadMaxSize: "画像の最大サイズは 2MB です。",
-		invalidProviderUrl: (provider: string) =>
-			`${provider} の URL が無効です。`,
-		currentPasswordIncorrect:
-			"現在のパスワードが正しくありません。",
+		invalidProviderUrl: (provider: string) => `${provider} の URL が無効です。`,
+		currentPasswordIncorrect: "現在のパスワードが正しくありません。",
 		handleTaken: "そのハンドルはすでに使用されています。",
 		unableToSave: "プロフィールを保存できません。",
 	},
@@ -5008,8 +4959,7 @@ const japaneseMessages = {
 		upload: "アップロード",
 		uploading: "アップロード中...",
 		thumbnailPreviewAlt: "投稿サムネイル",
-		thumbnailEmpty:
-			"この投稿を表す画像をアップロードしてください。",
+		thumbnailEmpty: "この投稿を表す画像をアップロードしてください。",
 		thumbnailUploaded: "サムネイルをアップロードしました。",
 		thumbnailUploadError: "サムネイルをアップロードできません。",
 		thumbnailAlt: "サムネイル代替テキスト",
@@ -5040,25 +4990,21 @@ const japaneseMessages = {
 		publishEyebrow: "公開",
 		publishTitle: "次のステップを選ぶ",
 		statusDraftLabel: "下書きを保存",
-		statusDraftDescription:
-			"内容を整えている間は投稿を非公開に保ちます。",
+		statusDraftDescription: "内容を整えている間は投稿を非公開に保ちます。",
 		statusPendingReviewLabel: "レビューに送る",
 		statusPendingReviewDescription:
 			"下書きを編集レビュー準備完了としてマークします。",
 		statusPublishedLabel: "今すぐ公開",
-		statusPublishedDescription:
-			"投稿をすぐにサイト上で見える状態にします。",
+		statusPublishedDescription: "投稿をすぐにサイト上で見える状態にします。",
 		saving: "保存中...",
 		clearForm: "フォームをクリア",
-		submitError:
-			"現在投稿を保存できません。もう一度お試しください。",
+		submitError: "現在投稿を保存できません。もう一度お試しください。",
 		submitSuccessPublished: "投稿を公開しました。",
 		submitSuccessReview: "投稿をレビューに送りました。",
 		submitSuccessDraft: "下書きを保存しました。",
 		mainTagPlaceholder:
 			"既存のトピックを選ぶか、新しいメインタグを定義してください",
-		mainTagHelp:
-			"メインタグは一覧やおすすめ全体で投稿をまとめます。",
+		mainTagHelp: "メインタグは一覧やおすすめ全体で投稿をまとめます。",
 		tagsPlaceholder: "タグを追加して Enter を押してください",
 		tagsLimitReached: "タグ上限に達しました",
 		tagSlotsLeft: (count: number) =>
@@ -5102,8 +5048,7 @@ const japaneseMessages = {
 			"書き始めると、最終的な投稿レンダリングがここに表示されます。",
 		editorWordCount: (count: number) => `${count} 語`,
 		editorReadTime: (count: number) => `${count} 分で読了`,
-		editorCharacters: (used: number, max: number) =>
-			`${used}/${max} 文字`,
+		editorCharacters: (used: number, max: number) => `${used}/${max} 文字`,
 		imagesInserted: (count: number) =>
 			`${count} ${count === 1 ? "枚の画像を" : "枚の画像を"} markdown に挿入しました。`,
 		imageDefaultAlt: "画像",
@@ -5121,19 +5066,15 @@ const japaneseMessages = {
 		titleMin: "タイトルは 3 文字以上必要です。",
 		titleMax: (max: number) =>
 			`タイトルは ${max} 文字以下である必要があります。`,
-		slugMax: (max: number) =>
-			`Slug は ${max} 文字以下である必要があります。`,
-		slugInvalid:
-			"Slug に使えるのは小文字、数字、ハイフンのみです。",
+		slugMax: (max: number) => `Slug は ${max} 文字以下である必要があります。`,
+		slugInvalid: "Slug に使えるのは小文字、数字、ハイフンのみです。",
 		contentMin: "本文は 30 文字以上必要です。",
-		contentMax: (max: number) =>
-			`本文は ${max} 文字以下である必要があります。`,
+		contentMax: (max: number) => `本文は ${max} 文字以下である必要があります。`,
 		thumbnailAltMax: (max: number) =>
 			`サムネイル代替テキストは ${max} 文字以下である必要があります。`,
 		mainTagRequired: "メインタグは必須です。",
 		tagsRequired: "少なくとも 1 つのタグが必要です。",
-		tagsMaxItems: (max: number) =>
-			`タグは最大 ${max} 個までです。`,
+		tagsMaxItems: (max: number) => `タグは最大 ${max} 個までです。`,
 		tagsUnique: "タグは重複できません。",
 		descriptionMax: (max: number) =>
 			`説明は ${max} 文字以下である必要があります。`,
@@ -5168,8 +5109,7 @@ const japaneseMessages = {
 		loginModalDescription:
 			"ログインするとより良い体験になります。会話に参加しましょう。",
 		reportCommentTitle: "コメントを報告",
-		reportingCommentBy: (author: string) =>
-			`${author} のコメントを報告中:`,
+		reportingCommentBy: (author: string) => `${author} のコメントを報告中:`,
 		reason: "理由",
 		chooseReason: "理由を選択...",
 		details: "詳細",
@@ -5194,8 +5134,7 @@ const japaneseMessages = {
 		passwordsDoNotMatch: "パスワードが一致しません。",
 		currentPasswordRequired: "現在のパスワードは必須です。",
 		newPasswordRequired: "新しいパスワードは必須です。",
-		confirmNewPasswordRequired:
-			"新しいパスワードの確認を入力してください。",
+		confirmNewPasswordRequired: "新しいパスワードの確認を入力してください。",
 	},
 } as typeof dictionaries.en;
 

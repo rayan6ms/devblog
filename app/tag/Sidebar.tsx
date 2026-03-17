@@ -53,15 +53,14 @@ function TagGroup({
 							<button
 								key={tag.slug}
 								type="button"
-								className={`capitalize flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition-colors ${isSelected
-									? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
-									: "border-zinc-700/50 bg-greyBg/80 text-zinc-300 hover:border-zinc-500/80 hover:text-wheat"
-									}`}
+								className={`capitalize flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition-colors ${
+									isSelected
+										? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
+										: "border-zinc-700/50 bg-greyBg/80 text-zinc-300 hover:border-zinc-500/80 hover:text-wheat"
+								}`}
 								onClick={() => onSelectTag(tag.name)}
 							>
-								<span className="truncate text-sm font-medium">
-									{tag.name}
-								</span>
+								<span className="truncate text-sm font-medium">{tag.name}</span>
 								<span className="ml-3 rounded-full bg-darkBg px-2 py-1 text-xs text-zinc-500">
 									{tag.count}
 								</span>
@@ -157,10 +156,11 @@ export default function Sidebar({
 									<button
 										key={tag.slug}
 										type="button"
-										className={`capitalize rounded-full border px-3 py-2 text-sm transition-colors ${isSelected
-											? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
-											: "border-zinc-700/60 bg-greyBg text-zinc-300 hover:border-zinc-500 hover:text-wheat"
-											}`}
+										className={`capitalize rounded-full border px-3 py-2 text-sm transition-colors ${
+											isSelected
+												? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
+												: "border-zinc-700/60 bg-greyBg text-zinc-300 hover:border-zinc-500 hover:text-wheat"
+										}`}
 										onClick={() => onSelectTag(tag.name)}
 									>
 										{tag.name}

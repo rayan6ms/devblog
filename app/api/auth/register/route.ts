@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/database/prisma";
 import { hashPassword } from "@/lib/password";
-import { registerPayloadSchema } from "@/lib/validation/auth";
 import {
 	ensureUniqueSlug,
 	ensureUniqueUsername,
 	normalizeEmail,
 } from "@/lib/user-profile";
+import { registerPayloadSchema } from "@/lib/validation/auth";
 
 export async function POST(req: Request) {
 	const payload = await req.json().catch(() => null);

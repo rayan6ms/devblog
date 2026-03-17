@@ -21,7 +21,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useI18n } from "@/components/LocaleProvider";
-import { markdownComponents, MARKDOWN_ARTICLE_CLASS } from "@/lib/markdown";
+import { MARKDOWN_ARTICLE_CLASS, markdownComponents } from "@/lib/markdown";
 import { getReadingTimeMinutes, stripMarkdown } from "@/lib/post-shared";
 
 type UploadedImage = {
@@ -146,7 +146,9 @@ export default function MarkdownEditor({
 			setFeedback({
 				tone: "error",
 				message:
-					error instanceof Error ? error.message : messages.newPost.imageUploadError,
+					error instanceof Error
+						? error.message
+						: messages.newPost.imageUploadError,
 			});
 		} finally {
 			setIsUploading(false);
@@ -233,7 +235,8 @@ export default function MarkdownEditor({
 				{
 					label: messages.newPost.toolbarList,
 					icon: FaListUl,
-					action: () => insertAtSelection("\n\n- First item\n- Second item\n\n"),
+					action: () =>
+						insertAtSelection("\n\n- First item\n- Second item\n\n"),
 				},
 				{
 					label: messages.newPost.toolbarNumbered,
@@ -351,8 +354,8 @@ export default function MarkdownEditor({
 							{mode === "split"
 								? messages.newPost.dualPanel
 								: messages.newPost.modeBadge(
-										modeOptions.find((option) => option.value === mode)?.label ||
-											mode,
+										modeOptions.find((option) => option.value === mode)
+											?.label || mode,
 									)}
 						</div>
 					</div>
@@ -433,9 +436,13 @@ export default function MarkdownEditor({
 					<FaEye className="text-xs" />
 					<span>{messages.newPost.editorReadTime(readingTime)}</span>
 				</div>
-				<div className={`inline-flex items-center gap-2 ${remaining < 0 ? "text-red-400" : ""}`}>
+				<div
+					className={`inline-flex items-center gap-2 ${remaining < 0 ? "text-red-400" : ""}`}
+				>
 					<FaTableColumns className="text-xs" />
-					<span>{messages.newPost.editorCharacters(value.length, maxLength)}</span>
+					<span>
+						{messages.newPost.editorCharacters(value.length, maxLength)}
+					</span>
 				</div>
 				{feedback ? (
 					<span

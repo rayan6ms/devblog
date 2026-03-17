@@ -4,17 +4,18 @@ import LocalizedLink from "@/components/LocalizedLink";
 import { auth } from "@/lib/auth";
 import { getMessages } from "@/lib/i18n";
 import { canViewPost, slugifyPostValue } from "@/lib/post-shared";
-import { getRequestLocale } from "@/lib/request-locale";
 import {
 	getPostBySlugWithAuthor,
 	getRelatedPosts,
 	mapPostForPage,
 } from "@/lib/posts";
+import { getRequestLocale } from "@/lib/request-locale";
 import CommentSection from "./CommentSection";
 import PostBody from "./PostBody";
 import PostEditButton from "./PostEditButton";
 import PostFooter from "./PostFooter";
 import PostHeader from "./PostHeader";
+import ReadingProgressTracker from "./ReadingProgressTracker";
 
 type PostPageProps = PageProps<"/post/[slug]">;
 
@@ -50,6 +51,7 @@ export default async function Page({ params }: PostPageProps) {
 
 						<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
 							<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+								<ReadingProgressTracker postId={post.id} />
 								<PostBody markdown={post.content} />
 								<CommentSection />
 							</div>

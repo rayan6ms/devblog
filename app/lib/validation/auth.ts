@@ -3,8 +3,9 @@ import { DEFAULT_LOCALE, getMessages } from "@/lib/i18n";
 
 const MAX_PASSWORD_LENGTH = 128;
 
-export type AuthValidationMessages =
-	ReturnType<typeof getMessages>["authValidation"];
+export type AuthValidationMessages = ReturnType<
+	typeof getMessages
+>["authValidation"];
 
 function createEmailSchema(messages: AuthValidationMessages) {
 	return z
@@ -58,9 +59,7 @@ export function createRegisterPayloadSchema(messages: AuthValidationMessages) {
 export function createRegisterFormSchema(messages: AuthValidationMessages) {
 	return createRegisterPayloadSchema(messages)
 		.extend({
-			confirmPassword: z
-				.string()
-				.min(1, messages.confirmPasswordRequired),
+			confirmPassword: z.string().min(1, messages.confirmPasswordRequired),
 		})
 		.superRefine(({ password, confirmPassword }, ctx) => {
 			if (confirmPassword.length > 0 && password !== confirmPassword) {
@@ -79,8 +78,7 @@ export const passwordSchema = createPasswordSchema(defaultAuthMessages);
 export const loginSchema = createLoginSchema(defaultAuthMessages);
 export const registerPayloadSchema =
 	createRegisterPayloadSchema(defaultAuthMessages);
-export const registerFormSchema =
-	createRegisterFormSchema(defaultAuthMessages);
+export const registerFormSchema = createRegisterFormSchema(defaultAuthMessages);
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerFormSchema>;

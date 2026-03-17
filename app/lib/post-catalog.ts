@@ -58,6 +58,8 @@ export function getPostHref(post: Pick<PostListItem, "slug" | "title">) {
 	return `/post/${post.slug || getPostSlug(post.title)}`;
 }
 
-export function getAuthorHref(post: Pick<PostListItem, "author" | "authorSlug">) {
+export function getAuthorHref(
+	post: Pick<PostListItem, "author" | "authorSlug">,
+) {
 	return `/profile/${post.authorSlug || getPostSlug(post.author)}`;
 }

@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import FirstSection from "@/components/FirstSection";
 import Footer from "@/components/Footer";
+import { useI18n } from "@/components/LocaleProvider";
 import Main from "@/components/Main";
 import SecondSection from "@/components/SecondSection";
 import {
-	getRecommendedPosts,
 	getRecentPosts,
+	getRecommendedPosts,
 	getTrendingPosts,
 	type IPost,
 } from "@/lib/posts-client";
-import { useI18n } from "@/components/LocaleProvider";
 import SkeletonFirstSection from "./components/SkeletonFirstSection";
 import SkeletonMain from "./components/SkeletonMain";
 import SkeletonSecondSection from "./components/SkeletonSecondSection";
@@ -149,7 +149,9 @@ export default function Home() {
 							</div>
 						</div>
 						<div className="px-4 py-5 sm:px-6">
-							<Main posts={{ recent: recentPosts, recommended: recommendedPosts }} />
+							<Main
+								posts={{ recent: recentPosts, recommended: recommendedPosts }}
+							/>
 						</div>
 					</div>
 				</section>

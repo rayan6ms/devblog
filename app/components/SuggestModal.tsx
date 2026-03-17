@@ -116,102 +116,102 @@ function SuggestModalBody({
 					aria-labelledby="suggest-post-title-heading"
 					className="relative flex w-full max-w-xl flex-col rounded-2xl border border-zinc-700/50 bg-greyBg shadow-2xl max-h-[calc(100dvh-2rem)]"
 				>
-				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
-					<h3
-						id="suggest-post-title-heading"
-						className="text-lg font-semibold text-zinc-100"
-					>
-						{messages.suggestModal.title}
-					</h3>
-					<button
-						type="button"
-						className="text-zinc-300 hover:text-white"
-						onClick={onClose}
-						aria-label={messages.common.close}
-					>
-						✕
-					</button>
-				</div>
-
-				<div className="space-y-4 overflow-y-auto px-5 py-5">
-					<div>
-						<label
-							htmlFor="suggest-post-title"
-							className="block text-sm text-zinc-300 mb-1"
+					<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
+						<h3
+							id="suggest-post-title-heading"
+							className="text-lg font-semibold text-zinc-100"
 						>
-							{messages.suggestModal.fieldTitle}
-						</label>
-						<input
-							id="suggest-post-title"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							maxLength={MAX_TITLE}
-							placeholder={messages.suggestModal.titlePlaceholder}
-							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
-						/>
-						<div className="flex justify-between">
-							{errors.title && (
-								<p className="text-xs text-red-400 mt-1">{errors.title}</p>
-							)}
-							<span className="text-xs text-zinc-400 mt-1 ml-auto">
-								{title.length}/{MAX_TITLE}
-							</span>
-						</div>
+							{messages.suggestModal.title}
+						</h3>
+						<button
+							type="button"
+							className="text-zinc-300 hover:text-white"
+							onClick={onClose}
+							aria-label={messages.common.close}
+						>
+							✕
+						</button>
 					</div>
 
-					<div>
-						<label
-							htmlFor="suggest-post-details"
-							className="block text-sm text-zinc-300 mb-1"
-						>
-							{messages.suggestModal.fieldIdea}
-						</label>
-						<textarea
-							id="suggest-post-details"
-							value={details}
-							onChange={(e) => setDetails(e.target.value)}
-							maxLength={MAX_DETAILS}
-							rows={5}
-							placeholder={messages.suggestModal.ideaPlaceholder}
-							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
-						/>
-						<div className="flex justify-between">
-							{errors.details && (
-								<p className="text-xs text-red-400 mt-1">{errors.details}</p>
-							)}
-							<span className="text-xs text-zinc-400 mt-1 ml-auto">
-								{details.length}/{MAX_DETAILS}
-							</span>
+					<div className="space-y-4 overflow-y-auto px-5 py-5">
+						<div>
+							<label
+								htmlFor="suggest-post-title"
+								className="block text-sm text-zinc-300 mb-1"
+							>
+								{messages.suggestModal.fieldTitle}
+							</label>
+							<input
+								id="suggest-post-title"
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								maxLength={MAX_TITLE}
+								placeholder={messages.suggestModal.titlePlaceholder}
+								className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
+							/>
+							<div className="flex justify-between">
+								{errors.title && (
+									<p className="text-xs text-red-400 mt-1">{errors.title}</p>
+								)}
+								<span className="text-xs text-zinc-400 mt-1 ml-auto">
+									{title.length}/{MAX_TITLE}
+								</span>
+							</div>
 						</div>
+
+						<div>
+							<label
+								htmlFor="suggest-post-details"
+								className="block text-sm text-zinc-300 mb-1"
+							>
+								{messages.suggestModal.fieldIdea}
+							</label>
+							<textarea
+								id="suggest-post-details"
+								value={details}
+								onChange={(e) => setDetails(e.target.value)}
+								maxLength={MAX_DETAILS}
+								rows={5}
+								placeholder={messages.suggestModal.ideaPlaceholder}
+								className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
+							/>
+							<div className="flex justify-between">
+								{errors.details && (
+									<p className="text-xs text-red-400 mt-1">{errors.details}</p>
+								)}
+								<span className="text-xs text-zinc-400 mt-1 ml-auto">
+									{details.length}/{MAX_DETAILS}
+								</span>
+							</div>
+						</div>
+
+						<p className="text-xs text-zinc-400">
+							{messages.suggestModal.reviewNote}
+						</p>
 					</div>
 
-					<p className="text-xs text-zinc-400">
-						{messages.suggestModal.reviewNote}
-					</p>
-				</div>
-
-				<div className="flex items-center justify-end gap-3 px-5 pb-5">
-					<button
-						type="button"
-						className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
-						onClick={onClose}
-						disabled={saving}
-					>
-						{messages.common.cancel}
-					</button>
-					<button
-						type="button"
-						className="px-4 py-2 rounded-md bg-purpleContrast hover:bg-purple-500 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-						onClick={handleSubmit}
-						disabled={saving || !dirty}
-					>
-						{submitted
-							? messages.suggestModal.submitted
-							: saving
-								? messages.suggestModal.submitting
-								: messages.suggestModal.submit}
-					</button>
-				</div>
+					<div className="flex items-center justify-end gap-3 px-5 pb-5">
+						<button
+							type="button"
+							className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
+							onClick={onClose}
+							disabled={saving}
+						>
+							{messages.common.cancel}
+						</button>
+						<button
+							type="button"
+							className="px-4 py-2 rounded-md bg-purpleContrast hover:bg-purple-500 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+							onClick={handleSubmit}
+							disabled={saving || !dirty}
+						>
+							{submitted
+								? messages.suggestModal.submitted
+								: saving
+									? messages.suggestModal.submitting
+									: messages.suggestModal.submit}
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

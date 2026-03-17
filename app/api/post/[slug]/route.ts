@@ -2,15 +2,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import prisma from "@/database/prisma";
 import { auth } from "@/lib/auth";
 import {
-	ensureUniquePostSlug,
-	getPostBySlugWithAuthor,
-} from "@/lib/posts";
-import {
 	buildPostDescription,
 	canEditPost,
 	canViewPost,
 	canWriteRole,
 } from "@/lib/post-shared";
+import { ensureUniquePostSlug, getPostBySlugWithAuthor } from "@/lib/posts";
 import { createPostSchema } from "@/lib/validation/content";
 
 export async function GET(
@@ -112,7 +109,8 @@ export async function PATCH(
 				slug: nextSlug,
 				content: parsed.data.content.trim(),
 				thumbnail: parsed.data.thumbnail.trim(),
-				thumbnailAlt: parsed.data.thumbnailAlt.trim() || parsed.data.title.trim(),
+				thumbnailAlt:
+					parsed.data.thumbnailAlt.trim() || parsed.data.title.trim(),
 				mainTag: parsed.data.mainTag.trim(),
 				tags: parsed.data.tags.map((tag) => tag.trim()),
 				description: buildPostDescription(

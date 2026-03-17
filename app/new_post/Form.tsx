@@ -1,7 +1,7 @@
 "use client";
 
-import type React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
 import {
@@ -16,12 +16,13 @@ import {
 	FaTags,
 } from "react-icons/fa6";
 import type { z } from "zod";
-import CircleProgress from "./CircleProgress";
-import MainTagInput from "./MainTagInput";
-import MarkdownEditor from "./MarkdownEditor";
-import TagsInput from "./TagsInput";
 import { useI18n } from "@/components/LocaleProvider";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import {
+	getReadingTimeMinutes,
+	slugifyPostValue,
+	stripMarkdown,
+} from "@/lib/post-shared";
 import {
 	buildPostSchema,
 	MAX_POST_CONTENT,
@@ -30,11 +31,10 @@ import {
 	MAX_POST_THUMBNAIL_ALT,
 	MAX_POST_TITLE,
 } from "@/lib/validation/content";
-import {
-	getReadingTimeMinutes,
-	slugifyPostValue,
-	stripMarkdown,
-} from "@/lib/post-shared";
+import CircleProgress from "./CircleProgress";
+import MainTagInput from "./MainTagInput";
+import MarkdownEditor from "./MarkdownEditor";
+import TagsInput from "./TagsInput";
 
 type PostFormData = z.input<ReturnType<typeof buildPostSchema>>;
 type PostStatus = "draft" | "pending_review" | "published";
@@ -124,7 +124,10 @@ export default function Form({
 		[content],
 	);
 	const readingTime = useMemo(() => getReadingTimeMinutes(content), [content]);
-	const statusDetails: Record<PostStatus, { label: string; description: string }> = {
+	const statusDetails: Record<
+		PostStatus,
+		{ label: string; description: string }
+	> = {
 		draft: {
 			label: messages.newPost.statusDraftLabel,
 			description: messages.newPost.statusDraftDescription,
@@ -168,9 +171,7 @@ export default function Form({
 				data && "error" in data && typeof data.error === "string"
 					? translatePostFieldError(data.error, messages)
 					: messages.newPost.imageUploadError;
-			throw new Error(
-				message,
-			);
+			throw new Error(message);
 		}
 
 		return data;
@@ -215,7 +216,9 @@ export default function Form({
 	}
 
 	function applyServerFieldErrors(
-		fields: Partial<Record<keyof PostFormData, string[] | undefined>> | undefined,
+		fields:
+			| Partial<Record<keyof PostFormData, string[] | undefined>>
+			| undefined,
 	) {
 		if (!fields) {
 			return;
@@ -251,23 +254,20 @@ export default function Form({
 				},
 			);
 
-			const result = (await response.json().catch(() => null)) as
-				| {
-						error?: string;
-						fields?: Partial<Record<keyof PostFormData, string[] | undefined>>;
-						slug?: string;
-				  }
-				| null;
+			const result = (await response.json().catch(() => null)) as {
+				error?: string;
+				fields?: Partial<Record<keyof PostFormData, string[] | undefined>>;
+				slug?: string;
+			} | null;
 
 			if (!response.ok) {
 				applyServerFieldErrors(result?.fields);
 				setSubmitState({
 					tone: "error",
-					message:
-						translatePostFieldError(
-							result?.error || messages.newPost.submitError,
-							messages,
-						),
+					message: translatePostFieldError(
+						result?.error || messages.newPost.submitError,
+						messages,
+					),
 				});
 				return;
 			}
@@ -289,7 +289,10 @@ export default function Form({
 	}
 
 	const checklist = [
-		{ label: messages.newPost.checklistTitleSet, done: title.trim().length >= 3 },
+		{
+			label: messages.newPost.checklistTitleSet,
+			done: title.trim().length >= 3,
+		},
 		{
 			label: messages.newPost.checklistThumbnailUploaded,
 			done: Boolean(thumbnail),
@@ -397,7 +400,9 @@ export default function Form({
 									placeholder={messages.newPost.titlePlaceholder}
 								/>
 								<div className="mt-2 flex items-center justify-between">
-									<p className="text-sm text-red-400">{errors.title?.message}</p>
+									<p className="text-sm text-red-400">
+										{errors.title?.message}
+									</p>
 									<CircleProgress
 										size={26}
 										progress={(MAX_POST_TITLE - titleLength) / MAX_POST_TITLE}
@@ -442,7 +447,9 @@ export default function Form({
 										slug || messages.newPost.slugPlaceholder,
 									)}
 								</p>
-								<p className="mt-1 text-sm text-red-400">{errors.slug?.message}</p>
+								<p className="mt-1 text-sm text-red-400">
+									{errors.slug?.message}
+								</p>
 							</label>
 
 							<label className="block">
@@ -455,7 +462,9 @@ export default function Form({
 										type="button"
 										onClick={() => {
 											const generated = stripMarkdown(content).slice(0, 220);
-											setValue("description", generated, { shouldValidate: true });
+											setValue("description", generated, {
+												shouldValidate: true,
+											});
 										}}
 										className="inline-flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-wheat"
 									>
@@ -528,9 +537,7 @@ export default function Form({
 									<div className="mt-4 overflow-hidden rounded-[24px] border border-zinc-700/50 bg-darkBg/45">
 										<img
 											src={thumbnail}
-											alt={
-												thumbnailAlt || messages.newPost.thumbnailPreviewAlt
-											}
+											alt={thumbnailAlt || messages.newPost.thumbnailPreviewAlt}
 											className="aspect-[16/10] w-full object-cover"
 										/>
 									</div>
@@ -539,9 +546,13 @@ export default function Form({
 										{messages.newPost.thumbnailEmpty}
 									</div>
 								)}
-								<p className="mt-3 text-sm text-red-400">{errors.thumbnail?.message}</p>
+								<p className="mt-3 text-sm text-red-400">
+									{errors.thumbnail?.message}
+								</p>
 								{thumbnailMessage ? (
-									<p className="mt-1 text-sm text-emerald-400">{thumbnailMessage}</p>
+									<p className="mt-1 text-sm text-emerald-400">
+										{thumbnailMessage}
+									</p>
 								) : null}
 							</div>
 
@@ -675,11 +686,16 @@ export default function Form({
 									name="tags"
 									render={({ field }) => (
 										<div className="mt-2">
-											<TagsInput value={field.value || []} onChange={field.onChange} />
+											<TagsInput
+												value={field.value || []}
+												onChange={field.onChange}
+											/>
 										</div>
 									)}
 								/>
-								<p className="mt-2 text-sm text-red-400">{errors.tags?.message}</p>
+								<p className="mt-2 text-sm text-red-400">
+									{errors.tags?.message}
+								</p>
 							</div>
 						</div>
 					</section>
@@ -706,9 +722,7 @@ export default function Form({
 								>
 									<span className="text-zinc-300">{item.label}</span>
 									<span
-										className={
-											item.done ? "text-emerald-400" : "text-zinc-500"
-										}
+										className={item.done ? "text-emerald-400" : "text-zinc-500"}
 									>
 										{item.done
 											? messages.newPost.ready
@@ -742,9 +756,11 @@ export default function Form({
 							</div>
 						</div>
 						<div className="mt-5 grid gap-3">
-							{(Object.entries(statusDetails) as Array<
-								[PostStatus, (typeof statusDetails)[PostStatus]]
-							>).map(([nextStatus, details]) => (
+							{(
+								Object.entries(statusDetails) as Array<
+									[PostStatus, (typeof statusDetails)[PostStatus]]
+								>
+							).map(([nextStatus, details]) => (
 								<button
 									key={nextStatus}
 									type="button"
@@ -828,12 +844,16 @@ function translatePostFieldError(
 		case "You do not have permission to upload images.":
 			return messages.newPost.imageUploadError;
 		default: {
-			const titleMax = message.match(/^Title must be (\d+) characters or fewer\.$/);
+			const titleMax = message.match(
+				/^Title must be (\d+) characters or fewer\.$/,
+			);
 			if (titleMax) {
 				return messages.postValidation.titleMax(Number(titleMax[1]));
 			}
 
-			const slugMax = message.match(/^Slug must be (\d+) characters or fewer\.$/);
+			const slugMax = message.match(
+				/^Slug must be (\d+) characters or fewer\.$/,
+			);
 			if (slugMax) {
 				return messages.postValidation.slugMax(Number(slugMax[1]));
 			}
@@ -845,7 +865,9 @@ function translatePostFieldError(
 				return messages.postValidation.contentMax(Number(contentMax[1]));
 			}
 
-			const tagMax = message.match(/^Tags must be (\d+) characters or fewer\.$/);
+			const tagMax = message.match(
+				/^Tags must be (\d+) characters or fewer\.$/,
+			);
 			if (tagMax) {
 				return messages.postValidation.tagMaxLength(Number(tagMax[1]));
 			}

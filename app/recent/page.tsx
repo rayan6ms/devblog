@@ -6,8 +6,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getIntlLocale } from "@/lib/i18n";
 import {
@@ -74,10 +74,11 @@ function PaginationControls({
 						key={page}
 						type="button"
 						onClick={() => onPageChange(page)}
-						className={`h-10 min-w-10 rounded-full border px-3 text-sm font-semibold transition-colors ${page === currentPage
-							? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
-							: "border-zinc-700/60 bg-greyBg text-zinc-300 hover:border-zinc-500 hover:text-wheat"
-							}`}
+						className={`h-10 min-w-10 rounded-full border px-3 text-sm font-semibold transition-colors ${
+							page === currentPage
+								? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
+								: "border-zinc-700/60 bg-greyBg text-zinc-300 hover:border-zinc-500 hover:text-wheat"
+						}`}
 					>
 						{page}
 					</button>
@@ -436,7 +437,9 @@ function RecentPageContent() {
 												className="capitalize rounded-full border border-zinc-700/60 bg-greyBg px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 											>
 												{topic.label}
-												<span className="ml-2 text-zinc-500">{topic.count}</span>
+												<span className="ml-2 text-zinc-500">
+													{topic.count}
+												</span>
 											</LocalizedLink>
 										))}
 									</div>
@@ -493,11 +496,7 @@ function RecentPageContent() {
 
 export default function RecentPage() {
 	return (
-		<Suspense
-			fallback={
-				<Skeleton />
-			}
-		>
+		<Suspense fallback={<Skeleton />}>
 			<RecentPageContent />
 		</Suspense>
 	);

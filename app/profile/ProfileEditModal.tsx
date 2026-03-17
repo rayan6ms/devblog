@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "@/components/LocaleProvider";
 import { buildLetterAvatar } from "@/lib/avatar";
 import {
 	hostOkFor,
@@ -19,7 +20,6 @@ import {
 	PROFILE_UPLOAD_MAX_BYTES,
 } from "@/lib/validation/profile";
 import type { ProfileAvatarMode, ProfileUser } from "@/profile/types";
-import { useI18n } from "@/components/LocaleProvider";
 
 type ProfileUpdatePayload = {
 	name: string;
@@ -210,7 +210,11 @@ function ProfileEditModalBody({
 			return;
 		}
 
-		if (!PROFILE_UPLOAD_ACCEPT.includes(file.type as (typeof PROFILE_UPLOAD_ACCEPT)[number])) {
+		if (
+			!PROFILE_UPLOAD_ACCEPT.includes(
+				file.type as (typeof PROFILE_UPLOAD_ACCEPT)[number],
+			)
+		) {
 			setErrors((current) => ({
 				...current,
 				profilePicture: messages.profileValidation.uploadAllowed,
@@ -315,334 +319,339 @@ function ProfileEditModalBody({
 					aria-labelledby="edit-profile-title"
 					className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[30px] border border-zinc-700/60 bg-lessDarkBg/95 shadow-[0_32px_120px_rgba(0,0,0,0.55)] max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]"
 				>
-				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.34),transparent_42%),linear-gradient(180deg,rgba(103,79,248,0.14),rgba(20,23,26,0.02)_28%,rgba(20,23,26,0.78)_100%)]" />
-				<div className="relative flex items-center justify-between border-b border-zinc-700/50 px-6 py-5 sm:px-8">
-					<div>
-						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-							{messages.profileEdit.settingsEyebrow}
-						</p>
-						<h3
-							id="edit-profile-title"
-							className="mt-2 text-3xl font-somerton uppercase text-wheat"
-						>
-							{messages.profileEdit.title}
-						</h3>
-					</div>
-					<button
-						type="button"
-						className="rounded-full border border-zinc-600/50 bg-greyBg/70 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-						onClick={onClose}
-						aria-label={messages.common.close}
-					>
-						{messages.common.close}
-					</button>
-				</div>
-
-				<div className="relative grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-6 sm:px-8 xl:grid-cols-[320px_minmax(0,1fr)]">
-					<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-xl shadow-zinc-950/20">
-						<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-							{messages.profileEdit.preview}
-						</p>
-						<div className="mt-5 mx-auto h-36 w-36 overflow-hidden rounded-[28px] border border-zinc-200/70 shadow-xl shadow-zinc-950/30">
-							<img
-								src={avatarPreview}
-								alt={messages.profileEdit.previewAlt}
-								className="h-full w-full object-cover"
-							/>
-						</div>
-
-						<p className="mt-4 text-center text-sm text-zinc-300">
-							{normalizedHandle ? `@${normalizedHandle}` : "@handle"}
-						</p>
-						<p className="mt-1 text-center text-xs uppercase tracking-[0.18em] text-zinc-500">
-							{initialUser.providerPicture
-								? messages.profileEdit.providerAvailable
-								: messages.profileEdit.providerMissing}
-						</p>
-
-						<div className="mt-6 grid gap-2">
-							{initialUser.providerPicture ? (
-								<AvatarOption
-									label={messages.profileEdit.providerPhoto}
-									active={avatarMode === "provider"}
-									onClick={() => setAvatarMode("provider")}
-								/>
-							) : null}
-							<AvatarOption
-								label={messages.profileEdit.generatedAvatar}
-								active={avatarMode === "generated"}
-								onClick={() => setAvatarMode("generated")}
-							/>
-							<AvatarOption
-								label={messages.profileEdit.uploadPhoto}
-								active={avatarMode === "custom"}
-								onClick={() => setAvatarMode("custom")}
-							/>
-						</div>
-
-					{avatarMode === "custom" ? (
-						<div className="mt-5 space-y-3">
-							<label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat">
-								{messages.profileEdit.uploadPhoto}
-								<input
-									type="file"
-									accept={PROFILE_UPLOAD_ACCEPT.join(",")}
-									className="hidden"
-									onChange={handleAvatarUpload}
-								/>
-							</label>
-							<p className="text-xs leading-5 text-zinc-400">
-								{messages.profileEdit.uploadHint}
+					<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.34),transparent_42%),linear-gradient(180deg,rgba(103,79,248,0.14),rgba(20,23,26,0.02)_28%,rgba(20,23,26,0.78)_100%)]" />
+					<div className="relative flex items-center justify-between border-b border-zinc-700/50 px-6 py-5 sm:px-8">
+						<div>
+							<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+								{messages.profileEdit.settingsEyebrow}
 							</p>
-							{uploadedAvatarName ? (
-								<p className="rounded-2xl border border-zinc-700/50 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-200">
-									{messages.profileEdit.uploaded(uploadedAvatarName)}
-								</p>
-							) : null}
-							{errors.profilePicture ? (
-								<p className="mt-1 text-xs text-red-400">
-									{errors.profilePicture}
-								</p>
-							) : null}
-						</div>
-					) : null}
-				</div>
-
-				<div className="grid grid-cols-1 gap-5">
-					{submitError ? (
-						<p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-							{submitError}
-						</p>
-					) : null}
-
-					<div className="grid gap-5 lg:grid-cols-2">
-						<div>
-							<label
-								htmlFor="profile-name"
-								className="mb-2 block text-sm text-zinc-300"
+							<h3
+								id="edit-profile-title"
+								className="mt-2 text-3xl font-somerton uppercase text-wheat"
 							>
-								{messages.profileEdit.displayName}
-							</label>
-							<input
-								id="profile-name"
-								value={name}
-								onChange={(event) => setName(event.target.value)}
-								maxLength={MAX_NAME}
-								className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
-							/>
-							<div className="flex justify-between">
-								{errors.name ? (
-									<p className="mt-1 text-xs text-red-400">{errors.name}</p>
-								) : null}
-								<span className="ml-auto mt-1 text-xs text-zinc-400">
-									{name.length}/{MAX_NAME}
-								</span>
-							</div>
+								{messages.profileEdit.title}
+							</h3>
 						</div>
-
-						<div>
-							<label
-								htmlFor="profile-handle"
-								className="mb-2 block text-sm text-zinc-300"
-							>
-								{messages.profile.handle}
-							</label>
-							<div className="rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 transition-colors focus-within:border-purpleContrast">
-								<div className="flex items-center gap-2">
-									<span className="text-zinc-500">@</span>
-									<input
-										id="profile-handle"
-										value={handle}
-										onChange={(event) => setHandle(event.target.value)}
-										className="w-full bg-transparent text-zinc-100 outline-none"
-										autoCapitalize="none"
-										autoCorrect="off"
-										spellCheck={false}
-									/>
-								</div>
-							</div>
-							<div className="flex justify-between gap-3">
-								{errors.handle ? (
-									<p className="mt-1 text-xs text-red-400">{errors.handle}</p>
-								) : (
-									<p className="mt-1 text-xs text-zinc-500">
-										{messages.profileEdit.profileUrl(
-											normalizedHandle || "handle",
-										)}
-									</p>
-								)}
-							</div>
-						</div>
-					</div>
-
-					<div>
-						<label
-							htmlFor="profile-description"
-							className="mb-2 block text-sm text-zinc-300"
+						<button
+							type="button"
+							className="rounded-full border border-zinc-600/50 bg-greyBg/70 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+							onClick={onClose}
+							aria-label={messages.common.close}
 						>
-							{messages.profileEdit.description}
-						</label>
-						<textarea
-							id="profile-description"
-							value={description}
-							onChange={(event) => setDescription(event.target.value)}
-							maxLength={MAX_DESC}
-							rows={4}
-							className="w-full rounded-[24px] border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
-						/>
-						<div className="flex justify-between">
-							{errors.description ? (
-								<p className="mt-1 text-xs text-red-400">
-									{errors.description}
-								</p>
-							) : null}
-							<span className="ml-auto mt-1 text-xs text-zinc-400">
-								{description.length}/{MAX_DESC}
-							</span>
-						</div>
+							{messages.common.close}
+						</button>
 					</div>
 
-					<div className="grid gap-4 sm:grid-cols-2">
-						{SOCIAL_PROVIDERS.map((provider) => (
-							<div key={provider}>
-								<label
-									htmlFor={`profile-social-${provider}`}
-									className="mb-2 block text-sm capitalize text-zinc-300"
-								>
-									{getProviderLabel(provider)}
-								</label>
-								<input
-									id={`profile-social-${provider}`}
-									type="url"
-									placeholder={`https://${hostForPlaceholder(provider)}/username`}
-									className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
-									value={links[provider]}
-									onChange={(event) =>
-										setLinks((current) => ({
-											...current,
-											[provider]: event.target.value,
-										}))
-									}
+					<div className="relative grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-6 sm:px-8 xl:grid-cols-[320px_minmax(0,1fr)]">
+						<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-xl shadow-zinc-950/20">
+							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+								{messages.profileEdit.preview}
+							</p>
+							<div className="mt-5 mx-auto h-36 w-36 overflow-hidden rounded-[28px] border border-zinc-200/70 shadow-xl shadow-zinc-950/30">
+								<img
+									src={avatarPreview}
+									alt={messages.profileEdit.previewAlt}
+									className="h-full w-full object-cover"
 								/>
-								{errors[provider] ? (
-									<p className="mt-1 text-xs text-red-400">
-										{errors[provider]}
-									</p>
-								) : null}
 							</div>
-						))}
-					</div>
 
-					<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 px-5 py-5">
-						<div className="flex items-start justify-between gap-4">
-							<div>
-								<h4 className="text-sm font-semibold text-zinc-100">
-									{initialUser.hasPassword
-										? messages.profileEdit.changePassword
-										: messages.profileEdit.createPassword}
-								</h4>
-								<p className="mt-1 text-xs leading-5 text-zinc-400">
-									{initialUser.hasPassword
-										? messages.profileEdit.changePasswordDescription
-										: messages.profileEdit.createPasswordDescription}
-								</p>
-							</div>
-							<span className="rounded-full border border-zinc-600/50 bg-zinc-800/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-zinc-300">
-								{initialUser.hasPassword
-									? messages.profile.configured
-									: messages.profileEdit.optional}
-							</span>
-						</div>
+							<p className="mt-4 text-center text-sm text-zinc-300">
+								{normalizedHandle ? `@${normalizedHandle}` : "@handle"}
+							</p>
+							<p className="mt-1 text-center text-xs uppercase tracking-[0.18em] text-zinc-500">
+								{initialUser.providerPicture
+									? messages.profileEdit.providerAvailable
+									: messages.profileEdit.providerMissing}
+							</p>
 
-						<div className="mt-4 grid gap-4 sm:grid-cols-2">
-							{initialUser.hasPassword ? (
-								<div className="sm:col-span-2">
-									<label
-										htmlFor="profile-current-password"
-										className="mb-1 block text-sm text-zinc-300"
-									>
-										{messages.profileEdit.currentPassword}
-									</label>
-									<input
-										id="profile-current-password"
-										type="password"
-										value={currentPassword}
-										onChange={(event) => setCurrentPassword(event.target.value)}
-										className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+							<div className="mt-6 grid gap-2">
+								{initialUser.providerPicture ? (
+									<AvatarOption
+										label={messages.profileEdit.providerPhoto}
+										active={avatarMode === "provider"}
+										onClick={() => setAvatarMode("provider")}
 									/>
-									{errors.currentPassword ? (
+								) : null}
+								<AvatarOption
+									label={messages.profileEdit.generatedAvatar}
+									active={avatarMode === "generated"}
+									onClick={() => setAvatarMode("generated")}
+								/>
+								<AvatarOption
+									label={messages.profileEdit.uploadPhoto}
+									active={avatarMode === "custom"}
+									onClick={() => setAvatarMode("custom")}
+								/>
+							</div>
+
+							{avatarMode === "custom" ? (
+								<div className="mt-5 space-y-3">
+									<label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat">
+										{messages.profileEdit.uploadPhoto}
+										<input
+											type="file"
+											accept={PROFILE_UPLOAD_ACCEPT.join(",")}
+											className="hidden"
+											onChange={handleAvatarUpload}
+										/>
+									</label>
+									<p className="text-xs leading-5 text-zinc-400">
+										{messages.profileEdit.uploadHint}
+									</p>
+									{uploadedAvatarName ? (
+										<p className="rounded-2xl border border-zinc-700/50 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-200">
+											{messages.profileEdit.uploaded(uploadedAvatarName)}
+										</p>
+									) : null}
+									{errors.profilePicture ? (
 										<p className="mt-1 text-xs text-red-400">
-											{errors.currentPassword}
+											{errors.profilePicture}
 										</p>
 									) : null}
 								</div>
 							) : null}
+						</div>
 
-							<div>
-								<label
-									htmlFor="profile-new-password"
-									className="mb-1 block text-sm text-zinc-300"
-								>
-									{messages.profileEdit.newPassword}
-								</label>
-								<input
-									id="profile-new-password"
-									type="password"
-									value={newPassword}
-									onChange={(event) => setNewPassword(event.target.value)}
-									className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
-								/>
-								{errors.newPassword ? (
-									<p className="mt-1 text-xs text-red-400">
-										{errors.newPassword}
-									</p>
-								) : null}
+						<div className="grid grid-cols-1 gap-5">
+							{submitError ? (
+								<p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+									{submitError}
+								</p>
+							) : null}
+
+							<div className="grid gap-5 lg:grid-cols-2">
+								<div>
+									<label
+										htmlFor="profile-name"
+										className="mb-2 block text-sm text-zinc-300"
+									>
+										{messages.profileEdit.displayName}
+									</label>
+									<input
+										id="profile-name"
+										value={name}
+										onChange={(event) => setName(event.target.value)}
+										maxLength={MAX_NAME}
+										className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+									/>
+									<div className="flex justify-between">
+										{errors.name ? (
+											<p className="mt-1 text-xs text-red-400">{errors.name}</p>
+										) : null}
+										<span className="ml-auto mt-1 text-xs text-zinc-400">
+											{name.length}/{MAX_NAME}
+										</span>
+									</div>
+								</div>
+
+								<div>
+									<label
+										htmlFor="profile-handle"
+										className="mb-2 block text-sm text-zinc-300"
+									>
+										{messages.profile.handle}
+									</label>
+									<div className="rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 transition-colors focus-within:border-purpleContrast">
+										<div className="flex items-center gap-2">
+											<span className="text-zinc-500">@</span>
+											<input
+												id="profile-handle"
+												value={handle}
+												onChange={(event) => setHandle(event.target.value)}
+												className="w-full bg-transparent text-zinc-100 outline-none"
+												autoCapitalize="none"
+												autoCorrect="off"
+												spellCheck={false}
+											/>
+										</div>
+									</div>
+									<div className="flex justify-between gap-3">
+										{errors.handle ? (
+											<p className="mt-1 text-xs text-red-400">
+												{errors.handle}
+											</p>
+										) : (
+											<p className="mt-1 text-xs text-zinc-500">
+												{messages.profileEdit.profileUrl(
+													normalizedHandle || "handle",
+												)}
+											</p>
+										)}
+									</div>
+								</div>
 							</div>
 
 							<div>
 								<label
-									htmlFor="profile-confirm-password"
-									className="mb-1 block text-sm text-zinc-300"
+									htmlFor="profile-description"
+									className="mb-2 block text-sm text-zinc-300"
 								>
-									{messages.profileEdit.confirmNewPassword}
+									{messages.profileEdit.description}
 								</label>
-								<input
-									id="profile-confirm-password"
-									type="password"
-									value={confirmPassword}
-									onChange={(event) => setConfirmPassword(event.target.value)}
-									className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+								<textarea
+									id="profile-description"
+									value={description}
+									onChange={(event) => setDescription(event.target.value)}
+									maxLength={MAX_DESC}
+									rows={4}
+									className="w-full rounded-[24px] border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
 								/>
-								{errors.confirmPassword ? (
-									<p className="mt-1 text-xs text-red-400">
-										{errors.confirmPassword}
-									</p>
-								) : null}
+								<div className="flex justify-between">
+									{errors.description ? (
+										<p className="mt-1 text-xs text-red-400">
+											{errors.description}
+										</p>
+									) : null}
+									<span className="ml-auto mt-1 text-xs text-zinc-400">
+										{description.length}/{MAX_DESC}
+									</span>
+								</div>
+							</div>
+
+							<div className="grid gap-4 sm:grid-cols-2">
+								{SOCIAL_PROVIDERS.map((provider) => (
+									<div key={provider}>
+										<label
+											htmlFor={`profile-social-${provider}`}
+											className="mb-2 block text-sm capitalize text-zinc-300"
+										>
+											{getProviderLabel(provider)}
+										</label>
+										<input
+											id={`profile-social-${provider}`}
+											type="url"
+											placeholder={`https://${hostForPlaceholder(provider)}/username`}
+											className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+											value={links[provider]}
+											onChange={(event) =>
+												setLinks((current) => ({
+													...current,
+													[provider]: event.target.value,
+												}))
+											}
+										/>
+										{errors[provider] ? (
+											<p className="mt-1 text-xs text-red-400">
+												{errors[provider]}
+											</p>
+										) : null}
+									</div>
+								))}
+							</div>
+
+							<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 px-5 py-5">
+								<div className="flex items-start justify-between gap-4">
+									<div>
+										<h4 className="text-sm font-semibold text-zinc-100">
+											{initialUser.hasPassword
+												? messages.profileEdit.changePassword
+												: messages.profileEdit.createPassword}
+										</h4>
+										<p className="mt-1 text-xs leading-5 text-zinc-400">
+											{initialUser.hasPassword
+												? messages.profileEdit.changePasswordDescription
+												: messages.profileEdit.createPasswordDescription}
+										</p>
+									</div>
+									<span className="rounded-full border border-zinc-600/50 bg-zinc-800/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-zinc-300">
+										{initialUser.hasPassword
+											? messages.profile.configured
+											: messages.profileEdit.optional}
+									</span>
+								</div>
+
+								<div className="mt-4 grid gap-4 sm:grid-cols-2">
+									{initialUser.hasPassword ? (
+										<div className="sm:col-span-2">
+											<label
+												htmlFor="profile-current-password"
+												className="mb-1 block text-sm text-zinc-300"
+											>
+												{messages.profileEdit.currentPassword}
+											</label>
+											<input
+												id="profile-current-password"
+												type="password"
+												value={currentPassword}
+												onChange={(event) =>
+													setCurrentPassword(event.target.value)
+												}
+												className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+											/>
+											{errors.currentPassword ? (
+												<p className="mt-1 text-xs text-red-400">
+													{errors.currentPassword}
+												</p>
+											) : null}
+										</div>
+									) : null}
+
+									<div>
+										<label
+											htmlFor="profile-new-password"
+											className="mb-1 block text-sm text-zinc-300"
+										>
+											{messages.profileEdit.newPassword}
+										</label>
+										<input
+											id="profile-new-password"
+											type="password"
+											value={newPassword}
+											onChange={(event) => setNewPassword(event.target.value)}
+											className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+										/>
+										{errors.newPassword ? (
+											<p className="mt-1 text-xs text-red-400">
+												{errors.newPassword}
+											</p>
+										) : null}
+									</div>
+
+									<div>
+										<label
+											htmlFor="profile-confirm-password"
+											className="mb-1 block text-sm text-zinc-300"
+										>
+											{messages.profileEdit.confirmNewPassword}
+										</label>
+										<input
+											id="profile-confirm-password"
+											type="password"
+											value={confirmPassword}
+											onChange={(event) =>
+												setConfirmPassword(event.target.value)
+											}
+											className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+										/>
+										{errors.confirmPassword ? (
+											<p className="mt-1 text-xs text-red-400">
+												{errors.confirmPassword}
+											</p>
+										) : null}
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
 
-				</div>
-
-				<div className="relative flex items-center justify-end gap-3 border-t border-zinc-700/50 px-6 pb-6 pt-5 sm:px-8">
-					<button
-						type="button"
-						className="rounded-full border border-zinc-600/50 bg-greyBg/75 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-						onClick={onClose}
-						disabled={saving}
-					>
-						{messages.common.cancel}
-					</button>
-					<button
-						type="button"
-						className="rounded-full border border-purpleContrast/50 bg-purpleContrast/85 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purpleContrast/20 transition-colors hover:bg-purpleContrast disabled:cursor-not-allowed disabled:opacity-50"
-						onClick={handleSave}
-						disabled={saving || !dirty}
-					>
-						{saving ? messages.profileEdit.saving : messages.profileEdit.save}
-					</button>
-				</div>
+					<div className="relative flex items-center justify-end gap-3 border-t border-zinc-700/50 px-6 pb-6 pt-5 sm:px-8">
+						<button
+							type="button"
+							className="rounded-full border border-zinc-600/50 bg-greyBg/75 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+							onClick={onClose}
+							disabled={saving}
+						>
+							{messages.common.cancel}
+						</button>
+						<button
+							type="button"
+							className="rounded-full border border-purpleContrast/50 bg-purpleContrast/85 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purpleContrast/20 transition-colors hover:bg-purpleContrast disabled:cursor-not-allowed disabled:opacity-50"
+							onClick={handleSave}
+							disabled={saving || !dirty}
+						>
+							{saving ? messages.profileEdit.saving : messages.profileEdit.save}
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -729,7 +738,9 @@ function translateProfileFieldError(
 		case "Max image size is 2MB.":
 			return messages.profileValidation.uploadMaxSize;
 		default: {
-			const handleMin = message.match(/^Handle must be at least (\d+) characters\.$/);
+			const handleMin = message.match(
+				/^Handle must be at least (\d+) characters\.$/,
+			);
 			if (handleMin) {
 				return messages.profileValidation.handleMin(Number(handleMin[1]));
 			}

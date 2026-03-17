@@ -4,20 +4,17 @@ import prisma from "@/database/prisma";
 import { auth } from "@/lib/auth";
 import { buildLetterAvatar } from "@/lib/avatar";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { normalizeSocialLinks, validateSocialLinks } from "@/lib/social-links";
 import { getCurrentUserProfile } from "@/lib/user-profile";
+import {
+	getPasswordUpdateErrors,
+	type PasswordUpdateValues,
+} from "@/lib/validation/auth";
 import {
 	getHandleError,
 	getProfileUploadError,
 	normalizeHandle,
 } from "@/lib/validation/profile";
-import {
-	normalizeSocialLinks,
-	validateSocialLinks,
-} from "@/lib/social-links";
-import {
-	getPasswordUpdateErrors,
-	type PasswordUpdateValues,
-} from "@/lib/validation/auth";
 
 const profileUpdateSchema = z.object({
 	name: z.string().trim().min(2).max(60),

@@ -3,8 +3,8 @@ import {
 	DEFAULT_LOCALE,
 	LOCALE_COOKIE,
 	LOCALE_HEADER,
-	resolveLocale,
 	type Locale,
+	resolveLocale,
 } from "@/lib/i18n";
 
 export async function getRequestLocale(): Promise<Locale> {

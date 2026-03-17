@@ -12,11 +12,11 @@ import {
 	FaGoogle,
 	FaSpinner,
 } from "react-icons/fa6";
-import PhaserBackground from "@/PhaserBackground";
-import { emitClientAuthChange } from "@/components/useClientAuth";
 import { useI18n } from "@/components/LocaleProvider";
+import { emitClientAuthChange } from "@/components/useClientAuth";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { createLoginSchema, type LoginFormValues } from "@/lib/validation/auth";
+import PhaserBackground from "@/PhaserBackground";
 import SocialAuthButton from "./SocialAuthButton";
 
 const SOCIAL_AUTH_OPTIONS = [

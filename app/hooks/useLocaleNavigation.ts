@@ -1,9 +1,8 @@
 "use client";
 
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
-import { withLocaleQuery, type Locale } from "@/lib/i18n";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/LocaleProvider";
+import { type Locale, withLocaleQuery } from "@/lib/i18n";
 
 function buildRelativeHref(pathname: string, href: string, search: string) {
 	if (href.startsWith("?")) {
@@ -24,39 +23,35 @@ export function useLocaleNavigation() {
 	const { locale } = useI18n();
 	const currentSearch = searchParams.toString();
 
-	const localizeHref = useCallback(
-		(href: string, nextLocale = locale) =>
-			withLocaleQuery(
-				buildRelativeHref(
-					pathname,
-					href,
-					currentSearch ? `?${currentSearch}` : "",
-				),
-				nextLocale,
+	function localizeHref(href: string, nextLocale = locale) {
+		return withLocaleQuery(
+			buildRelativeHref(
+				pathname,
+				href,
+				currentSearch ? `?${currentSearch}` : "",
 			),
-		[currentSearch, locale, pathname],
-	);
+			nextLocale,
+		);
+	}
 
-	const push = useCallback(
-		(href: string, options?: Parameters<typeof router.push>[1]) =>
-			router.push(localizeHref(href), options),
-		[localizeHref, router],
-	);
+	function push(href: string, options?: Parameters<typeof router.push>[1]) {
+		router.push(localizeHref(href), options);
+	}
 
-	const replace = useCallback(
-		(href: string, options?: Parameters<typeof router.replace>[1]) =>
-			router.replace(localizeHref(href), options),
-		[localizeHref, router],
-	);
+	function replace(
+		href: string,
+		options?: Parameters<typeof router.replace>[1],
+	) {
+		router.replace(localizeHref(href), options);
+	}
 
-	const replaceWithLocale = useCallback(
-		(
-			href: string,
-			nextLocale: Locale,
-			options?: Parameters<typeof router.replace>[1],
-		) => router.replace(localizeHref(href, nextLocale), options),
-		[localizeHref, router],
-	);
+	function replaceWithLocale(
+		href: string,
+		nextLocale: Locale,
+		options?: Parameters<typeof router.replace>[1],
+	) {
+		router.replace(localizeHref(href, nextLocale), options);
+	}
 
 	return {
 		locale,

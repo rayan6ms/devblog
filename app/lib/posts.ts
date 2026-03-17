@@ -11,14 +11,15 @@ import {
 	type PostTagOption,
 } from "@/lib/post-catalog";
 import {
-	emptySocialLinks,
-	normalizeSocialLinks,
-} from "@/lib/social-links";
-import {
 	buildPostDescription,
-	slugifyPostValue,
 	type PostPageData,
+	slugifyPostValue,
 } from "@/lib/post-shared";
+import {
+	clampReadingProgress,
+	shouldPersistReadingProgress,
+} from "@/lib/reading-progress";
+import { emptySocialLinks, normalizeSocialLinks } from "@/lib/social-links";
 
 export type PostWithAuthor = Prisma.PostGetPayload<{
 	include: { author: true };
@@ -81,8 +82,7 @@ export function mapPostForPage(post: PostWithAuthor): PostPageData {
 			id: post.author.id,
 			name: authorName,
 			slug: post.author.slug || post.author.id,
-			profilePicture:
-				post.author.profilePic || post.author.image || "",
+			profilePicture: post.author.profilePic || post.author.image || "",
 			socialLinks: normalizeSocialLinks(post.author.socialLinks),
 		},
 	};
@@ -95,9 +95,7 @@ export async function getPostEditorMainTags() {
 		orderBy: { mainTag: "asc" },
 	});
 
-	return rows
-		.map((row) => row.mainTag.trim())
-		.filter(Boolean);
+	return rows.map((row) => row.mainTag.trim()).filter(Boolean);
 }
 
 export async function getPostBySlugWithAuthor(slug: string) {
@@ -112,10 +110,7 @@ export async function getRelatedPosts(post: PostWithAuthor, limit = 3) {
 		where: {
 			id: { not: post.id },
 			status: "published",
-			OR: [
-				{ mainTag: post.mainTag },
-				{ tags: { hasSome: post.tags } },
-			],
+			OR: [{ mainTag: post.mainTag }, { tags: { hasSome: post.tags } }],
 		},
 		include: { author: true },
 		orderBy: [{ views: "desc" }, { postedAt: "desc" }],
@@ -156,6 +151,46 @@ function mapPostForList(post: PostWithAuthor): PostListItem {
 		percentRead: 0,
 		description: buildPostDescription(post.content, post.description),
 	};
+}
+
+async function hydratePostReadingProgress(
+	posts: PostListItem[],
+	userId?: string | null,
+) {
+	if (!userId || posts.length === 0) {
+		return posts;
+	}
+
+	const progressRows = await prisma.progress.findMany({
+		where: {
+			userId,
+			postId: {
+				in: posts.map((post) => post.id),
+			},
+		},
+		select: {
+			postId: true,
+			percentageRead: true,
+		},
+	});
+	const progressByPostId = new Map(
+		progressRows
+			.filter((row) => shouldPersistReadingProgress(row.percentageRead))
+			.map((row) => [row.postId, clampReadingProgress(row.percentageRead)]),
+	);
+
+	return posts.map((post) => {
+		const percentRead = progressByPostId.get(post.id);
+		if (typeof percentRead !== "number") {
+			return post;
+		}
+
+		return {
+			...post,
+			hasStartedReading: true,
+			percentRead,
+		};
+	});
 }
 
 async function getPublishedPostsWithAuthor(): Promise<PostWithAuthor[]> {
@@ -267,7 +302,10 @@ function paginatePosts(posts: PostListItem[], page?: number, limit?: number) {
 	return posts.slice(start, start + limit);
 }
 
-function buildTagOptions(tags: string[], counts: Map<string, number>): PostTagOption[] {
+function buildTagOptions(
+	tags: string[],
+	counts: Map<string, number>,
+): PostTagOption[] {
 	return tags
 		.map((tag) => ({
 			name: tag,
@@ -283,6 +321,7 @@ export async function getPostCatalog(options?: {
 	query?: string;
 	tagSlugs?: string[];
 	sort?: "recent" | "trending";
+	userId?: string | null;
 }): Promise<PostCatalogResponse> {
 	const posts = (await getPublishedPostsWithAuthor()).map(mapPostForList);
 	const query = options?.query?.trim();
@@ -301,9 +340,13 @@ export async function getPostCatalog(options?: {
 		options?.sort === "trending"
 			? sortTrendingPosts(filtered)
 			: sortRecentPosts(filtered);
+	const hydrated = await hydratePostReadingProgress(
+		paginatePosts(sorted, options?.page, options?.limit),
+		options?.userId,
+	);
 
 	return {
-		posts: paginatePosts(sorted, options?.page, options?.limit),
+		posts: hydrated,
 		total: sorted.length,
 	};
 }
@@ -429,10 +472,7 @@ function scoreRecommendedPost(
 	const authorScore = signals.authorWeights.get(post.authorId) ?? 0;
 	const tagScore =
 		(signals.tagWeights.get(post.mainTag) ?? 0) +
-		post.tags.reduce(
-			(sum, tag) => sum + (signals.tagWeights.get(tag) ?? 0),
-			0,
-		);
+		post.tags.reduce((sum, tag) => sum + (signals.tagWeights.get(tag) ?? 0), 0);
 
 	return tagScore + authorScore + popularityScore + recencyScore;
 }
@@ -443,9 +483,9 @@ export async function getRecommendedPostCatalog(options?: {
 }): Promise<PostCatalogResponse> {
 	const limit = options?.limit ?? 10;
 	const allPosts = await getPublishedPostsWithAuthor();
-	const fallbackPosts = sortFallbackRecommendedPosts(
-		allPosts.map(mapPostForList),
-		limit,
+	const fallbackPosts = await hydratePostReadingProgress(
+		sortFallbackRecommendedPosts(allPosts.map(mapPostForList), limit),
+		options?.userId,
 	);
 
 	if (!options?.userId) {
@@ -479,10 +519,14 @@ export async function getRecommendedPostCatalog(options?: {
 		.map((entry) => mapPostForList(entry.post));
 
 	const posts = mergeUniquePostLists([scoredPosts, fallbackPosts], limit);
+	const hydratedPosts = await hydratePostReadingProgress(
+		posts,
+		options?.userId,
+	);
 
 	return {
-		posts,
-		total: posts.length,
+		posts: hydratedPosts,
+		total: hydratedPosts.length,
 	};
 }
 
@@ -503,7 +547,9 @@ export async function getPostTagCatalog(): Promise<PostTagCatalogResponse> {
 	);
 	const otherTags = Array.from(
 		new Set(
-			posts.flatMap((post) => post.tags.map((tag) => tag.trim()).filter(Boolean)),
+			posts.flatMap((post) =>
+				post.tags.map((tag) => tag.trim()).filter(Boolean),
+			),
 		),
 	);
 

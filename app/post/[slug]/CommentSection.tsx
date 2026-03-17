@@ -187,10 +187,10 @@ export default function CommentSection() {
 				comment={
 					reportTarget
 						? {
-							id: reportTarget.id,
-							author: reportTarget.author,
-							text: reportTarget.commentText,
-						}
+								id: reportTarget.id,
+								author: reportTarget.author,
+								text: reportTarget.commentText,
+							}
 						: undefined
 				}
 				onSubmit={handleSubmitReport}

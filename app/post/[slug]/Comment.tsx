@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { FaChevronDown, FaChevronUp, FaFlag } from "react-icons/fa6";
 import slugify from "slugify";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { getIntlLocale } from "@/lib/i18n";
 
 interface CommentProps {

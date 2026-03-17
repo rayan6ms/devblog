@@ -3,10 +3,7 @@ import Footer from "@/components/Footer";
 import { auth } from "@/lib/auth";
 import { getMessages } from "@/lib/i18n";
 import { canEditPost } from "@/lib/post-shared";
-import {
-	getPostBySlugWithAuthor,
-	getPostEditorMainTags,
-} from "@/lib/posts";
+import { getPostBySlugWithAuthor, getPostEditorMainTags } from "@/lib/posts";
 import { getRequestLocale } from "@/lib/request-locale";
 import Form from "@/new_post/Form";
 

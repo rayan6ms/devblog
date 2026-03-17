@@ -14,7 +14,7 @@ html {
 
 body {
 	color: rgb(var(--foreground-rgb));
-	background: rgba(20, 23, 26, 0.80);
+	background: rgba(20, 23, 26, 0.8);
 }
 
 ::-webkit-scrollbar {

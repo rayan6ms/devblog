@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
 import type { ProfileUser } from "@/profile/types";
 
 const AUTH_CHANGE_EVENT = "devblog:auth-change";

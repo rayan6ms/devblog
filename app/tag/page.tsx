@@ -2,21 +2,27 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useDeferredValue, useEffect, useMemo, useState } from "react";
+import {
+	Suspense,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getIntlLocale } from "@/lib/i18n";
 import {
 	getAllPosts,
 	getAuthorHref,
 	getFilteredPosts,
-	getPostTagCatalog,
 	getPostHref,
-	type TagCatalog,
+	getPostTagCatalog,
 	type IPost,
+	type TagCatalog,
 } from "@/lib/posts-client";
 import InfiniteScroller from "./InfiniteScroller";
 import SelectedTags from "./SelectedTags";
@@ -29,7 +35,9 @@ function normalizeTagValue(value: string) {
 
 function isValidTag(tag: string, allTags: string[]) {
 	const normalizedTag = normalizeTagValue(tag);
-	return allTags.some((validTag) => normalizeTagValue(validTag) === normalizedTag);
+	return allTags.some(
+		(validTag) => normalizeTagValue(validTag) === normalizedTag,
+	);
 }
 
 function formatViews(views: number) {
@@ -42,7 +50,8 @@ function matchesTagSearch(tag: TagOption, query: string) {
 	}
 
 	return (
-		tag.slug.includes(query) || tag.name.toLowerCase().includes(query.toLowerCase())
+		tag.slug.includes(query) ||
+		tag.name.toLowerCase().includes(query.toLowerCase())
 	);
 }
 
@@ -112,7 +121,9 @@ function TagPostCard({
 						{post.author}
 					</LocalizedLink>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
-					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
+					<time dateTime={post.date}>
+						{dateFormatter.format(new Date(post.date))}
+					</time>
 				</div>
 
 				<div className="mt-5 flex flex-wrap gap-2">
@@ -148,11 +159,7 @@ function TagsPageContent() {
 	const otherTags = tagCatalog.otherTags;
 	const allTags = useMemo(
 		() =>
-			Array.from(
-				new Set(
-					[...mainTags, ...otherTags].map((tag) => tag.name),
-				),
-			),
+			Array.from(new Set([...mainTags, ...otherTags].map((tag) => tag.name))),
 		[mainTags, otherTags],
 	);
 	const selectedTags = useMemo(() => {
@@ -180,9 +187,7 @@ function TagsPageContent() {
 	const selectedTagsKey = selectedTags.join(",");
 
 	const updateSelectedTags = (nextTags: string[]) => {
-		push(
-			nextTags.length > 0 ? `/tag?selected=${nextTags.join(",")}` : "/tag",
-		);
+		push(nextTags.length > 0 ? `/tag?selected=${nextTags.join(",")}` : "/tag");
 	};
 
 	const handleSelectTag = (tag: string) => {
@@ -237,11 +242,17 @@ function TagsPageContent() {
 	const allOtherTagOptions = otherTags;
 	const normalizedTagQuery = normalizeTagValue(deferredTagQuery);
 	const mainTagOptions = useMemo(
-		() => allMainTagOptions.filter((tag) => matchesTagSearch(tag, normalizedTagQuery)),
+		() =>
+			allMainTagOptions.filter((tag) =>
+				matchesTagSearch(tag, normalizedTagQuery),
+			),
 		[allMainTagOptions, normalizedTagQuery],
 	);
 	const otherTagOptions = useMemo(
-		() => allOtherTagOptions.filter((tag) => matchesTagSearch(tag, normalizedTagQuery)),
+		() =>
+			allOtherTagOptions.filter((tag) =>
+				matchesTagSearch(tag, normalizedTagQuery),
+			),
 		[allOtherTagOptions, normalizedTagQuery],
 	);
 	const featuredTags = useMemo(

@@ -21,9 +21,7 @@ export default function Icons({ className }: IconsProps) {
 					rel="noreferrer"
 					className="group flex rounded-2xl border border-zinc-700/60 bg-greyBg/75 p-3 antialiased transition-colors hover:border-zinc-500/70 hover:bg-greyBg"
 				>
-					<Icon
-						className="text-lg text-wheat transition-colors ease-in-out group-hover:text-purpleContrast"
-					/>
+					<Icon className="text-lg text-wheat transition-colors ease-in-out group-hover:text-purpleContrast" />
 				</a>
 			))}
 		</div>

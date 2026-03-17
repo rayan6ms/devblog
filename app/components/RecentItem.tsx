@@ -3,15 +3,11 @@
 import Image from "next/image";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import LocalizedLink from "@/components/LocalizedLink";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getIntlLocale } from "@/lib/i18n";
-import {
-	getAuthorHref,
-	getPostHref,
-	type IPost,
-} from "@/lib/posts-client";
+import { getAuthorHref, getPostHref, type IPost } from "@/lib/posts-client";
 import CircleProgress from "./CircleProgress";
 import Popover from "./Popover";
 
@@ -42,11 +38,14 @@ export default function RecentItem({
 		percentRead,
 	} = post;
 
-	const formattedDate = new Date(date).toLocaleDateString(getIntlLocale(locale), {
-		day: "2-digit",
-		month: "short",
-		year: "numeric",
-	});
+	const formattedDate = new Date(date).toLocaleDateString(
+		getIntlLocale(locale),
+		{
+			day: "2-digit",
+			month: "short",
+			year: "numeric",
+		},
+	);
 	let formattedAuthor =
 		author.length > 20 ? `${author.slice(0, 20)}...` : author;
 	formattedAuthor = formattedAuthor

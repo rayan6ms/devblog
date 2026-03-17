@@ -1,7 +1,7 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
 	FaArrowRightFromBracket,
@@ -14,8 +14,8 @@ import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import HamburgerMenu from "./HamburgerMenu";
 import Icons from "./Icons";
 import LanguageSwitcher from "./LanguageSwitcher";
-import LocalizedLink from "./LocalizedLink";
 import { useI18n } from "./LocaleProvider";
+import LocalizedLink from "./LocalizedLink";
 import SearchBar from "./SearchBar";
 import SuggestModal from "./SuggestModal";
 import { useClientAuth } from "./useClientAuth";
@@ -46,13 +46,15 @@ function LinkPill({
 		<LocalizedLink
 			href={href}
 			onClick={onClick}
-			className={`border font-semibold uppercase transition-colors ${compact
+			className={`border font-semibold uppercase transition-colors ${
+				compact
 					? "rounded-2xl px-3 py-2 text-xs tracking-[0.15em]"
 					: "rounded-full px-4 py-2 text-sm tracking-[0.18em]"
-				} ${active
+			} ${
+				active
 					? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
 					: "border-zinc-700/60 bg-greyBg/55 text-zinc-300 hover:border-zinc-500/70 hover:text-wheat"
-				}`}
+			}`}
 		>
 			{label}
 		</LocalizedLink>
@@ -210,10 +212,11 @@ export default function NavBar() {
 											key={item.href}
 											href={item.href}
 											onClick={() => setIsMenuOpen(false)}
-											className={`rounded-[24px] border px-5 py-4 text-lg font-semibold uppercase tracking-[0.16em] transition-colors ${pathname === item.href
+											className={`rounded-[24px] border px-5 py-4 text-lg font-semibold uppercase tracking-[0.16em] transition-colors ${
+												pathname === item.href
 													? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
 													: "border-zinc-700/60 bg-greyBg/75 text-zinc-300 hover:border-zinc-500/70 hover:text-wheat"
-												}`}
+											}`}
 										>
 											{item.label}
 										</LocalizedLink>
@@ -278,9 +281,7 @@ export default function NavBar() {
 								{isAuthed ? (
 									<button
 										type="button"
-										onClick={() =>
-											signOut({ callbackUrl: localizeHref("/") })
-										}
+										onClick={() => signOut({ callbackUrl: localizeHref("/") })}
 										className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 									>
 										<FaArrowRightFromBracket className="text-xs" />
@@ -296,10 +297,11 @@ export default function NavBar() {
 			) : null}
 
 			<div
-				className={`fixed inset-x-0 top-4 z-[60] transition-all duration-300 ${isScrolled && !hasModalOpen
+				className={`fixed inset-x-0 top-4 z-[60] transition-all duration-300 ${
+					isScrolled && !hasModalOpen
 						? "translate-y-0 opacity-100"
 						: "pointer-events-none -translate-y-6 opacity-0"
-					}`}
+				}`}
 			>
 				<div className="mx-auto max-w-[1440px] px-4">
 					<div className="relative overflow-hidden rounded-[22px] border border-zinc-700/50 bg-lessDarkBg/92 shadow-xl shadow-zinc-950/20 backdrop-blur-xl">

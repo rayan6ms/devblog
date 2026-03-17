@@ -72,7 +72,9 @@ export default function Main({ posts }: MainProps) {
 						)}
 					</div>
 				</div>
-				{recentHighlights.length === 0 && !featuredRecent && recommendedPosts.length === 0 ? (
+				{recentHighlights.length === 0 &&
+				!featuredRecent &&
+				recommendedPosts.length === 0 ? (
 					<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400 xl:col-span-2 xxl:col-span-3">
 						{messages.home.noPosts}
 					</div>

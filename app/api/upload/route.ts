@@ -30,7 +30,10 @@ export async function POST(request: Request) {
 	const file = formData?.get("file");
 
 	if (!(file instanceof File)) {
-		return NextResponse.json({ error: "Image file is required." }, { status: 400 });
+		return NextResponse.json(
+			{ error: "Image file is required." },
+			{ status: 400 },
+		);
 	}
 
 	const extension = ALLOWED_IMAGE_TYPES.get(file.type);

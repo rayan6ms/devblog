@@ -30,9 +30,7 @@ export default function MainTagInput({
 					<option key={tag} value={tag} />
 				))}
 			</datalist>
-			<p className="text-sm text-zinc-500">
-				{messages.newPost.mainTagHelp}
-			</p>
+			<p className="text-sm text-zinc-500">{messages.newPost.mainTagHelp}</p>
 		</div>
 	);
 }

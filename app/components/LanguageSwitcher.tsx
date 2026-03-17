@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type HTMLAttributes } from "react";
 import { useSearchParams } from "next/navigation";
+import { type HTMLAttributes, useEffect, useId, useRef, useState } from "react";
 import { FaCheck, FaGlobe } from "react-icons/fa6";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { localeOptions } from "@/lib/i18n";
@@ -50,7 +50,10 @@ export default function LanguageSwitcher({
 			const rect = trigger.getBoundingClientRect();
 			const menuWidth = menuRef.current?.offsetWidth ?? FALLBACK_MENU_WIDTH;
 			const menuHeight = menuRef.current?.offsetHeight ?? FALLBACK_MENU_HEIGHT;
-			const maxLeft = Math.max(VIEWPORT_MARGIN, window.innerWidth - menuWidth - VIEWPORT_MARGIN);
+			const maxLeft = Math.max(
+				VIEWPORT_MARGIN,
+				window.innerWidth - menuWidth - VIEWPORT_MARGIN,
+			);
 			const nextLeft = Math.min(
 				maxLeft,
 				Math.max(VIEWPORT_MARGIN, rect.right - menuWidth),
@@ -168,7 +171,9 @@ export default function LanguageSwitcher({
 											</p>
 										</div>
 										<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-700/70 bg-darkBg/80 text-zinc-200">
-											{isActive ? <FaCheck className="text-xs text-wheat" /> : null}
+											{isActive ? (
+												<FaCheck className="text-xs text-wheat" />
+											) : null}
 										</span>
 									</button>
 								);

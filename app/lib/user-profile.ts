@@ -184,7 +184,10 @@ export async function ensureUniqueSlug(base: string, excludeUserId?: string) {
 	return candidate;
 }
 
-export async function ensureUniqueUsername(base: string, excludeUserId?: string) {
+export async function ensureUniqueUsername(
+	base: string,
+	excludeUserId?: string,
+) {
 	const raw = usernameBase(base);
 	let candidate = raw;
 	let index = 1;
@@ -205,7 +208,9 @@ export async function ensureUniqueUsername(base: string, excludeUserId?: string)
 	return candidate;
 }
 
-export async function ensureUserIdentityFields(user: Pick<User, "id" | "name" | "email">) {
+export async function ensureUserIdentityFields(
+	user: Pick<User, "id" | "name" | "email">,
+) {
 	const base = user.name?.trim() || user.email?.split("@")[0] || "user";
 	const existing = await prisma.user.findUnique({
 		where: { id: user.id },
@@ -213,8 +218,7 @@ export async function ensureUserIdentityFields(user: Pick<User, "id" | "name" | 
 	});
 
 	return {
-		username:
-			existing?.username || (await ensureUniqueUsername(base, user.id)),
+		username: existing?.username || (await ensureUniqueUsername(base, user.id)),
 		slug: existing?.slug || (await ensureUniqueSlug(base, user.id)),
 	};
 }

@@ -4,8 +4,8 @@ import LocalizedLink from "@/components/LocalizedLink";
 import { getIntlLocale, getMessages } from "@/lib/i18n";
 import {
 	getReadingTimeMinutes,
-	slugifyPostValue,
 	type PostPageData,
+	slugifyPostValue,
 } from "@/lib/post-shared";
 import { getRequestLocale } from "@/lib/request-locale";
 

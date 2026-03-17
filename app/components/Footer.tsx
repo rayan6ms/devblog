@@ -8,8 +8,8 @@ import {
 	FaSquareTwitter,
 	FaSquareYoutube,
 } from "react-icons/fa6";
-import LocalizedLink from "./LocalizedLink";
 import { useI18n } from "./LocaleProvider";
+import LocalizedLink from "./LocalizedLink";
 
 const coreLinks = [
 	{ href: "/", key: "home" },

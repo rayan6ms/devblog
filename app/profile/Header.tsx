@@ -14,8 +14,8 @@ import {
 	FaStar,
 	FaUser,
 } from "react-icons/fa6";
-import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { useI18n } from "@/components/LocaleProvider";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import type { ProfileUser } from "@/profile/types";
 import SocialLinks from "./SocialLinks";
 
@@ -114,7 +114,9 @@ export default function Header({
 										className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-white ${color}`}
 									>
 										<RoleIcon className="text-xs" />
-										<span className={role === "vip" ? "uppercase" : "capitalize"}>
+										<span
+											className={role === "vip" ? "uppercase" : "capitalize"}
+										>
 											{roleLabel}
 										</span>
 									</div>

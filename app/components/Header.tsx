@@ -1,7 +1,7 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
 	FaArrowRightFromBracket,
@@ -14,8 +14,8 @@ import {
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import Icons from "./Icons";
 import LanguageSwitcher from "./LanguageSwitcher";
-import LocalizedLink from "./LocalizedLink";
 import { useI18n } from "./LocaleProvider";
+import LocalizedLink from "./LocalizedLink";
 import SuggestModal from "./SuggestModal";
 import { useClientAuth } from "./useClientAuth";
 
@@ -110,9 +110,7 @@ export default function Header() {
 								{isAuthed ? (
 									<button
 										type="button"
-										onClick={() =>
-											signOut({ callbackUrl: localizeHref("/") })
-										}
+										onClick={() => signOut({ callbackUrl: localizeHref("/") })}
 										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 										aria-label={messages.common.logout}
 									>
