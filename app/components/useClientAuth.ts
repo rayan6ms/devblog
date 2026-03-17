@@ -1,63 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+import type { ProfileUser } from "@/profile/types";
 
 const AUTH_CHANGE_EVENT = "devblog:auth-change";
 const WRITER_ROLES = new Set(["owner", "admin", "writer"]);
-
-type StoredAuthUser = {
-	id?: string;
-	role?: string;
-};
-
-type StoredUserProfile = {
-	name?: string;
-	role?: string;
-	profilePicture?: string;
-	description?: string;
-	socialLinks?: Record<string, string>;
-};
 
 export type ClientAuthState = {
 	activeUser: string | null;
 	canWrite: boolean;
 	isAuthed: boolean;
-	profile: StoredUserProfile | null;
+	isLoading: boolean;
+	profile: ProfileUser | null;
 	role: string;
 };
 
-function readStoredAuth(): Omit<ClientAuthState, "canWrite"> {
-	if (typeof window === "undefined") {
-		return {
-			activeUser: null,
-			isAuthed: false,
-			profile: null,
-			role: "member",
-		};
-	}
-
+async function fetchCurrentProfile() {
 	try {
-		const authRaw = localStorage.getItem("authUser");
-		const profileRaw = localStorage.getItem("userProfile");
-		const authUser = authRaw ? (JSON.parse(authRaw) as StoredAuthUser) : null;
-		const profile = profileRaw
-			? (JSON.parse(profileRaw) as StoredUserProfile)
-			: null;
-		const role = (authUser?.role || profile?.role || "member").toLowerCase();
+		const response = await fetch("/api/user", { cache: "no-store" });
+		if (!response.ok) {
+			return null;
+		}
 
-		return {
-			activeUser: authUser?.id ?? null,
-			isAuthed: Boolean(authUser?.id),
-			profile,
-			role,
-		};
+		return (await response.json()) as ProfileUser;
 	} catch {
-		return {
-			activeUser: null,
-			isAuthed: false,
-			profile: null,
-			role: "member",
-		};
+		return null;
 	}
 }
 
@@ -69,75 +37,59 @@ export function emitClientAuthChange() {
 	window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 }
 
-export function writeMockAuth(
-	profile: StoredUserProfile & {
-		id?: string;
-	},
-) {
-	if (typeof window === "undefined") {
-		return;
-	}
-
-	const role = (profile.role || "member").toLowerCase();
-
-	localStorage.setItem(
-		"authUser",
-		JSON.stringify({
-			id: profile.id || "me",
-			role,
-		}),
-	);
-
-	localStorage.setItem(
-		"userProfile",
-		JSON.stringify({
-			...profile,
-			role,
-		}),
-	);
-
-	emitClientAuthChange();
-}
-
-export function clearMockAuth() {
-	if (typeof window === "undefined") {
-		return;
-	}
-
-	localStorage.removeItem("authUser");
-	emitClientAuthChange();
-}
-
 export function useClientAuth(): ClientAuthState {
-	const [authState, setAuthState] = useState(() => readStoredAuth());
+	const { data: session, status } = useSession();
+	const [profile, setProfile] = useState<ProfileUser | null>(null);
+	const [profileLoaded, setProfileLoaded] = useState(false);
 
 	useEffect(() => {
-		const sync = () => {
-			setAuthState(readStoredAuth());
-		};
+		let cancelled = false;
 
-		sync();
+		const sync = async () => {
+			if (status !== "authenticated") {
+				if (!cancelled) {
+					setProfile(null);
+					setProfileLoaded(true);
+				}
+				return;
+			}
 
-		const handleStorage = (event: StorageEvent) => {
-			if (event.key === "authUser" || event.key === "userProfile") {
-				sync();
+			setProfileLoaded(false);
+			const nextProfile = await fetchCurrentProfile();
+			if (!cancelled) {
+				setProfile(nextProfile);
+				setProfileLoaded(true);
 			}
 		};
 
-		window.addEventListener("storage", handleStorage);
-		window.addEventListener(AUTH_CHANGE_EVENT, sync);
+		const handleAuthChange = () => {
+			void sync();
+		};
+
+		void sync();
+		window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
 
 		return () => {
-			window.removeEventListener("storage", handleStorage);
-			window.removeEventListener(AUTH_CHANGE_EVENT, sync);
+			cancelled = true;
+			window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
 		};
-	}, []);
+	}, [session?.user?.id, status]);
+
+	const role = (profile?.role || session?.user?.role || "member").toLowerCase();
+	const activeUser = profile?.slug || session?.user?.slug || null;
+	const isAuthed = status === "authenticated";
+	const isLoading =
+		status === "loading" || (status === "authenticated" && !profileLoaded);
 
 	return useMemo(
 		() => ({
-			...authState,
-			canWrite: WRITER_ROLES.has(authState.role),
+			activeUser,
+			canWrite: WRITER_ROLES.has(role),
+			isAuthed,
+			isLoading,
+			profile,
+			role,
 		}),
-		[authState],
+		[activeUser, isAuthed, isLoading, profile, role],
 	);
 }

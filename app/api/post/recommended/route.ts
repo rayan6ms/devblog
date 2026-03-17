@@ -8,7 +8,7 @@ import {
 	getRecommendationsFromTags,
 	getTrendingPosts,
 } from "@/api/utils";
-import { auth } from "../../auth/[...nextauth]/route";
+import { auth } from "@/lib/auth";
 
 export async function GET(_request: NextRequest) {
 	const session = await auth();

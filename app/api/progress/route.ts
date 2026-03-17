@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createProgress, getProgress } from "@/api/utils";
+import { createProgressSchema } from "@/lib/validation/content";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
 	const { userId, postId } = await request.json();
@@ -22,7 +23,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-	const data = await req.json();
-	const progress = await createProgress(data);
+	const payload = await req.json().catch(() => null);
+	const parsed = createProgressSchema.safeParse(payload);
+	if (!parsed.success) {
+		return NextResponse.json(
+			{
+				error: "Please correct the progress payload.",
+				fields: parsed.error.flatten().fieldErrors,
+			},
+			{ status: 400 },
+		);
+	}
+
+	const progress = await createProgress(parsed.data);
 	return NextResponse.json(progress);
 }

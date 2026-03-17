@@ -14,16 +14,25 @@ function LoginModal({ isOpen, onClose }: LoginModalProps) {
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed top-0 left-0 z-50 flex h-full w-full items-center justify-center bg-gray-900 bg-opacity-50">
+		<div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 p-4">
 			<button
 				type="button"
-				className="absolute inset-0"
+				className="fixed inset-0"
 				aria-label="Close login modal"
 				onClick={onClose}
 			/>
-			<div className="relative bg-darkBg border border-zinc-700/50 shadow-md shadow-zinc-900 rounded-lg p-10 w-11/12 md:w-[50%] lg:w-[40%]">
+			<div className="relative flex min-h-full items-start justify-center sm:items-center">
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="login-modal-title"
+					className="relative w-11/12 rounded-lg border border-zinc-700/50 bg-darkBg p-10 shadow-md shadow-zinc-900 md:w-[50%] lg:w-[40%] max-h-[calc(100dvh-2rem)] overflow-y-auto"
+				>
 				<div className="flex justify-between items-center">
-					<h2 className="text-xl font-bold mb-3 text-purpleContrast">
+					<h2
+						id="login-modal-title"
+						className="text-xl font-bold mb-3 text-purpleContrast"
+					>
 						Você precisa estar logado para fazer isto!
 					</h2>
 					<button type="button" onClick={onClose}>
@@ -59,6 +68,7 @@ function LoginModal({ isOpen, onClose }: LoginModalProps) {
 				>
 					&times;
 				</button>
+				</div>
 			</div>
 		</div>
 	);

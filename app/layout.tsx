@@ -1,7 +1,9 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
+import AuthProvider from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import NavBar from "@/components/NavBar";
+import { auth } from "@/lib/auth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,11 +12,13 @@ export const metadata = {
 	description: "A blog for everyone who loves technology",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	const session = await auth();
+
 	return (
 		<html lang="pt-BR">
 			<head>
@@ -28,9 +32,11 @@ export default function RootLayout({
 				/>
 			</head>
 			<body className={inter.className}>
-				<Header />
-				<NavBar />
-				{children}
+				<AuthProvider session={session}>
+					<Header />
+					<NavBar />
+					{children}
+				</AuthProvider>
 			</body>
 		</html>
 	);

@@ -1,43 +1,44 @@
 "use client";
 
-import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import type { IUser } from "@/data/posts";
+import { buildLetterAvatar } from "@/lib/avatar";
+import {
+	hostOkFor,
+	SOCIAL_PROVIDERS,
+	type SocialProvider,
+} from "@/lib/social-links";
+import {
+	getPasswordUpdateErrors,
+	type PasswordUpdateValues,
+} from "@/lib/validation/auth";
+import {
+	getHandleError,
+	getProfileUploadError,
+	normalizeHandle,
+	PROFILE_UPLOAD_ACCEPT,
+	PROFILE_UPLOAD_MAX_BYTES,
+} from "@/lib/validation/profile";
+import type { ProfileAvatarMode, ProfileUser } from "@/profile/types";
+
+type ProfileUpdatePayload = {
+	name: string;
+	handle: string;
+	description: string;
+	avatarMode: ProfileAvatarMode;
+	profilePicture: string;
+	socialLinks: ProfileUser["socialLinks"];
+	password: PasswordUpdateValues;
+};
 
 type Props = {
 	isOpen: boolean;
 	onClose: () => void;
-	initialUser: IUser;
-	onSave: (u: IUser) => Promise<void> | void;
+	initialUser: ProfileUser;
+	onSave: (payload: ProfileUpdatePayload) => Promise<void> | void;
 };
 
 const MAX_NAME = 60;
 const MAX_DESC = 300;
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const SOCIAL_PROVIDERS = ["linkedin", "github", "youtube", "twitter"] as const;
-
-function isValidHttpUrl(s: string) {
-	try {
-		const u = new URL(s);
-		return u.protocol === "http:" || u.protocol === "https:";
-	} catch {
-		return false;
-	}
-}
-
-function hostOkFor(provider: string, url: string) {
-	if (!isValidHttpUrl(url)) return false;
-	const { hostname } = new URL(url);
-	const map: Record<string, string[]> = {
-		linkedin: ["linkedin.com"],
-		github: ["github.com"],
-		youtube: ["youtube.com", "youtu.be"],
-		twitter: ["twitter.com", "x.com"],
-	};
-	const allowed = map[provider.toLowerCase()] ?? [];
-	return allowed.some((h) => hostname === h || hostname.endsWith(`.${h}`));
-}
 
 export default function ProfileEditModal({
 	isOpen,
@@ -61,184 +62,397 @@ function ProfileEditModalBody({
 	initialUser,
 	onSave,
 }: Omit<Props, "isOpen">) {
-	const [name, setName] = useState(initialUser?.name ?? "");
-	const [description, setDescription] = useState(
-		initialUser?.description ?? "",
+	const [name, setName] = useState(initialUser.name);
+	const [handle, setHandle] = useState(initialUser.slug);
+	const [description, setDescription] = useState(initialUser.description);
+	const [links, setLinks] = useState(initialUser.socialLinks);
+	const [avatarMode, setAvatarMode] = useState<ProfileAvatarMode>(
+		initialUser.avatarMode,
 	);
-	const [links, setLinks] = useState<IUser["socialLinks"]>(
-		initialUser?.socialLinks ?? {
-			linkedin: "",
-			github: "",
-			youtube: "",
-			twitter: "",
-		},
+	const [customAvatarUrl, setCustomAvatarUrl] = useState(
+		initialUser.avatarMode === "custom" &&
+			!initialUser.profilePicture.startsWith("data:image/")
+			? initialUser.profilePicture
+			: "",
 	);
-	const [avatar, setAvatar] = useState(initialUser?.profilePicture ?? "");
-	const [avatarFileError, setAvatarFileError] = useState<string | null>(null);
-	const [urlMode, setUrlMode] = useState(false);
+	const [uploadedAvatarData, setUploadedAvatarData] = useState(
+		initialUser.avatarMode === "custom" &&
+			initialUser.profilePicture.startsWith("data:image/")
+			? initialUser.profilePicture
+			: "",
+	);
+	const [uploadedAvatarName, setUploadedAvatarName] = useState(
+		initialUser.avatarMode === "custom" &&
+			initialUser.profilePicture.startsWith("data:image/")
+			? "Uploaded image"
+			: "",
+	);
 	const [saving, setSaving] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [submitError, setSubmitError] = useState<string | null>(null);
+	const [currentPassword, setCurrentPassword] = useState("");
+	const [newPassword, setNewPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
 
-	// Close on ESC
 	useEffect(() => {
-		const handler = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
+		const handler = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				onClose();
+			}
 		};
+
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
 	}, [onClose]);
 
-	const dirty = useMemo(() => {
-		return (
-			name !== initialUser?.name ||
-			description !== initialUser?.description ||
-			avatar !== initialUser?.profilePicture ||
-			links.linkedin !== initialUser?.socialLinks?.linkedin ||
-			links.github !== initialUser?.socialLinks?.github ||
-			links.youtube !== initialUser?.socialLinks?.youtube ||
-			links.twitter !== initialUser?.socialLinks?.twitter
+	const generatedAvatar = useMemo(
+		() => buildLetterAvatar(name || initialUser.name || "User"),
+		[name, initialUser.name],
+	);
+	const normalizedHandle = useMemo(() => normalizeHandle(handle), [handle]);
+	const customAvatarValue = uploadedAvatarData || customAvatarUrl;
+
+	const avatarPreview =
+		avatarMode === "provider"
+			? initialUser.providerPicture || generatedAvatar
+			: avatarMode === "generated"
+				? generatedAvatar
+				: customAvatarValue || generatedAvatar;
+
+	const dirty = useMemo(
+		() =>
+			name !== initialUser.name ||
+			handle !== initialUser.slug ||
+			description !== initialUser.description ||
+			avatarMode !== initialUser.avatarMode ||
+			customAvatarValue !==
+				(initialUser.avatarMode === "custom" ? initialUser.profilePicture : "") ||
+			SOCIAL_PROVIDERS.some(
+				(provider) => links[provider] !== initialUser.socialLinks[provider],
+			) ||
+			currentPassword.length > 0 ||
+			newPassword.length > 0 ||
+			confirmPassword.length > 0,
+		[
+			avatarMode,
+			confirmPassword,
+			currentPassword,
+			customAvatarValue,
+			description,
+			handle,
+			initialUser,
+			links,
+			name,
+			newPassword,
+		],
+	);
+
+	function validate() {
+		const nextErrors: Record<string, string> = {};
+
+		if (!name.trim()) {
+			nextErrors.name = "Name is required.";
+		} else if (name.trim().length > MAX_NAME) {
+			nextErrors.name = `Max ${MAX_NAME} characters.`;
+		}
+
+		const handleError = getHandleError(handle);
+		if (handleError) {
+			nextErrors.handle = handleError;
+		}
+
+		if (description.trim().length > MAX_DESC) {
+			nextErrors.description = `Max ${MAX_DESC} characters.`;
+		}
+
+		if (avatarMode === "custom" && uploadedAvatarData) {
+			const uploadError = getProfileUploadError(uploadedAvatarData);
+			if (uploadError) {
+				nextErrors.profilePicture = uploadError;
+			}
+		} else if (avatarMode === "custom" && customAvatarUrl) {
+			try {
+				const url = new URL(customAvatarUrl);
+				if (!["http:", "https:"].includes(url.protocol)) {
+					nextErrors.profilePicture = "Enter a valid image URL.";
+				}
+			} catch {
+				nextErrors.profilePicture = "Enter a valid image URL.";
+			}
+		} else if (avatarMode === "custom") {
+			nextErrors.profilePicture = "Upload an image or enter an image URL.";
+		}
+
+		for (const provider of SOCIAL_PROVIDERS) {
+			const value = links[provider];
+			if (value && !hostOkFor(provider, value)) {
+				nextErrors[provider] = `Invalid ${provider} URL.`;
+			}
+		}
+
+		Object.assign(
+			nextErrors,
+			getPasswordUpdateErrors(
+				{
+					currentPassword,
+					newPassword,
+					confirmPassword,
+				},
+				{
+					requireCurrentPassword: initialUser.hasPassword,
+				},
+			),
 		);
-	}, [name, description, avatar, links, initialUser]);
 
-	function validate(): boolean {
-		const e: Record<string, string> = {};
-		if (!name.trim()) e.name = "Name is required.";
-		if (name.trim().length > MAX_NAME) e.name = `Max ${MAX_NAME} characters.`;
-		if (description.trim().length > MAX_DESC)
-			e.description = `Max ${MAX_DESC} characters.`;
-
-		SOCIAL_PROVIDERS.forEach((p) => {
-			const v = links[p];
-			if (!v) return;
-			if (!hostOkFor(p, v)) e[p] = `Invalid ${p} URL.`;
-		});
-
-		setErrors(e);
-		return Object.keys(e).length === 0 && !avatarFileError;
+		setErrors(nextErrors);
+		return Object.keys(nextErrors).length === 0;
 	}
 
-	function onAvatarFileChange(ev: React.ChangeEvent<HTMLInputElement>) {
-		const file = ev.target.files?.[0];
-		if (!file) return;
-		setAvatarFileError(null);
-		if (!ALLOWED_TYPES.includes(file.type)) {
-			setAvatarFileError("Use JPG, PNG or WEBP.");
+	function handleAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
+		const file = event.target.files?.[0];
+		if (!file) {
 			return;
 		}
-		if (file.size > MAX_IMAGE_BYTES) {
-			setAvatarFileError("Max image size is 2MB.");
+
+		if (!PROFILE_UPLOAD_ACCEPT.includes(file.type as (typeof PROFILE_UPLOAD_ACCEPT)[number])) {
+			setErrors((current) => ({
+				...current,
+				profilePicture: "Only JPG, PNG, or WEBP images are allowed.",
+			}));
 			return;
 		}
-		const objectUrl = URL.createObjectURL(file);
-		setAvatar(objectUrl);
+
+		if (file.size > PROFILE_UPLOAD_MAX_BYTES) {
+			setErrors((current) => ({
+				...current,
+				profilePicture: "Max image size is 2MB.",
+			}));
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = () => {
+			const result = typeof reader.result === "string" ? reader.result : "";
+			setAvatarMode("custom");
+			setUploadedAvatarData(result);
+			setUploadedAvatarName(file.name);
+			setCustomAvatarUrl("");
+			setErrors((current) => {
+				const nextErrors = { ...current };
+				delete nextErrors.profilePicture;
+				return nextErrors;
+			});
+		};
+		reader.readAsDataURL(file);
+		event.target.value = "";
 	}
 
 	async function handleSave() {
-		if (!validate()) return;
+		if (!validate()) {
+			return;
+		}
+
 		setSaving(true);
-		await onSave({
-			...initialUser,
-			name: name.trim(),
-			description: description.trim(),
-			profilePicture: avatar,
-			socialLinks: {
-				linkedin: links.linkedin?.trim() || "",
-				github: links.github?.trim() || "",
-				youtube: links.youtube?.trim() || "",
-				twitter: links.twitter?.trim() || "",
-			},
-		});
-		setSaving(false);
-		onClose();
+
+		try {
+			setSubmitError(null);
+			await onSave({
+				name: name.trim(),
+				handle: normalizedHandle,
+				description: description.trim(),
+				avatarMode,
+				profilePicture: customAvatarValue.trim(),
+				socialLinks: {
+					linkedin: links.linkedin.trim(),
+					github: links.github.trim(),
+					youtube: links.youtube.trim(),
+					twitter: links.twitter.trim(),
+				},
+				password: {
+					currentPassword,
+					newPassword,
+					confirmPassword,
+				},
+			});
+			onClose();
+		} catch (error) {
+			const fieldErrors =
+				typeof error === "object" &&
+				error !== null &&
+				"fieldErrors" in error &&
+				typeof error.fieldErrors === "object" &&
+				error.fieldErrors !== null
+					? (error.fieldErrors as Record<string, string>)
+					: null;
+			if (fieldErrors) {
+				setErrors((current) => ({
+					...current,
+					...fieldErrors,
+				}));
+			}
+			setSubmitError(
+				error instanceof Error ? error.message : "Unable to save profile.",
+			);
+		} finally {
+			setSaving(false);
+		}
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4">
 			<button
 				type="button"
-				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+				className="fixed inset-0 bg-black/75 backdrop-blur-xl"
 				aria-label="Close edit profile modal"
 				onClick={onClose}
 			/>
-			<div className="relative w-full max-w-2xl bg-greyBg rounded-2xl border border-zinc-700/50 shadow-2xl">
-				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
-					<h3 className="text-lg font-semibold text-zinc-100">Edit profile</h3>
+			<div className="relative flex min-h-full items-start justify-center sm:items-center">
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="edit-profile-title"
+					className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[30px] border border-zinc-700/60 bg-lessDarkBg/95 shadow-[0_32px_120px_rgba(0,0,0,0.55)] max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]"
+				>
+				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.34),transparent_42%),linear-gradient(180deg,rgba(103,79,248,0.14),rgba(20,23,26,0.02)_28%,rgba(20,23,26,0.78)_100%)]" />
+				<div className="relative flex items-center justify-between border-b border-zinc-700/50 px-6 py-5 sm:px-8">
+					<div>
+						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+							Profile settings
+						</p>
+						<h3
+							id="edit-profile-title"
+							className="mt-2 text-3xl font-somerton uppercase text-wheat"
+						>
+							Edit profile
+						</h3>
+					</div>
 					<button
 						type="button"
-						className="text-zinc-300 hover:text-white"
+						className="rounded-full border border-zinc-600/50 bg-greyBg/70 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 						onClick={onClose}
 						aria-label="Close"
 					>
-						✕
+						Close
 					</button>
 				</div>
 
-				<div className="px-5 pt-5 flex flex-col items-center">
-					<div className="relative w-32 h-32 rounded-xl overflow-hidden border border-zinc-600/50 shadow">
+				<div className="relative grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-6 sm:px-8 xl:grid-cols-[320px_minmax(0,1fr)]">
+					<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-xl shadow-zinc-950/20">
+						<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+							Preview
+						</p>
+						<div className="mt-5 mx-auto h-36 w-36 overflow-hidden rounded-[28px] border border-zinc-200/70 shadow-xl shadow-zinc-950/30">
 						<img
-							src={avatar || "/avatar-placeholder.png"}
+							src={avatarPreview}
 							alt="Profile preview"
-							className="w-full h-full object-cover"
-						/>
-						<label
-							htmlFor="avatarInput"
-							className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 hover:opacity-100 cursor-pointer transition"
-							title="Change photo"
-						>
-							<span className="text-xs text-white bg-purple-600/80 rounded-md px-3 py-1">
-								Change photo
-							</span>
-						</label>
-						<input
-							id="avatarInput"
-							type="file"
-							accept={ALLOWED_TYPES.join(",")}
-							className="hidden"
-							onChange={onAvatarFileChange}
+							className="h-full w-full object-cover"
 						/>
 					</div>
 
-					<button
-						type="button"
-						className="mt-3 text-xs text-zinc-300 underline underline-offset-4 hover:text-zinc-100"
-						onClick={() => setUrlMode((v) => !v)}
-					>
-						{urlMode ? "Hide URL input" : "Paste image URL instead"}
-					</button>
-					{urlMode && (
-						<input
-							type="url"
-							placeholder="https://…"
-							className="mt-2 w-72 rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
-							value={avatar}
-							onChange={(e) => setAvatar(e.target.value)}
+						<p className="mt-4 text-center text-sm text-zinc-300">
+							{normalizedHandle ? `@${normalizedHandle}` : "@handle"}
+						</p>
+						<p className="mt-1 text-center text-xs uppercase tracking-[0.18em] text-zinc-500">
+							{initialUser.providerPicture
+								? "Provider photo available"
+								: "No provider photo on file"}
+						</p>
+
+						<div className="mt-6 grid gap-2">
+							{initialUser.providerPicture ? (
+							<AvatarOption
+								label="Provider photo"
+								active={avatarMode === "provider"}
+								onClick={() => setAvatarMode("provider")}
+							/>
+						) : null}
+						<AvatarOption
+							label="Generated avatar"
+							active={avatarMode === "generated"}
+							onClick={() => setAvatarMode("generated")}
 						/>
-					)}
-					{avatarFileError && (
-						<p className="mt-2 text-xs text-red-400">{avatarFileError}</p>
-					)}
+						<AvatarOption
+							label="Upload or URL"
+							active={avatarMode === "custom"}
+							onClick={() => setAvatarMode("custom")}
+						/>
+					</div>
+
+					{avatarMode === "custom" ? (
+						<div className="mt-5 space-y-3">
+							<label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat">
+								Upload photo
+								<input
+									type="file"
+									accept={PROFILE_UPLOAD_ACCEPT.join(",")}
+									className="hidden"
+									onChange={handleAvatarUpload}
+								/>
+							</label>
+							<p className="text-xs leading-5 text-zinc-400">
+								JPG, PNG, or WEBP up to 2MB.
+							</p>
+							{uploadedAvatarName ? (
+								<p className="rounded-2xl border border-zinc-700/50 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-200">
+									Uploaded: {uploadedAvatarName}
+								</p>
+							) : null}
+							<div>
+								<label
+									htmlFor="profile-picture-url"
+									className="mb-1 block text-sm text-zinc-300"
+								>
+									Or use an image URL
+								</label>
+							<input
+									id="profile-picture-url"
+								type="url"
+								placeholder="https://…"
+								className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+								value={customAvatarUrl}
+								onChange={(event) => {
+									setCustomAvatarUrl(event.target.value);
+									setUploadedAvatarData("");
+									setUploadedAvatarName("");
+								}}
+							/>
+							</div>
+							{errors.profilePicture ? (
+								<p className="mt-1 text-xs text-red-400">
+									{errors.profilePicture}
+								</p>
+							) : null}
+						</div>
+					) : null}
 				</div>
 
-				<div className="px-5 py-5 grid grid-cols-1 gap-4">
-					<div>
+				<div className="grid grid-cols-1 gap-5">
+					{submitError ? (
+						<p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+							{submitError}
+						</p>
+					) : null}
+
+					<div className="grid gap-5 lg:grid-cols-2">
+						<div>
 						<label
 							htmlFor="profile-name"
-							className="block text-sm text-zinc-300 mb-1"
+							className="mb-2 block text-sm text-zinc-300"
 						>
-							Name
+							Display name
 						</label>
 						<input
 							id="profile-name"
 							value={name}
-							onChange={(e) => setName(e.target.value)}
+							onChange={(event) => setName(event.target.value)}
 							maxLength={MAX_NAME}
-							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
+							className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
 						/>
 						<div className="flex justify-between">
-							{errors.name && (
-								<p className="text-xs text-red-400 mt-1">{errors.name}</p>
-							)}
-							<span className="text-xs text-zinc-400 mt-1 ml-auto">
+							{errors.name ? (
+								<p className="mt-1 text-xs text-red-400">{errors.name}</p>
+							) : null}
+							<span className="ml-auto mt-1 text-xs text-zinc-400">
 								{name.length}/{MAX_NAME}
 							</span>
 						</div>
@@ -246,62 +460,187 @@ function ProfileEditModalBody({
 
 					<div>
 						<label
+							htmlFor="profile-handle"
+							className="mb-2 block text-sm text-zinc-300"
+						>
+							Handle
+						</label>
+						<div className="rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 transition-colors focus-within:border-purpleContrast">
+							<div className="flex items-center gap-2">
+								<span className="text-zinc-500">@</span>
+								<input
+									id="profile-handle"
+									value={handle}
+									onChange={(event) => setHandle(event.target.value)}
+									className="w-full bg-transparent text-zinc-100 outline-none"
+									autoCapitalize="none"
+									autoCorrect="off"
+									spellCheck={false}
+								/>
+							</div>
+						</div>
+						<div className="flex justify-between gap-3">
+							{errors.handle ? (
+								<p className="mt-1 text-xs text-red-400">{errors.handle}</p>
+							) : (
+								<p className="mt-1 text-xs text-zinc-500">
+									Profile URL: `/profile/{normalizedHandle || "handle"}`
+								</p>
+							)}
+						</div>
+					</div>
+					</div>
+
+					<div>
+						<label
 							htmlFor="profile-description"
-							className="block text-sm text-zinc-300 mb-1"
+							className="mb-2 block text-sm text-zinc-300"
 						>
 							Description
 						</label>
 						<textarea
 							id="profile-description"
 							value={description}
-							onChange={(e) => setDescription(e.target.value)}
+							onChange={(event) => setDescription(event.target.value)}
 							maxLength={MAX_DESC}
 							rows={4}
-							className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
+							className="w-full rounded-[24px] border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
 						/>
 						<div className="flex justify-between">
-							{errors.description && (
-								<p className="text-xs text-red-400 mt-1">
+							{errors.description ? (
+								<p className="mt-1 text-xs text-red-400">
 									{errors.description}
 								</p>
-							)}
-							<span className="text-xs text-zinc-400 mt-1 ml-auto">
+							) : null}
+							<span className="ml-auto mt-1 text-xs text-zinc-400">
 								{description.length}/{MAX_DESC}
 							</span>
 						</div>
 					</div>
 
-					<div className="grid md:grid-cols-2 gap-3">
-						{SOCIAL_PROVIDERS.map((p) => (
-							<div key={p}>
+					<div className="grid gap-4 sm:grid-cols-2">
+						{SOCIAL_PROVIDERS.map((provider) => (
+							<div key={provider}>
 								<label
-									htmlFor={`profile-social-${p}`}
-									className="block text-sm text-zinc-300 mb-1 capitalize"
+									htmlFor={`profile-social-${provider}`}
+									className="mb-2 block text-sm capitalize text-zinc-300"
 								>
-									{p}
+									{provider}
 								</label>
 								<input
-									id={`profile-social-${p}`}
+									id={`profile-social-${provider}`}
 									type="url"
-									placeholder={`https://${p}.com/username`}
-									value={links[p] ?? ""}
-									onChange={(e) =>
-										setLinks((old) => ({ ...old, [p]: e.target.value }))
+									placeholder={`https://${hostForPlaceholder(provider)}/username`}
+									className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+									value={links[provider]}
+									onChange={(event) =>
+										setLinks((current) => ({
+											...current,
+											[provider]: event.target.value,
+										}))
 									}
-									className="w-full rounded-md bg-zinc-800/70 border border-zinc-600/60 px-3 py-2 text-zinc-100 outline-none focus:border-purple-500"
 								/>
-								{errors[p] && (
-									<p className="text-xs text-red-400 mt-1">{errors[p]}</p>
-								)}
+								{errors[provider] ? (
+									<p className="mt-1 text-xs text-red-400">
+										{errors[provider]}
+									</p>
+								) : null}
 							</div>
 						))}
 					</div>
+
+					<div className="rounded-[28px] border border-zinc-700/50 bg-greyBg/70 px-5 py-5">
+						<div className="flex items-start justify-between gap-4">
+							<div>
+								<h4 className="text-sm font-semibold text-zinc-100">
+									{initialUser.hasPassword ? "Change password" : "Create password"}
+								</h4>
+								<p className="mt-1 text-xs leading-5 text-zinc-400">
+									{initialUser.hasPassword
+										? "Update your email login password without losing your social sign-in."
+										: "Add an email login password to this social account."}
+								</p>
+							</div>
+							<span className="rounded-full border border-zinc-600/50 bg-zinc-800/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-zinc-300">
+								{initialUser.hasPassword ? "Configured" : "Optional"}
+							</span>
+						</div>
+
+						<div className="mt-4 grid gap-4 sm:grid-cols-2">
+							{initialUser.hasPassword ? (
+								<div className="sm:col-span-2">
+									<label
+										htmlFor="profile-current-password"
+										className="mb-1 block text-sm text-zinc-300"
+									>
+										Current password
+									</label>
+									<input
+										id="profile-current-password"
+										type="password"
+										value={currentPassword}
+										onChange={(event) => setCurrentPassword(event.target.value)}
+										className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+									/>
+									{errors.currentPassword ? (
+										<p className="mt-1 text-xs text-red-400">
+											{errors.currentPassword}
+										</p>
+									) : null}
+								</div>
+							) : null}
+
+							<div>
+								<label
+									htmlFor="profile-new-password"
+									className="mb-1 block text-sm text-zinc-300"
+								>
+									New password
+								</label>
+								<input
+									id="profile-new-password"
+									type="password"
+									value={newPassword}
+									onChange={(event) => setNewPassword(event.target.value)}
+									className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+								/>
+								{errors.newPassword ? (
+									<p className="mt-1 text-xs text-red-400">
+										{errors.newPassword}
+									</p>
+								) : null}
+							</div>
+
+							<div>
+								<label
+									htmlFor="profile-confirm-password"
+									className="mb-1 block text-sm text-zinc-300"
+								>
+									Confirm new password
+								</label>
+								<input
+									id="profile-confirm-password"
+									type="password"
+									value={confirmPassword}
+									onChange={(event) => setConfirmPassword(event.target.value)}
+									className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
+								/>
+								{errors.confirmPassword ? (
+									<p className="mt-1 text-xs text-red-400">
+										{errors.confirmPassword}
+									</p>
+								) : null}
+							</div>
+						</div>
+					</div>
 				</div>
 
-				<div className="px-5 pb-5 flex items-center justify-end gap-3">
+				</div>
+
+				<div className="relative flex items-center justify-end gap-3 border-t border-zinc-700/50 px-6 pb-6 pt-5 sm:px-8">
 					<button
 						type="button"
-						className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
+						className="rounded-full border border-zinc-600/50 bg-greyBg/75 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 						onClick={onClose}
 						disabled={saving}
 					>
@@ -309,14 +648,51 @@ function ProfileEditModalBody({
 					</button>
 					<button
 						type="button"
-						className="px-4 py-2 rounded-md bg-purpleContrast hover:bg-purple-500 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+						className="rounded-full border border-purpleContrast/50 bg-purpleContrast/85 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purpleContrast/20 transition-colors hover:bg-purpleContrast disabled:cursor-not-allowed disabled:opacity-50"
 						onClick={handleSave}
 						disabled={saving || !dirty}
 					>
-						{saving ? "Saving…" : "Save changes"}
+						{saving ? "Saving…" : "Save profile"}
 					</button>
+				</div>
 				</div>
 			</div>
 		</div>
 	);
+}
+
+function AvatarOption({
+	label,
+	active,
+	onClick,
+}: {
+	label: string;
+	active: boolean;
+	onClick: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className={`rounded-full border px-3 py-2 text-sm font-semibold transition-colors ${
+				active
+					? "border-purpleContrast/60 bg-purpleContrast/20 text-wheat"
+					: "border-zinc-600/50 bg-zinc-800/70 text-zinc-200 hover:border-zinc-500/70"
+			}`}
+		>
+			{label}
+		</button>
+	);
+}
+
+function hostForPlaceholder(provider: SocialProvider) {
+	if (provider === "youtube") {
+		return "youtube.com";
+	}
+
+	if (provider === "twitter") {
+		return "x.com";
+	}
+
+	return `${provider}.com`;
 }

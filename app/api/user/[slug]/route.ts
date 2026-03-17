@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getUserBySlug } from "@/api/utils";
+import { auth } from "@/lib/auth";
+import { findUserProfile } from "@/lib/user-profile";
 
 export async function GET(
 	_request: NextRequest,
@@ -8,7 +9,11 @@ export async function GET(
 	const { slug } = await context.params;
 
 	try {
-		const user = await getUserBySlug(slug);
+		const session = await auth();
+		const user =
+			slug === "me" && session?.user?.id
+				? await findUserProfile(session.user.id, session.user.id)
+				: await findUserProfile(slug, session?.user?.id);
 		if (!user) {
 			return NextResponse.json({ error: "User not found" }, { status: 404 });
 		}

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+	FaArrowRightFromBracket,
 	FaLightbulb,
 	FaPaperPlane,
 	FaPlus,
@@ -96,6 +98,18 @@ export default function Header() {
 										Login
 									</Link>
 								)}
+
+								{isAuthed ? (
+									<button
+										type="button"
+										onClick={() => signOut({ callbackUrl: "/" })}
+										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+										aria-label="Logout"
+									>
+										<FaArrowRightFromBracket className="text-xs" />
+										Logout
+									</button>
+								) : null}
 
 								<a
 									href="https://t.me/+d-L4_z7gQjg5ZWQx"

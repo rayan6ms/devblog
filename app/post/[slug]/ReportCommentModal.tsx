@@ -86,16 +86,25 @@ function ReportCommentModalBody({
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-50 overflow-y-auto p-4">
 			<button
 				type="button"
-				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+				className="fixed inset-0 bg-black/60 backdrop-blur-sm"
 				aria-label="Close report comment modal"
 				onClick={onClose}
 			/>
-			<div className="relative w-full max-w-lg bg-greyBg rounded-2xl border border-zinc-700/50 shadow-2xl">
+			<div className="relative flex min-h-full items-start justify-center sm:items-center">
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="report-comment-title"
+					className="relative flex w-full max-w-lg flex-col rounded-2xl border border-zinc-700/50 bg-greyBg shadow-2xl max-h-[calc(100dvh-2rem)]"
+				>
 				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
-					<h3 className="text-lg font-semibold text-zinc-100">
+					<h3
+						id="report-comment-title"
+						className="text-lg font-semibold text-zinc-100"
+					>
 						Report comment
 					</h3>
 					<button
@@ -108,7 +117,7 @@ function ReportCommentModalBody({
 					</button>
 				</div>
 
-				<div className="px-5 py-4 space-y-4">
+				<div className="space-y-4 overflow-y-auto px-5 py-4">
 					<div className="bg-zinc-800/60 border border-zinc-600/40 rounded-md p-3">
 						<p className="text-sm text-zinc-300">
 							Reporting comment by{" "}
@@ -178,7 +187,7 @@ function ReportCommentModalBody({
 					</div>
 				</div>
 
-				<div className="px-5 pb-5 flex justify-end gap-3">
+				<div className="flex justify-end gap-3 px-5 pb-5">
 					<button
 						type="button"
 						className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
@@ -195,6 +204,7 @@ function ReportCommentModalBody({
 					>
 						{saving ? "Submitting…" : "Submit report"}
 					</button>
+				</div>
 				</div>
 			</div>
 		</div>

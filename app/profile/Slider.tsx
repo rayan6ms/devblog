@@ -1,17 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import type { IconType } from "react-icons";
 import { FaBookmark, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import type { IPost } from "@/data/posts";
+import type { ProfilePost } from "@/profile/types";
 
 type SliderProps = {
 	title: string;
-	items?: IPost[] | null;
+	items?: ProfilePost[] | null;
 };
 
 const icons: Record<string, IconType> = {
@@ -19,12 +18,12 @@ const icons: Record<string, IconType> = {
 	bookmarks: FaBookmark,
 };
 
-function SliderItem({ item }: { item: IPost }) {
+function SliderItem({ item }: { item: ProfilePost }) {
 	const router = useRouter();
 
-	const onTagClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const onTagClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+		event.preventDefault();
+		event.stopPropagation();
 		router.push(
 			`/tag?selected=${slugify(item.mainTag, { lower: true, strict: true })}`,
 		);
@@ -32,30 +31,29 @@ function SliderItem({ item }: { item: IPost }) {
 
 	return (
 		<Link
-			href={`/post/${slugify(item.title, { lower: true, strict: true })}`}
+			href={`/post/${item.slug}`}
 			className="group w-[280px] shrink-0 rounded-[24px] border border-zinc-700/50 bg-greyBg/65 p-3 shadow-lg shadow-zinc-950/10 transition-transform hover:-translate-y-1"
 		>
-			<div className="relative h-40 overflow-hidden rounded-[20px]">
-				<Image
-					src={item.image}
-					alt={item.title}
-					fill
-					className="object-cover transition-transform duration-700 group-hover:scale-105"
-					sizes="280px"
-				/>
+			<div className="relative flex h-40 flex-col justify-end overflow-hidden rounded-[20px] border border-zinc-700/40 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.35),transparent_56%),linear-gradient(180deg,rgba(52,56,64,0.35),rgba(23,25,29,0.95))] p-4">
+				<p className="text-xs uppercase tracking-[0.3em] text-zinc-500">
+					{item.slug}
+				</p>
+				<p className="mt-3 line-clamp-2 text-2xl font-somerton uppercase text-wheat">
+					{item.title}
+				</p>
 				<button
 					type="button"
 					onClick={onTagClick}
-					className="absolute bottom-3 left-3 rounded-full bg-darkBg/85 px-3 py-1 text-xs uppercase tracking-[0.12em] text-zinc-200 transition-colors hover:bg-purpleContrast"
+					className="mt-4 w-fit rounded-full bg-darkBg/85 px-3 py-1 text-xs uppercase tracking-[0.12em] text-zinc-200 transition-colors hover:bg-purpleContrast"
 				>
 					{item.mainTag}
 				</button>
 			</div>
 
 			<div className="pt-4">
-				<h3 className="line-clamp-2 text-lg font-semibold text-zinc-100">
-					{item.title}
-				</h3>
+				<p className="line-clamp-3 text-sm leading-7 text-zinc-300">
+					{item.description || "No post summary saved for this entry yet."}
+				</p>
 				<div className="mt-3 flex flex-wrap gap-2">
 					{item.tags.slice(0, 3).map((tag) => (
 						<span
@@ -72,7 +70,7 @@ function SliderItem({ item }: { item: IPost }) {
 }
 
 export default function Slider({ title, items = [] }: SliderProps) {
-	const list: IPost[] = Array.isArray(items) ? items : [];
+	const list: ProfilePost[] = Array.isArray(items) ? items : [];
 	const Icon = icons[title.toLowerCase()];
 
 	return (
@@ -91,13 +89,13 @@ export default function Slider({ title, items = [] }: SliderProps) {
 
 			<div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 				{list.map((item) => (
-					<SliderItem key={item.title} item={item} />
+					<SliderItem key={item.id} item={item} />
 				))}
-				{list.length === 0 && (
+				{list.length === 0 ? (
 					<div className="rounded-2xl border border-dashed border-zinc-700/60 bg-greyBg/45 px-4 py-6 text-sm text-zinc-400">
 						No items to show yet.
 					</div>
-				)}
+				) : null}
 			</div>
 		</section>
 	);

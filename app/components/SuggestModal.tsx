@@ -100,16 +100,25 @@ function SuggestModalBody({
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-50 overflow-y-auto p-4">
 			<button
 				type="button"
-				className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+				className="fixed inset-0 bg-black/60 backdrop-blur-sm"
 				aria-label="Close suggest post modal"
 				onClick={onClose}
 			/>
-			<div className="relative w-full max-w-xl bg-greyBg rounded-2xl border border-zinc-700/50 shadow-2xl">
+			<div className="relative flex min-h-full items-start justify-center sm:items-center">
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="suggest-post-title-heading"
+					className="relative flex w-full max-w-xl flex-col rounded-2xl border border-zinc-700/50 bg-greyBg shadow-2xl max-h-[calc(100dvh-2rem)]"
+				>
 				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
-					<h3 className="text-lg font-semibold text-zinc-100">
+					<h3
+						id="suggest-post-title-heading"
+						className="text-lg font-semibold text-zinc-100"
+					>
 						Suggest a post
 					</h3>
 					<button
@@ -122,7 +131,7 @@ function SuggestModalBody({
 					</button>
 				</div>
 
-				<div className="px-5 py-5 space-y-4">
+				<div className="space-y-4 overflow-y-auto px-5 py-5">
 					<div>
 						<label
 							htmlFor="suggest-post-title"
@@ -180,7 +189,7 @@ function SuggestModalBody({
 					</p>
 				</div>
 
-				<div className="px-5 pb-5 flex items-center justify-end gap-3">
+				<div className="flex items-center justify-end gap-3 px-5 pb-5">
 					<button
 						type="button"
 						className="px-4 py-2 rounded-md bg-zinc-700/60 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-600/50"
@@ -201,6 +210,7 @@ function SuggestModalBody({
 								? "Submitting…"
 								: "Submit suggestion"}
 					</button>
+				</div>
 				</div>
 			</div>
 		</div>

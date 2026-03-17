@@ -1,25 +1,40 @@
+import { NextResponse } from "next/server";
 import slugify from "slugify";
 import prisma from "@/database/prisma";
-import { auth } from "../auth/[...nextauth]/route";
+import { auth } from "@/lib/auth";
+import { createPostSchema } from "@/lib/validation/content";
 
 export async function POST(req: Request) {
 	const session = await auth();
-	if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
 
-	const body = await req.json();
-	// TODO: validate with zod
-	const slug = slugify(body.title, { lower: true, strict: true });
+	const payload = await req.json().catch(() => null);
+	const parsed = createPostSchema.safeParse(payload);
+	if (!parsed.success) {
+		return NextResponse.json(
+			{
+				error: "Please correct the post fields.",
+				fields: parsed.error.flatten().fieldErrors,
+			},
+			{ status: 400 },
+		);
+	}
+
+	const slug = slugify(parsed.data.title, { lower: true, strict: true });
 	const post = await prisma.post.create({
 		data: {
-			title: body.title,
+			title: parsed.data.title,
 			slug,
-			content: body.content,
+			content: parsed.data.content,
 			authorId: session.user.id,
-			mainTag: body.mainTag,
-			tags: body.tags || [],
-			description: body.description,
-			status: "draft",
+			mainTag: parsed.data.mainTag,
+			tags: parsed.data.tags,
+			description: parsed.data.description || null,
+			status: parsed.data.status,
 		},
 	});
-	return Response.json({ id: post.id, slug: post.slug });
+
+	return NextResponse.json({ id: post.id, slug: post.slug });
 }

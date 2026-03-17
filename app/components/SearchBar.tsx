@@ -21,9 +21,13 @@ interface Post {
 export default function SearchBar({
 	tabIndex,
 	reserveSpace = false,
+	forceExpanded = false,
+	widthClass,
 }: {
 	tabIndex?: number;
 	reserveSpace?: boolean;
+	forceExpanded?: boolean;
+	widthClass?: string;
 }) {
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [query, setQuery] = useState("");
@@ -49,14 +53,19 @@ export default function SearchBar({
 	const closeSearch = useCallback(() => {
 		setSuggestions([]);
 		setActiveIndex(-1);
+		if (forceExpanded) {
+			return;
+		}
 		setIsSearchOpen(false);
-	}, []);
+	}, [forceExpanded]);
+
+	const searchExpanded = forceExpanded || isSearchOpen;
 
 	useEffect(() => {
-		if (isSearchOpen) {
+		if (searchExpanded) {
 			requestAnimationFrame(() => searchInput.current?.focus());
 		}
-	}, [isSearchOpen]);
+	}, [searchExpanded]);
 
 	useEffect(() => {
 		const handle = setTimeout(async () => {
@@ -133,7 +142,11 @@ export default function SearchBar({
 	};
 
 	const handleButtonClick = () => {
-		if (!isSearchOpen) {
+		if (!searchExpanded) {
+			if (forceExpanded) {
+				searchInput.current?.focus();
+				return;
+			}
 			setIsSearchOpen(true);
 			return;
 		}
@@ -150,11 +163,14 @@ export default function SearchBar({
 		<form
 			ref={containerRef}
 			onSubmit={handleSearch}
-			className={`relative ml-auto h-[50px] ${reserveSpace ? "w-full max-w-[340px] min-w-[50px]" : "w-full"
+			className={`relative ml-auto h-[50px] ${
+				reserveSpace
+					? `w-full min-w-[50px] ${widthClass || "max-w-[340px]"}`
+					: "w-full"
 				}`}
 		>
 			<div
-				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${isSearchOpen ? "w-full" : "w-[50px]"
+				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${searchExpanded ? "w-full" : "w-[50px]"
 					}`}
 			>
 				<div className="flex min-w-0 flex-1 items-center overflow-hidden">
@@ -166,7 +182,7 @@ export default function SearchBar({
 						onChange={(event) => setQuery(event.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="Search posts"
-						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${isSearchOpen
+						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${searchExpanded
 								? "pl-4 pr-3 opacity-100"
 								: "pointer-events-none w-0 px-0 opacity-0"
 							}`}
@@ -179,7 +195,7 @@ export default function SearchBar({
 						onClick={handleButtonClick}
 						tabIndex={tabIndex}
 						className="flex h-[38px] w-[38px] items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 text-zinc-100 transition-colors hover:bg-purpleContrast/25"
-						aria-label={isSearchOpen ? "Search" : "Open search"}
+						aria-label={searchExpanded ? "Search" : "Open search"}
 					>
 						<FaMagnifyingGlass className="text-sm" />
 					</button>

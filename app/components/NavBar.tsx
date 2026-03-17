@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FaLightbulb, FaPlus, FaRightToBracket, FaUser } from "react-icons/fa6";
+import {
+	FaArrowRightFromBracket,
+	FaLightbulb,
+	FaPlus,
+	FaRightToBracket,
+	FaUser,
+} from "react-icons/fa6";
 import HamburgerMenu from "./HamburgerMenu";
 import Icons from "./Icons";
 import SearchBar from "./SearchBar";
@@ -18,6 +25,8 @@ const NAV_LINKS = [
 	{ href: "/about", label: "About" },
 	{ href: "/playground", label: "Playground" },
 ];
+
+const SCROLLED_NAV_LINKS = NAV_LINKS.filter((item) => item.href !== "/");
 
 function LinkPill({
 	active,
@@ -120,17 +129,25 @@ export default function NavBar() {
 			<div className="bg-darkBg px-4 pb-4 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-[1440px] rounded-b-[30px] border border-t-0 border-zinc-700/50 bg-greyBg/75 shadow-xl shadow-zinc-950/10">
 					<div className="px-4 py-4 sm:px-6">
-						<div className="flex items-center gap-3">
-							<div className="md:hidden">
+						<div className="flex flex-wrap items-center justify-between gap-3 lg:justify-start">
+							<div className="shrink-0 lg:hidden">
 								<HamburgerMenu
 									isMenuOpen={isMenuOpen}
 									setIsMenuOpen={setIsMenuOpen}
+									hideAt="lg"
 								/>
 							</div>
 
-							<ul className="hidden flex-1 flex-wrap items-center gap-2 md:flex">
+							<ul className="hidden flex-1 flex-wrap items-center gap-2 lg:flex">
 								{NAV_LINKS.map((item) => (
-									<li key={`main-${item.href}`}>
+									<li
+										key={`main-${item.href}`}
+										className={
+											item.href === "/playground"
+												? "max-[1160px]:hidden"
+												: undefined
+										}
+									>
 										<LinkPill
 											active={pathname === item.href}
 											href={item.href}
@@ -140,13 +157,16 @@ export default function NavBar() {
 								))}
 							</ul>
 
-							<div className="ml-auto hidden w-full max-w-[340px] md:block">
-								<SearchBar reserveSpace />
+							<div className="min-w-0 flex-1 max-[340px]:hidden sm:w-[340px] sm:flex-none lg:ml-auto">
+								<SearchBar
+									reserveSpace
+									widthClass="max-w-none sm:max-w-[340px]"
+								/>
 							</div>
-						</div>
 
-						<div className="mt-4 md:hidden">
-							<SearchBar />
+							<div className="hidden w-full max-[340px]:block">
+								<SearchBar forceExpanded reserveSpace widthClass="max-w-none" />
+							</div>
 						</div>
 					</div>
 				</div>
@@ -168,6 +188,7 @@ export default function NavBar() {
 								<HamburgerMenu
 									isMenuOpen={isMenuOpen}
 									setIsMenuOpen={setIsMenuOpen}
+									hideAt={isScrolled ? "xl" : "lg"}
 								/>
 							</div>
 						</div>
@@ -191,7 +212,7 @@ export default function NavBar() {
 								</div>
 
 								<div className="mt-6">
-									<SearchBar />
+									<SearchBar forceExpanded />
 								</div>
 							</div>
 
@@ -241,6 +262,17 @@ export default function NavBar() {
 									</Link>
 								)}
 
+								{isAuthed ? (
+									<button
+										type="button"
+										onClick={() => signOut({ callbackUrl: "/" })}
+										className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+									>
+										<FaArrowRightFromBracket className="text-xs" />
+										Logout
+									</button>
+								) : null}
+
 								<Icons className="justify-center" />
 							</div>
 						</div>
@@ -258,11 +290,11 @@ export default function NavBar() {
 					<div className="rounded-[22px] border border-zinc-700/50 bg-lessDarkBg/92 shadow-xl shadow-zinc-950/20 backdrop-blur-xl">
 						<nav className="px-3 py-3 sm:px-4">
 							<div className="flex items-center gap-3">
-								<div className="lg:hidden">
+								<div className="xl:hidden">
 									<HamburgerMenu
 										isMenuOpen={isMenuOpen}
 										setIsMenuOpen={setIsMenuOpen}
-										fromScrollBar
+										hideAt="xl"
 									/>
 								</div>
 
@@ -273,8 +305,8 @@ export default function NavBar() {
 									devblog
 								</Link>
 
-								<ul className="hidden flex-1 flex-wrap items-center gap-2 lg:flex">
-									{NAV_LINKS.map((item) => (
+								<ul className="hidden flex-1 flex-wrap items-center gap-2 xl:flex">
+									{SCROLLED_NAV_LINKS.map((item) => (
 										<li key={`fixed-${item.href}`}>
 											<LinkPill
 												active={pathname === item.href}
@@ -286,11 +318,23 @@ export default function NavBar() {
 									))}
 								</ul>
 
-								<div className="hidden w-full max-w-[340px] sm:block">
-									<SearchBar reserveSpace tabIndex={isScrolled ? 0 : -1} />
-								</div>
+								<div className="ml-auto flex min-w-0 items-center gap-2 xl:gap-3">
+									<div className="hidden min-[340px]:w-[220px] min-[340px]:block sm:hidden">
+										<SearchBar
+											forceExpanded
+											reserveSpace
+											widthClass="max-w-[220px]"
+											tabIndex={isScrolled ? 0 : -1}
+										/>
+									</div>
+									<div className="hidden sm:block sm:w-[240px] lg:w-[260px] xl:w-[280px]">
+										<SearchBar
+											reserveSpace
+											widthClass="max-w-[280px] xl:max-w-[300px]"
+											tabIndex={isScrolled ? 0 : -1}
+										/>
+									</div>
 
-								<div className="ml-auto flex items-center gap-3">
 									{isAuthed && activeUser ? (
 										<Link
 											href={`/profile/${activeUser}`}
@@ -329,6 +373,17 @@ export default function NavBar() {
 											Login
 										</Link>
 									)}
+
+									{isAuthed ? (
+										<button
+											type="button"
+											onClick={() => signOut({ callbackUrl: "/" })}
+											className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat md:inline-flex"
+										>
+											<FaArrowRightFromBracket className="text-xs" />
+											Logout
+										</button>
+									) : null}
 								</div>
 							</div>
 						</nav>

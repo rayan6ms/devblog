@@ -1,25 +1,23 @@
-import Image from "next/image";
 import Link from "next/link";
 import { FaComment } from "react-icons/fa6";
-import slugify from "slugify";
-
-type Comment = {
-	content: string;
-	postTitle: string;
-	postImage: string;
-	postedAt: string;
-	edited: boolean;
-	editedAt: string;
-};
+import type { ProfileComment } from "@/profile/types";
 
 type CommentsProps = {
-	comments: Comment[];
+	comments: ProfileComment[];
 };
 
-function CommentItem({ comment }: { comment: Comment }) {
+function formatActivityDate(value: string) {
+	return new Date(value).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+function CommentItem({ comment }: { comment: ProfileComment }) {
 	return (
 		<Link
-			href={`/post/${slugify(comment.postTitle, { lower: true, strict: true })}`}
+			href={`/post/${comment.postSlug}`}
 			className="group flex min-h-[220px] flex-col justify-between rounded-[24px] border border-zinc-700/50 bg-greyBg/65 p-4 shadow-lg shadow-zinc-950/10 transition-transform hover:-translate-y-1"
 		>
 			<div>
@@ -28,24 +26,15 @@ function CommentItem({ comment }: { comment: Comment }) {
 				</p>
 			</div>
 			<div className="mt-5 border-t border-zinc-700/50 pt-4">
-				<div className="flex items-center gap-3">
-					<div className="relative h-12 w-16 overflow-hidden rounded-xl">
-						<Image
-							src={comment.postImage}
-							fill
-							alt={comment.postTitle}
-							className="object-cover"
-							sizes="64px"
-						/>
-					</div>
-					<div className="min-w-0">
-						<p className="line-clamp-2 text-sm font-semibold text-zinc-100">
-							{comment.postTitle}
-						</p>
-						<p className="mt-1 text-xs text-zinc-400">
-							{comment.edited ? `Edited ${comment.editedAt}` : comment.postedAt}
-						</p>
-					</div>
+				<div className="rounded-2xl border border-zinc-700/50 bg-zinc-900/50 p-3">
+					<p className="line-clamp-2 text-sm font-semibold text-zinc-100">
+						{comment.postTitle}
+					</p>
+					<p className="mt-1 text-xs text-zinc-400">
+						{comment.edited
+							? `Edited ${formatActivityDate(comment.editedAt || comment.postedAt)}`
+							: formatActivityDate(comment.postedAt)}
+					</p>
 				</div>
 			</div>
 		</Link>
@@ -67,12 +56,14 @@ export default function Comments({ comments }: CommentsProps) {
 				</div>
 			</div>
 			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{comments.map((comment, index) => (
-					<CommentItem
-						key={`${comment.postTitle}-${comment.postedAt}-${comment.postImage}-${index}`}
-						comment={comment}
-					/>
+				{comments.map((comment) => (
+					<CommentItem key={comment.id} comment={comment} />
 				))}
+				{comments.length === 0 ? (
+					<div className="rounded-2xl border border-dashed border-zinc-700/60 bg-greyBg/45 px-4 py-6 text-sm text-zinc-400">
+						No comments to show yet.
+					</div>
+				) : null}
 			</div>
 		</section>
 	);

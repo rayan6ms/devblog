@@ -1,7 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getProviders, signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
 	FaArrowRight,
 	FaEye,
@@ -11,47 +14,100 @@ import {
 	FaSpinner,
 } from "react-icons/fa6";
 import PhaserBackground from "@/PhaserBackground";
-import { getUser } from "@/data/posts";
-import { writeMockAuth } from "@/components/useClientAuth";
+import { emitClientAuthChange } from "@/components/useClientAuth";
+import { type LoginFormValues, loginSchema } from "@/lib/validation/auth";
 import SocialAuthButton from "./SocialAuthButton";
 
+const SOCIAL_AUTH_OPTIONS = [
+	{
+		provider: "google",
+		icon: FaGoogle,
+		bgColor: "bg-slate-700",
+		hoverBgColor: "hover:bg-slate-800/60 border border-gray-600/60",
+	},
+	{
+		provider: "github",
+		icon: FaGithub,
+		bgColor: "bg-gray-800",
+		hoverBgColor: "hover:bg-gray-900 border border-gray-700",
+	},
+] as const;
+
 export default function LoginForm() {
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
+	const [submissionError, setSubmissionError] = useState("");
+	const [providerIds, setProviderIds] = useState<string[]>([]);
 	const router = useRouter();
-
-	const socialAuthOptions = [
-		{
-			provider: "google",
-			icon: FaGoogle,
-			bgColor: "bg-slate-700",
-			hoverBgColor: "hover:bg-slate-800/60 border border-gray-600/60",
+	const { status } = useSession();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isSubmitting },
+	} = useForm<LoginFormValues>({
+		resolver: zodResolver(loginSchema),
+		defaultValues: {
+			email: "",
+			password: "",
 		},
-		{
-			provider: "github",
-			icon: FaGithub,
-			bgColor: "bg-gray-800",
-			hoverBgColor: "hover:bg-gray-900 border border-gray-700",
-		},
-	];
+	});
 
-	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		setIsLoading(true);
+	useEffect(() => {
+		if (status === "authenticated") {
+			router.replace("/profile/me");
+		}
+	}, [router, status]);
+
+	useEffect(() => {
+		let cancelled = false;
+
+		const loadProviders = async () => {
+			const providers = await getProviders();
+			if (!cancelled) {
+				setProviderIds(
+					Object.keys(providers || {}).filter(
+						(provider) => provider !== "credentials",
+					),
+				);
+			}
+		};
+
+		void loadProviders();
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	const enabledSocialProviders = useMemo(
+		() =>
+			SOCIAL_AUTH_OPTIONS.filter((option) =>
+				providerIds.includes(option.provider),
+			),
+		[providerIds],
+	);
+
+	async function onSubmit(values: LoginFormValues) {
+		setSubmissionError("");
 
 		try {
-			const user = await getUser();
-			writeMockAuth({
-				id: "me",
-				...user,
+			const result = await signIn("credentials", {
+				email: values.email,
+				password: values.password,
+				redirect: false,
+				callbackUrl: "/profile/me",
 			});
-			router.push("/profile/me");
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoading(false);
+
+			if (result?.error) {
+				setSubmissionError("Invalid email or password.");
+				return;
+			}
+
+			emitClientAuthChange();
+			router.push(result?.url || "/profile/me");
+			router.refresh();
+		} catch (submissionError) {
+			console.error(submissionError);
+			setSubmissionError("Unable to login right now.");
 		}
 	}
 
@@ -63,8 +119,9 @@ export default function LoginForm() {
 			<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,23,26,0.22),rgba(20,23,26,0.58))]" />
 			<div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
 				<form
-					onSubmit={handleSubmit}
+					onSubmit={handleSubmit(onSubmit)}
 					className="w-full max-w-[420px] rounded-[28px] border border-zinc-200/15 bg-darkBg/58 p-6 shadow-2xl shadow-zinc-950/30 backdrop-blur-md sm:p-7"
+					noValidate
 				>
 					<div className="mb-6 text-center">
 						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
@@ -77,31 +134,40 @@ export default function LoginForm() {
 
 					<div className="space-y-4">
 						<div>
-							<label htmlFor="email" className="mb-2 block text-sm text-zinc-300">
+							<label
+								htmlFor="email"
+								className="mb-2 block text-sm text-zinc-300"
+							>
 								Email
 							</label>
 							<input
 								type="email"
 								id="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
+								{...register("email")}
 								className="w-full rounded-xl border border-zinc-500/45 bg-darkBg/75 px-4 py-3 text-zinc-200 outline-none transition-colors focus:border-purpleContrast"
-								required
+								aria-invalid={errors.email ? "true" : "false"}
 							/>
+							{errors.email ? (
+								<p className="mt-2 text-sm text-red-400">
+									{errors.email.message}
+								</p>
+							) : null}
 						</div>
 
 						<div>
-							<label htmlFor="password" className="mb-2 block text-sm text-zinc-300">
+							<label
+								htmlFor="password"
+								className="mb-2 block text-sm text-zinc-300"
+							>
 								Password
 							</label>
 							<div className="relative flex items-center rounded-xl border border-zinc-500/45 bg-darkBg/75">
 								<input
 									type={showPassword ? "text" : "password"}
 									id="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
+									{...register("password")}
 									className="w-full bg-transparent px-4 py-3 pr-12 text-zinc-200 outline-none"
-									required
+									aria-invalid={errors.password ? "true" : "false"}
 								/>
 								<button
 									type="button"
@@ -112,28 +178,39 @@ export default function LoginForm() {
 									{showPassword ? <FaEye /> : <FaEyeSlash />}
 								</button>
 							</div>
+							{errors.password ? (
+								<p className="mt-2 text-sm text-red-400">
+									{errors.password.message}
+								</p>
+							) : null}
 						</div>
 					</div>
 
-					<div className="mt-6 grid grid-cols-2 gap-3">
-						{socialAuthOptions.map((option) => (
-							<SocialAuthButton
-								key={option.provider}
-								provider={option.provider}
-								icon={option.icon}
-								bgColor={option.bgColor}
-								hoverBgColor={option.hoverBgColor}
-							/>
-						))}
-					</div>
+					{submissionError ? (
+						<p className="mt-3 text-sm text-red-400">{submissionError}</p>
+					) : null}
+
+					{enabledSocialProviders.length > 0 ? (
+						<div className="mt-6 grid grid-cols-2 gap-3">
+							{enabledSocialProviders.map((option) => (
+								<SocialAuthButton
+									key={option.provider}
+									provider={option.provider}
+									icon={option.icon}
+									bgColor={option.bgColor}
+									hoverBgColor={option.hoverBgColor}
+								/>
+							))}
+						</div>
+					) : null}
 
 					<div className="mt-8 flex flex-col gap-4">
 						<button
 							type="submit"
 							className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-600/70 bg-purpleContrast px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-purpleContrast/85 disabled:cursor-not-allowed disabled:bg-zinc-700/70 disabled:text-zinc-400"
-							disabled={!(email && password) || isLoading}
+							disabled={isSubmitting}
 						>
-							{isLoading ? (
+							{isSubmitting ? (
 								<FaSpinner className="animate-spin text-lg" />
 							) : (
 								<FaArrowRight className="text-lg" />
