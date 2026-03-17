@@ -69,12 +69,6 @@ function ProfileEditModalBody({
 	const [avatarMode, setAvatarMode] = useState<ProfileAvatarMode>(
 		initialUser.avatarMode,
 	);
-	const [customAvatarUrl, setCustomAvatarUrl] = useState(
-		initialUser.avatarMode === "custom" &&
-			!initialUser.profilePicture.startsWith("data:image/")
-			? initialUser.profilePicture
-			: "",
-	);
 	const [uploadedAvatarData, setUploadedAvatarData] = useState(
 		initialUser.avatarMode === "custom" &&
 			initialUser.profilePicture.startsWith("data:image/")
@@ -110,14 +104,14 @@ function ProfileEditModalBody({
 		[name, initialUser.name],
 	);
 	const normalizedHandle = useMemo(() => normalizeHandle(handle), [handle]);
-	const customAvatarValue = uploadedAvatarData || customAvatarUrl;
+	const customAvatarValue = uploadedAvatarData;
 
 	const avatarPreview =
 		avatarMode === "provider"
 			? initialUser.providerPicture || generatedAvatar
 			: avatarMode === "generated"
 				? generatedAvatar
-				: customAvatarValue || generatedAvatar;
+				: customAvatarValue || initialUser.profilePicture || generatedAvatar;
 
 	const dirty = useMemo(
 		() =>
@@ -126,7 +120,10 @@ function ProfileEditModalBody({
 			description !== initialUser.description ||
 			avatarMode !== initialUser.avatarMode ||
 			customAvatarValue !==
-				(initialUser.avatarMode === "custom" ? initialUser.profilePicture : "") ||
+				(initialUser.avatarMode === "custom" &&
+				initialUser.profilePicture.startsWith("data:image/")
+					? initialUser.profilePicture
+					: "") ||
 			SOCIAL_PROVIDERS.some(
 				(provider) => links[provider] !== initialUser.socialLinks[provider],
 			) ||
@@ -170,17 +167,8 @@ function ProfileEditModalBody({
 			if (uploadError) {
 				nextErrors.profilePicture = uploadError;
 			}
-		} else if (avatarMode === "custom" && customAvatarUrl) {
-			try {
-				const url = new URL(customAvatarUrl);
-				if (!["http:", "https:"].includes(url.protocol)) {
-					nextErrors.profilePicture = "Enter a valid image URL.";
-				}
-			} catch {
-				nextErrors.profilePicture = "Enter a valid image URL.";
-			}
 		} else if (avatarMode === "custom") {
-			nextErrors.profilePicture = "Upload an image or enter an image URL.";
+			nextErrors.profilePicture = "Upload a JPG, PNG, or WEBP image.";
 		}
 
 		for (const provider of SOCIAL_PROVIDERS) {
@@ -236,7 +224,6 @@ function ProfileEditModalBody({
 			setAvatarMode("custom");
 			setUploadedAvatarData(result);
 			setUploadedAvatarName(file.name);
-			setCustomAvatarUrl("");
 			setErrors((current) => {
 				const nextErrors = { ...current };
 				delete nextErrors.profilePicture;
@@ -372,7 +359,7 @@ function ProfileEditModalBody({
 							onClick={() => setAvatarMode("generated")}
 						/>
 						<AvatarOption
-							label="Upload or URL"
+							label="Upload photo"
 							active={avatarMode === "custom"}
 							onClick={() => setAvatarMode("custom")}
 						/>
@@ -397,26 +384,6 @@ function ProfileEditModalBody({
 									Uploaded: {uploadedAvatarName}
 								</p>
 							) : null}
-							<div>
-								<label
-									htmlFor="profile-picture-url"
-									className="mb-1 block text-sm text-zinc-300"
-								>
-									Or use an image URL
-								</label>
-							<input
-									id="profile-picture-url"
-								type="url"
-								placeholder="https://…"
-								className="w-full rounded-2xl border border-zinc-600/60 bg-zinc-900/60 px-4 py-3 text-zinc-100 outline-none transition-colors focus:border-purpleContrast"
-								value={customAvatarUrl}
-								onChange={(event) => {
-									setCustomAvatarUrl(event.target.value);
-									setUploadedAvatarData("");
-									setUploadedAvatarName("");
-								}}
-							/>
-							</div>
 							{errors.profilePicture ? (
 								<p className="mt-1 text-xs text-red-400">
 									{errors.profilePicture}

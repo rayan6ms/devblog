@@ -1,30 +1,28 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
-import { useClientAuth } from "@/components/useClientAuth";
-import { getAllMainTags } from "@/data/posts";
+import prisma from "@/database/prisma";
+import { auth } from "@/lib/auth";
+import { canWriteRole } from "@/lib/post-shared";
+import { getPostEditorMainTags } from "@/lib/posts";
 import Form from "./Form";
 
-const allowedRoles = ["volunteer", "writer", "admin", "owner"];
-
-export default function Page() {
-	const [mainTags, setMainTags] = useState<string[]>([]);
-	const { isAuthed, profile, role } = useClientAuth();
-	const hasPermission = Boolean(
-		isAuthed && role && allowedRoles.includes(role),
-	);
-
-	useEffect(() => {
-		if (!hasPermission) return;
-
-		const fetchMainTags = async () => {
-			const tags = await getAllMainTags();
-			setMainTags(tags);
-		};
-
-		fetchMainTags();
-	}, [hasPermission]);
+export default async function Page() {
+	const session = await auth();
+	const userId = session?.user?.id || null;
+	const role = (session?.user?.role || "member").toLowerCase();
+	const hasPermission = Boolean(userId && canWriteRole(role));
+	const [mainTags, currentUser] = hasPermission
+		? await Promise.all([
+				getPostEditorMainTags(),
+				prisma.user.findUnique({
+					where: { id: userId! },
+					select: {
+						name: true,
+						username: true,
+						slug: true,
+					},
+				}),
+			])
+		: [[], null];
 
 	if (!hasPermission) {
 		return (
@@ -40,30 +38,7 @@ export default function Page() {
 							</h1>
 							<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
 								This page is reserved for contributor accounts. Sign in with a
-								writer-capable profile to draft and review mock posts.
-							</p>
-						</section>
-					</div>
-				</main>
-				<Footer />
-			</>
-		);
-	}
-
-	if (!mainTags.length) {
-		return (
-			<>
-				<main className="min-h-screen bg-darkBg px-4 pb-12 pt-6 text-gray sm:px-6 lg:px-8">
-					<div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8">
-						<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
-							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								New Post
-							</p>
-							<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
-								Preparing editor
-							</h1>
-							<p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
-								Loading available main tags and authoring controls.
+								writer-capable profile to draft, review, and publish posts.
 							</p>
 						</section>
 					</div>
@@ -84,12 +59,11 @@ export default function Page() {
 									New Post
 								</p>
 								<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
-									Create a new article
+									Create a production-ready article
 								</h1>
 								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-									Use the same mock authoring flow that powers the post preview
-									routes. Draft content, review the metadata, and publish to the
-									local mock blog.
+									Write the real markdown, attach real media, and save directly to
+									the backend so the post page renders the exact same content.
 								</p>
 							</div>
 
@@ -107,7 +81,7 @@ export default function Page() {
 										Author
 									</p>
 									<p className="mt-1 text-lg font-semibold text-zinc-100">
-										{profile?.name || "Mock author"}
+										{currentUser?.name || currentUser?.username || currentUser?.slug || "Author"}
 									</p>
 								</div>
 							</div>
@@ -117,7 +91,13 @@ export default function Page() {
 					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-4 py-5 shadow-xl shadow-zinc-950/20 sm:px-6 sm:py-6">
 						<Form
 							mainTagsOptions={mainTags}
-							initialValues={{ author: profile?.name || "mock-user-id-1" }}
+							initialValues={{
+								authorName:
+									currentUser?.name ||
+									currentUser?.username ||
+									currentUser?.slug ||
+									"Author",
+							}}
 						/>
 					</section>
 				</div>

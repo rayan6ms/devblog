@@ -7,7 +7,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import type { IPost } from "@/data/posts";
+import {
+	getAuthorHref,
+	getPostHref,
+	type IPost,
+} from "@/lib/posts-client";
 import CircleProgress from "./CircleProgress";
 import Popover from "./Popover";
 
@@ -26,11 +30,12 @@ export default function RecentItem({
 }: RecentItemProps) {
 	const {
 		image,
+		imageAlt,
 		mainTag,
 		title,
 		author,
-		date,
 		views,
+		date,
 		hasStartedReading,
 		percentRead,
 	} = post;
@@ -62,7 +67,7 @@ export default function RecentItem({
 
 	return (
 		<Link
-			href={`/post/${slugify(title, { lower: true, strict: true })}`}
+			href={getPostHref(post)}
 			className={`group flex h-fit flex-col ${compact ? "rounded-[24px]" : "rounded-lg"} ${
 				fluid
 					? "w-full max-w-none"
@@ -96,7 +101,7 @@ export default function RecentItem({
 				>
 					<Image
 						src={image}
-						alt={title}
+						alt={imageAlt}
 						fill
 						className={`rounded-lg shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
             w-full h-full`}
@@ -165,7 +170,7 @@ export default function RecentItem({
 					onClick={(e) =>
 						handleRouteButtonClick(
 							e,
-							`/profile/${slugify(author, { lower: true, strict: true })}`,
+							getAuthorHref(post),
 						)
 					}
 					className="text-wheat text-sm hover:text-purpleContrast transition-all ease-in-out"

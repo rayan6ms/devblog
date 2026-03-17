@@ -57,9 +57,11 @@ model User {
 
 model Post {
   id           String     @id @default(cuid())
-  title        String     @unique
+  title        String
   slug         String     @unique
   content      String
+  thumbnail    String?
+  thumbnailAlt String?
   authorId     String
   author       User       @relation("AuthorPosts", fields: [authorId], references: [id])
   mainTag      String

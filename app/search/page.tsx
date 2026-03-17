@@ -5,8 +5,8 @@ import { Suspense, useEffect, useState } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import Footer from "@/components/Footer";
 import PostsGrid from "@/components/PostsGrid";
-import type { IPost } from "@/data/posts";
-import { getPostsByQueryPaginated } from "@/data/posts";
+import type { IPost } from "@/lib/posts-client";
+import { getPostsByQueryPaginated } from "@/lib/posts-client";
 import Skeleton from "../components/PostGridSkeleton";
 
 function SearchPageContent() {

@@ -7,22 +7,19 @@ import { Suspense, useDeferredValue, useEffect, useMemo, useState } from "react"
 import slugify from "slugify";
 import Footer from "@/components/Footer";
 import {
-	getAllMainTags,
-	getAllOtherTags,
 	getAllPosts,
+	getAuthorHref,
 	getFilteredPosts,
+	getPostTagCatalog,
+	getPostHref,
+	type TagCatalog,
 	type IPost,
-} from "../data/posts";
+} from "@/lib/posts-client";
 import InfiniteScroller from "./InfiniteScroller";
 import SelectedTags from "./SelectedTags";
 import Sidebar, { type TagOption } from "./Sidebar";
 
 const MAX_SELECTED_TAGS = 5;
-const mainTags = getAllMainTags().sort((a, b) => a.localeCompare(b));
-const otherTags = getAllOtherTags().sort((a, b) => a.localeCompare(b));
-const allTags = Array.from(new Set([...mainTags, ...otherTags])).sort((a, b) =>
-	a.localeCompare(b),
-);
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
 	month: "short",
 	day: "numeric",
@@ -33,7 +30,7 @@ function normalizeTagValue(value: string) {
 	return slugify(value, { lower: true, strict: true });
 }
 
-function isValidTag(tag: string) {
+function isValidTag(tag: string, allTags: string[]) {
 	const normalizedTag = normalizeTagValue(tag);
 	return allTags.some((validTag) => normalizeTagValue(validTag) === normalizedTag);
 }
@@ -52,16 +49,6 @@ function matchesTagSearch(tag: TagOption, query: string) {
 	);
 }
 
-function buildTagOptions(tags: string[], tagCounts: Map<string, number>) {
-	return tags
-		.map((tag) => ({
-			count: tagCounts.get(normalizeTagValue(tag)) ?? 0,
-			name: tag,
-			slug: normalizeTagValue(tag),
-		}))
-		.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-}
-
 function TagPostCard({
 	post,
 	onSelectTag,
@@ -69,7 +56,7 @@ function TagPostCard({
 	post: IPost;
 	onSelectTag: (tag: string) => void;
 }) {
-	const postHref = `/post/${slugify(post.title, { lower: true, strict: true })}`;
+	const postHref = getPostHref(post);
 
 	return (
 		<article className="group flex h-full flex-col overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20 transition-colors hover:border-zinc-500/70">
@@ -77,7 +64,7 @@ function TagPostCard({
 				<Image
 					fill
 					src={post.image}
-					alt={post.title}
+					alt={post.imageAlt}
 					className="object-cover transition-transform duration-700 group-hover:scale-105"
 					sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
 				/>
@@ -108,7 +95,9 @@ function TagPostCard({
 				</p>
 
 				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-					<span>{post.author}</span>
+					<Link href={getAuthorHref(post)} className="transition-colors hover:text-wheat">
+						{post.author}
+					</Link>
 					<span className="h-1 w-1 rounded-full bg-zinc-700" />
 					<time dateTime={post.date}>{dateFormatter.format(new Date(post.date))}</time>
 				</div>
@@ -133,11 +122,25 @@ function TagPostCard({
 function TagsPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const [allPostsData, setAllPostsData] = useState<IPost[]>([]);
+	const [tagCatalog, setTagCatalog] = useState<TagCatalog>({
+		mainTags: [],
+		otherTags: [],
+	});
 	const [posts, setPosts] = useState<IPost[]>([]);
 	const [tagQuery, setTagQuery] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 	const deferredTagQuery = useDeferredValue(tagQuery);
+	const mainTags = tagCatalog.mainTags;
+	const otherTags = tagCatalog.otherTags;
+	const allTags = useMemo(
+		() =>
+			Array.from(
+				new Set(
+					[...mainTags, ...otherTags].map((tag) => tag.name),
+				),
+			),
+		[mainTags, otherTags],
+	);
 	const selectedTags = useMemo(() => {
 		const selectedParam = searchParams.get("selected");
 
@@ -151,7 +154,7 @@ function TagsPageContent() {
 			.split(",")
 			.map((tag) => normalizeTagValue(tag))
 			.filter((tag) => {
-				if (!isValidTag(tag) || uniqueTags.has(tag)) {
+				if (!isValidTag(tag, allTags) || uniqueTags.has(tag)) {
 					return false;
 				}
 
@@ -159,7 +162,7 @@ function TagsPageContent() {
 				return true;
 			})
 			.slice(0, MAX_SELECTED_TAGS);
-	}, [searchParams]);
+	}, [allTags, searchParams]);
 	const selectedTagsKey = selectedTags.join(",");
 
 	const updateSelectedTags = (nextTags: string[]) => {
@@ -172,7 +175,7 @@ function TagsPageContent() {
 	const handleSelectTag = (tag: string) => {
 		const nextTag = normalizeTagValue(tag);
 
-		if (!isValidTag(nextTag) || selectedTags.includes(nextTag)) {
+		if (!isValidTag(nextTag, allTags) || selectedTags.includes(nextTag)) {
 			return;
 		}
 
@@ -194,17 +197,18 @@ function TagsPageContent() {
 
 		async function loadPosts() {
 			setIsLoading(true);
+			const activeTags = selectedTagsKey ? selectedTagsKey.split(",") : [];
 
-			const [allPosts, visiblePosts] = await Promise.all([
-				getAllPosts(),
-				selectedTags.length > 0 ? getFilteredPosts(selectedTags) : getAllPosts(),
+			const [catalog, visiblePosts] = await Promise.all([
+				getPostTagCatalog(),
+				activeTags.length > 0 ? getFilteredPosts(activeTags) : getAllPosts(),
 			]);
 
 			if (!active) {
 				return;
 			}
 
-			setAllPostsData(allPosts);
+			setTagCatalog(catalog);
 			setPosts(visiblePosts);
 			setIsLoading(false);
 		}
@@ -214,32 +218,10 @@ function TagsPageContent() {
 		return () => {
 			active = false;
 		};
-	}, [selectedTags, selectedTagsKey]);
+	}, [selectedTagsKey]);
 
-	const tagCounts = useMemo(() => {
-		const counts = new Map<string, number>();
-
-		allPostsData.forEach((post) => {
-			const uniquePostTags = new Set(
-				[post.mainTag, ...post.tags].map((tag) => normalizeTagValue(tag)),
-			);
-
-			uniquePostTags.forEach((tag) => {
-				counts.set(tag, (counts.get(tag) ?? 0) + 1);
-			});
-		});
-
-		return counts;
-	}, [allPostsData]);
-
-	const allMainTagOptions = useMemo(
-		() => buildTagOptions(mainTags, tagCounts),
-		[tagCounts],
-	);
-	const allOtherTagOptions = useMemo(
-		() => buildTagOptions(otherTags, tagCounts),
-		[tagCounts],
-	);
+	const allMainTagOptions = mainTags;
+	const allOtherTagOptions = otherTags;
 	const normalizedTagQuery = normalizeTagValue(deferredTagQuery);
 	const mainTagOptions = useMemo(
 		() => allMainTagOptions.filter((tag) => matchesTagSearch(tag, normalizedTagQuery)),
@@ -277,11 +259,12 @@ function TagsPageContent() {
 	const marqueeMainTags =
 		allMainTagOptions.length > 0
 			? allMainTagOptions.slice(0, 10).map((tag) => tag.name)
-			: mainTags;
+			: mainTags.map((tag) => tag.name);
 	const marqueeOtherTags =
 		allOtherTagOptions.length > 0
 			? allOtherTagOptions.slice(0, 14).map((tag) => tag.name)
-			: otherTags;
+			: otherTags.map((tag) => tag.name);
+	const hasCatalogData = mainTags.length > 0 || otherTags.length > 0;
 
 	return (
 		<>
@@ -385,11 +368,24 @@ function TagsPageContent() {
 										/>
 									))}
 								</div>
+							) : !hasCatalogData ? (
+								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-lessDarkBg/80 px-6 py-10 text-center shadow-lg shadow-zinc-950/10">
+									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+										No posts yet
+									</p>
+									<h2 className="mt-3 text-3xl font-somerton uppercase text-wheat">
+										Tag browsing will unlock after the first published post
+									</h2>
+									<p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-400">
+										The tag page is now reading the real database, so it will stay
+										empty until there are published posts and tags to show.
+									</p>
+								</div>
 							) : posts.length > 0 ? (
 								<div className="grid gap-4 md:grid-cols-2 xxl:grid-cols-3">
 									{posts.map((post) => (
 										<TagPostCard
-											key={post.title}
+											key={post.id}
 											post={post}
 											onSelectTag={handleSelectTag}
 										/>

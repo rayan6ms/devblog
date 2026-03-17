@@ -8,7 +8,6 @@ import { getCurrentUserProfile } from "@/lib/user-profile";
 import {
 	getHandleError,
 	getProfileUploadError,
-	isHttpUrl,
 	normalizeHandle,
 } from "@/lib/validation/profile";
 import {
@@ -77,7 +76,7 @@ export async function PATCH(req: Request) {
 	if (parsed.data.avatarMode === "custom") {
 		if (!parsed.data.profilePicture) {
 			return NextResponse.json(
-				{ error: "Upload an image or enter an image URL." },
+				{ error: "Upload a JPG, PNG, or WEBP image." },
 				{ status: 400 },
 			);
 		}
@@ -90,12 +89,12 @@ export async function PATCH(req: Request) {
 					{ status: 400 },
 				);
 			}
-		} else if (!isHttpUrl(parsed.data.profilePicture)) {
+		} else {
 			return NextResponse.json(
 				{
-					error: "Custom avatar URL is invalid.",
+					error: "Custom avatar image is invalid.",
 					fields: {
-						profilePicture: "Enter a valid image URL.",
+						profilePicture: "Upload a JPG, PNG, or WEBP image.",
 					},
 				},
 				{ status: 400 },

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import type { ProfileUser } from "@/profile/types";
 
 const AUTH_CHANGE_EVENT = "devblog:auth-change";
-const WRITER_ROLES = new Set(["owner", "admin", "writer"]);
+const WRITER_ROLES = new Set(["owner", "admin", "writer", "volunteer"]);
 
 export type ClientAuthState = {
 	activeUser: string | null;

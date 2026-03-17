@@ -3,20 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
-import { getSearchSuggestions } from "@/data/posts";
-
-interface Post {
-	image: string;
-	mainTag: string;
-	tags: string[];
-	title: string;
-	author: string;
-	date: string;
-	views: number;
-	hasStartedReading: boolean;
-	percentRead: number;
-	description: string;
-}
+import { getSearchSuggestions, type IPost } from "@/lib/posts-client";
 
 export default function SearchBar({
 	tabIndex,
@@ -31,7 +18,7 @@ export default function SearchBar({
 }) {
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [query, setQuery] = useState("");
-	const [suggestions, setSuggestions] = useState<Post[]>([]);
+	const [suggestions, setSuggestions] = useState<IPost[]>([]);
 	const [activeIndex, setActiveIndex] = useState(-1);
 
 	const searchInput = useRef<HTMLInputElement>(null);
@@ -211,7 +198,7 @@ export default function SearchBar({
 						const isActive = index === activeIndex;
 
 						return (
-							<li key={suggestion.title}>
+							<li key={suggestion.id}>
 								<button
 									type="button"
 									onMouseDown={(event) => {

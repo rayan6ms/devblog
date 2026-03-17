@@ -2,291 +2,442 @@
 
 import type React from "react";
 import { useRef, useState } from "react";
+import type { IconType } from "react-icons";
+import {
+	FaBold,
+	FaCode,
+	FaEye,
+	FaGripLines,
+	FaHeading,
+	FaImage,
+	FaItalic,
+	FaLink,
+	FaListOl,
+	FaListUl,
+	FaPenNib,
+	FaQuoteLeft,
+	FaTableColumns,
+} from "react-icons/fa6";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { markdownComponents, MARKDOWN_ARTICLE_CLASS } from "@/lib/markdown";
+import { getReadingTimeMinutes, stripMarkdown } from "@/lib/post-shared";
 
-const MAX_IMAGES = 5;
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+type UploadedImage = {
+	name: string;
+	url: string;
+};
 
 type MarkdownEditorProps = {
 	value: string;
-	onChange: (v: string) => void;
+	onChange: (value: string) => void;
 	maxLength: number;
+	disabled?: boolean;
+	onUploadImage: (file: File) => Promise<UploadedImage>;
 };
+
+type EditorMode = "write" | "preview" | "split";
+
+type ToolbarAction = {
+	label: string;
+	icon: IconType;
+	action: () => void;
+};
+
+const MODE_OPTIONS: Array<{
+	value: EditorMode;
+	label: string;
+	description: string;
+	icon: IconType;
+}> = [
+	{
+		value: "write",
+		label: "Write",
+		description: "Focus on the markdown.",
+		icon: FaPenNib,
+	},
+	{
+		value: "preview",
+		label: "Preview",
+		description: "Read the final render.",
+		icon: FaEye,
+	},
+	{
+		value: "split",
+		label: "Split",
+		description: "Write and preview together.",
+		icon: FaTableColumns,
+	},
+];
+
+function fileNameToAlt(name: string) {
+	return name
+		.replace(/\.[^.]+$/, "")
+		.replace(/[-_]+/g, " ")
+		.trim();
+}
 
 export default function MarkdownEditor({
 	value,
 	onChange,
 	maxLength,
+	disabled = false,
+	onUploadImage,
 }: MarkdownEditorProps) {
-	const [tab, setTab] = useState<"edit" | "preview">("edit");
-	const [images, setImages] = useState<
-		{ url: string; name: string; size: number }[]
-	>([]);
-	const [error, setError] = useState<string | null>(null);
+	const [mode, setMode] = useState<EditorMode>("split");
+	const [feedback, setFeedback] = useState<string | null>(null);
+	const [isUploading, setIsUploading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+	function updateSelection(nextValue: string, cursorPosition: number) {
+		onChange(nextValue);
+		requestAnimationFrame(() => {
+			const textarea = textareaRef.current;
+			if (!textarea) {
+				return;
+			}
+
+			textarea.focus();
+			textarea.setSelectionRange(cursorPosition, cursorPosition);
+		});
+	}
+
 	function insertAtSelection(snippet: string, moveCursorBy = 0) {
-		const ta = textareaRef.current;
-		if (!ta) return onChange((value || "") + snippet);
-		const start = ta.selectionStart ?? value.length;
-		const end = ta.selectionEnd ?? value.length;
-		const next = value.slice(0, start) + snippet + value.slice(end);
-		onChange(next);
-		requestAnimationFrame(() => {
-			ta.focus();
-			ta.setSelectionRange(
-				start + snippet.length + moveCursorBy,
-				start + snippet.length + moveCursorBy,
-			);
-		});
-	}
-
-	function wrapSelection(prefix: string, suffix: string = "") {
-		const ta = textareaRef.current;
-		if (!ta) return;
-		const start = ta.selectionStart ?? 0;
-		const end = ta.selectionEnd ?? 0;
-		const sel = value.slice(start, end);
-		const next =
-			value.slice(0, start) + prefix + sel + suffix + value.slice(end);
-		onChange(next);
-		requestAnimationFrame(() => {
-			ta.focus();
-			const pos = start + prefix.length + sel.length + suffix.length;
-			ta.setSelectionRange(pos, pos);
-		});
-	}
-
-	function onImageChooseClick() {
-		fileInputRef.current?.click();
-	}
-
-	function onFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
-		const files = Array.from(e.target.files || []);
-		if (!files.length) return;
-		setError(null);
-
-		const remainingSlots = MAX_IMAGES - images.length;
-		if (files.length > remainingSlots) {
-			setError(
-				`You can add up to ${MAX_IMAGES} images (you have ${images.length}).`,
-			);
+		const textarea = textareaRef.current;
+		if (!textarea) {
+			onChange(`${value}${snippet}`);
 			return;
 		}
 
-		const accepted: { url: string; name: string; size: number }[] = [];
-		for (const file of files) {
-			if (!ALLOWED_TYPES.includes(file.type)) {
-				setError("Only JPG, PNG or WEBP images are allowed.");
-				return;
-			}
-			if (file.size > MAX_IMAGE_BYTES) {
-				setError("Max image size is 2MB.");
-				return;
-			}
-			const url = URL.createObjectURL(file);
-			accepted.push({ url, name: file.name, size: file.size });
+		const start = textarea.selectionStart ?? value.length;
+		const end = textarea.selectionEnd ?? value.length;
+		const nextValue = `${value.slice(0, start)}${snippet}${value.slice(end)}`;
+		updateSelection(nextValue, start + snippet.length + moveCursorBy);
+	}
+
+	function wrapSelection(prefix: string, suffix = "") {
+		const textarea = textareaRef.current;
+		if (!textarea) {
+			return;
 		}
 
-		if (!accepted.length) return;
-
-		const mdSnippets = accepted.map((a) => `\n\n![${a.name}](${a.url})\n`);
-		insertAtSelection(mdSnippets.join(""));
-		setImages((prev) => [...prev, ...accepted]);
-		(e.target as HTMLInputElement).value = "";
-	}
-
-	function removeImage(url: string) {
-		setImages((prev) => prev.filter((i) => i.url !== url));
-		const regex = new RegExp(
-			`!\\[[^\\]]*\\]\\(${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\)`,
-			"g",
+		const start = textarea.selectionStart ?? 0;
+		const end = textarea.selectionEnd ?? 0;
+		const selectedText = value.slice(start, end) || "text";
+		const nextValue = `${value.slice(0, start)}${prefix}${selectedText}${suffix}${value.slice(end)}`;
+		updateSelection(
+			nextValue,
+			start + prefix.length + selectedText.length + suffix.length,
 		);
-		onChange(value.replace(regex, ""));
 	}
 
-	const chars = value?.length || 0;
-	const remaining = maxLength - chars;
+	async function handleFilesSelected(
+		event: React.ChangeEvent<HTMLInputElement>,
+	) {
+		const files = Array.from(event.target.files || []);
+		if (!files.length) {
+			return;
+		}
 
-	const toolbar = (
-		<div className="flex flex-wrap gap-2 bg-zinc-800/50 border border-zinc-700/50 rounded-md px-2 py-1">
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => wrapSelection("**", "**")}
-			>
-				Bold
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => wrapSelection("_", "_")}
-			>
-				Italic
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => wrapSelection("`", "`")}
-			>
-				Code
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => insertAtSelection("\n\n> Quote\n")}
-			>
-				Quote
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => insertAtSelection("\n\n# Heading 1\n")}
-			>
-				H1
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => insertAtSelection("\n\n## Heading 2\n")}
-			>
-				H2
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => insertAtSelection("\n\n- Item 1\n- Item 2\n")}
-			>
-				List
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => insertAtSelection("\n\n1. First\n2. Second\n")}
-			>
-				Ordered
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => wrapSelection("[", "](https://)")}
-			>
-				Link
-			</button>
-			<button
-				className="px-2 py-1 hover:bg-zinc-700/60 rounded"
-				type="button"
-				onClick={() => insertAtSelection("\n\n---\n")}
-			>
-				HR
-			</button>
-			<div className="ml-auto flex items-center gap-2">
-				<span
-					className={`text-xs ${remaining < 0 ? "text-red-400" : "text-zinc-400"}`}
-				>
-					{chars}/{maxLength}
-				</span>
-				<button
-					className={`px-2 py-1 rounded ${tab === "edit" ? "bg-purple-600/70" : "hover:bg-zinc-700/60"}`}
-					type="button"
-					onClick={() => setTab("edit")}
-				>
-					Edit
-				</button>
-				<button
-					className={`px-2 py-1 rounded ${tab === "preview" ? "bg-purple-600/70" : "hover:bg-zinc-700/60"}`}
-					type="button"
-					onClick={() => setTab("preview")}
-				>
-					Preview
-				</button>
-			</div>
-		</div>
-	);
+		setIsUploading(true);
+		setFeedback(null);
+
+		try {
+			const uploads: UploadedImage[] = [];
+			for (const file of files) {
+				uploads.push(await onUploadImage(file));
+			}
+
+			const markdownBlock = uploads
+				.map(
+					(upload) =>
+						`\n\n![${fileNameToAlt(upload.name) || "Image"}](${upload.url})\n`,
+				)
+				.join("");
+
+			insertAtSelection(markdownBlock);
+			setFeedback(
+				`${uploads.length} image${uploads.length === 1 ? "" : "s"} inserted into the markdown.`,
+			);
+		} catch (error) {
+			setFeedback(
+				error instanceof Error ? error.message : "Unable to upload image.",
+			);
+		} finally {
+			setIsUploading(false);
+			event.target.value = "";
+		}
+	}
+
+	const plainText = stripMarkdown(value);
+	const wordCount = plainText ? plainText.split(" ").filter(Boolean).length : 0;
+	const readingTime = getReadingTimeMinutes(value);
+	const remaining = maxLength - value.length;
+	const toolbarSections: Array<{
+		title: string;
+		actions: ToolbarAction[];
+	}> = [
+		{
+			title: "Inline",
+			actions: [
+				{ label: "Bold", icon: FaBold, action: () => wrapSelection("**", "**") },
+				{
+					label: "Italic",
+					icon: FaItalic,
+					action: () => wrapSelection("_", "_"),
+				},
+				{ label: "Code", icon: FaCode, action: () => wrapSelection("`", "`") },
+				{
+					label: "Link",
+					icon: FaLink,
+					action: () => wrapSelection("[", "](https://example.com)"),
+				},
+			],
+		},
+		{
+			title: "Blocks",
+			actions: [
+				{
+					label: "Code Block",
+					icon: FaCode,
+					action: () => insertAtSelection("\n```ts\n\n```\n", -5),
+				},
+				{
+					label: "Heading",
+					icon: FaHeading,
+					action: () => insertAtSelection("\n\n## Heading\n\n"),
+				},
+				{
+					label: "Quote",
+					icon: FaQuoteLeft,
+					action: () => insertAtSelection("\n\n> Pull quote\n\n"),
+				},
+				{
+					label: "List",
+					icon: FaListUl,
+					action: () => insertAtSelection("\n\n- First item\n- Second item\n\n"),
+				},
+				{
+					label: "Numbered",
+					icon: FaListOl,
+					action: () =>
+						insertAtSelection("\n\n1. First step\n2. Second step\n\n"),
+				},
+				{
+					label: "Divider",
+					icon: FaGripLines,
+					action: () => insertAtSelection("\n\n---\n\n"),
+				},
+			],
+		},
+	];
+	const editorGridClass =
+		mode === "split"
+			? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+			: "grid gap-4 grid-cols-1";
 
 	return (
-		<div className="space-y-2">
-			{toolbar}
-
-			<div className="rounded-md border border-zinc-700/50 bg-zinc-800/40">
-				{tab === "edit" ? (
-					<textarea
-						ref={textareaRef}
-						value={value}
-						onChange={(e) => onChange(e.target.value)}
-						rows={14}
-						maxLength={maxLength + 100}
-						className="w-full bg-transparent outline-none p-3 text-zinc-100"
-						placeholder="Write your post in Markdown…"
-					/>
-				) : (
-					<div className="prose prose-invert max-w-none p-4">
-						<ReactMarkdown
-							remarkPlugins={[remarkGfm]}
-							components={{
-								img({ node, ...props }) {
-									return (
-										<img
-											{...props}
-											alt={props.alt ?? ""}
-											className="rounded-md border border-zinc-700/50 max-w-full"
-										/>
-									);
-								},
-							}}
-						>
-							{value || "_Nothing to preview yet…_"}
-						</ReactMarkdown>
-					</div>
-				)}
-			</div>
-
-			<div className="flex items-center gap-2">
-				<button
-					type="button"
-					onClick={onImageChooseClick}
-					className="px-3 py-1.5 rounded-md bg-zinc-700/60 hover:bg-zinc-700/80 border border-zinc-600/50"
-				>
-					Insert image
-				</button>
-				<span className="text-xs text-zinc-400">
-					{images.length}/{MAX_IMAGES} images
-				</span>
-				{error && <span className="text-xs text-red-400">{error}</span>}
-				<input
-					ref={fileInputRef}
-					type="file"
-					accept={ALLOWED_TYPES.join(",")}
-					multiple
-					className="hidden"
-					onChange={onFilesSelected}
-				/>
-			</div>
-
-			{images.length > 0 && (
-				<div className="flex flex-wrap gap-2">
-					{images.map((img) => (
-						<div key={img.url} className="relative">
-							<img
-								src={img.url}
-								alt={img.name}
-								className="w-24 h-24 object-cover rounded-md border border-zinc-700/50"
-							/>
-							<button
-								type="button"
-								className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-xs"
-								onClick={() => removeImage(img.url)}
-								aria-label="Remove image"
-							>
-								×
-							</button>
+		<div className="grid gap-4">
+			<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/65 p-4 sm:p-5">
+				<div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+					<div className="min-w-0">
+						<div className="flex items-center gap-3">
+							<div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-700/60 bg-darkBg/55 text-wheat">
+								<FaPenNib />
+							</div>
+							<div className="min-w-0">
+								<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+									Editor controls
+								</p>
+								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
+									Shape the markdown with intent
+								</h3>
+							</div>
 						</div>
-					))}
+						<p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+							Inline images stay where you insert them and render centered in both
+							preview and the final post.
+						</p>
+					</div>
+
+					<div className="grid gap-2 sm:grid-cols-3 xl:w-[26rem]">
+						{MODE_OPTIONS.map((option) => {
+							const Icon = option.icon;
+							const active = mode === option.value;
+							return (
+								<button
+									key={option.value}
+									type="button"
+									onClick={() => setMode(option.value)}
+									className={`rounded-[20px] border px-4 py-3 text-left transition-colors ${
+										active
+											? "border-purpleContrast/45 bg-purpleContrast/16"
+											: "border-zinc-700/60 bg-darkBg/50 hover:border-zinc-500/70"
+									}`}
+								>
+									<div className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+										<Icon className={active ? "text-wheat" : "text-zinc-400"} />
+										<span>{option.label}</span>
+									</div>
+									<p className="mt-1 text-xs leading-5 text-zinc-500">
+										{option.description}
+									</p>
+								</button>
+							);
+						})}
+					</div>
 				</div>
-			)}
+
+				<div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
+					<div className="grid gap-3">
+						{toolbarSections.map((section) => (
+							<div key={section.title}>
+								<p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+									{section.title}
+								</p>
+								<div className="flex flex-wrap gap-2">
+									{section.actions.map((item) => {
+										const Icon = item.icon;
+										return (
+											<button
+												key={item.label}
+												type="button"
+												onClick={item.action}
+												disabled={disabled || isUploading}
+												className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-2 text-sm text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-50"
+											>
+												<Icon className="text-xs" />
+												<span>{item.label}</span>
+											</button>
+										);
+									})}
+								</div>
+							</div>
+						))}
+					</div>
+
+					<div className="flex flex-col gap-2 xl:items-end">
+						<button
+							type="button"
+							onClick={() => fileInputRef.current?.click()}
+							disabled={disabled || isUploading}
+							className="inline-flex items-center justify-center gap-2 rounded-full border border-purpleContrast/35 bg-purpleContrast/18 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/26 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							<FaImage className="text-sm" />
+							<span>{isUploading ? "Uploading..." : "Insert image"}</span>
+						</button>
+						<div className="rounded-full border border-zinc-700/60 bg-darkBg/55 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
+							{mode === "split" ? "Dual panel" : `${mode} mode`}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div className={editorGridClass}>
+				{mode !== "preview" ? (
+					<div className="overflow-hidden rounded-[26px] border border-zinc-700/50 bg-darkBg/55">
+						<div className="flex flex-col gap-2 border-b border-zinc-700/50 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+							<div className="min-w-0">
+								<div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-zinc-500">
+									<FaPenNib />
+									<span>Markdown</span>
+								</div>
+								<p className="mt-2 max-w-xl text-sm leading-6 text-zinc-400">
+									Write with plain markdown and keep control of where every block
+									and image lands.
+								</p>
+							</div>
+							<div className="rounded-full border border-zinc-700/60 bg-greyBg/40 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
+								Editable source
+							</div>
+						</div>
+						<textarea
+							ref={textareaRef}
+							value={value}
+							onChange={(event) => onChange(event.target.value)}
+							disabled={disabled}
+							rows={20}
+							className="min-h-[32rem] w-full resize-y bg-transparent px-4 py-4 text-zinc-100 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
+							placeholder={`Write the article in Markdown.\n\nExample:\n## Section title\n\nA paragraph with **emphasis** and a [link](https://example.com).\n`}
+						/>
+					</div>
+				) : null}
+
+				{mode !== "write" ? (
+					<div className="overflow-hidden rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90">
+						<div className="flex flex-col gap-2 border-b border-zinc-700/50 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+							<div className="min-w-0">
+								<div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-zinc-500">
+									<FaEye />
+									<span>Preview</span>
+								</div>
+								<p className="mt-2 max-w-xl text-sm leading-6 text-zinc-400">
+									The preview uses the same renderer as the published post page.
+								</p>
+							</div>
+							<div className="rounded-full border border-zinc-700/60 bg-greyBg/40 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
+								Final rendering
+							</div>
+						</div>
+						<div className="min-h-[32rem] px-5 py-4">
+							{value.trim() ? (
+								<div className={MARKDOWN_ARTICLE_CLASS}>
+									<ReactMarkdown
+										remarkPlugins={[remarkGfm]}
+										components={markdownComponents}
+									>
+										{value}
+									</ReactMarkdown>
+								</div>
+							) : (
+								<div className="flex min-h-[28rem] items-center justify-center rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/30 px-6 text-center text-zinc-500">
+									Start writing to see the final post rendering.
+								</div>
+							)}
+						</div>
+					</div>
+				) : null}
+			</div>
+
+			<div className="flex flex-wrap items-center gap-3 rounded-[22px] border border-zinc-700/50 bg-darkBg/35 px-4 py-3 text-sm text-zinc-500">
+				<div className="inline-flex items-center gap-2">
+					<FaPenNib className="text-xs" />
+					<span>{wordCount} words</span>
+				</div>
+				<div className="inline-flex items-center gap-2">
+					<FaEye className="text-xs" />
+					<span>{readingTime} min read</span>
+				</div>
+				<div className={`inline-flex items-center gap-2 ${remaining < 0 ? "text-red-400" : ""}`}>
+					<FaTableColumns className="text-xs" />
+					<span>
+						{value.length}/{maxLength} characters
+					</span>
+				</div>
+				{feedback ? (
+					<span
+						className={`inline-flex items-center gap-2 ${
+							feedback.toLowerCase().includes("unable") ||
+							feedback.toLowerCase().includes("error")
+								? "text-red-400"
+								: "text-emerald-400"
+						}`}
+					>
+						<FaImage className="text-xs" />
+						<span>{feedback}</span>
+					</span>
+				) : null}
+			</div>
+
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept="image/jpeg,image/png,image/webp,image/gif"
+				multiple
+				className="hidden"
+				onChange={handleFilesSelected}
+			/>
 		</div>
 	);
 }

@@ -7,7 +7,12 @@ import { useEffect, useMemo, useState } from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
-import { getAllPosts, type IPost } from "@/data/posts";
+import {
+	getAuthorHref,
+	getPostHref,
+	getTrendingPosts,
+	type IPost,
+} from "@/lib/posts-client";
 import Skeleton from "./Skeleton";
 
 const Accordion = dynamic(() => import("@/trending/Accordion"), { ssr: false });
@@ -32,10 +37,6 @@ function formatTagLabel(tag: string) {
 	}
 
 	return `${tag.charAt(0).toUpperCase()}${tag.slice(1)}`;
-}
-
-function sortByTrending(posts: IPost[]) {
-	return [...posts].sort((a, b) => b.views - a.views || b.date.localeCompare(a.date));
 }
 
 function TopicPill({
@@ -65,7 +66,7 @@ function RankedPostRow({
 	post: IPost;
 	index: number;
 }) {
-	const postHref = `/post/${normalizeTag(post.title)}`;
+	const postHref = getPostHref(post);
 
 	return (
 		<article className="grid gap-4 rounded-[24px] border border-zinc-700/50 bg-greyBg/85 p-4 shadow-lg shadow-zinc-950/10 sm:grid-cols-[auto_112px_1fr] sm:items-center">
@@ -90,7 +91,7 @@ function RankedPostRow({
 				<Image
 					fill
 					src={post.image}
-					alt={post.title}
+					alt={post.imageAlt}
 					className="object-cover transition-transform duration-700 hover:scale-105"
 					sizes="112px"
 				/>
@@ -122,7 +123,7 @@ function RankedPostRow({
 
 				<div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
 					<Link
-						href={`/profile/${normalizeTag(post.author)}`}
+						href={getAuthorHref(post)}
 						className="transition-colors hover:text-wheat"
 					>
 						{post.author}
@@ -140,7 +141,7 @@ function RankedPostRow({
 }
 
 function SpotlightPostCard({ post }: { post: IPost }) {
-	const postHref = `/post/${normalizeTag(post.title)}`;
+	const postHref = getPostHref(post);
 
 	return (
 		<article className="overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20">
@@ -148,7 +149,7 @@ function SpotlightPostCard({ post }: { post: IPost }) {
 				<Image
 					fill
 					src={post.image}
-					alt={post.title}
+					alt={post.imageAlt}
 					className="object-cover transition-transform duration-700 hover:scale-105"
 					sizes="(max-width: 1024px) 100vw, 50vw"
 				/>
@@ -176,7 +177,7 @@ function SpotlightPostCard({ post }: { post: IPost }) {
 				</p>
 				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
 					<Link
-						href={`/profile/${normalizeTag(post.author)}`}
+						href={getAuthorHref(post)}
 						className="transition-colors hover:text-wheat"
 					>
 						{post.author}
@@ -197,13 +198,13 @@ export default function TrendingPage() {
 		let active = true;
 
 		async function loadPosts() {
-			const allPosts = await getAllPosts();
+			const allPosts = await getTrendingPosts();
 
 			if (!active) {
 				return;
 			}
 
-			setPosts(sortByTrending(allPosts));
+			setPosts(allPosts);
 			setLoading(false);
 		}
 
@@ -288,7 +289,14 @@ export default function TrendingPage() {
 						</div>
 
 						<div className="px-4 py-5 sm:px-6">
-							<Accordion posts={accordionPosts} />
+							{accordionPosts.length > 0 ? (
+								<Accordion posts={accordionPosts} />
+							) : (
+								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
+									No trending posts are available yet. This section will populate
+									once published posts start collecting views.
+								</div>
+							)}
 						</div>
 					</div>
 				</section>
@@ -308,23 +316,29 @@ export default function TrendingPage() {
 								context of what is hot right now.
 							</p>
 
-							<div className="mt-6 space-y-3">
-								{topTopics.map((topic) => (
-									<TopicPill
-										key={topic.label}
-										label={topic.label}
-										count={topic.count}
-									/>
-								))}
-							</div>
+							{topTopics.length > 0 ? (
+								<div className="mt-6 space-y-3">
+									{topTopics.map((topic) => (
+										<TopicPill
+											key={topic.label}
+											label={topic.label}
+											count={topic.count}
+										/>
+									))}
+								</div>
+							) : (
+								<p className="mt-6 text-sm text-zinc-500">
+									Topic signals will appear here after posts are published.
+								</p>
+							)}
 
-							{leadingPost && (
+							{leadingPost ? (
 								<div className="mt-6 rounded-2xl border border-zinc-700/50 bg-greyBg/75 p-4">
 									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 										Leading post
 									</p>
 									<Link
-										href={`/post/${normalizeTag(leadingPost.title)}`}
+										href={getPostHref(leadingPost)}
 										className="mt-3 block text-lg font-semibold text-wheat transition-colors hover:text-zinc-100"
 									>
 										{leadingPost.title}
@@ -334,6 +348,11 @@ export default function TrendingPage() {
 										<span className="h-1 w-1 rounded-full bg-zinc-700" />
 										<span>{formatViews(leadingPost.views)} views</span>
 									</div>
+								</div>
+							) : (
+								<div className="mt-6 rounded-2xl border border-dashed border-zinc-700/60 bg-greyBg/55 p-4 text-sm leading-7 text-zinc-400">
+									No trending leader yet. Publish posts and accumulate views to
+									build this ranking.
 								</div>
 							)}
 						</aside>
@@ -355,15 +374,21 @@ export default function TrendingPage() {
 									</div>
 								</div>
 
-								<div className="mt-6 grid gap-4">
-									{rankedPosts.map((post, index) => (
-										<RankedPostRow
-											key={`${post.title}-${post.author}-${index}`}
-											post={post}
-											index={index}
-										/>
-									))}
-								</div>
+								{rankedPosts.length > 0 ? (
+									<div className="mt-6 grid gap-4">
+										{rankedPosts.map((post, index) => (
+											<RankedPostRow
+												key={post.id}
+												post={post}
+												index={index}
+											/>
+										))}
+									</div>
+								) : (
+									<div className="mt-6 rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
+										No trending posts are available yet.
+									</div>
+								)}
 							</section>
 
 							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
@@ -380,14 +405,17 @@ export default function TrendingPage() {
 									</p>
 								</div>
 
-								<div className="mt-6 grid gap-4 lg:grid-cols-2">
-									{spotlightPosts.map((post) => (
-										<SpotlightPostCard
-											key={`${post.title}-${post.author}-spotlight`}
-											post={post}
-										/>
-									))}
-								</div>
+								{spotlightPosts.length > 0 ? (
+									<div className="mt-6 grid gap-4 lg:grid-cols-2">
+										{spotlightPosts.map((post) => (
+											<SpotlightPostCard key={post.id} post={post} />
+										))}
+									</div>
+								) : (
+									<div className="mt-6 rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
+										There are not enough posts yet for a secondary spotlight list.
+									</div>
+								)}
 							</section>
 						</div>
 					</div>

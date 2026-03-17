@@ -2,23 +2,12 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 const PhaserBackground = dynamic(() => import("@/PhaserBackground"), {
 	ssr: false,
 });
 
 export default function NotFound() {
-	const router = useRouter();
-	const pathname = usePathname();
-
-	useEffect(() => {
-		if (pathname !== "/not-found") {
-			router.replace("/not-found");
-		}
-	}, [router, pathname]);
-
 	return (
 		<>
 			<div className="fixed top-0 left-0 w-full h-full z-0">

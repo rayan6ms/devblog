@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createFeedback } from "@/api/utils";
+import prisma from "@/database/prisma";
 import { createFeedbackSchema } from "@/lib/validation/content";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -16,7 +16,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 	}
 
 	try {
-		const feedback = await createFeedback(parsed.data);
+		const feedback = await prisma.feedback.create({
+			data: {
+				userId: parsed.data.userId,
+				postId: parsed.data.postId,
+				score: parsed.data.score,
+			},
+		});
 		return NextResponse.json(feedback);
 	} catch (_error) {
 		return NextResponse.json(

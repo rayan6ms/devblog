@@ -1,48 +1,34 @@
-import { useState } from "react";
+"use client";
 
-const MainTagInput = ({
-	tags,
-	onTagSelect,
-}: {
-	tags: string[];
-	onTagSelect: (tag: string) => void;
-}) => {
-	const [filter, setFilter] = useState("");
-	const filteredTags = tags.filter((tag) =>
-		tag.toLowerCase().includes(filter.toLowerCase()),
-	);
-
-	return (
-		<div className="relative">
-			<span className="text-zinc-200">Main Tag:</span>
-			<input
-				type="text"
-				className="bg-zinc-500/40 p-2.5 mt-1 block w-full rounded-md border border-gray-300/20 shadow-sm"
-				placeholder="Search and select a main tag"
-				value={filter}
-				onChange={(e) => setFilter(e.target.value)}
-				onKeyDown={(e) =>
-					e.key === "Enter" &&
-					filteredTags.length > 0 &&
-					onTagSelect(filteredTags[0])
-				}
-			/>
-			{filter && (
-				<div className="absolute w-full bg-zinc-500 shadow-md max-h-40 overflow-auto">
-					{filteredTags.map((tag) => (
-						<button
-							key={tag}
-							type="button"
-							className="p-2 hover:bg-zinc-600 cursor-pointer"
-							onClick={() => onTagSelect(tag)}
-						>
-							{tag}
-						</button>
-					))}
-				</div>
-			)}
-		</div>
-	);
+type MainTagInputProps = {
+	suggestions: string[];
+	value: string;
+	onChange: (tag: string) => void;
 };
 
-export default MainTagInput;
+export default function MainTagInput({
+	suggestions,
+	value,
+	onChange,
+}: MainTagInputProps) {
+	return (
+		<div className="grid gap-2">
+			<input
+				list="main-tag-suggestions"
+				type="text"
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				className="h-12 w-full rounded-2xl border border-zinc-700/50 bg-darkBg/55 px-4 text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-purpleContrast/45"
+				placeholder="Pick an existing topic or define a new main tag"
+			/>
+			<datalist id="main-tag-suggestions">
+				{suggestions.map((tag) => (
+					<option key={tag} value={tag} />
+				))}
+			</datalist>
+			<p className="text-sm text-zinc-500">
+				Main tags group the post across listings and recommendations.
+			</p>
+		</div>
+	);
+}

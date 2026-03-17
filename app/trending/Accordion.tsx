@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import type { IPost } from "@/data/posts";
+import {
+	getAuthorHref,
+	getPostHref,
+	type IPost,
+} from "@/lib/posts-client";
 
 type AccordionProps = {
 	posts: IPost[];
@@ -89,7 +93,7 @@ export default function Accordion({ posts }: AccordionProps) {
 		>
 			{visiblePosts.map((post, index) => {
 				const isActive = currentPanel === index;
-				const postHref = `/post/${normalizeValue(post.title)}`;
+				const postHref = getPostHref(post);
 
 				return (
 					<article
@@ -100,7 +104,7 @@ export default function Accordion({ posts }: AccordionProps) {
 						<Image
 							fill
 							src={post.image}
-							alt={post.title}
+							alt={post.imageAlt}
 							className={`object-cover transition-[filter,transform] duration-700 ${isActive ? "scale-100 brightness-[0.74]" : "scale-105 brightness-[0.80]"
 								}`}
 							sizes="(max-width: 960px) 100vw, 30vw"
@@ -172,7 +176,7 @@ export default function Accordion({ posts }: AccordionProps) {
 
 								<div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-zinc-200/85">
 									<Link
-										href={`/profile/${normalizeValue(post.author)}`}
+										href={getAuthorHref(post)}
 										className="transition-colors hover:text-wheat"
 									>
 										{post.author}

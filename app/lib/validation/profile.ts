@@ -40,15 +40,6 @@ export function getHandleError(value: string) {
 	return null;
 }
 
-export function isHttpUrl(value: string) {
-	try {
-		const url = new URL(value);
-		return url.protocol === "http:" || url.protocol === "https:";
-	} catch {
-		return false;
-	}
-}
-
 export function parseUploadedAvatarDataUrl(value: string) {
 	const match = value.match(
 		/^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=]+)$/i,

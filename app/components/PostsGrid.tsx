@@ -8,7 +8,11 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
-import type { IPost } from "@/data/posts";
+import {
+	getAuthorHref,
+	getPostHref,
+	type IPost,
+} from "@/lib/posts-client";
 
 type Props = {
 	posts: IPost[];
@@ -64,11 +68,12 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 		type: "author" | "tag",
 		value: string,
 		e: React.MouseEvent,
+		post?: IPost,
 	) => {
 		e.preventDefault();
 		const url =
 			type === "author"
-				? `/profile/${slugify(value, { lower: true, strict: true })}`
+				? getAuthorHref(post || { author: value, authorSlug: "" })
 				: `/tag?selected=${slugify(value, { lower: true, strict: true })}`;
 		router.push(url);
 	};
@@ -82,14 +87,14 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 			<div className="col-start-1 row-start-2 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-1">
 				{posts.map((post) => (
 					<Link
-						key={slugify(post.title, { lower: true, strict: true })}
+						key={post.id}
 						className="bg-greyBg border border-t-0 border-zinc-700/30 rounded-lg overflow-hidden shadow-lg group"
-						href={`/post/${slugify(post.title, { lower: true, strict: true })}`}
+						href={getPostHref(post)}
 					>
 						<div className="w-full h-[200px] relative overflow-hidden rounded-t-lg">
 							<Image
 								src={post.image}
-								alt={post.title}
+								alt={post.imageAlt}
 								fill
 								className="object-cover group-hover:scale-110 transition-transform duration-500 rounded-t-lg"
 								sizes="(max-width: 1024px) 100vw, 25vw"
@@ -121,7 +126,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 							<div className="flex items-center justify-between text-zinc-400 text-sm">
 								<button
 									type="button"
-									onClick={(e) => pushTo("author", post.author, e)}
+									onClick={(e) => pushTo("author", post.author, e, post)}
 									className="hover:text-purpleContrast transition-colors"
 								>
 									{highlight(post.author, highlightTerm)}

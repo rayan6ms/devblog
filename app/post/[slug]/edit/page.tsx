@@ -1,92 +1,89 @@
-"use client";
-
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
-import { getAllMainTags } from "@/data/posts";
+import { auth } from "@/lib/auth";
+import { canEditPost } from "@/lib/post-shared";
+import {
+	getPostBySlugWithAuthor,
+	getPostEditorMainTags,
+} from "@/lib/posts";
 import Form from "@/new_post/Form";
-
-type StoredPost = {
-	image?: string;
-	mainTag: string;
-	tags: string[];
-	title: string;
-	author: string;
-	date: string;
-	views: number;
-	hasStartedReading: boolean;
-	percentRead: number;
-	description: string;
-	content: string;
-	status: "draft" | "pending_review" | "published";
-	slug: string;
-};
 
 type EditPostPageProps = PageProps<"/post/[slug]/edit">;
 
-export default function EditPostPage(_props: EditPostPageProps) {
-	const params = useParams<{ slug: string }>();
-	const slug = params.slug;
+export default async function EditPostPage({ params }: EditPostPageProps) {
+	const { slug } = await params;
+	const session = await auth();
+	const post = await getPostBySlugWithAuthor(slug);
 
-	const [mainTags, setMainTags] = useState<string[]>([]);
-	const [initial, setInitial] = useState<StoredPost | null>(null);
-	const [loading, setLoading] = useState(true);
+	if (!post) {
+		notFound();
+	}
 
-	useEffect(() => {
-		(async () => {
-			const tags = await getAllMainTags();
-			setMainTags(tags);
+	if (!canEditPost(post, session?.user)) {
+		return (
+			<>
+				<main className="min-h-screen bg-darkBg px-4 pb-12 pt-6 text-gray sm:px-6 lg:px-8">
+					<div className="mx-auto flex w-full max-w-[960px] flex-col gap-8">
+						<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+								Edit Post
+							</p>
+							<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
+								Access denied
+							</h1>
+							<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+								Only the author or site administrators can edit this post.
+							</p>
+						</section>
+					</div>
+				</main>
+				<Footer />
+			</>
+		);
+	}
 
-			const raw =
-				typeof window !== "undefined" ? localStorage.getItem("posts") : null;
-			const list: StoredPost[] = raw ? JSON.parse(raw) : [];
-			const found = list.find((p) => p.slug === slug) || null;
-
-			setInitial(
-				found ?? {
-					image: "",
-					mainTag: "",
-					tags: [],
-					title: "",
-					author: "mock-user-id-1",
-					date: new Date().toISOString(),
-					views: 0,
-					hasStartedReading: false,
-					percentRead: 0,
-					description: "",
-					content: "",
-					status: "draft",
-					slug,
-				},
-			);
-			setLoading(false);
-		})();
-	}, [slug]);
-
-	if (loading) return <p className="p-6">Loading…</p>;
-	if (!initial) return <p className="p-6">Post not found (mock).</p>;
-	if (!mainTags.length) return <p className="p-6">Loading tags…</p>;
+	const mainTags = await getPostEditorMainTags();
+	const authorName =
+		post.author.name || post.author.username || post.author.slug || "Author";
 
 	return (
 		<>
-			<div className="flex items-center justify-center">
-				<div className="w-full mx-5 md:mx-auto md:w-2/3 h-full relative border mt-8 border-gray-500/40 shadow-sm bg-greyBg p-6 rounded-xl">
-					<Form
-						mainTagsOptions={mainTags}
-						mode="edit"
-						existingSlug={slug}
-						initialValues={{
-							title: initial.title,
-							content: initial.content,
-							description: initial.description,
-							tags: initial.tags,
-							mainTag: initial.mainTag,
-							author: initial.author,
-							status: initial.status,
-						}}
-					/>
+			<main className="min-h-screen bg-darkBg px-4 pb-12 pt-6 text-gray sm:px-6 lg:px-8">
+				<div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8">
+					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+						<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+							Edit Post
+						</p>
+						<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
+							Update article
+						</h1>
+						<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+							Refine the metadata, body, or media and save directly back to the
+							same persisted post record.
+						</p>
+					</section>
+
+					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-4 py-5 shadow-xl shadow-zinc-950/20 sm:px-6 sm:py-6">
+						<Form
+							mainTagsOptions={mainTags}
+							mode="edit"
+							existingSlug={slug}
+							initialValues={{
+								title: post.title,
+								slug: post.slug,
+								content: post.content,
+								thumbnail: post.thumbnail || "",
+								thumbnailAlt: post.thumbnailAlt || "",
+								description: post.description || "",
+								tags: post.tags,
+								mainTag: post.mainTag,
+								status: post.status,
+								authorName,
+							}}
+						/>
+					</section>
 				</div>
-			</div>
+			</main>
 			<Footer />
 		</>
 	);

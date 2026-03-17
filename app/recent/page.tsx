@@ -7,7 +7,12 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
-import { getAllPosts, type IPost } from "@/data/posts";
+import {
+	getAuthorHref,
+	getPostHref,
+	getRecentPosts,
+	type IPost,
+} from "@/lib/posts-client";
 import Skeleton from "./Skeleton";
 
 const ITEMS_PER_PAGE = 12;
@@ -24,10 +29,6 @@ function normalizeValue(value: string) {
 
 function formatViews(views: number) {
 	return views >= 1000 ? `${(views / 1000).toFixed(1)}k` : `${views}`;
-}
-
-function sortByRecency(posts: IPost[]) {
-	return [...posts].sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function getPaginationRange(currentPage: number, totalPages: number) {
@@ -98,7 +99,7 @@ function PaginationControls({
 }
 
 function RecentPostCard({ post }: { post: IPost }) {
-	const postHref = `/post/${normalizeValue(post.title)}`;
+	const postHref = getPostHref(post);
 
 	return (
 		<article className="group flex h-full flex-col overflow-hidden rounded-[26px] border border-zinc-700/50 bg-greyBg/90 shadow-lg shadow-zinc-950/20 transition-colors hover:border-zinc-500/70">
@@ -106,7 +107,7 @@ function RecentPostCard({ post }: { post: IPost }) {
 				<Image
 					fill
 					src={post.image}
-					alt={post.title}
+					alt={post.imageAlt}
 					className="object-cover transition-transform duration-700 group-hover:scale-105"
 					sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
 				/>
@@ -146,7 +147,7 @@ function RecentPostCard({ post }: { post: IPost }) {
 
 				<div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
 					<Link
-						href={`/profile/${normalizeValue(post.author)}`}
+						href={getAuthorHref(post)}
 						className="transition-colors hover:text-wheat"
 					>
 						{post.author}
@@ -183,13 +184,13 @@ function RecentPageContent() {
 		let active = true;
 
 		async function loadPosts() {
-			const allPosts = await getAllPosts();
+			const recent = await getRecentPosts();
 
 			if (!active) {
 				return;
 			}
 
-			setPosts(sortByRecency(allPosts));
+			setPosts(recent.posts);
 			setLoading(false);
 		}
 
@@ -205,6 +206,10 @@ function RecentPageContent() {
 	const pageStart = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
 	const pageEnd = Math.min(pageStart + ITEMS_PER_PAGE, posts.length);
 	const visiblePosts = posts.slice(pageStart, pageEnd);
+	const visibleRangeLabel =
+		posts.length > 0
+			? `Posts ${pageStart + 1}-${pageEnd} of ${posts.length}`
+			: "No published posts yet";
 	const newestPost = posts[0];
 	const totalViews = useMemo(
 		() => posts.reduce((sum, post) => sum + post.views, 0),
@@ -271,9 +276,9 @@ function RecentPageContent() {
 
 								<div className="grid gap-3 sm:grid-cols-3">
 									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
-										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Post count
-										</p>
+									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+										Post count
+									</p>
 										<p className="mt-2 text-3xl font-semibold text-wheat">
 											{posts.length}
 										</p>
@@ -298,16 +303,16 @@ function RecentPageContent() {
 							</div>
 						</div>
 
-						{newestPost && (
+						{newestPost ? (
 							<div className="grid gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
 								<Link
-									href={`/post/${normalizeValue(newestPost.title)}`}
+									href={getPostHref(newestPost)}
 									className="relative block aspect-[16/10] overflow-hidden rounded-[26px]"
 								>
 									<Image
 										fill
 										src={newestPost.image}
-										alt={newestPost.title}
+										alt={newestPost.imageAlt}
 										className="object-cover transition-transform duration-700 hover:scale-105"
 										sizes="(max-width: 1024px) 100vw, 60vw"
 									/>
@@ -324,7 +329,7 @@ function RecentPageContent() {
 										{newestPost.mainTag}
 									</Link>
 									<Link
-										href={`/post/${normalizeValue(newestPost.title)}`}
+										href={getPostHref(newestPost)}
 										className="mt-4 block text-2xl font-semibold text-wheat transition-colors hover:text-zinc-100"
 									>
 										{newestPost.title}
@@ -334,7 +339,7 @@ function RecentPageContent() {
 									</p>
 									<div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
 										<Link
-											href={`/profile/${normalizeValue(newestPost.author)}`}
+											href={getAuthorHref(newestPost)}
 											className="transition-colors hover:text-wheat"
 										>
 											{newestPost.author}
@@ -349,6 +354,13 @@ function RecentPageContent() {
 											{formatViews(newestPost.views)}
 										</span>
 									</div>
+								</div>
+							</div>
+						) : (
+							<div className="px-4 py-5 sm:px-6">
+								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-greyBg/60 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
+									No published posts yet. Create your first post and it will show
+									up here as the latest arrival.
 								</div>
 							</div>
 						)}
@@ -375,7 +387,7 @@ function RecentPageContent() {
 									Showing now
 								</p>
 								<p className="mt-2 text-lg font-semibold text-wheat">
-									Posts {pageStart + 1}-{pageEnd} of {posts.length}
+									{visibleRangeLabel}
 								</p>
 								<p className="mt-2 text-sm text-zinc-500">
 									Page {safeCurrentPage} of {totalPages}
@@ -399,18 +411,24 @@ function RecentPageContent() {
 								<p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300">
 									Fresh topics
 								</p>
-								<div className="mt-3 flex flex-wrap gap-2">
-									{recentTopics.map((topic) => (
-										<Link
-											key={topic.label}
-											href={`/tag?selected=${normalizeValue(topic.label)}`}
-											className="capitalize rounded-full border border-zinc-700/60 bg-greyBg px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
-										>
-											{topic.label}
-											<span className="ml-2 text-zinc-500">{topic.count}</span>
-										</Link>
-									))}
-								</div>
+								{recentTopics.length > 0 ? (
+									<div className="mt-3 flex flex-wrap gap-2">
+										{recentTopics.map((topic) => (
+											<Link
+												key={topic.label}
+												href={`/tag?selected=${normalizeValue(topic.label)}`}
+												className="capitalize rounded-full border border-zinc-700/60 bg-greyBg px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
+											>
+												{topic.label}
+												<span className="ml-2 text-zinc-500">{topic.count}</span>
+											</Link>
+										))}
+									</div>
+								) : (
+									<p className="mt-3 text-sm text-zinc-500">
+										Topic counts will appear here after posts are published.
+									</p>
+								)}
 							</div>
 						</aside>
 
@@ -437,14 +455,19 @@ function RecentPageContent() {
 									/>
 								</div>
 
-								<div className="mt-6 grid gap-4 md:grid-cols-2 xxl:grid-cols-3">
-									{visiblePosts.map((post) => (
-										<RecentPostCard
-											key={`${post.title}-${post.author}-${post.date}`}
-											post={post}
-										/>
-									))}
-								</div>
+								{visiblePosts.length > 0 ? (
+									<div className="mt-6 grid gap-4 md:grid-cols-2 xxl:grid-cols-3">
+										{visiblePosts.map((post) => (
+											<RecentPostCard key={post.id} post={post} />
+										))}
+									</div>
+								) : (
+									<div className="mt-6 rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-10 text-center text-sm leading-7 text-zinc-400">
+										No posts are available yet. This page now reads straight from
+										the database and will populate as soon as published entries
+										exist.
+									</div>
+								)}
 							</section>
 						</div>
 					</div>

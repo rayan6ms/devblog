@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import type { IPost } from "@/data/posts";
+import { getPostHref, type IPost } from "@/lib/posts-client";
 import Popover from "./Popover";
 
 type TrendingItemProps = {
@@ -18,9 +18,8 @@ export default function TrendingItem({
 	section = false,
 	addSeparation,
 }: TrendingItemProps) {
-	const { image, mainTag, title } = post;
+	const { image, imageAlt, mainTag, title } = post;
 
-	const postId = slugify(title, { lower: true, strict: true });
 	const tagId = slugify(mainTag, { lower: true, strict: true });
 	const router = useRouter();
 
@@ -35,7 +34,7 @@ export default function TrendingItem({
 
 	return (
 		<Link
-			href={`/post/${postId}`}
+			href={getPostHref(post)}
 			className={`group flex gap-6
         ${
 					section
@@ -53,7 +52,7 @@ export default function TrendingItem({
 			>
 				<Image
 					src={image}
-					alt={title}
+					alt={imageAlt}
 					fill
 					quality={90}
 					className="w-full h-full rounded-lg object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out"

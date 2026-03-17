@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import type { IPost } from "@/data/posts";
+import { getPostHref, type IPost } from "@/lib/posts-client";
 import Popover from "./Popover";
 
 interface RecommendedItemProps {
@@ -17,9 +17,8 @@ export default function RecommendedItem({
 	post,
 	addSeparation,
 }: RecommendedItemProps) {
-	const { image, mainTag, title } = post;
+	const { image, imageAlt, mainTag, title } = post;
 
-	const postId = slugify(title, { lower: true, strict: true });
 	const tagId = slugify(mainTag, { lower: true, strict: true });
 	const router = useRouter();
 
@@ -34,7 +33,7 @@ export default function RecommendedItem({
 
 	return (
 		<Link
-			href={`/post/${postId}`}
+			href={getPostHref(post)}
 			className={`group flex
         h-[92px] w-full
         sm:w-[460px]
@@ -64,7 +63,7 @@ export default function RecommendedItem({
 			<div className="relative flex h-[92px] min-w-[92px] max-w-[92px] overflow-hidden rounded-lg">
 				<Image
 					src={image}
-					alt={title}
+					alt={imageAlt}
 					width={120}
 					height={120}
 					quality={90}
