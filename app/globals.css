@@ -73,12 +73,57 @@ body {
 	will-change: transform;
 }
 
+@keyframes about-float {
+	0%,
+	100% {
+		transform: translate3d(0, 0, 0) rotate(var(--about-rotate, 0deg));
+	}
+
+	50% {
+		transform: translate3d(
+				var(--about-shift-x, 10px),
+				var(--about-shift-y, -12px),
+				0
+			)
+			rotate(calc(var(--about-rotate, 0deg) + 5deg));
+	}
+}
+
+.animate-about-float {
+	animation: about-float var(--about-duration, 12s) ease-in-out
+		var(--about-delay, 0s) infinite;
+	will-change: transform;
+}
+
+@keyframes about-pan {
+	0% {
+		background-position:
+			0 0,
+			0 0,
+			12px 12px;
+	}
+
+	100% {
+		background-position:
+			54px 18px,
+			26px 54px,
+			36px 28px;
+	}
+}
+
+.animate-about-pan {
+	animation: about-pan 28s linear infinite alternate;
+	will-change: background-position;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	html {
 		scroll-behavior: auto;
 	}
 
-	.animate-tag-marquee {
+	.animate-tag-marquee,
+	.animate-about-float,
+	.animate-about-pan {
 		animation-play-state: paused;
 	}
 }

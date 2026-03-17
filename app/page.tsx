@@ -128,7 +128,7 @@ export default function Home() {
 										A personal dev blog with room to explore
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										devblog is where I publish development writing, opinions,
+										DevBlog is where I publish development writing, opinions,
 										tutorials, and experiments. The front page highlights featured
 										reading, what is trending now, and quick ways to branch into
 										the rest of the blog.
