@@ -75,7 +75,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 					<button
 						type="button"
 						onClick={(e) => handleRouteButtonClick(e, section.path)}
-						className="group mt-auto flex w-full items-center gap-2 self-start rounded-full border border-zinc-700/60 bg-darkBg px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
+						className="group mt-auto flex w-full items-center gap-2 self-start rounded-full border border-zinc-700/60 bg-lessDarkBg px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 					>
 						View section
 						<FaArrowRight className="transition-transform delay-200 ease-in-out transform group-hover:translate-x-2" />
