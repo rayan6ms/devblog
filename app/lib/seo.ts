@@ -67,6 +67,8 @@ export function getSiteUrl() {
 	return (
 		normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) ||
 		normalizeSiteUrl(process.env.SITE_URL) ||
+		normalizeSiteUrl(process.env.AUTH_URL) ||
+		normalizeSiteUrl(process.env.NEXTAUTH_URL) ||
 		normalizeSiteUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
 		normalizeSiteUrl(process.env.VERCEL_URL) ||
 		"http://localhost:3000"
@@ -105,6 +107,21 @@ export function buildLanguageAlternates(
 
 	for (const locale of locales) {
 		languages[getIntlLocale(locale)] = buildLocalizedPath(path, locale);
+	}
+
+	return languages;
+}
+
+export function buildAbsoluteLanguageAlternates(
+	path: string,
+	locales: readonly Locale[] = LOCALES,
+) {
+	const languages: Record<string, string> = {
+		"x-default": new URL(normalizePath(path), getSiteUrl()).toString(),
+	};
+
+	for (const locale of locales) {
+		languages[getIntlLocale(locale)] = buildLocalizedUrl(path, locale);
 	}
 
 	return languages;

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 import { auth } from "@/lib/auth";
@@ -51,20 +50,27 @@ export async function POST(request: Request) {
 	}
 
 	try {
+		if (!process.env.BLOB_READ_WRITE_TOKEN) {
+			return NextResponse.json(
+				{ error: "BLOB_READ_WRITE_TOKEN is not configured." },
+				{ status: 500 },
+			);
+		}
+
 		const baseName =
 			slugify(file.name.replace(/\.[^.]+$/, ""), {
 				lower: true,
 				strict: true,
 			}) || "image";
 		const fileName = `${Date.now()}-${randomUUID().slice(0, 8)}-${baseName}.${extension}`;
-		const relativePath = path.join("uploads", "posts", fileName);
-		const absolutePath = path.join(process.cwd(), "public", relativePath);
-
-		await mkdir(path.dirname(absolutePath), { recursive: true });
-		await writeFile(absolutePath, Buffer.from(await file.arrayBuffer()));
+		const blob = await put(`posts/${fileName}`, file, {
+			access: "public",
+			addRandomSuffix: false,
+			contentType: file.type,
+		});
 
 		return NextResponse.json({
-			url: `/${relativePath.replaceAll(path.sep, "/")}`,
+			url: blob.url,
 			name: file.name,
 			size: file.size,
 		});

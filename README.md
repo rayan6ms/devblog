@@ -38,7 +38,11 @@ Create an `.env` file with at least:
 
 ```bash
 DATABASE_URL=...
+SITE_URL=https://your-production-domain.example
 NEXT_PUBLIC_SITE_URL=https://your-production-domain.example
+BLOB_READ_WRITE_TOKEN=...
+AUTH_URL=https://your-production-domain.example
+NEXTAUTH_URL=https://your-production-domain.example
 ```
 
 If you want to test social login locally, also configure the provider credentials required by Auth.js for the GitHub and Google providers used in `app/api/auth/[...nextauth]/route.ts`.
@@ -59,10 +63,5 @@ Then open `http://localhost:3000`.
 
 ## SEO
 
-Generate the checked-in SEO files with:
-
-```bash
-node scripts/generate-seo-files.mjs
-```
-
-This writes `public/sitemap.xml` and `public/robots.txt`. For production-safe canonical URLs and sitemap hosts, set `NEXT_PUBLIC_SITE_URL` to the live domain before running it.
+SEO metadata, `robots.txt`, and `sitemap.xml` are generated at runtime from `app/layout.tsx`, `app/robots.ts`, and `app/sitemap.ts`.
+Set `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to the live domain so canonical URLs, social metadata, and sitemap entries point at production.

@@ -1,17 +1,28 @@
 /** @type {import('next').NextConfig} */
-const allowedHosts = [
-	"avatars.githubusercontent.com",
-	"lh3.googleusercontent.com",
+const remotePatterns = [
+	{
+		protocol: "https",
+		hostname: "avatars.githubusercontent.com",
+		port: "",
+		pathname: "/**",
+	},
+	{
+		protocol: "https",
+		hostname: "lh3.googleusercontent.com",
+		port: "",
+		pathname: "/**",
+	},
+	{
+		protocol: "https",
+		hostname: "**.public.blob.vercel-storage.com",
+		port: "",
+		pathname: "/**",
+	},
 ];
 
 const nextConfig = {
 	images: {
-		remotePatterns: allowedHosts.map((hostname) => ({
-			protocol: "https",
-			hostname,
-			port: "",
-			pathname: "/**",
-		})),
+		remotePatterns,
 	},
 };
 

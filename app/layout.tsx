@@ -6,6 +6,8 @@ import AuthProvider from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import LocaleProvider from "@/components/LocaleProvider";
 import NavBar from "@/components/NavBar";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { auth } from "@/lib/auth";
 import { getRequestLocale } from "@/lib/request-locale";
 import {
@@ -29,6 +31,7 @@ export const metadata: Metadata = {
 	category: "technology",
 	openGraph: {
 		type: "website",
+		url: getSiteUrl(),
 		siteName: SITE_NAME,
 		title: SITE_NAME,
 		description: SITE_DESCRIPTION,
@@ -90,6 +93,8 @@ export default async function RootLayout({
 						{children}
 					</AuthProvider>
 				</LocaleProvider>
+				<Analytics />
+				<SpeedInsights />
 			</body>
 		</html>
 	);

@@ -120,9 +120,11 @@ const providers = [
 
 export const authConfig = {
 	adapter: PrismaAdapter(prisma),
+	secret: process.env.AUTH_SECRET,
 	session: {
 		strategy: "jwt",
 	},
+	trustHost: true,
 	providers,
 	pages: {
 		signIn: "/login",
