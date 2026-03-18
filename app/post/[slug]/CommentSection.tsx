@@ -41,7 +41,7 @@ type CommentReportPayload = {
 
 export default function CommentSection() {
 	const { messages } = useI18n();
-	const { isAuthed, profile } = useClientAuth();
+	const { isAuthed, profile } = useClientAuth({ includeProfile: true });
 	const [isLoginOpen, setIsLoginOpen] = useState(false);
 
 	const [isReportOpen, setIsReportOpen] = useState(false);

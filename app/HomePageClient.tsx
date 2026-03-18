@@ -1,108 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import FirstSection from "@/components/FirstSection";
 import Footer from "@/components/Footer";
 import { useI18n } from "@/components/LocaleProvider";
 import Main from "@/components/Main";
 import SecondSection from "@/components/SecondSection";
-import {
-	getRecentPosts,
-	getRecommendedPosts,
-	getTrendingPosts,
-	type IPost,
-} from "@/lib/posts-client";
-import SkeletonFirstSection from "./components/SkeletonFirstSection";
-import SkeletonMain from "./components/SkeletonMain";
-import SkeletonSecondSection from "./components/SkeletonSecondSection";
+import type { IPost } from "@/lib/posts-client";
 
-export default function HomePageClient() {
+export default function HomePageClient({
+	recentPosts,
+	recommendedPosts,
+	trendingPosts,
+}: {
+	recentPosts: IPost[];
+	recommendedPosts: IPost[];
+	trendingPosts: IPost[];
+}) {
 	const { messages } = useI18n();
-	const [recentPosts, setRecentPosts] = useState<IPost[]>([]);
-	const [trendingPosts, setTrendingPosts] = useState<IPost[]>([]);
-	const [recommendedPosts, setRecommendedPosts] = useState<IPost[]>([]);
-	const [loading, setLoading] = useState<boolean>(true);
-
-	useEffect(() => {
-		let active = true;
-
-		async function loadPosts() {
-			const [recent, trending, recommended] = await Promise.all([
-				getRecentPosts(1, 3),
-				getTrendingPosts(4),
-				getRecommendedPosts(5),
-			]);
-
-			if (!active) return;
-
-			setRecentPosts(recent.posts);
-			setTrendingPosts(trending);
-			setRecommendedPosts(recommended);
-
-			setLoading(false);
-		}
-
-		void loadPosts();
-
-		return () => {
-			active = false;
-		};
-	}, []);
-
-	return loading ? (
-		<>
-			<div className="min-h-screen bg-darkBg text-gray">
-				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 pt-8 sm:px-6 lg:px-8">
-					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
-						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
-							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-								<div className="max-w-3xl space-y-3">
-									<div className="h-3 w-24 animate-pulse rounded-full bg-zinc-700/80" />
-									<div className="h-12 w-full max-w-xl animate-pulse rounded-2xl bg-zinc-700/80" />
-									<div className="h-4 w-full max-w-2xl animate-pulse rounded-full bg-zinc-700/70" />
-									<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
-								</div>
-								<div className="grid gap-3 sm:grid-cols-3">
-									{Array.from({ length: 3 }, (_, index) => (
-										<div
-											key={`home-stat-skeleton-${index}`}
-											className="h-28 w-full min-w-[160px] animate-pulse rounded-2xl bg-zinc-700/70"
-										/>
-									))}
-								</div>
-							</div>
-						</div>
-						<div className="px-4 py-5 sm:px-6">
-							<SkeletonMain />
-						</div>
-					</div>
-				</section>
-
-				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 sm:px-6 lg:px-8">
-					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
-						<div className="mb-6 space-y-3">
-							<div className="h-3 w-28 animate-pulse rounded-full bg-zinc-700/80" />
-							<div className="h-10 w-full max-w-md animate-pulse rounded-2xl bg-zinc-700/80" />
-							<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
-						</div>
-						<SkeletonFirstSection />
-					</div>
-				</section>
-
-				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
-					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
-						<div className="mb-6 space-y-3">
-							<div className="h-3 w-24 animate-pulse rounded-full bg-zinc-700/80" />
-							<div className="h-10 w-full max-w-md animate-pulse rounded-2xl bg-zinc-700/80" />
-							<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
-						</div>
-						<SkeletonSecondSection />
-					</div>
-				</section>
-			</div>
-			<Footer />
-		</>
-	) : (
+	return (
 		<>
 			<div className="min-h-screen bg-darkBg text-gray">
 				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 pt-8 sm:px-6 lg:px-8">

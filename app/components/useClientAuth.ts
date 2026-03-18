@@ -16,14 +16,41 @@ export type ClientAuthState = {
 	role: string;
 };
 
-async function fetchCurrentProfile() {
-	try {
-		const response = await fetch("/api/user", { cache: "no-store" });
-		if (!response.ok) {
-			return null;
-		}
+let cachedProfile: ProfileUser | null | undefined;
+let cachedProfileUserId: string | null = null;
+let profilePromise: Promise<ProfileUser | null> | null = null;
 
-		return (await response.json()) as ProfileUser;
+function resetProfileCache() {
+	cachedProfile = undefined;
+	cachedProfileUserId = null;
+	profilePromise = null;
+}
+
+async function fetchCurrentProfile(userId: string, force = false) {
+	if (!force && cachedProfileUserId === userId && cachedProfile !== undefined) {
+		return cachedProfile;
+	}
+
+	if (!force && cachedProfileUserId === userId && profilePromise) {
+		return profilePromise;
+	}
+
+	try {
+		cachedProfileUserId = userId;
+		profilePromise = fetch("/api/user", { cache: "no-store" })
+			.then(async (response) => {
+				if (!response.ok) {
+					return null;
+				}
+
+				return (await response.json()) as ProfileUser;
+			})
+			.catch(() => null)
+			.finally(() => {
+				profilePromise = null;
+			});
+		cachedProfile = await profilePromise;
+		return cachedProfile;
 	} catch {
 		return null;
 	}
@@ -34,19 +61,32 @@ export function emitClientAuthChange() {
 		return;
 	}
 
+	resetProfileCache();
 	window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 }
 
-export function useClientAuth(): ClientAuthState {
+export function useClientAuth(options?: {
+	includeProfile?: boolean;
+}): ClientAuthState {
 	const { data: session, status } = useSession();
 	const [profile, setProfile] = useState<ProfileUser | null>(null);
 	const [profileLoaded, setProfileLoaded] = useState(false);
+	const includeProfile = options?.includeProfile ?? false;
 
 	useEffect(() => {
 		let cancelled = false;
 
-		const sync = async () => {
-			if (status !== "authenticated") {
+		const sync = async (force = false) => {
+			if (status !== "authenticated" || !session?.user?.id) {
+				resetProfileCache();
+				if (!cancelled) {
+					setProfile(null);
+					setProfileLoaded(true);
+				}
+				return;
+			}
+
+			if (!includeProfile) {
 				if (!cancelled) {
 					setProfile(null);
 					setProfileLoaded(true);
@@ -55,7 +95,7 @@ export function useClientAuth(): ClientAuthState {
 			}
 
 			setProfileLoaded(false);
-			const nextProfile = await fetchCurrentProfile();
+			const nextProfile = await fetchCurrentProfile(session.user.id, force);
 			if (!cancelled) {
 				setProfile(nextProfile);
 				setProfileLoaded(true);
@@ -63,7 +103,7 @@ export function useClientAuth(): ClientAuthState {
 		};
 
 		const handleAuthChange = () => {
-			void sync();
+			void sync(true);
 		};
 
 		void sync();
@@ -73,13 +113,14 @@ export function useClientAuth(): ClientAuthState {
 			cancelled = true;
 			window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
 		};
-	}, [session?.user?.id, status]);
+	}, [includeProfile, session?.user?.id, status]);
 
 	const role = (profile?.role || session?.user?.role || "member").toLowerCase();
 	const activeUser = profile?.slug || session?.user?.slug || null;
 	const isAuthed = status === "authenticated";
 	const isLoading =
-		status === "loading" || (status === "authenticated" && !profileLoaded);
+		status === "loading" ||
+		(includeProfile && status === "authenticated" && !profileLoaded);
 
 	return useMemo(
 		() => ({

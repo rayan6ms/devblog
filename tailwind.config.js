@@ -20,7 +20,7 @@ module.exports = {
 				purpleContrast: "#674FF8",
 			},
 			fontFamily: {
-				somerton: ['"Somerton Dense"', "sans-serif"],
+				somerton: ["var(--font-somerton)", "sans-serif"],
 				europa: ["Europa", "sans-serif"],
 				roboto: ["Roboto", "sans-serif"],
 			},

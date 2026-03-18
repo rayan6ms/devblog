@@ -22,7 +22,9 @@ export default function PostEditButton({
 }) {
 	const { messages } = useI18n();
 	const { push } = useLocaleNavigation();
-	const { activeUser, isAuthed, isLoading, profile, role } = useClientAuth();
+	const { activeUser, isAuthed, isLoading, profile, role } = useClientAuth({
+		includeProfile: true,
+	});
 	const normalize = (value?: string | null) =>
 		value?.trim().toLowerCase() || "";
 	const matchesAuthor =

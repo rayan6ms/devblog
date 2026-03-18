@@ -1,24 +1,30 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import AuthProvider from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import LocaleProvider from "@/components/LocaleProvider";
 import NavBar from "@/components/NavBar";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { auth } from "@/lib/auth";
 import { getRequestLocale } from "@/lib/request-locale";
 import {
 	getMetadataBase,
 	getSiteUrl,
-	serializeJsonLd,
 	SITE_DESCRIPTION,
 	SITE_NAME,
+	serializeJsonLd,
 } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"] });
+const somerton = localFont({
+	src: "./SomertonDense-Regular.otf",
+	variable: "--font-somerton",
+	display: "swap",
+});
 
 export const metadata: Metadata = {
 	metadataBase: getMetadataBase(),
@@ -70,14 +76,6 @@ export default async function RootLayout({
 	return (
 		<html lang={locale}>
 			<head>
-				<link
-					href="https://fonts.cdnfonts.com/css/somerton-dense"
-					rel="stylesheet"
-				/>
-				<link
-					href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
-					rel="stylesheet"
-				/>
 				<script
 					type="application/ld+json"
 					dangerouslySetInnerHTML={{
@@ -85,7 +83,7 @@ export default async function RootLayout({
 					}}
 				/>
 			</head>
-			<body className={inter.className}>
+			<body className={`${inter.className} ${somerton.variable}`}>
 				<LocaleProvider initialLocale={locale}>
 					<AuthProvider session={session}>
 						<Header />

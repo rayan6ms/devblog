@@ -1,12 +1,9 @@
 import "server-only";
 
 import type { Prisma } from "@prisma/client";
+import { cache } from "react";
 import prisma from "@/database/prisma";
-import {
-	DEFAULT_LOCALE,
-	type Locale,
-	resolveLocale,
-} from "@/lib/i18n";
+import { DEFAULT_LOCALE, type Locale, resolveLocale } from "@/lib/i18n";
 import {
 	FALLBACK_POST_IMAGE,
 	getPostSlug,
@@ -73,7 +70,9 @@ function getLocalizedPostSnapshot(
 			: buildPostDescription(post.content, post.description),
 		thumbnailAlt:
 			translation?.thumbnailAlt?.trim() || post.thumbnailAlt?.trim() || title,
-		locale: translation ? normalizePostLocale(translation.locale) : originalLocale,
+		locale: translation
+			? normalizePostLocale(translation.locale)
+			: originalLocale,
 		originalLocale,
 		isTranslated: Boolean(translation),
 	};
@@ -297,23 +296,32 @@ async function hydratePostReadingProgress(
 	});
 }
 
-async function getPublishedPostsWithAuthor(
-	locale?: Locale | null,
-): Promise<Array<PostWithAuthor | PostWithAuthorAndTranslations>> {
-	return prisma.post.findMany({
-		where: { status: "published" },
-		include: {
-			author: true,
-			translations: locale
-				? {
-						where: { locale },
-						take: 1,
-					}
-				: false,
-		},
-		orderBy: [{ postedAt: "desc" }, { createdAt: "desc" }],
-	});
-}
+const getPublishedPostsWithAuthor = cache(
+	async function getPublishedPostsWithAuthor(
+		locale?: Locale | null,
+	): Promise<Array<PostWithAuthor | PostWithAuthorAndTranslations>> {
+		return prisma.post.findMany({
+			where: { status: "published" },
+			include: {
+				author: true,
+				translations: locale
+					? {
+							where: { locale },
+							take: 1,
+						}
+					: false,
+			},
+			orderBy: [{ postedAt: "desc" }, { createdAt: "desc" }],
+		});
+	},
+);
+
+export const getPublishedPostList = cache(
+	async (locale?: Locale | null): Promise<PostListItem[]> => {
+		const posts = await getPublishedPostsWithAuthor(locale);
+		return posts.map((post) => mapPostForList(post, locale));
+	},
+);
 
 function sortRecentPosts(posts: PostListItem[]) {
 	return [...posts].sort((a, b) => b.date.localeCompare(a.date));
@@ -438,9 +446,7 @@ export async function getPostCatalog(options?: {
 	userId?: string | null;
 	locale?: Locale | null;
 }): Promise<PostCatalogResponse> {
-	const posts = (await getPublishedPostsWithAuthor(options?.locale)).map((post) =>
-		mapPostForList(post, options?.locale),
-	);
+	const posts = await getPublishedPostList(options?.locale);
 	const query = options?.query?.trim();
 	const tagSlugs = options?.tagSlugs ?? [];
 
@@ -651,10 +657,10 @@ export async function getRecommendedPostCatalog(options?: {
 	};
 }
 
-export async function getPostTagCatalog(): Promise<PostTagCatalogResponse> {
-	const posts = (await getPublishedPostsWithAuthor()).map((post) =>
-		mapPostForList(post),
-	);
+export async function getPostTagCatalog(
+	locale?: Locale | null,
+): Promise<PostTagCatalogResponse> {
+	const posts = await getPublishedPostList(locale);
 	const counts = new Map<string, number>();
 
 	for (const post of posts) {

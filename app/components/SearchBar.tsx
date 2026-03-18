@@ -6,6 +6,9 @@ import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getSearchSuggestions, type IPost } from "@/lib/posts-client";
 import { useI18n } from "./LocaleProvider";
 
+const SEARCH_DEBOUNCE_MS = 250;
+const suggestionCache = new Map<string, IPost[]>();
+
 export default function SearchBar({
 	tabIndex,
 	reserveSpace = false,
@@ -27,28 +30,38 @@ export default function SearchBar({
 	const { messages } = useI18n();
 	const { push } = useLocaleNavigation();
 
+	const trimmedQuery = query.trim();
+	const shouldShowSuggestions = trimmedQuery.length >= 2;
+	const cacheKey = shouldShowSuggestions ? trimmedQuery.toLowerCase() : "";
+	const cachedSuggestions = cacheKey ? suggestionCache.get(cacheKey) : undefined;
+	const visibleSuggestions = shouldShowSuggestions
+		? (cachedSuggestions ?? suggestions)
+		: [];
+	const searchExpanded = forceExpanded || isSearchOpen;
+
+	const clearSuggestions = useCallback(() => {
+		setSuggestions([]);
+		setActiveIndex(-1);
+	}, []);
+
 	const goToResults = useCallback(
 		(nextQuery: string) => {
 			const queryString = encodeURIComponent(nextQuery.trim());
 			if (!queryString) return;
-			setSuggestions([]);
-			setActiveIndex(-1);
+			clearSuggestions();
 			setIsSearchOpen(false);
 			push(`/search?q=${queryString}&page=1`);
 		},
-		[push],
+		[clearSuggestions, push],
 	);
 
 	const closeSearch = useCallback(() => {
-		setSuggestions([]);
-		setActiveIndex(-1);
+		clearSuggestions();
 		if (forceExpanded) {
 			return;
 		}
 		setIsSearchOpen(false);
-	}, [forceExpanded]);
-
-	const searchExpanded = forceExpanded || isSearchOpen;
+	}, [clearSuggestions, forceExpanded]);
 
 	useEffect(() => {
 		if (searchExpanded) {
@@ -57,31 +70,46 @@ export default function SearchBar({
 	}, [searchExpanded]);
 
 	useEffect(() => {
-		const handle = setTimeout(async () => {
-			const trimmedQuery = query.trim();
+		if (!shouldShowSuggestions || cachedSuggestions) {
+			return;
+		}
 
-			if (trimmedQuery.length >= 2) {
-				const result = await getSearchSuggestions(trimmedQuery);
+		const controller = new AbortController();
+		const handle = setTimeout(async () => {
+			try {
+				const result = await getSearchSuggestions(
+					trimmedQuery,
+					controller.signal,
+				);
+				suggestionCache.set(cacheKey, result);
 				setSuggestions(result);
 				setActiveIndex(-1);
-				return;
+			} catch (error) {
+				if (!(error instanceof Error) || error.name !== "AbortError") {
+					clearSuggestions();
+				}
 			}
+		}, SEARCH_DEBOUNCE_MS);
 
-			setSuggestions([]);
-			setActiveIndex(-1);
-		}, 180);
-
-		return () => clearTimeout(handle);
-	}, [query]);
+		return () => {
+			controller.abort();
+			clearTimeout(handle);
+		};
+	}, [
+		cacheKey,
+		cachedSuggestions,
+		clearSuggestions,
+		shouldShowSuggestions,
+		trimmedQuery,
+	]);
 
 	useEffect(() => {
 		const handleMouseDown = (event: MouseEvent) => {
 			if (!containerRef.current?.contains(event.target as Node)) {
-				if (!query.trim()) {
+				if (!trimmedQuery) {
 					closeSearch();
 				} else {
-					setSuggestions([]);
-					setActiveIndex(-1);
+					clearSuggestions();
 				}
 			}
 		};
@@ -89,26 +117,25 @@ export default function SearchBar({
 		document.addEventListener("mousedown", handleMouseDown);
 
 		return () => document.removeEventListener("mousedown", handleMouseDown);
-	}, [closeSearch, query]);
+	}, [clearSuggestions, closeSearch, trimmedQuery]);
 
 	const handleSearch = (event: React.FormEvent) => {
 		event.preventDefault();
-		if (query.trim()) goToResults(query);
+		if (trimmedQuery) goToResults(query);
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === "Escape") {
-			if (query.trim()) {
-				setSuggestions([]);
-				setActiveIndex(-1);
+			if (trimmedQuery) {
+				clearSuggestions();
 			} else {
 				closeSearch();
 			}
 			return;
 		}
 
-		if (suggestions.length === 0) {
-			if (event.key === "Enter" && query.trim()) {
+		if (visibleSuggestions.length === 0) {
+			if (event.key === "Enter" && trimmedQuery) {
 				event.preventDefault();
 				goToResults(query);
 			}
@@ -117,15 +144,16 @@ export default function SearchBar({
 
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
-			setActiveIndex((index) => (index + 1) % suggestions.length);
+			setActiveIndex((index) => (index + 1) % visibleSuggestions.length);
 		} else if (event.key === "ArrowUp") {
 			event.preventDefault();
 			setActiveIndex(
-				(index) => (index - 1 + suggestions.length) % suggestions.length,
+				(index) => (index - 1 + visibleSuggestions.length) % visibleSuggestions.length,
 			);
 		} else if (event.key === "Enter") {
 			event.preventDefault();
-			const chosen = activeIndex >= 0 ? suggestions[activeIndex].title : query;
+			const chosen =
+				activeIndex >= 0 ? visibleSuggestions[activeIndex].title : query;
 			goToResults(chosen);
 		}
 	};
@@ -140,7 +168,7 @@ export default function SearchBar({
 			return;
 		}
 
-		if (query.trim()) {
+		if (trimmedQuery) {
 			goToResults(query);
 			return;
 		}
@@ -152,16 +180,14 @@ export default function SearchBar({
 		<form
 			ref={containerRef}
 			onSubmit={handleSearch}
-			className={`relative ml-auto h-[50px] ${
-				reserveSpace
+			className={`relative ml-auto h-[50px] ${reserveSpace
 					? `w-full min-w-[50px] ${widthClass || "max-w-[340px]"}`
 					: "w-full"
-			}`}
+				}`}
 		>
 			<div
-				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${
-					searchExpanded ? "w-full" : "w-[50px]"
-				}`}
+				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${searchExpanded ? "w-full" : "w-[50px]"
+					}`}
 			>
 				<div className="flex min-w-0 flex-1 items-center overflow-hidden">
 					<input
@@ -169,14 +195,21 @@ export default function SearchBar({
 						tabIndex={tabIndex}
 						type="text"
 						value={query}
-						onChange={(event) => setQuery(event.target.value)}
+						onChange={(event) => {
+							const nextQuery = event.target.value;
+							setQuery(nextQuery);
+							setActiveIndex(-1);
+
+							if (nextQuery.trim().length < 2) {
+								setSuggestions([]);
+							}
+						}}
 						onKeyDown={handleKeyDown}
 						placeholder={messages.searchBar.placeholder}
-						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${
-							searchExpanded
+						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${searchExpanded
 								? "pl-4 pr-3 opacity-100"
 								: "pointer-events-none w-0 px-0 opacity-0"
-						}`}
+							}`}
 						aria-label={messages.searchBar.ariaLabel}
 					/>
 				</div>
@@ -197,12 +230,12 @@ export default function SearchBar({
 				</div>
 			</div>
 
-			{suggestions.length > 0 ? (
+			{visibleSuggestions.length > 0 ? (
 				<ul
 					className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] w-full overflow-hidden rounded-[22px] border border-zinc-700/60 bg-lessDarkBg/98 shadow-2xl shadow-zinc-950/40"
 					aria-label={messages.searchBar.searchSuggestions}
 				>
-					{suggestions.map((suggestion, index) => {
+					{visibleSuggestions.map((suggestion, index) => {
 						const isActive = index === activeIndex;
 
 						return (
@@ -214,9 +247,8 @@ export default function SearchBar({
 										setQuery(suggestion.title);
 										goToResults(suggestion.title);
 									}}
-									className={`w-full px-4 py-3 text-left text-sm leading-6 text-zinc-200 transition-colors ${
-										isActive ? "bg-purpleContrast/18" : "hover:bg-greyBg/80"
-									}`}
+									className={`w-full px-4 py-3 text-left text-sm leading-6 text-zinc-200 transition-colors ${isActive ? "bg-purpleContrast/18" : "hover:bg-greyBg/80"
+										}`}
 								>
 									{suggestion.title}
 								</button>

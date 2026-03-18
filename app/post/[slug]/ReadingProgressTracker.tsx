@@ -53,6 +53,7 @@ export default function ReadingProgressTracker({ postId }: { postId: string }) {
 	const maxProgressRef = useRef(0);
 	const lastSyncedRef = useRef<number | null>(null);
 	const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const frameRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		if (status !== "authenticated" || !session?.user?.id) {
@@ -134,8 +135,23 @@ export default function ReadingProgressTracker({ postId }: { postId: string }) {
 		};
 
 		const flushProgress = () => {
+			if (frameRef.current) {
+				cancelAnimationFrame(frameRef.current);
+				frameRef.current = null;
+			}
 			clearPendingTimer();
 			syncProgress(maxProgressRef.current, true);
+		};
+
+		const scheduleProgressUpdate = () => {
+			if (frameRef.current) {
+				return;
+			}
+
+			frameRef.current = window.requestAnimationFrame(() => {
+				frameRef.current = null;
+				updateProgress();
+			});
 		};
 
 		const handleVisibilityChange = () => {
@@ -145,12 +161,14 @@ export default function ReadingProgressTracker({ postId }: { postId: string }) {
 		};
 
 		updateProgress();
-		window.addEventListener("scroll", updateProgress, { passive: true });
+		window.addEventListener("scroll", scheduleProgressUpdate, {
+			passive: true,
+		});
 		window.addEventListener("pagehide", flushProgress);
 		document.addEventListener("visibilitychange", handleVisibilityChange);
 
 		return () => {
-			window.removeEventListener("scroll", updateProgress);
+			window.removeEventListener("scroll", scheduleProgressUpdate);
 			window.removeEventListener("pagehide", flushProgress);
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 			flushProgress();

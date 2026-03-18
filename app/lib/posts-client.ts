@@ -14,8 +14,8 @@ export type TagCatalog = PostTagCatalogResponse;
 
 export { FALLBACK_POST_IMAGE, getAuthorHref, getPostHref, getPostSlug };
 
-async function fetchJson<T>(input: string): Promise<T> {
-	const response = await fetch(input, { cache: "no-store" });
+async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
+	const response = await fetch(input, { cache: "no-store", ...init });
 	if (!response.ok) {
 		throw new Error(`Request failed: ${response.status}`);
 	}
@@ -49,6 +49,7 @@ async function fetchCatalog(params?: {
 	limit?: number;
 	query?: string;
 	tags?: string[];
+	signal?: AbortSignal;
 }): Promise<PostCatalogResponse> {
 	const searchParams = new URLSearchParams();
 
@@ -70,7 +71,9 @@ async function fetchCatalog(params?: {
 
 	const suffix = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
 	try {
-		const data = await fetchJson<PostCatalogResponse>(`/api/post${suffix}`);
+		const data = await fetchJson<PostCatalogResponse>(`/api/post${suffix}`, {
+			signal: params?.signal,
+		});
 
 		return {
 			...data,
@@ -81,12 +84,15 @@ async function fetchCatalog(params?: {
 	}
 }
 
-export async function getSearchSuggestions(query: string) {
+export async function getSearchSuggestions(
+	query: string,
+	signal?: AbortSignal,
+) {
 	if (!query.trim()) {
 		return [];
 	}
 
-	const result = await fetchCatalog({ query, limit: 5 });
+	const result = await fetchCatalog({ query, limit: 5, signal });
 	return result.posts;
 }
 
