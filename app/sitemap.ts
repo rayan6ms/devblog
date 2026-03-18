@@ -121,10 +121,7 @@ async function getPostEntries(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "weekly",
 			priority: 0.92,
 			alternates: {
-				languages: buildAbsoluteLanguageAlternates(
-					`/post/${post.slug}`,
-					locales,
-				),
+				languages: buildAbsoluteLanguageAlternates(`/post/${post.slug}`, locales),
 			},
 		};
 	});
@@ -169,23 +166,27 @@ async function getProfileEntries(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "weekly",
 			priority: 0.55,
 			alternates: {
-				languages: buildAbsoluteLanguageAlternates(
-					`/profile/${profileKey}`,
-					LOCALES,
-				),
+				languages: buildAbsoluteLanguageAlternates(`/profile/${profileKey}`, LOCALES),
 			},
 		};
 	});
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-	const [staticEntries, postEntries, profileEntries] = await Promise.all([
-		getStaticEntries(),
-		getPostEntries(),
-		getProfileEntries(),
-	]);
+	const staticEntries = await getStaticEntries();
 
-	return [...staticEntries, ...postEntries, ...profileEntries].sort((a, b) =>
-		a.url.localeCompare(b.url),
-	);
+	try {
+		const [postEntries, profileEntries] = await Promise.all([
+			getPostEntries(),
+			getProfileEntries(),
+		]);
+
+		return [...staticEntries, ...postEntries, ...profileEntries].sort((a, b) =>
+			a.url.localeCompare(b.url),
+		);
+	} catch (error) {
+		console.error("Failed to generate dynamic sitemap entries:", error);
+
+		return [...staticEntries].sort((a, b) => a.url.localeCompare(b.url));
+	}
 }
