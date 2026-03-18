@@ -1,11 +1,16 @@
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import { auth } from "@/lib/auth";
+import { DEFAULT_LOCALE, resolveLocale } from "@/lib/i18n";
 import { getMessages } from "@/lib/i18n";
 import { canEditPost } from "@/lib/post-shared";
-import { getPostBySlugWithAuthor, getPostEditorMainTags } from "@/lib/posts";
+import {
+	getPostBySlugWithTranslations,
+	getPostEditorMainTags,
+} from "@/lib/posts";
 import { getRequestLocale } from "@/lib/request-locale";
 import Form from "@/new_post/Form";
+import PostTranslationForm from "../PostTranslationForm";
 
 type EditPostPageProps = PageProps<"/post/[slug]/edit">;
 
@@ -14,7 +19,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 	const messages = getMessages(locale);
 	const { slug } = await params;
 	const session = await auth();
-	const post = await getPostBySlugWithAuthor(slug);
+	const post = await getPostBySlugWithTranslations(slug);
 
 	if (!post) {
 		notFound();
@@ -49,6 +54,23 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 		post.author.username ||
 		post.author.slug ||
 		messages.newPost.defaultAuthor;
+	const translations = post.translations.flatMap((translation) => {
+		const translationLocale = resolveLocale(translation.locale);
+		if (!translationLocale) {
+			return [];
+		}
+
+		return [
+			{
+				locale: translationLocale,
+				title: translation.title,
+				content: translation.content,
+				description: translation.description || "",
+				thumbnailAlt: translation.thumbnailAlt || "",
+				updatedAt: translation.updatedAt.toISOString(),
+			},
+		];
+	});
 
 	return (
 		<>
@@ -72,6 +94,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 							mode="edit"
 							existingSlug={slug}
 							initialValues={{
+								locale: resolveLocale(post.locale) || DEFAULT_LOCALE,
 								title: post.title,
 								slug: post.slug,
 								content: post.content,
@@ -85,6 +108,18 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 							}}
 						/>
 					</section>
+
+					<PostTranslationForm
+						postSlug={slug}
+						originalLocale={resolveLocale(post.locale) || DEFAULT_LOCALE}
+						originalPost={{
+							title: post.title,
+							content: post.content,
+							description: post.description || "",
+							thumbnailAlt: post.thumbnailAlt || post.title,
+						}}
+						translations={translations}
+					/>
 				</div>
 			</main>
 			<Footer />

@@ -21,6 +21,9 @@ export type PostListItem = {
 	slug: string;
 	image: string;
 	imageAlt: string;
+	locale: string;
+	originalLocale: string;
+	isTranslated: boolean;
 	mainTag: string;
 	tags: string[];
 	title: string;

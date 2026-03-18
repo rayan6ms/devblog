@@ -3,6 +3,11 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/database/prisma";
 import {
+	DEFAULT_LOCALE,
+	type Locale,
+	resolveLocale,
+} from "@/lib/i18n";
+import {
 	FALLBACK_POST_IMAGE,
 	getPostSlug,
 	type PostCatalogResponse,
@@ -25,12 +30,54 @@ export type PostWithAuthor = Prisma.PostGetPayload<{
 	include: { author: true };
 }>;
 
+export type PostWithAuthorAndTranslations = Prisma.PostGetPayload<{
+	include: { author: true; translations: true };
+}>;
+
 type RecommendationSignals = {
 	authorWeights: Map<string, number>;
 	tagWeights: Map<string, number>;
 	excludedIds: Set<string>;
 	hasSignals: boolean;
 };
+
+function normalizePostLocale(locale?: string | null): Locale {
+	return resolveLocale(locale) || DEFAULT_LOCALE;
+}
+
+function getPostTranslations(
+	post: PostWithAuthor | PostWithAuthorAndTranslations,
+) {
+	return "translations" in post ? post.translations : [];
+}
+
+function getLocalizedPostSnapshot(
+	post: PostWithAuthor | PostWithAuthorAndTranslations,
+	locale?: Locale | null,
+) {
+	const originalLocale = normalizePostLocale(post.locale);
+	const translation =
+		locale && locale !== originalLocale
+			? getPostTranslations(post).find(
+					(entry) => normalizePostLocale(entry.locale) === locale,
+				)
+			: null;
+	const content = translation?.content?.trim() || post.content;
+	const title = translation?.title?.trim() || post.title;
+
+	return {
+		title,
+		content,
+		description: translation
+			? buildPostDescription(content, translation.description)
+			: buildPostDescription(post.content, post.description),
+		thumbnailAlt:
+			translation?.thumbnailAlt?.trim() || post.thumbnailAlt?.trim() || title,
+		locale: translation ? normalizePostLocale(translation.locale) : originalLocale,
+		originalLocale,
+		isTranslated: Boolean(translation),
+	};
+}
 
 export async function ensureUniquePostSlug(
 	value: string,
@@ -58,19 +105,26 @@ export async function ensureUniquePostSlug(
 	}
 }
 
-export function mapPostForPage(post: PostWithAuthor): PostPageData {
+export function mapPostForPage(
+	post: PostWithAuthor | PostWithAuthorAndTranslations,
+	locale?: Locale | null,
+): PostPageData {
 	const authorName = resolveAuthorName(post.author);
+	const localized = getLocalizedPostSnapshot(post, locale);
 
 	return {
 		id: post.id,
-		title: post.title,
+		title: localized.title,
 		slug: post.slug,
-		content: post.content,
+		content: localized.content,
+		locale: localized.locale,
+		originalLocale: localized.originalLocale,
+		isTranslated: localized.isTranslated,
 		thumbnail: post.thumbnail,
-		thumbnailAlt: post.thumbnailAlt?.trim() || post.title,
+		thumbnailAlt: localized.thumbnailAlt,
 		mainTag: post.mainTag,
 		tags: post.tags,
-		description: buildPostDescription(post.content, post.description),
+		description: localized.description,
 		views: post.views,
 		bookmarks: post.bookmarks,
 		edited: post.edited,
@@ -105,19 +159,61 @@ export async function getPostBySlugWithAuthor(slug: string) {
 	});
 }
 
-export async function getRelatedPosts(post: PostWithAuthor, limit = 3) {
+export async function getPostBySlugWithTranslations(slug: string) {
+	return prisma.post.findUnique({
+		where: { slug },
+		include: {
+			author: true,
+			translations: {
+				orderBy: { locale: "asc" },
+			},
+		},
+	});
+}
+
+export async function getLocalizedPostBySlugWithAuthor(
+	slug: string,
+	locale?: Locale | null,
+) {
+	return prisma.post.findUnique({
+		where: { slug },
+		include: {
+			author: true,
+			translations: locale
+				? {
+						where: { locale },
+						take: 1,
+					}
+				: false,
+		},
+	});
+}
+
+export async function getRelatedPosts(
+	post: PostWithAuthor,
+	locale?: Locale | null,
+	limit = 3,
+) {
 	const related = await prisma.post.findMany({
 		where: {
 			id: { not: post.id },
 			status: "published",
 			OR: [{ mainTag: post.mainTag }, { tags: { hasSome: post.tags } }],
 		},
-		include: { author: true },
+		include: {
+			author: true,
+			translations: locale
+				? {
+						where: { locale },
+						take: 1,
+					}
+				: false,
+		},
 		orderBy: [{ views: "desc" }, { postedAt: "desc" }],
 		take: limit,
 	});
 
-	return related.map(mapPostForPage);
+	return related.map((entry) => mapPostForPage(entry, locale));
 }
 
 export function emptyAuthorSocialLinks() {
@@ -133,15 +229,23 @@ function resolveAuthorName(author: PostWithAuthor["author"]) {
 	);
 }
 
-function mapPostForList(post: PostWithAuthor): PostListItem {
+function mapPostForList(
+	post: PostWithAuthor | PostWithAuthorAndTranslations,
+	locale?: Locale | null,
+): PostListItem {
+	const localized = getLocalizedPostSnapshot(post, locale);
+
 	return {
 		id: post.id,
 		slug: post.slug,
 		image: post.thumbnail?.trim() || FALLBACK_POST_IMAGE,
-		imageAlt: post.thumbnailAlt?.trim() || post.title,
+		imageAlt: localized.thumbnailAlt,
+		locale: localized.locale,
+		originalLocale: localized.originalLocale,
+		isTranslated: localized.isTranslated,
 		mainTag: post.mainTag,
 		tags: post.tags,
-		title: post.title,
+		title: localized.title,
 		author: resolveAuthorName(post.author),
 		authorSlug: post.author.slug?.trim() || "",
 		date: post.postedAt.toISOString(),
@@ -149,7 +253,7 @@ function mapPostForList(post: PostWithAuthor): PostListItem {
 		bookmarks: post.bookmarks,
 		hasStartedReading: false,
 		percentRead: 0,
-		description: buildPostDescription(post.content, post.description),
+		description: localized.description,
 	};
 }
 
@@ -193,10 +297,20 @@ async function hydratePostReadingProgress(
 	});
 }
 
-async function getPublishedPostsWithAuthor(): Promise<PostWithAuthor[]> {
+async function getPublishedPostsWithAuthor(
+	locale?: Locale | null,
+): Promise<Array<PostWithAuthor | PostWithAuthorAndTranslations>> {
 	return prisma.post.findMany({
 		where: { status: "published" },
-		include: { author: true },
+		include: {
+			author: true,
+			translations: locale
+				? {
+						where: { locale },
+						take: 1,
+					}
+				: false,
+		},
 		orderBy: [{ postedAt: "desc" }, { createdAt: "desc" }],
 	});
 }
@@ -322,8 +436,11 @@ export async function getPostCatalog(options?: {
 	tagSlugs?: string[];
 	sort?: "recent" | "trending";
 	userId?: string | null;
+	locale?: Locale | null;
 }): Promise<PostCatalogResponse> {
-	const posts = (await getPublishedPostsWithAuthor()).map(mapPostForList);
+	const posts = (await getPublishedPostsWithAuthor(options?.locale)).map((post) =>
+		mapPostForList(post, options?.locale),
+	);
 	const query = options?.query?.trim();
 	const tagSlugs = options?.tagSlugs ?? [];
 
@@ -460,7 +577,7 @@ async function getRecommendationSignals(
 }
 
 function scoreRecommendedPost(
-	post: PostWithAuthor,
+	post: PostWithAuthor | PostWithAuthorAndTranslations,
 	signals: RecommendationSignals,
 ) {
 	const ageInDays = Math.max(
@@ -480,11 +597,15 @@ function scoreRecommendedPost(
 export async function getRecommendedPostCatalog(options?: {
 	userId?: string | null;
 	limit?: number;
+	locale?: Locale | null;
 }): Promise<PostCatalogResponse> {
 	const limit = options?.limit ?? 10;
-	const allPosts = await getPublishedPostsWithAuthor();
+	const allPosts = await getPublishedPostsWithAuthor(options?.locale);
 	const fallbackPosts = await hydratePostReadingProgress(
-		sortFallbackRecommendedPosts(allPosts.map(mapPostForList), limit),
+		sortFallbackRecommendedPosts(
+			allPosts.map((post) => mapPostForList(post, options?.locale)),
+			limit,
+		),
 		options?.userId,
 	);
 
@@ -516,7 +637,7 @@ export async function getRecommendedPostCatalog(options?: {
 				b.post.views - a.post.views ||
 				b.post.postedAt.getTime() - a.post.postedAt.getTime(),
 		)
-		.map((entry) => mapPostForList(entry.post));
+		.map((entry) => mapPostForList(entry.post, options?.locale));
 
 	const posts = mergeUniquePostLists([scoredPosts, fallbackPosts], limit);
 	const hydratedPosts = await hydratePostReadingProgress(
@@ -531,7 +652,9 @@ export async function getRecommendedPostCatalog(options?: {
 }
 
 export async function getPostTagCatalog(): Promise<PostTagCatalogResponse> {
-	const posts = (await getPublishedPostsWithAuthor()).map(mapPostForList);
+	const posts = (await getPublishedPostsWithAuthor()).map((post) =>
+		mapPostForList(post),
+	);
 	const counts = new Map<string, number>();
 
 	for (const post of posts) {

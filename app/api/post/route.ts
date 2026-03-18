@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/database/prisma";
 import { auth } from "@/lib/auth";
+import { getRequestLocale } from "@/lib/request-locale";
 import { buildPostDescription, canWriteRole } from "@/lib/post-shared";
 import {
 	ensureUniquePostSlug,
@@ -27,6 +28,7 @@ function parsePositiveInt(
 
 export async function GET(request: Request) {
 	const session = await auth();
+	const locale = await getRequestLocale();
 	const { searchParams } = new URL(request.url);
 	const sort = searchParams.get("sort");
 	const query = searchParams.get("q")?.trim() || undefined;
@@ -42,6 +44,7 @@ export async function GET(request: Request) {
 			const recommendations = await getRecommendedPostCatalog({
 				userId: session?.user?.id ?? null,
 				limit,
+				locale,
 			});
 
 			return NextResponse.json(recommendations);
@@ -54,6 +57,7 @@ export async function GET(request: Request) {
 			tagSlugs: tags,
 			sort: sort === "trending" ? "trending" : "recent",
 			userId: session?.user?.id ?? null,
+			locale,
 		});
 
 		return NextResponse.json(posts);
@@ -95,6 +99,7 @@ export async function POST(req: Request) {
 		);
 		const post = await prisma.post.create({
 			data: {
+				locale: parsed.data.locale,
 				title: parsed.data.title.trim(),
 				slug,
 				content: parsed.data.content.trim(),

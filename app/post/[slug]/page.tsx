@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { getMessages } from "@/lib/i18n";
 import { canViewPost, slugifyPostValue } from "@/lib/post-shared";
 import {
-	getPostBySlugWithAuthor,
+	getLocalizedPostBySlugWithAuthor,
 	getRelatedPosts,
 	mapPostForPage,
 } from "@/lib/posts";
@@ -24,14 +24,14 @@ export default async function Page({ params }: PostPageProps) {
 	const locale = await getRequestLocale();
 	const messages = getMessages(locale);
 	const session = await auth();
-	const postRecord = await getPostBySlugWithAuthor(slug);
+	const postRecord = await getLocalizedPostBySlugWithAuthor(slug, locale);
 
 	if (!postRecord || !canViewPost(postRecord, session?.user)) {
 		notFound();
 	}
 
-	const post = mapPostForPage(postRecord);
-	const relatedPosts = await getRelatedPosts(postRecord, 3);
+	const post = mapPostForPage(postRecord, locale);
+	const relatedPosts = await getRelatedPosts(postRecord, locale, 3);
 
 	return (
 		<>

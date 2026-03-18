@@ -1,3 +1,4 @@
+import { LOCALES } from "@/lib/i18n";
 import { z } from "zod";
 
 export const MAX_POST_TITLE = 120;
@@ -10,6 +11,7 @@ export const MAX_POST_THUMBNAIL_ALT = 140;
 const MAX_COMMENT_LENGTH = 2000;
 
 export type PostValidationMessages = {
+	localeRequired: string;
 	imageRequired: string;
 	imageInvalid: string;
 	tagEmpty: string;
@@ -29,6 +31,7 @@ export type PostValidationMessages = {
 };
 
 const defaultPostValidationMessages: PostValidationMessages = {
+	localeRequired: "Post language is required.",
 	imageRequired: "Image is required.",
 	imageInvalid: "Image must be an uploaded file path or a valid URL.",
 	tagEmpty: "Tags cannot be empty.",
@@ -81,6 +84,9 @@ export function buildPostSchema(
 		.max(MAX_POST_TAG_LENGTH, messages.tagMaxLength(MAX_POST_TAG_LENGTH));
 
 	return z.object({
+		locale: z.enum(LOCALES, {
+			error: () => messages.localeRequired,
+		}),
 		title: z
 			.string()
 			.trim()
@@ -129,6 +135,40 @@ export function buildPostSchema(
 }
 
 export const createPostSchema = buildPostSchema();
+
+export function buildPostTranslationSchema(
+	messages: PostValidationMessages = defaultPostValidationMessages,
+) {
+	return z.object({
+		title: z
+			.string()
+			.trim()
+			.min(3, messages.titleMin)
+			.max(MAX_POST_TITLE, messages.titleMax(MAX_POST_TITLE)),
+		content: z
+			.string()
+			.trim()
+			.min(30, messages.contentMin)
+			.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT)),
+		description: z
+			.string()
+			.trim()
+			.max(MAX_POST_DESCRIPTION, messages.descriptionMax(MAX_POST_DESCRIPTION))
+			.optional()
+			.default(""),
+		thumbnailAlt: z
+			.string()
+			.trim()
+			.max(
+				MAX_POST_THUMBNAIL_ALT,
+				messages.thumbnailAltMax(MAX_POST_THUMBNAIL_ALT),
+			)
+			.optional()
+			.default(""),
+	});
+}
+
+export const createPostTranslationSchema = buildPostTranslationSchema();
 
 export const createFeedbackSchema = z.object({
 	userId: nonEmptyString("User ID is required."),

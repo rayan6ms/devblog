@@ -57,6 +57,7 @@ model User {
 
 model Post {
   id           String     @id @default(cuid())
+  locale       String     @default("en")
   title        String
   slug         String     @unique
   content      String
@@ -83,9 +84,26 @@ model Post {
   bookmarkedBy UserBookmark[]
   feedback     Feedback[]
   progress     Progress[]
+  translations PostTranslation[]
 
   @@index([status, createdAt])
   @@index([status, postedAt, views])
+}
+
+model PostTranslation {
+  id           String   @id @default(cuid())
+  postId       String
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  locale       String
+  title        String
+  content      String
+  description  String?
+  thumbnailAlt String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([postId, locale])
+  @@index([locale])
 }
 
 model Comment {

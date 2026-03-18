@@ -16,8 +16,14 @@ import {
 } from "react-icons/fa6";
 import { useI18n } from "@/components/LocaleProvider";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import type { Locale } from "@/lib/i18n";
 import type { ProfileUser } from "@/profile/types";
 import SocialLinks from "./SocialLinks";
+
+type RoleLabelMap = Record<
+	"member" | "volunteer" | "writer" | "vip" | "admin" | "owner",
+	string
+>;
 
 const roleStyles: Record<string, { color: string; icon: IconType }> = {
 	member: { color: "bg-emerald-500/90", icon: FaUser },
@@ -28,15 +34,17 @@ const roleStyles: Record<string, { color: string; icon: IconType }> = {
 	owner: { color: "bg-indigo-600", icon: FaBolt },
 };
 
-const roleLabels = {
-	en: {
-		member: "Member",
-		volunteer: "Volunteer",
-		writer: "Writer",
-		vip: "VIP",
-		admin: "Admin",
-		owner: "Owner",
-	},
+const defaultRoleLabels: RoleLabelMap = {
+	member: "Member",
+	volunteer: "Volunteer",
+	writer: "Writer",
+	vip: "VIP",
+	admin: "Admin",
+	owner: "Owner",
+};
+
+const roleLabels: Record<Locale, RoleLabelMap> = {
+	en: defaultRoleLabels,
 	"pt-BR": {
 		member: "Membro",
 		volunteer: "Voluntário",
@@ -53,7 +61,11 @@ const roleLabels = {
 		admin: "Admin",
 		owner: "Propietario",
 	},
-} as const;
+	de: defaultRoleLabels,
+	ru: defaultRoleLabels,
+	fr: defaultRoleLabels,
+	ja: defaultRoleLabels,
+};
 
 export default function Header({
 	user,
@@ -66,9 +78,9 @@ export default function Header({
 	const { localizeHref } = useLocaleNavigation();
 	const role = (user.role || "member").toLowerCase();
 	const { color, icon: RoleIcon } = roleStyles[role] || roleStyles.member;
+	const localizedRoleLabels = roleLabels[locale] || roleLabels.en;
 	const roleLabel =
-		roleLabels[locale][role as keyof (typeof roleLabels)[typeof locale]] ||
-		user.role;
+		localizedRoleLabels[role as keyof typeof defaultRoleLabels] || user.role;
 
 	return (
 		<div className="relative overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">

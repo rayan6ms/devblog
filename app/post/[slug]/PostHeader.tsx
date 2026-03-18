@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { FaBookmark, FaClock, FaEye } from "react-icons/fa6";
 import LocalizedLink from "@/components/LocalizedLink";
-import { getIntlLocale, getMessages } from "@/lib/i18n";
+import { getIntlLocale, getMessages, getLocaleLabel } from "@/lib/i18n";
 import {
 	getReadingTimeMinutes,
 	type PostPageData,
@@ -74,6 +74,16 @@ export default async function PostHeader({
 							<span className="rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-400">
 								{statusLabel}
 							</span>
+							{post.isTranslated ? (
+								<span
+									className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em] text-emerald-200"
+									title={messages.post.translationFromLanguage(
+										getLocaleLabel(post.originalLocale),
+									)}
+								>
+									{messages.post.translatedToCurrentLanguage}
+								</span>
+							) : null}
 						</div>
 
 						{editAction ? <div className="shrink-0">{editAction}</div> : null}

@@ -18,6 +18,7 @@ import {
 import type { z } from "zod";
 import { useI18n } from "@/components/LocaleProvider";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { localeOptions } from "@/lib/i18n";
 import {
 	getReadingTimeMinutes,
 	slugifyPostValue,
@@ -66,7 +67,7 @@ export default function Form({
 	initialValues,
 	existingSlug,
 }: FormProps) {
-	const { messages } = useI18n();
+	const { locale, messages } = useI18n();
 	const { push } = useLocaleNavigation();
 	const schema = useMemo(
 		() => buildPostSchema(messages.postValidation),
@@ -95,6 +96,7 @@ export default function Form({
 	} = useForm<PostFormData>({
 		resolver: zodResolver(schema),
 		defaultValues: {
+			locale: initialValues?.locale ?? locale,
 			title: initialValues?.title ?? "",
 			slug: initialValues?.slug ?? "",
 			content: initialValues?.content ?? "",
@@ -108,6 +110,7 @@ export default function Form({
 	});
 
 	const title = watch("title");
+	const postLocale = watch("locale");
 	const slug = watch("slug");
 	const description = watch("description") || "";
 	const content = watch("content") || "";
@@ -387,6 +390,33 @@ export default function Form({
 							</div>
 						</div>
 						<div className="grid gap-5">
+							<label className="block">
+								<div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
+									<FaLink className="text-xs text-zinc-500" />
+									<span>{messages.newPost.language}</span>
+								</div>
+								<select
+									{...register("locale")}
+									className="mt-2 h-12 w-full rounded-2xl border border-zinc-700/50 bg-darkBg/55 px-4 text-zinc-100 outline-none transition-colors focus:border-purpleContrast/45"
+								>
+									{localeOptions.map((option) => (
+										<option
+											key={option.value}
+											value={option.value}
+											className="bg-greyBg text-zinc-100"
+										>
+											{option.label}
+										</option>
+									))}
+								</select>
+								<p className="mt-2 text-sm text-zinc-500">
+									{messages.newPost.languageHelp}
+								</p>
+								<p className="mt-1 text-sm text-red-400">
+									{errors.locale?.message}
+								</p>
+							</label>
+
 							<label className="block">
 								<div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-300">
 									<FaPenNib className="text-xs text-zinc-500" />
@@ -738,6 +768,12 @@ export default function Form({
 							<p className="mt-2 capitalize">
 								{messages.newPost.currentTarget(statusDetails[status].label)}
 							</p>
+							<p className="mt-2">
+								{messages.newPost.currentLanguage(
+									localeOptions.find((option) => option.value === postLocale)
+										?.label || postLocale || "en",
+								)}
+							</p>
 						</div>
 					</section>
 
@@ -812,6 +848,8 @@ function translatePostFieldError(
 	switch (message) {
 		case "Image is required.":
 			return messages.postValidation.imageRequired;
+		case "Post language is required.":
+			return messages.postValidation.localeRequired;
 		case "Image must be an uploaded file path or a valid URL.":
 			return messages.postValidation.imageInvalid;
 		case "Tags cannot be empty.":

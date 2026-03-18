@@ -1,4 +1,5 @@
 import slugify from "slugify";
+import type { Locale } from "@/lib/i18n";
 import type { SocialLinks } from "@/lib/social-links";
 
 const GLOBAL_POST_ROLES = new Set(["admin", "owner"]);
@@ -22,6 +23,9 @@ export type PostPageData = {
 	title: string;
 	slug: string;
 	content: string;
+	locale: Locale;
+	originalLocale: Locale;
+	isTranslated: boolean;
 	thumbnail: string | null;
 	thumbnailAlt: string;
 	mainTag: string;

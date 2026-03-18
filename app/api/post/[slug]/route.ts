@@ -25,6 +25,7 @@ export async function GET(
 
 		return NextResponse.json({
 			id: post.id,
+			locale: post.locale,
 			title: post.title,
 			slug: post.slug,
 			content: post.content,
@@ -94,6 +95,28 @@ export async function PATCH(
 	}
 
 	try {
+		if (parsed.data.locale !== existing.locale) {
+			const conflictingTranslation = await prisma.postTranslation.findUnique({
+				where: {
+					postId_locale: {
+						postId: existing.id,
+						locale: parsed.data.locale,
+					},
+				},
+				select: { id: true },
+			});
+
+			if (conflictingTranslation) {
+				return NextResponse.json(
+					{
+						error:
+							"A translation already exists for the selected original language.",
+					},
+					{ status: 400 },
+				);
+			}
+		}
+
 		const nextSlug = await ensureUniquePostSlug(
 			parsed.data.slug || parsed.data.title,
 			existing.id,
@@ -105,6 +128,7 @@ export async function PATCH(
 		const post = await prisma.post.update({
 			where: { id: existing.id },
 			data: {
+				locale: parsed.data.locale,
 				title: parsed.data.title.trim(),
 				slug: nextSlug,
 				content: parsed.data.content.trim(),

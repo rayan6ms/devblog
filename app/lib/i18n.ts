@@ -27,6 +27,12 @@ export const localeOptions = [
 	{ shortLabel: "JA", value: "ja", label: "日本語" },
 ] as const;
 
+export function getLocaleLabel(locale: Locale) {
+	return (
+		localeOptions.find((option) => option.value === locale)?.label || locale
+	);
+}
+
 export function resolveLocale(value?: string | null): Locale | null {
 	if (!value) {
 		return null;
@@ -584,6 +590,9 @@ const dictionaries = {
 			role: "Role",
 			author: "Author",
 			defaultAuthor: "Author",
+			language: "Original language",
+			languageHelp:
+				"This is the language the post was first written in. Translations are attached separately on the edit page.",
 			mode: "Mode",
 			modeCreating: "Creating",
 			modeEditing: "Editing",
@@ -642,6 +651,7 @@ const dictionaries = {
 			tagCount: (count: number) =>
 				`${count} tag${count === 1 ? "" : "s"} attached`,
 			currentTarget: (status: string) => `Current target: ${status}`,
+			currentLanguage: (language: string) => `Original language: ${language}`,
 			publishEyebrow: "Publish",
 			publishTitle: "Choose the next step",
 			statusDraftLabel: "Save draft",
@@ -710,10 +720,37 @@ const dictionaries = {
 				`${count} ${count === 1 ? "image" : "images"} inserted into the markdown.`,
 			imageDefaultAlt: "Image",
 			imageUploadError: "Unable to upload image.",
+			translationEyebrow: "Translations",
+			translationTitle: "Add or update a localized version",
+			translationDescription:
+				"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
+			translationOriginalLanguage: "Original post language",
+			translationNoLocales:
+				"All supported site languages are already covered by the original post or the saved translations.",
+			translationLanguage: "Translation language",
+			translationLanguageHelp:
+				"Choose the site language that should receive this localized version.",
+			translationExisting: "Available translations",
+			translationNoneYet: "No translations saved yet.",
+			translationStatusExisting: "Editing saved translation",
+			translationStatusNew: "Creating new translation",
+			translationCopyFromOriginal: "Copy original text",
+			translationCopiedFromOriginal:
+				"Original post content copied into the translation editor.",
+			translationBodyDescription:
+				"Write the translated markdown that should replace the original body for this language.",
+			translationSave: "Save translation",
+			translationSaving: "Saving translation...",
+			translationSaveSuccess: "Translation saved.",
+			translationSaveError:
+				"Unable to save the translation right now. Please try again.",
+			translationMustDiffer:
+				"Choose a language different from the original post.",
 			progressAria: (progress: number, remaining: number) =>
 				`${progress}% progress, ${remaining} minutes remaining`,
 		},
 		postValidation: {
+			localeRequired: "Post language is required.",
 			imageRequired: "Image is required.",
 			imageInvalid: "Image must be an uploaded file path or a valid URL.",
 			tagEmpty: "Tags cannot be empty.",
@@ -741,6 +778,9 @@ const dictionaries = {
 			statusPublished: "Published",
 			statusPendingReview: "Pending review",
 			statusDraft: "Draft",
+			translatedToCurrentLanguage: "Translated to your current language",
+			translationFromLanguage: (language: string) =>
+				`Originally written in ${language}`,
 			writtenBy: "Written by",
 			editPost: "Edit post",
 			edit: "Edit",
@@ -1289,6 +1329,9 @@ const dictionaries = {
 			role: "Função",
 			author: "Autor",
 			defaultAuthor: "Autor",
+			language: "Idioma original",
+			languageHelp:
+				"Este é o idioma em que o post foi escrito primeiro. As traduções são anexadas separadamente na página de edição.",
 			mode: "Modo",
 			modeCreating: "Criando",
 			modeEditing: "Editando",
@@ -1347,6 +1390,7 @@ const dictionaries = {
 			tagCount: (count: number) =>
 				`${count} tag${count === 1 ? "" : "s"} anexada${count === 1 ? "" : "s"}`,
 			currentTarget: (status: string) => `Destino atual: ${status}`,
+			currentLanguage: (language: string) => `Idioma original: ${language}`,
 			publishEyebrow: "Publicar",
 			publishTitle: "Escolha o próximo passo",
 			statusDraftLabel: "Salvar rascunho",
@@ -1415,10 +1459,37 @@ const dictionaries = {
 				`${count} ${count === 1 ? "imagem inserida" : "imagens inseridas"} no markdown.`,
 			imageDefaultAlt: "Imagem",
 			imageUploadError: "Não foi possível enviar a imagem.",
+			translationEyebrow: "Traduções",
+			translationTitle: "Adicionar ou atualizar uma versão localizada",
+			translationDescription:
+				"As traduções substituem o título, a descrição, o texto alternativo da miniatura e o corpo quando o leitor estiver navegando nesse idioma. O slug, as tags e o status continuam ligados ao post original.",
+			translationOriginalLanguage: "Idioma do post original",
+			translationNoLocales:
+				"Todos os idiomas suportados já estão cobertos pelo post original ou pelas traduções salvas.",
+			translationLanguage: "Idioma da tradução",
+			translationLanguageHelp:
+				"Escolha o idioma do site que deve receber esta versão localizada.",
+			translationExisting: "Traduções disponíveis",
+			translationNoneYet: "Ainda não há traduções salvas.",
+			translationStatusExisting: "Editando tradução salva",
+			translationStatusNew: "Criando nova tradução",
+			translationCopyFromOriginal: "Copiar texto original",
+			translationCopiedFromOriginal:
+				"O conteúdo do post original foi copiado para o editor de tradução.",
+			translationBodyDescription:
+				"Escreva o markdown traduzido que deve substituir o corpo original neste idioma.",
+			translationSave: "Salvar tradução",
+			translationSaving: "Salvando tradução...",
+			translationSaveSuccess: "Tradução salva.",
+			translationSaveError:
+				"Não foi possível salvar a tradução agora. Tente novamente.",
+			translationMustDiffer:
+				"Escolha um idioma diferente do post original.",
 			progressAria: (progress: number, remaining: number) =>
 				`${progress}% de progresso, ${remaining} minutos restantes`,
 		},
 		postValidation: {
+			localeRequired: "O idioma do post é obrigatório.",
 			imageRequired: "A imagem é obrigatória.",
 			imageInvalid:
 				"A imagem deve ser um caminho de arquivo enviado ou uma URL válida.",
@@ -1449,6 +1520,9 @@ const dictionaries = {
 			statusPublished: "Publicado",
 			statusPendingReview: "Aguardando revisão",
 			statusDraft: "Rascunho",
+			translatedToCurrentLanguage: "Traduzido para o seu idioma atual",
+			translationFromLanguage: (language: string) =>
+				`Escrito originalmente em ${language}`,
 			writtenBy: "Escrito por",
 			editPost: "Editar post",
 			edit: "Editar",
@@ -2002,6 +2076,9 @@ const dictionaries = {
 			role: "Rol",
 			author: "Autor",
 			defaultAuthor: "Autor",
+			language: "Original language",
+			languageHelp:
+				"This is the language the post was first written in. Translations are attached separately on the edit page.",
 			mode: "Modo",
 			modeCreating: "Creando",
 			modeEditing: "Editando",
@@ -2060,6 +2137,7 @@ const dictionaries = {
 			tagCount: (count: number) =>
 				`${count} tag${count === 1 ? "" : "s"} adjunta${count === 1 ? "" : "s"}`,
 			currentTarget: (status: string) => `Objetivo actual: ${status}`,
+			currentLanguage: (language: string) => `Original language: ${language}`,
 			publishEyebrow: "Publicar",
 			publishTitle: "Elige el siguiente paso",
 			statusDraftLabel: "Guardar borrador",
@@ -2131,10 +2209,37 @@ const dictionaries = {
 				`${count} ${count === 1 ? "imagen insertada" : "imágenes insertadas"} en el markdown.`,
 			imageDefaultAlt: "Imagen",
 			imageUploadError: "No se pudo subir la imagen.",
+			translationEyebrow: "Translations",
+			translationTitle: "Add or update a localized version",
+			translationDescription:
+				"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
+			translationOriginalLanguage: "Original post language",
+			translationNoLocales:
+				"All supported site languages are already covered by the original post or the saved translations.",
+			translationLanguage: "Translation language",
+			translationLanguageHelp:
+				"Choose the site language that should receive this localized version.",
+			translationExisting: "Available translations",
+			translationNoneYet: "No translations saved yet.",
+			translationStatusExisting: "Editing saved translation",
+			translationStatusNew: "Creating new translation",
+			translationCopyFromOriginal: "Copy original text",
+			translationCopiedFromOriginal:
+				"Original post content copied into the translation editor.",
+			translationBodyDescription:
+				"Write the translated markdown that should replace the original body for this language.",
+			translationSave: "Save translation",
+			translationSaving: "Saving translation...",
+			translationSaveSuccess: "Translation saved.",
+			translationSaveError:
+				"Unable to save the translation right now. Please try again.",
+			translationMustDiffer:
+				"Choose a language different from the original post.",
 			progressAria: (progress: number, remaining: number) =>
 				`${progress}% de progreso, ${remaining} minutos restantes`,
 		},
 		postValidation: {
+			localeRequired: "Post language is required.",
 			imageRequired: "La imagen es obligatoria.",
 			imageInvalid:
 				"La imagen debe ser una ruta de archivo subida o una URL válida.",
@@ -2166,6 +2271,9 @@ const dictionaries = {
 			statusPublished: "Publicado",
 			statusPendingReview: "Pendiente de revisión",
 			statusDraft: "Borrador",
+			translatedToCurrentLanguage: "Translated to your current language",
+			translationFromLanguage: (language: string) =>
+				`Originally written in ${language}`,
 			writtenBy: "Escrito por",
 			editPost: "Editar publicación",
 			edit: "Editar",
@@ -2957,7 +3065,7 @@ const germanMessages = {
 		newPasswordRequired: "Das neue Passwort ist erforderlich.",
 		confirmNewPasswordRequired: "Bitte bestätige dein neues Passwort.",
 	},
-} as typeof dictionaries.en;
+} as unknown as typeof dictionaries.en;
 
 const russianMessages = {
 	...dictionaries.en,
@@ -3691,7 +3799,7 @@ const russianMessages = {
 		newPasswordRequired: "Новый пароль обязателен.",
 		confirmNewPasswordRequired: "Пожалуйста, подтвердите новый пароль.",
 	},
-} as typeof dictionaries.en;
+} as unknown as typeof dictionaries.en;
 
 const frenchMessages = {
 	...dictionaries.en,
@@ -4206,6 +4314,9 @@ const frenchMessages = {
 		role: "Rôle",
 		author: "Auteur",
 		defaultAuthor: "Auteur",
+		language: "Original language",
+		languageHelp:
+			"This is the language the post was first written in. Translations are attached separately on the edit page.",
 		mode: "Mode",
 		modeCreating: "Création",
 		modeEditing: "Édition",
@@ -4264,6 +4375,7 @@ const frenchMessages = {
 		tagCount: (count: number) =>
 			`${count} tag${count === 1 ? "" : "s"} attaché${count === 1 ? "" : "s"}`,
 		currentTarget: (status: string) => `Cible actuelle : ${status}`,
+		currentLanguage: (language: string) => `Original language: ${language}`,
 		publishEyebrow: "Publication",
 		publishTitle: "Choisir la prochaine étape",
 		statusDraftLabel: "Enregistrer le brouillon",
@@ -4334,10 +4446,37 @@ const frenchMessages = {
 			`${count} ${count === 1 ? "image insérée" : "images insérées"} dans le markdown.`,
 		imageDefaultAlt: "Image",
 		imageUploadError: "Impossible de téléverser l'image.",
+		translationEyebrow: "Translations",
+		translationTitle: "Add or update a localized version",
+		translationDescription:
+			"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
+		translationOriginalLanguage: "Original post language",
+		translationNoLocales:
+			"All supported site languages are already covered by the original post or the saved translations.",
+		translationLanguage: "Translation language",
+		translationLanguageHelp:
+			"Choose the site language that should receive this localized version.",
+		translationExisting: "Available translations",
+		translationNoneYet: "No translations saved yet.",
+		translationStatusExisting: "Editing saved translation",
+		translationStatusNew: "Creating new translation",
+		translationCopyFromOriginal: "Copy original text",
+		translationCopiedFromOriginal:
+			"Original post content copied into the translation editor.",
+		translationBodyDescription:
+			"Write the translated markdown that should replace the original body for this language.",
+		translationSave: "Save translation",
+		translationSaving: "Saving translation...",
+		translationSaveSuccess: "Translation saved.",
+		translationSaveError:
+			"Unable to save the translation right now. Please try again.",
+		translationMustDiffer:
+			"Choose a language different from the original post.",
 		progressAria: (progress: number, remaining: number) =>
 			`${progress}% de progression, ${remaining} minutes restantes`,
 	},
 	postValidation: {
+		localeRequired: "Post language is required.",
 		imageRequired: "L'image est requise.",
 		imageInvalid:
 			"L'image doit être un chemin de fichier téléversé ou une URL valide.",
@@ -4370,6 +4509,9 @@ const frenchMessages = {
 		statusPublished: "Publié",
 		statusPendingReview: "En relecture",
 		statusDraft: "Brouillon",
+		translatedToCurrentLanguage: "Translated to your current language",
+		translationFromLanguage: (language: string) =>
+			`Originally written in ${language}`,
 		writtenBy: "Écrit par",
 		editPost: "Modifier le post",
 		edit: "Modifier",
@@ -4423,7 +4565,7 @@ const frenchMessages = {
 		confirmNewPasswordRequired:
 			"Veuillez confirmer votre nouveau mot de passe.",
 	},
-} as typeof dictionaries.en;
+} as unknown as typeof dictionaries.en;
 
 const japaneseMessages = {
 	...dictionaries.en,
@@ -4930,6 +5072,9 @@ const japaneseMessages = {
 		role: "役割",
 		author: "著者",
 		defaultAuthor: "著者",
+		language: "Original language",
+		languageHelp:
+			"This is the language the post was first written in. Translations are attached separately on the edit page.",
 		mode: "モード",
 		modeCreating: "作成中",
 		modeEditing: "編集中",
@@ -4987,6 +5132,7 @@ const japaneseMessages = {
 		wordCount: (count: number) => `${count} 語`,
 		tagCount: (count: number) => `${count} 個のタグを設定`,
 		currentTarget: (status: string) => `現在の対象: ${status}`,
+		currentLanguage: (language: string) => `Original language: ${language}`,
 		publishEyebrow: "公開",
 		publishTitle: "次のステップを選ぶ",
 		statusDraftLabel: "下書きを保存",
@@ -5053,10 +5199,37 @@ const japaneseMessages = {
 			`${count} ${count === 1 ? "枚の画像を" : "枚の画像を"} markdown に挿入しました。`,
 		imageDefaultAlt: "画像",
 		imageUploadError: "画像をアップロードできません。",
+		translationEyebrow: "Translations",
+		translationTitle: "Add or update a localized version",
+		translationDescription:
+			"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
+		translationOriginalLanguage: "Original post language",
+		translationNoLocales:
+			"All supported site languages are already covered by the original post or the saved translations.",
+		translationLanguage: "Translation language",
+		translationLanguageHelp:
+			"Choose the site language that should receive this localized version.",
+		translationExisting: "Available translations",
+		translationNoneYet: "No translations saved yet.",
+		translationStatusExisting: "Editing saved translation",
+		translationStatusNew: "Creating new translation",
+		translationCopyFromOriginal: "Copy original text",
+		translationCopiedFromOriginal:
+			"Original post content copied into the translation editor.",
+		translationBodyDescription:
+			"Write the translated markdown that should replace the original body for this language.",
+		translationSave: "Save translation",
+		translationSaving: "Saving translation...",
+		translationSaveSuccess: "Translation saved.",
+		translationSaveError:
+			"Unable to save the translation right now. Please try again.",
+		translationMustDiffer:
+			"Choose a language different from the original post.",
 		progressAria: (progress: number, remaining: number) =>
 			`${progress}% 進行中、残り ${remaining} 分`,
 	},
 	postValidation: {
+		localeRequired: "Post language is required.",
 		imageRequired: "画像は必須です。",
 		imageInvalid:
 			"画像はアップロード済みファイルパスまたは有効な URL である必要があります。",
@@ -5085,6 +5258,9 @@ const japaneseMessages = {
 		statusPublished: "公開済み",
 		statusPendingReview: "レビュー待ち",
 		statusDraft: "下書き",
+		translatedToCurrentLanguage: "Translated to your current language",
+		translationFromLanguage: (language: string) =>
+			`Originally written in ${language}`,
 		writtenBy: "著者",
 		editPost: "投稿を編集",
 		edit: "編集",
@@ -5136,24 +5312,24 @@ const japaneseMessages = {
 		newPasswordRequired: "新しいパスワードは必須です。",
 		confirmNewPasswordRequired: "新しいパスワードの確認を入力してください。",
 	},
-} as typeof dictionaries.en;
+} as unknown as typeof dictionaries.en;
 
 export function getMessages(locale: Locale): MessageDictionary {
 	if (locale === "de") {
-		return germanMessages as MessageDictionary;
+		return germanMessages as unknown as MessageDictionary;
 	}
 
 	if (locale === "ru") {
-		return russianMessages as MessageDictionary;
+		return russianMessages as unknown as MessageDictionary;
 	}
 
 	if (locale === "fr") {
-		return frenchMessages as MessageDictionary;
+		return frenchMessages as unknown as MessageDictionary;
 	}
 
 	if (locale === "ja") {
-		return japaneseMessages as MessageDictionary;
+		return japaneseMessages as unknown as MessageDictionary;
 	}
 
-	return dictionaries[locale];
+	return dictionaries[locale] as unknown as MessageDictionary;
 }

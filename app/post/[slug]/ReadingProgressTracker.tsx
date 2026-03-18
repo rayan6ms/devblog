@@ -52,9 +52,7 @@ export default function ReadingProgressTracker({ postId }: { postId: string }) {
 	const { data: session, status } = useSession();
 	const maxProgressRef = useRef(0);
 	const lastSyncedRef = useRef<number | null>(null);
-	const pendingTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(
-		null,
-	);
+	const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
 		if (status !== "authenticated" || !session?.user?.id) {
@@ -63,7 +61,7 @@ export default function ReadingProgressTracker({ postId }: { postId: string }) {
 
 		const clearPendingTimer = () => {
 			if (pendingTimerRef.current) {
-				window.clearTimeout(pendingTimerRef.current);
+				clearTimeout(pendingTimerRef.current);
 				pendingTimerRef.current = null;
 			}
 		};
@@ -114,7 +112,7 @@ export default function ReadingProgressTracker({ postId }: { postId: string }) {
 
 		const queueSync = () => {
 			clearPendingTimer();
-			pendingTimerRef.current = window.setTimeout(() => {
+			pendingTimerRef.current = setTimeout(() => {
 				syncProgress(maxProgressRef.current);
 			}, AUTOSAVE_DELAY_MS);
 		};
