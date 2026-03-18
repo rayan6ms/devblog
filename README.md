@@ -38,6 +38,7 @@ Create an `.env` file with at least:
 
 ```bash
 DATABASE_URL=...
+NEXT_PUBLIC_SITE_URL=https://your-production-domain.example
 ```
 
 If you want to test social login locally, also configure the provider credentials required by Auth.js for the GitHub and Google providers used in `app/api/auth/[...nextauth]/route.ts`.
@@ -55,3 +56,13 @@ Then open `http://localhost:3000`.
 - This is not meant to be a complex publishing platform.
 - The project favors a minimal, authored feel over lots of product surface area.
 - The playground exists because I like building small interactive things, not because this is a game-dev portfolio.
+
+## SEO
+
+Generate the checked-in SEO files with:
+
+```bash
+node scripts/generate-seo-files.mjs
+```
+
+This writes `public/sitemap.xml` and `public/robots.txt`. For production-safe canonical URLs and sitemap hosts, set `NEXT_PUBLIC_SITE_URL` to the live domain before running it.

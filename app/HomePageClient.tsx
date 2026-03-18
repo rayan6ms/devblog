@@ -1,0 +1,198 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import FirstSection from "@/components/FirstSection";
+import Footer from "@/components/Footer";
+import { useI18n } from "@/components/LocaleProvider";
+import Main from "@/components/Main";
+import SecondSection from "@/components/SecondSection";
+import {
+	getRecentPosts,
+	getRecommendedPosts,
+	getTrendingPosts,
+	type IPost,
+} from "@/lib/posts-client";
+import SkeletonFirstSection from "./components/SkeletonFirstSection";
+import SkeletonMain from "./components/SkeletonMain";
+import SkeletonSecondSection from "./components/SkeletonSecondSection";
+
+export default function HomePageClient() {
+	const { messages } = useI18n();
+	const [recentPosts, setRecentPosts] = useState<IPost[]>([]);
+	const [trendingPosts, setTrendingPosts] = useState<IPost[]>([]);
+	const [recommendedPosts, setRecommendedPosts] = useState<IPost[]>([]);
+	const [loading, setLoading] = useState<boolean>(true);
+
+	useEffect(() => {
+		let active = true;
+
+		async function loadPosts() {
+			const [recent, trending, recommended] = await Promise.all([
+				getRecentPosts(1, 3),
+				getTrendingPosts(4),
+				getRecommendedPosts(5),
+			]);
+
+			if (!active) return;
+
+			setRecentPosts(recent.posts);
+			setTrendingPosts(trending);
+			setRecommendedPosts(recommended);
+
+			setLoading(false);
+		}
+
+		void loadPosts();
+
+		return () => {
+			active = false;
+		};
+	}, []);
+
+	return loading ? (
+		<>
+			<div className="min-h-screen bg-darkBg text-gray">
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 pt-8 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
+						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
+							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+								<div className="max-w-3xl space-y-3">
+									<div className="h-3 w-24 animate-pulse rounded-full bg-zinc-700/80" />
+									<div className="h-12 w-full max-w-xl animate-pulse rounded-2xl bg-zinc-700/80" />
+									<div className="h-4 w-full max-w-2xl animate-pulse rounded-full bg-zinc-700/70" />
+									<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
+								</div>
+								<div className="grid gap-3 sm:grid-cols-3">
+									{Array.from({ length: 3 }, (_, index) => (
+										<div
+											key={`home-stat-skeleton-${index}`}
+											className="h-28 w-full min-w-[160px] animate-pulse rounded-2xl bg-zinc-700/70"
+										/>
+									))}
+								</div>
+							</div>
+						</div>
+						<div className="px-4 py-5 sm:px-6">
+							<SkeletonMain />
+						</div>
+					</div>
+				</section>
+
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="mb-6 space-y-3">
+							<div className="h-3 w-28 animate-pulse rounded-full bg-zinc-700/80" />
+							<div className="h-10 w-full max-w-md animate-pulse rounded-2xl bg-zinc-700/80" />
+							<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
+						</div>
+						<SkeletonFirstSection />
+					</div>
+				</section>
+
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="mb-6 space-y-3">
+							<div className="h-3 w-24 animate-pulse rounded-full bg-zinc-700/80" />
+							<div className="h-10 w-full max-w-md animate-pulse rounded-2xl bg-zinc-700/80" />
+							<div className="h-4 w-full max-w-xl animate-pulse rounded-full bg-zinc-700/60" />
+						</div>
+						<SkeletonSecondSection />
+					</div>
+				</section>
+			</div>
+			<Footer />
+		</>
+	) : (
+		<>
+			<div className="min-h-screen bg-darkBg text-gray">
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 pt-8 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
+						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
+							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+								<div className="max-w-3xl">
+									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+										{messages.home.startHere}
+									</p>
+									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+										{messages.home.title}
+									</h1>
+									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+										{messages.home.description}
+									</p>
+								</div>
+								<div className="grid gap-3 sm:grid-cols-3">
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											{messages.home.featuredPosts}
+										</p>
+										<p className="mt-2 text-3xl font-semibold text-wheat">
+											{Math.min(recentPosts.length, 3)}
+										</p>
+									</div>
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											{messages.home.trendingPicks}
+										</p>
+										<p className="mt-2 text-3xl font-semibold text-wheat">
+											{Math.min(trendingPosts.length, 4)}
+										</p>
+									</div>
+									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
+										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+											{messages.home.recommended}
+										</p>
+										<p className="mt-2 text-3xl font-semibold text-wheat">
+											{Math.min(recommendedPosts.length, 5)}
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div className="px-4 py-5 sm:px-6">
+							<Main
+								posts={{ recent: recentPosts, recommended: recommendedPosts }}
+							/>
+						</div>
+					</div>
+				</section>
+
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-4 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="mb-6 max-w-3xl">
+							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+								{messages.home.trendingSnapshot}
+							</p>
+							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+								{messages.home.trendingTitle}
+							</h2>
+							<p className="mt-3 text-sm leading-7 text-zinc-400">
+								{messages.home.trendingDescription}
+							</p>
+						</div>
+						<FirstSection posts={trendingPosts} />
+					</div>
+				</section>
+
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+					<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="mb-6 max-w-3xl">
+							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+								{messages.home.exploreFurther}
+							</p>
+							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+								{messages.home.exploreTitle}
+							</h2>
+							<p className="mt-3 text-sm leading-7 text-zinc-400">
+								{messages.home.exploreDescription}
+							</p>
+						</div>
+						<SecondSection
+							posts={{ recent: recentPosts, recommended: recommendedPosts }}
+						/>
+					</div>
+				</section>
+			</div>
+			<Footer />
+		</>
+	);
+}

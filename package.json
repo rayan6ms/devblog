@@ -10,6 +10,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
+		"seo:generate": "node scripts/generate-seo-files.mjs",
 		"lint": "eslint app eslint.config.mjs next.config.js postcss.config.js tailwind.config.js prisma.config.ts",
 		"lint:fix": "eslint app eslint.config.mjs next.config.js postcss.config.js tailwind.config.js prisma.config.ts --fix",
 		"analyze": "ANALYZE=true next build",

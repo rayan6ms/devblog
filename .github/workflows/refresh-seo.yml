@@ -1,0 +1,47 @@
+name: Refresh SEO Files
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */12 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || secrets.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate SEO environment
+        run: |
+          test -n "$DATABASE_URL"
+          test -n "$NEXT_PUBLIC_SITE_URL"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate sitemap and robots
+        run: node scripts/generate-seo-files.mjs
+
+      - name: Commit updated SEO files
+        run: |
+          if git diff --quiet -- public/robots.txt public/sitemap.xml; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/robots.txt public/sitemap.xml
+          git commit -m "chore: refresh seo files"
+          git push

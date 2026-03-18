@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>http://localhost:3000/</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="http://localhost:3000/" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="http://localhost:3000/?lang=pt-BR" />
+    <xhtml:link rel="alternate" hreflang="es-ES" href="http://localhost:3000/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="de-DE" href="http://localhost:3000/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="http://localhost:3000/?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="http://localhost:3000/?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="ja-JP" href="http://localhost:3000/?lang=ja" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="http://localhost:3000/" />
+    <lastmod>2026-03-18T14:49:47.038Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/about</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="http://localhost:3000/about" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="http://localhost:3000/about?lang=pt-BR" />
+    <xhtml:link rel="alternate" hreflang="es-ES" href="http://localhost:3000/about?lang=es" />
+    <xhtml:link rel="alternate" hreflang="de-DE" href="http://localhost:3000/about?lang=de" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="http://localhost:3000/about?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="http://localhost:3000/about?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="ja-JP" href="http://localhost:3000/about?lang=ja" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="http://localhost:3000/about" />
+    <lastmod>2026-03-17T22:07:32.887Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/playground</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="http://localhost:3000/playground" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="http://localhost:3000/playground?lang=pt-BR" />
+    <xhtml:link rel="alternate" hreflang="es-ES" href="http://localhost:3000/playground?lang=es" />
+    <xhtml:link rel="alternate" hreflang="de-DE" href="http://localhost:3000/playground?lang=de" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="http://localhost:3000/playground?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="http://localhost:3000/playground?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="ja-JP" href="http://localhost:3000/playground?lang=ja" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="http://localhost:3000/playground" />
+    <lastmod>2026-03-17T20:37:22.985Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/recent</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="http://localhost:3000/recent" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="http://localhost:3000/recent?lang=pt-BR" />
+    <xhtml:link rel="alternate" hreflang="es-ES" href="http://localhost:3000/recent?lang=es" />
+    <xhtml:link rel="alternate" hreflang="de-DE" href="http://localhost:3000/recent?lang=de" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="http://localhost:3000/recent?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="http://localhost:3000/recent?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="ja-JP" href="http://localhost:3000/recent?lang=ja" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="http://localhost:3000/recent" />
+    <lastmod>2026-03-17T22:07:32.985Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/tag</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="http://localhost:3000/tag" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="http://localhost:3000/tag?lang=pt-BR" />
+    <xhtml:link rel="alternate" hreflang="es-ES" href="http://localhost:3000/tag?lang=es" />
+    <xhtml:link rel="alternate" hreflang="de-DE" href="http://localhost:3000/tag?lang=de" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="http://localhost:3000/tag?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="http://localhost:3000/tag?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="ja-JP" href="http://localhost:3000/tag?lang=ja" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="http://localhost:3000/tag" />
+    <lastmod>2026-03-17T22:07:32.976Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/trending</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="http://localhost:3000/trending" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="http://localhost:3000/trending?lang=pt-BR" />
+    <xhtml:link rel="alternate" hreflang="es-ES" href="http://localhost:3000/trending?lang=es" />
+    <xhtml:link rel="alternate" hreflang="de-DE" href="http://localhost:3000/trending?lang=de" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="http://localhost:3000/trending?lang=ru" />
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="http://localhost:3000/trending?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="ja-JP" href="http://localhost:3000/trending?lang=ja" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="http://localhost:3000/trending" />
+    <lastmod>2026-03-17T22:07:32.952Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

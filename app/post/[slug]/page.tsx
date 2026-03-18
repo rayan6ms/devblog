@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import LocalizedLink from "@/components/LocalizedLink";
@@ -10,6 +11,13 @@ import {
 	mapPostForPage,
 } from "@/lib/posts";
 import { getRequestLocale } from "@/lib/request-locale";
+import {
+	buildLocalizedUrl,
+	buildPageMetadata,
+	resolveAbsoluteSeoImage,
+	serializeJsonLd,
+	SITE_NAME,
+} from "@/lib/seo";
 import CommentSection from "./CommentSection";
 import PostBody from "./PostBody";
 import PostEditButton from "./PostEditButton";
@@ -18,6 +26,42 @@ import PostHeader from "./PostHeader";
 import ReadingProgressTracker from "./ReadingProgressTracker";
 
 type PostPageProps = PageProps<"/post/[slug]">;
+
+export async function generateMetadata({
+	params,
+}: PostPageProps): Promise<Metadata> {
+	const { slug } = await params;
+	const locale = await getRequestLocale();
+	const session = await auth();
+	const postRecord = await getLocalizedPostBySlugWithAuthor(slug, locale);
+
+	if (!postRecord || !canViewPost(postRecord, session?.user)) {
+		return buildPageMetadata({
+			title: "Post unavailable",
+			description: "This post is not available for indexing.",
+			path: `/post/${slug}`,
+			locale,
+			index: false,
+		});
+	}
+
+	const post = mapPostForPage(postRecord, locale);
+	const modifiedTime =
+		postRecord.lastEditedAt?.toISOString() || postRecord.updatedAt.toISOString();
+
+	return buildPageMetadata({
+		title: post.title,
+		description: post.description,
+		path: `/post/${post.slug}`,
+		locale,
+		type: "article",
+		image: post.thumbnail,
+		keywords: [post.mainTag, ...post.tags],
+		authors: [post.author.name],
+		publishedTime: post.postedAt,
+		modifiedTime,
+	});
+}
 
 export default async function Page({ params }: PostPageProps) {
 	const { slug } = await params;
@@ -32,10 +76,40 @@ export default async function Page({ params }: PostPageProps) {
 
 	const post = mapPostForPage(postRecord, locale);
 	const relatedPosts = await getRelatedPosts(postRecord, locale, 3);
+	const articleJsonLd = {
+		"@context": "https://schema.org",
+		"@type": "BlogPosting",
+		headline: post.title,
+		description: post.description,
+		datePublished: post.postedAt,
+		dateModified:
+			postRecord.lastEditedAt?.toISOString() || postRecord.updatedAt.toISOString(),
+		inLanguage: post.locale,
+		mainEntityOfPage: buildLocalizedUrl(`/post/${post.slug}`, locale),
+		url: buildLocalizedUrl(`/post/${post.slug}`, locale),
+		articleSection: post.mainTag,
+		keywords: [post.mainTag, ...post.tags],
+		image: [resolveAbsoluteSeoImage(post.thumbnail)],
+		author: {
+			"@type": "Person",
+			name: post.author.name,
+			url: buildLocalizedUrl(`/profile/${post.author.slug}`, locale),
+		},
+		publisher: {
+			"@type": "Organization",
+			name: SITE_NAME,
+		},
+	};
 
 	return (
 		<>
 			<div className="min-h-screen bg-darkBg text-gray">
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: serializeJsonLd(articleJsonLd),
+					}}
+				/>
 				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8">
 					<div className="grid gap-6">
 						<PostHeader
