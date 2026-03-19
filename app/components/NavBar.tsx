@@ -184,7 +184,7 @@ export default function NavBar() {
 			</div>
 
 			{isMenuOpen ? (
-				<div className="fixed inset-0 z-[70] bg-black/60 px-4 py-4 backdrop-blur-sm sm:px-6">
+				<div className="fixed inset-0 z-[70] overflow-y-auto bg-black/60 px-4 py-4 backdrop-blur-sm sm:px-6">
 					<div className="mx-auto max-w-[1440px] rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
 						<div className="border-b border-zinc-700/50 px-6 py-5 sm:px-8">
 							<div className="flex items-center justify-between gap-4">

@@ -300,11 +300,28 @@ const Playground: React.FC = () => {
 	const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 	const [SelectedComponent, setSelectedComponent] =
 		useState<React.ComponentType | null>(null);
+	const [isMobileViewport, setIsMobileViewport] = useState(false);
 	const contentRef = useRef<HTMLDivElement | null>(null);
 	const backdropMouseDownRef = useRef(false);
 
 	const playable = useMemo(() => games.filter((g) => g.mode === "play"), []);
 	const watchOnly = useMemo(() => games.filter((g) => g.mode === "watch"), []);
+
+	useEffect(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		const mediaQuery = window.matchMedia("(max-width: 767px)");
+		const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+
+		syncViewport();
+		mediaQuery.addEventListener("change", syncViewport);
+
+		return () => {
+			mediaQuery.removeEventListener("change", syncViewport);
+		};
+	}, []);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -394,17 +411,10 @@ const Playground: React.FC = () => {
 			];
 			if (keys.includes(e.key)) e.preventDefault();
 		};
-		const blockWheel = (e: WheelEvent) => e.preventDefault();
-		const blockTouch = (e: TouchEvent) => e.preventDefault();
-
 		window.addEventListener("keydown", blockKeys, { passive: false });
-		window.addEventListener("wheel", blockWheel, { passive: false });
-		window.addEventListener("touchmove", blockTouch, { passive: false });
 
 		return () => {
 			window.removeEventListener("keydown", blockKeys);
-			window.removeEventListener("wheel", blockWheel as any);
-			window.removeEventListener("touchmove", blockTouch as any);
 		};
 	}, [isOpen]);
 
@@ -494,7 +504,7 @@ const Playground: React.FC = () => {
 					/>
 
 					<div
-						className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-3"
+						className="fixed inset-0 z-50 overflow-y-auto p-2 md:p-3"
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="game-title"
@@ -502,55 +512,72 @@ const Playground: React.FC = () => {
 							backdropMouseDownRef.current = false;
 						}}
 					>
-						<div
-							className="relative flex h-[min(94vh,1000px)] w-[min(98vw,1600px)] flex-col overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_32px_90px_rgba(0,0,0,0.55)]"
-							onClick={(e) => e.stopPropagation()}
-						>
-							<div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.14),transparent_60%)]" />
+						<div className="flex min-h-full items-start justify-center md:items-center">
+							<div
+								className="relative flex h-[min(96dvh,1000px)] w-full max-w-[1600px] flex-col overflow-hidden rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_32px_90px_rgba(0,0,0,0.55)] md:w-[min(98vw,1600px)] md:rounded-[30px]"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.14),transparent_60%)]" />
 
-							<div className="relative z-20 border-b border-zinc-700/50 bg-lessDarkBg/92 px-4 py-3 backdrop-blur-sm md:px-5 md:py-4">
-								<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
-									<div className="min-w-0">
-										<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-											{messages.common.playground}
-										</p>
-										<h3
-											id="game-title"
-											className="mt-1 truncate font-somerton text-lg uppercase tracking-[0.08em] text-wheat md:text-xl"
-											title={selectedGameText?.name}
-										>
-											{selectedGameText?.name}
-										</h3>
-									</div>
-									<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-3 py-2">
-										<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-											{messages.playgroundPage.mode}
-										</p>
-										<p className="mt-1 text-sm font-semibold text-wheat">
-											{selectedGame?.mode === "play"
-												? messages.playgroundPage.badges.playable
-												: messages.playgroundPage.badges.watchOnly}
-										</p>
+								<div className="relative z-20 border-b border-zinc-700/50 bg-lessDarkBg/92 px-4 py-3 backdrop-blur-sm md:px-5 md:py-4">
+									<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
+										<div className="min-w-0">
+											<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+												{messages.common.playground}
+											</p>
+											<h3
+												id="game-title"
+												className="mt-1 truncate font-somerton text-lg uppercase tracking-[0.08em] text-wheat md:text-xl"
+												title={selectedGameText?.name}
+											>
+												{selectedGameText?.name}
+											</h3>
+										</div>
+										<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-3 py-2">
+											<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+												{messages.playgroundPage.mode}
+											</p>
+											<p className="mt-1 text-sm font-semibold text-wheat">
+												{selectedGame?.mode === "play"
+													? messages.playgroundPage.badges.playable
+													: messages.playgroundPage.badges.watchOnly}
+											</p>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<button
-								className="absolute right-3 top-3 z-30 md:right-4 md:top-4"
-								onClick={closeGame}
-								aria-label={messages.playgroundPage.closeGame}
-							>
-								<FaXmark className="h-9 w-9 rounded-xl border border-zinc-700/60 bg-greyBg/80 p-1.5 text-wheat transition-colors hover:border-zinc-500/70 hover:bg-zinc-800/90 hover:text-purpleContrast" />
-							</button>
+								<button
+									className="absolute right-3 top-3 z-30 md:right-4 md:top-4"
+									onClick={closeGame}
+									aria-label={messages.playgroundPage.closeGame}
+								>
+									<FaXmark className="h-9 w-9 rounded-xl border border-zinc-700/60 bg-greyBg/80 p-1.5 text-wheat transition-colors hover:border-zinc-500/70 hover:bg-zinc-800/90 hover:text-purpleContrast" />
+								</button>
 
-							<div className="min-h-0 flex-1">
-								{SelectedComponent ? (
-									<SelectedComponent />
-								) : (
-									<p className="p-6 text-zinc-200">
-										{messages.playgroundPage.loading}
-									</p>
-								)}
+								<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+									<div className="flex min-h-full flex-col">
+										{isMobileViewport ? (
+											<div className="border-b border-amber-300/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100 md:px-5">
+												<p className="font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+													{messages.playgroundPage.mobileNoticeTitle}
+												</p>
+												<p className="mt-1 max-w-4xl text-amber-100/90">
+													{messages.playgroundPage.mobileNoticeBody}
+												</p>
+											</div>
+										) : null}
+
+										<div className="min-h-0 flex-1">
+											{SelectedComponent ? (
+												<SelectedComponent />
+											) : (
+												<p className="p-6 text-zinc-200">
+													{messages.playgroundPage.loading}
+												</p>
+											)}
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>

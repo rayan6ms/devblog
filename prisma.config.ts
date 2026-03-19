@@ -3,12 +3,31 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+function normalizePostgresSslMode(value?: string) {
+	if (!value) {
+		return value;
+	}
+
+	try {
+		const url = new URL(value);
+		const sslMode = url.searchParams.get("sslmode");
+
+		if (sslMode && ["prefer", "require", "verify-ca"].includes(sslMode)) {
+			url.searchParams.set("sslmode", "verify-full");
+		}
+
+		return url.toString();
+	} catch {
+		return value;
+	}
+}
+
 export default defineConfig({
 	schema: "prisma/schema.prisma",
 	migrations: {
 		path: "prisma/migrations",
 	},
 	datasource: {
-		url: process.env["DATABASE_URL"],
+		url: normalizePostgresSslMode(process.env["DATABASE_URL"]),
 	},
 });

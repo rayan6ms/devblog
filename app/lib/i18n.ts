@@ -269,6 +269,9 @@ const dictionaries = {
 			mode: "Mode",
 			loading: "Loading...",
 			closeGame: "Close game",
+			mobileNoticeTitle: "Desktop-first playground",
+			mobileNoticeBody:
+				"These projects were designed for larger screens first. You can keep exploring here, but a computer will usually give you the intended layout and controls.",
 			badges: {
 				playable: "Playable",
 				watchOnly: "Watch-only",
@@ -1005,6 +1008,9 @@ const dictionaries = {
 			mode: "Modo",
 			loading: "Carregando...",
 			closeGame: "Fechar jogo",
+			mobileNoticeTitle: "Playground pensado para desktop",
+			mobileNoticeBody:
+				"Esses projetos foram pensados primeiro para telas maiores. Você ainda pode explorar por aqui, mas um computador costuma oferecer o layout e os controles pretendidos.",
 			badges: {
 				playable: "Jogável",
 				watchOnly: "Só assistir",
@@ -1750,6 +1756,9 @@ const dictionaries = {
 			mode: "Modo",
 			loading: "Cargando...",
 			closeGame: "Cerrar juego",
+			mobileNoticeTitle: "Playground pensado para escritorio",
+			mobileNoticeBody:
+				"Estos proyectos se diseñaron primero para pantallas más grandes. Puedes seguir explorando aquí, pero en una computadora suelen verse y controlarse como fueron pensados.",
 			badges: {
 				playable: "Jugable",
 				watchOnly: "Solo ver",
