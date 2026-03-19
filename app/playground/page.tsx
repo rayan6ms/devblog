@@ -301,7 +301,10 @@ const Playground: React.FC = () => {
 	const [SelectedComponent, setSelectedComponent] =
 		useState<React.ComponentType | null>(null);
 	const [isMobileViewport, setIsMobileViewport] = useState(false);
+	const [isGameMountReady, setIsGameMountReady] = useState(false);
+	const [gameMountVersion, setGameMountVersion] = useState(0);
 	const contentRef = useRef<HTMLDivElement | null>(null);
+	const gameViewportRef = useRef<HTMLDivElement | null>(null);
 	const backdropMouseDownRef = useRef(false);
 
 	const playable = useMemo(() => games.filter((g) => g.mode === "play"), []);
@@ -361,6 +364,75 @@ const Playground: React.FC = () => {
 	}, [selectedGame, closeGame]);
 
 	const isOpen = !!selectedGame;
+	const gameComponentKey = selectedGame
+		? `${selectedGame.id}-${gameMountVersion}`
+		: "playground-game";
+
+	useEffect(() => {
+		if (!isOpen) {
+			setIsGameMountReady(false);
+			return;
+		}
+
+		let cancelled = false;
+		let rafId = 0;
+		let stableFrames = 0;
+		let lastSignature = "";
+		let attempts = 0;
+
+		const waitForStableViewport = () => {
+			if (cancelled) {
+				return;
+			}
+
+			const viewport = gameViewportRef.current;
+			if (!viewport) {
+				rafId = window.requestAnimationFrame(waitForStableViewport);
+				return;
+			}
+
+			const rect = viewport.getBoundingClientRect();
+			const width = Math.round(rect.width);
+			const height = Math.round(rect.height);
+			const hasUsableSize = width >= 320 && height >= 240;
+
+			if (!hasUsableSize) {
+				stableFrames = 0;
+				lastSignature = "";
+			} else {
+				const nextSignature = `${width}x${height}`;
+				if (nextSignature === lastSignature) {
+					stableFrames += 1;
+				} else {
+					lastSignature = nextSignature;
+					stableFrames = 1;
+				}
+
+				if (stableFrames >= 2) {
+					setIsGameMountReady(true);
+					setGameMountVersion((version) => version + 1);
+					return;
+				}
+			}
+
+			attempts += 1;
+			if (attempts >= 45 && hasUsableSize) {
+				setIsGameMountReady(true);
+				setGameMountVersion((version) => version + 1);
+				return;
+			}
+
+			rafId = window.requestAnimationFrame(waitForStableViewport);
+		};
+
+		setIsGameMountReady(false);
+		rafId = window.requestAnimationFrame(waitForStableViewport);
+
+		return () => {
+			cancelled = true;
+			window.cancelAnimationFrame(rafId);
+		};
+	}, [isOpen, selectedGame?.id, isMobileViewport]);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -504,7 +576,7 @@ const Playground: React.FC = () => {
 					/>
 
 					<div
-						className="fixed inset-0 z-50 overflow-y-auto p-2 md:p-3"
+						className="fixed inset-0 z-50 overflow-y-auto p-2 md:flex md:items-center md:justify-center md:p-3"
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="game-title"
@@ -512,9 +584,13 @@ const Playground: React.FC = () => {
 							backdropMouseDownRef.current = false;
 						}}
 					>
-						<div className="flex min-h-full items-start justify-center md:items-center">
+						<div className="flex min-h-full items-start justify-center md:min-h-0">
 							<div
-								className="relative flex h-[min(96dvh,1000px)] w-full max-w-[1600px] flex-col overflow-hidden rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_32px_90px_rgba(0,0,0,0.55)] md:w-[min(98vw,1600px)] md:rounded-[30px]"
+								className={`relative flex flex-col overflow-hidden border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_32px_90px_rgba(0,0,0,0.55)] ${
+									isMobileViewport
+										? "h-[min(96dvh,1000px)] w-full max-w-[1600px] rounded-[26px]"
+										: "h-[min(94vh,1000px)] w-[min(98vw,1600px)] rounded-[30px]"
+								}`}
 								onClick={(e) => e.stopPropagation()}
 							>
 								<div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.14),transparent_60%)]" />
@@ -554,9 +630,9 @@ const Playground: React.FC = () => {
 									<FaXmark className="h-9 w-9 rounded-xl border border-zinc-700/60 bg-greyBg/80 p-1.5 text-wheat transition-colors hover:border-zinc-500/70 hover:bg-zinc-800/90 hover:text-purpleContrast" />
 								</button>
 
-								<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-									<div className="flex min-h-full flex-col">
-										{isMobileViewport ? (
+								{isMobileViewport ? (
+									<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+										<div className="flex min-h-full flex-col">
 											<div className="border-b border-amber-300/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100 md:px-5">
 												<p className="font-semibold uppercase tracking-[0.18em] text-amber-200/90">
 													{messages.playgroundPage.mobileNoticeTitle}
@@ -565,19 +641,29 @@ const Playground: React.FC = () => {
 													{messages.playgroundPage.mobileNoticeBody}
 												</p>
 											</div>
-										) : null}
 
-										<div className="min-h-0 flex-1">
-											{SelectedComponent ? (
-												<SelectedComponent />
+											<div ref={gameViewportRef} className="min-h-0 flex-1">
+												{SelectedComponent && isGameMountReady ? (
+													<SelectedComponent key={gameComponentKey} />
+												) : (
+													<p className="p-6 text-zinc-200">
+														{messages.playgroundPage.loading}
+													</p>
+												)}
+											</div>
+										</div>
+									</div>
+									) : (
+										<div ref={gameViewportRef} className="min-h-0 flex-1">
+											{SelectedComponent && isGameMountReady ? (
+												<SelectedComponent key={gameComponentKey} />
 											) : (
 												<p className="p-6 text-zinc-200">
 													{messages.playgroundPage.loading}
 												</p>
 											)}
 										</div>
-									</div>
-								</div>
+									)}
 							</div>
 						</div>
 					</div>

@@ -1048,7 +1048,7 @@ function mountBinaryPong(
 	}
 
 	game = new PhaserLib.Game({
-		type: PhaserLib.AUTO,
+		type: PhaserLib.CANVAS,
 		parent: host,
 		backgroundColor: "#050810",
 		transparent: false,
