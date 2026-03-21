@@ -417,6 +417,7 @@ export default function Form({
 				error?: string;
 				fields?: Partial<Record<keyof PostFormData, string[] | undefined>>;
 				slug?: string;
+				status?: PostStatus;
 			} | null;
 
 			if (!response.ok) {
@@ -442,7 +443,11 @@ export default function Form({
 			});
 
 			if (result?.slug) {
-				push(`/post/${result.slug}`);
+				push(
+					result.status === "published"
+						? `/post/${result.slug}`
+						: `/post/${result.slug}/edit`,
+				);
 			}
 		})();
 	}
