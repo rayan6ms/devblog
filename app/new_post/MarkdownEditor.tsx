@@ -18,7 +18,7 @@ import {
 	FaQuoteLeft,
 	FaTableColumns,
 } from "react-icons/fa6";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useI18n } from "@/components/LocaleProvider";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/image-upload";
@@ -267,6 +267,14 @@ export default function MarkdownEditor({
 			? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
 			: "grid gap-4 grid-cols-1";
 
+	function allowPreviewImageUrls(url: string) {
+		if (url.startsWith("pending-upload://") || url.startsWith("blob:")) {
+			return url;
+		}
+
+		return defaultUrlTransform(url);
+	}
+
 	return (
 		<div className="grid gap-4">
 			<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/65 p-4 sm:p-5">
@@ -422,6 +430,7 @@ export default function MarkdownEditor({
 								<div className={MARKDOWN_ARTICLE_CLASS}>
 									<ReactMarkdown
 										remarkPlugins={[remarkGfm]}
+										urlTransform={allowPreviewImageUrls}
 										components={{
 											...markdownComponents,
 											img({ alt, src }) {
