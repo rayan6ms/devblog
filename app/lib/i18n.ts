@@ -127,8 +127,8 @@ const dictionaries = {
 			previous: "Previous",
 			next: "Next",
 			loadingProfile: "Loading profile",
-			preparingPage: "Preparing the page",
-			noItemsYet: "No items to show yet.",
+			preparingPage: "Loading page",
+			noItemsYet: "Nothing to show yet.",
 			noDescriptionYet: "No profile description yet.",
 			percentComplete: (progress: number) => `${progress}% complete`,
 		},
@@ -140,8 +140,8 @@ const dictionaries = {
 		header: {
 			eyebrow: "Personal dev blog",
 			description:
-				"Tutorials, opinions, frontend notes, and interactive side projects collected in one place.",
-			suggestTitle: "Suggest a post (requires review)",
+				"Posts about frontend development, UI, and small side projects.",
+			suggestTitle: "Suggest a post (review required)",
 			homeAria: "Home",
 		},
 		nav: {
@@ -150,12 +150,12 @@ const dictionaries = {
 			closeMenu: "Close navigation menu",
 		},
 		footer: {
-			title: "Posts, experiments, interface work.",
+			title: "Posts, experiments, and UI work.",
 			description:
-				"A personal development blog with writing, interaction studies, and a playground for ideas that are easier to show than describe.",
+				"A personal development blog with articles, interface experiments, and small interactive projects.",
 			navigate: "Navigate",
 			socials: "Socials",
-			closing: "Articles, UI experiments, and interactive side work.",
+			closing: "Articles, UI experiments, and side projects.",
 		},
 		popover: {
 			aria: "Post actions",
@@ -166,41 +166,37 @@ const dictionaries = {
 		},
 		home: {
 			startHere: "Start here",
-			title: "A personal dev blog with room to explore",
+			title: "A personal dev blog",
 			description:
-				"DevBlog is where I publish development writing, opinions, tutorials, and experiments. The front page highlights featured reading, what is trending now, and quick ways to branch into the rest of the blog.",
+				"DevBlog is where I post tutorials, opinions, notes, and experiments. The homepage highlights featured posts, trending posts, and a few ways to browse the rest of the site.",
 			featuredPosts: "Featured posts",
 			trendingPicks: "Trending picks",
 			recommended: "Recommended",
-			trendingSnapshot: "Trending snapshot",
-			trendingTitle: "What is getting attention now",
+			trendingSnapshot: "Trending now",
+			trendingTitle: "Posts getting attention right now",
 			trendingDescription:
-				"A fast scan of the posts currently pulling readers in, kept in the same place as before but with stronger section framing.",
-			exploreFurther: "Explore further",
-			exploreTitle: "More ways into the blog",
+				"A quick look at the posts people are reading the most right now.",
+			exploreFurther: "Explore more",
+			exploreTitle: "More ways to browse",
 			exploreDescription:
-				"Use these sections to move between what is new, what is getting attention, and the posts worth revisiting.",
+				"Browse recent posts, trending posts, or posts by tag.",
 			editorPicks: "Editor picks",
 			noRecommended:
-				"No recommended posts yet. Publish a few entries and this section will fill itself from the live database.",
-			noPosts:
-				"No posts are published yet. The homepage is connected to Prisma now, so sections will populate as soon as real posts exist.",
+				"No recommended posts yet. This section will update once more posts are published.",
+			noPosts: "No posts have been published yet.",
 			scrollToTrending: "Scroll to trending posts",
 			noTrending:
-				"No trending posts yet. Once published posts start collecting views, they will appear here automatically.",
+				"No trending posts yet. They will appear here once published posts start getting views.",
 			explore: "Explore",
 			trendingPosts: "Trending posts",
-			trendingPostsDescription:
-				"See what is pulling the most attention right now.",
+			trendingPostsDescription: "See what people are reading most right now.",
 			recentPosts: "Recent posts",
-			recentPostsDescription:
-				"Start with the newest writing and work backward from there.",
+			recentPostsDescription: "Start with the newest posts.",
 			browseByTag: "Browse by tag",
-			browseByTagDescription:
-				"Filter the live post catalog by topic and supporting tags.",
-			noSectionPost: "No post is available for this section yet.",
+			browseByTagDescription: "Filter posts by topic and tag.",
+			noSectionPost: "No posts available in this section yet.",
 			noRecommendedCallouts:
-				"Recommended callouts will appear here after more posts are published.",
+				"Recommended posts will appear here once more content is published.",
 			viewSection: "View section",
 		},
 		notFound: {
@@ -223,7 +219,7 @@ const dictionaries = {
 			ideaPlaceholder:
 				"Add a short outline, bullet points, or links for context (optional).",
 			reviewNote:
-				"Your suggestion will be reviewed before publishing. Please avoid sensitive data or personal info.",
+				"Suggestions are reviewed before publishing. Please do not include sensitive or personal information.",
 			submitted: "Submitted!",
 			submitting: "Submitting...",
 			submit: "Submit suggestion",
@@ -233,45 +229,44 @@ const dictionaries = {
 		},
 		about: {
 			eyebrow: "About devblog",
-			title: "A place to write, experiment, and keep shipping",
+			title: "A place to write and build",
 			description:
-				"This site is where writing, interface work, and side experiments share the same frame. It is meant to stay useful, personal, and active instead of becoming a static portfolio archive.",
+				"This site brings together writing, UI work, and small experiments. It is part blog, part playground, and part personal project.",
 			storyCards: [
 				{
 					label: "Why it exists",
-					title: "A blog I actually keep using",
-					text: "DevBlog is my personal software development blog. It is where I publish tutorials, opinions, experiments, interface ideas, and the parts of web development I enjoy refining the most.",
+					title: "A blog I keep coming back to",
+					text: "DevBlog is my personal software development blog. I use it to publish tutorials, opinions, experiments, interface ideas, and other parts of web development I enjoy working on.",
 				},
 				{
 					label: "How it is built",
-					title: "A practical stack with room for visual work",
-					text: "The stack centers on Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser, and a few supporting libraries for data shaping and experiments. The goal is to keep the project practical, simple, and enjoyable to build without losing the visual side of the work.",
+					title: "A practical stack",
+					text: "The site is built with Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser, and a few smaller supporting libraries. The goal is to keep it simple enough to maintain while still leaving room for visual and interactive work.",
 				},
 				{
-					label: "What else lives here",
-					title: "Playful tools, sketches, and side ideas",
-					text: "Beyond posts, the site leans into interactivity: tag-driven discovery, recommendations, user tools, and a playground full of games and sketches. I am not a game developer, but the playground is a good home for hobby projects and another way to show what I can build.",
+					label: "What else is here",
+					title: "Small tools and side projects",
+					text: "Alongside the posts, there is a playground with games, sketches, and other experiments. I am not a game developer, but it is a good place for hobby projects and for trying out ideas that do not fit into a normal blog post.",
 				},
 			],
 		},
 		playgroundPage: {
-			title: "Games, sketches, and playable detours",
+			title: "Games, sketches, and small experiments",
 			description:
-				"This page is a home for hobby experiments. I am primarily a web developer, not a game developer, but these small projects are a useful way to explore interaction, motion, and browser rendering ideas.",
+				"This page is a home for hobby projects. I mostly work on the web, but these experiments are a fun way to explore motion, interaction, and rendering in the browser.",
 			totalProjects: "Total projects",
 			projects: "Projects",
 			playableTitle: "Playable",
-			playableDescription:
-				"Hands-on experiments you can control directly, from games to toy systems.",
+			playableDescription: "Projects you can interact with directly.",
 			watchOnlyTitle: "Watch-only",
 			watchOnlyDescription:
-				"Visual pieces that are better treated like motion studies than score-based games.",
+				"Visual experiments that are more for looking at than playing.",
 			mode: "Mode",
 			loading: "Loading...",
 			closeGame: "Close game",
-			mobileNoticeTitle: "Desktop-first playground",
+			mobileNoticeTitle: "Best on desktop",
 			mobileNoticeBody:
-				"These projects were designed for larger screens first. You can keep exploring here, but a computer will usually give you the intended layout and controls.",
+				"These projects were designed mainly for larger screens. They may still work on mobile, but desktop usually gives the best experience.",
 			badges: {
 				playable: "Playable",
 				watchOnly: "Watch-only",
@@ -292,7 +287,7 @@ const dictionaries = {
 				},
 				solarSystem: {
 					name: "Solar System",
-					description: "Planetary dance",
+					description: "Planetary motion",
 				},
 				terminal: { name: "Terminal", description: "Linux terminal" },
 				tankShooter: {
@@ -305,7 +300,7 @@ const dictionaries = {
 				},
 				movingMountains: {
 					name: "Moving Mountains",
-					description: "Moving mountains",
+					description: "Animated mountains",
 				},
 				survivalShooter: {
 					name: "Survival Shooter",
@@ -342,30 +337,27 @@ const dictionaries = {
 		},
 		recent: {
 			eyebrow: "Latest posts",
-			title: "The newest posts, in order",
+			title: "Newest posts",
 			description:
-				"This page is the clearest view of the blog in publishing order. It keeps the newest writing front and center, with pagination and topic cues close by when you want to keep browsing.",
+				"This page shows posts in publish order, with the newest first.",
 			postCount: "Post count",
 			currentPage: "Current page",
 			totalViews: "Total views",
-			latestArrival: "Latest arrival",
-			noPublished:
-				"No published posts yet. Create your first post and it will show up here as the latest arrival.",
+			latestArrival: "Latest post",
+			noPublished: "No published posts yet. Your first post will appear here.",
 			readingGuide: "Reading guide",
-			stayOriented: "Stay oriented",
+			stayOriented: "Browse by page",
 			stayOrientedDescription:
-				"Move through the blog page by page, keep an eye on the newest entry, and jump into the topics showing up most often in the latest batch of posts.",
+				"Move through posts page by page and keep up with the latest additions.",
 			showingNow: "Showing now",
 			pageControls: "Page controls",
-			freshTopics: "Fresh topics",
+			freshTopics: "Recent topics",
 			topicCountsLater:
-				"Topic counts will appear here after posts are published.",
+				"Topic counts will appear here once posts are published.",
 			recentPosts: "Recent posts",
-			recentPostsTitle: "Newest entries on devblog",
-			recentPostsDescription:
-				"Ordered strictly by publish date so the page behaves like a true recent-post feed, not a mixed grab bag.",
-			noPosts:
-				"No posts are available yet. This page now reads straight from the database and will populate as soon as published entries exist.",
+			recentPostsTitle: "Newest posts on DevBlog",
+			recentPostsDescription: "Posts sorted by publish date.",
+			noPosts: "No posts available yet.",
 			noPublishedShort: "No published posts yet",
 			relatedTags: (count: number) =>
 				`${count} related ${count === 1 ? "tag" : "tags"}`,
@@ -375,33 +367,30 @@ const dictionaries = {
 		},
 		trending: {
 			eyebrow: "Trending now",
-			title: "What readers are paying attention to",
+			title: "Posts readers are paying attention to",
 			description:
-				"The accordion stays as the page signature, but the rest of the page now supports it: ranked posts, visible topic signals, and clearer reasons for why a post is near the top.",
+				"This page shows the posts getting the most views right now.",
 			trackedPosts: "Tracked posts",
-			topPost: "Top post",
+			topPost: "Post líder",
 			totalViews: "Total views",
 			noTrending:
-				"No trending posts are available yet. This section will populate once published posts start collecting views.",
+				"No trending posts yet. This section will update once published posts start getting views.",
 			trendSignals: "Trend signals",
-			topicRadar: "Topic radar",
+			topicRadar: "Popular topics",
 			topicRadarDescription:
-				"Main topics with the strongest presence in the current trending stack. Use them to branch into related posts without losing the context of what is hot right now.",
+				"Topics showing up most often in the current trending posts.",
 			topicSignalsLater:
-				"Topic signals will appear here after posts are published.",
+				"Topic data will appear here once posts are published.",
 			leadingPost: "Leading post",
-			leadingPostEmpty:
-				"No trending leader yet. Publish posts and accumulate views to build this ranking.",
+			leadingPostEmpty: "No leading post yet.",
 			ranking: "Ranking",
-			topMomentum: "Top posts by momentum",
-			topMomentumDescription:
-				"The most-read posts right now, ordered by views so the list actually reflects a trend instead of a random sample.",
+			topMomentum: "Top posts",
+			topMomentumDescription: "The most-read posts right now, sorted by views.",
 			moreToWatch: "More to watch",
 			risingPosts: "Rising posts",
 			risingPostsDescription:
-				"Posts just below the top tier that still deserve a clear, readable presentation instead of another dense list.",
-			notEnoughPosts:
-				"There are not enough posts yet for a secondary spotlight list.",
+				"Posts that are also doing well, just below the top spots.",
+			notEnoughPosts: "There are not enough posts yet for a second list.",
 			readPost: "Read post",
 			focusPost: (title: string) => `Focus ${title}`,
 			viewsSuffix: (count: string) => `${count} views`,
@@ -409,62 +398,60 @@ const dictionaries = {
 		search: {
 			eyebrow: "Search posts",
 			description:
-				"Browse matching posts across devblog. Results use the same post cards as the rest of the site, with paging when a query spans more than one screen.",
+				"Search across posts on DevBlog. Results are shown with the same post cards used across the site.",
 			matches: "Matches",
 			noMatch: "No match",
-			nothingFound: (query: string) => `Nothing showed up for "${query}".`,
+			nothingFound: (query: string) => `No results for "${query}".`,
 			noMatchDescription:
-				"Try a shorter query, search by tag or author, or jump back to the latest posts to keep browsing.",
+				"Try a shorter search, search by tag or author, or browse recent posts instead.",
 			seeRecentPosts: "See recent posts",
 			resultsFor: (query: string) => `Results for "${query}"`,
 		},
 		tag: {
 			eyebrow: "Browse by tag",
-			title: "Discover posts by topic",
-			description:
-				"Use tags to narrow the blog quickly. Pick a main topic, layer a few supporting tags, and keep the results grid in view while you refine.",
+			title: "Browse posts by topic",
+			description: "Use tags to narrow down the post list.",
 			totalTags: "Total tags",
 			selected: "Selected",
 			visiblePosts: "Visible posts",
 			mainTopics: "Main topics",
-			mainTopicsDescription: "The broad categories that shape each post.",
+			mainTopicsDescription: "The main category for each post.",
 			supportingTags: "Supporting tags",
-			supportingTagsDescription:
-				"Use these to narrow the grid without losing context.",
+			supportingTagsDescription: "Use these to narrow the results further.",
 			noPostsYet: "No posts yet",
 			unlockAfterFirstPost:
-				"Tag browsing will unlock after the first published post",
+				"Tag browsing will be available after the first published post.",
 			tagBrowsingDescription:
-				"The tag page is now reading the real database, so it will stay empty until there are published posts and tags to show.",
+				"This page will stay empty until posts and tags have been published.",
 			noMatches: "No matches",
-			noPostsFit: "No posts fit this combination",
+			noPostsFit: "No posts match these tags",
 			noPostsFitDescription:
-				"Try removing one of the active tags or switch to a broader main topic. The quick picks in the filter panel are a good reset point.",
+				"Try removing one of the selected tags or switching to a broader topic.",
 			viewsSuffix: (count: string) => `${count} views`,
 			filterPosts: "Filter posts",
 			findTopic: "Find a topic",
 			filterDescription: (max: number) =>
-				`Search tags, combine up to ${max}, and narrow the post grid without leaving the page.`,
+				`Search tags, combine up to ${max}, and filter the post list.`,
 			searchTags: "Search tags",
 			selectedTags: "Selected tags",
 			selectedTagsHint:
-				"Add another tag to refine further, or reset to broaden the results.",
+				"Add another tag to narrow the results, or reset to see more posts.",
 			selectedTagsEmpty:
-				"Start with a broad topic, then layer supporting tags if you need to focus the results.",
+				"Start with a broad topic, then add more tags to narrow the results.",
 			clearFilters: "Clear filters",
 			quickPicks: "Quick picks",
-			quickPicksDescription: "Popular tags that open the page up fast.",
-			tagGroupMainDescription: "Primary categories that define the post.",
-			tagGroupOtherDescription: "Secondary details and related subjects.",
+			quickPicksDescription: "Popular tags to get started.",
+			tagGroupMainDescription: "Main categories for the post.",
+			tagGroupOtherDescription: "Extra details and related topics.",
 			noTagsMatch: "No tags match the current search.",
 			resultsSummary: (resultsCount: number, tagCount: number) =>
 				`${resultsCount} ${resultsCount === 1 ? "post" : "posts"} matching ${tagCount} ${tagCount === 1 ? "tag" : "tags"}`,
 			showingAll: (resultsCount: number) =>
 				`Showing all ${resultsCount} ${resultsCount === 1 ? "post" : "posts"}`,
 			resultsDescription:
-				"Remove a tag to broaden the results or keep combining related topics to stay focused.",
+				"Remove a tag to broaden the results, or keep adding tags to narrow them down.",
 			resultsDescriptionEmpty:
-				"Use the quick picks, marquee rows, or the filter panel to drill into a specific theme.",
+				"Use the quick picks or filter panel to browse by topic.",
 			resetAll: "Reset all",
 			removeTag: (label: string) => `Remove ${label}`,
 			noActiveFilters: "No active tag filters.",
@@ -502,8 +489,8 @@ const dictionaries = {
 			overview: "Profile overview",
 			yourProfile: "Your profile",
 			description:
-				"Real account data is now backed by the database, including role, connected providers, persisted profile fields, and live activity counts.",
-			loadingTitle: "Preparing the page",
+				"Your account details, activity, and connected sign-in methods.",
+			loadingTitle: "Loading page",
 			unavailable: "Profile unavailable",
 			goToLogin: "Go to login",
 			bookmarks: "Bookmarks",
@@ -520,7 +507,7 @@ const dictionaries = {
 			editProfile: "Edit profile",
 			logout: "Logout",
 			profileAlt: (name: string) => `${name} profile`,
-			recentActivity: "Recent activity across the blog",
+			recentActivity: "Recent activity",
 			noCommentsYet: "No comments to show yet.",
 			editedOn: (date: string) => `Edited ${date}`,
 			itemCount: (count: number) =>
@@ -550,9 +537,9 @@ const dictionaries = {
 			changePassword: "Change password",
 			createPassword: "Create password",
 			changePasswordDescription:
-				"Update your email login password without losing your social sign-in.",
+				"Update your password without removing social login access.",
 			createPasswordDescription:
-				"Add an email login password to this social account.",
+				"Add a password so you can also log in with email.",
 			optional: "Optional",
 			currentPassword: "Current password",
 			newPassword: "New password",
@@ -577,16 +564,14 @@ const dictionaries = {
 		},
 		newPost: {
 			createPageEyebrow: "New Post",
-			createPageTitle: "Create a production-ready article",
-			createPageDescription:
-				"Write the real markdown, attach real media, and save directly to the backend so the post page renders the exact same content.",
+			createPageTitle: "Create a post",
+			createPageDescription: "Write your post, add media, and save it here.",
 			accessRequiredTitle: "Author access required",
 			accessRequiredDescription:
-				"This page is reserved for contributor accounts. Sign in with a writer-capable profile to draft, review, and publish posts.",
+				"This page is only available to contributor accounts.",
 			editPageEyebrow: "Edit Post",
-			editPageTitle: "Update article",
-			editPageDescription:
-				"Refine the metadata, body, or media and save directly back to the same persisted post record.",
+			editPageTitle: "Edit post",
+			editPageDescription: "Update the post content, metadata, or media.",
 			editAccessDeniedTitle: "Access denied",
 			editAccessDeniedDescription:
 				"Only the author or site administrators can edit this post.",
@@ -595,59 +580,56 @@ const dictionaries = {
 			defaultAuthor: "Author",
 			language: "Original language",
 			languageHelp:
-				"This is the language the post was first written in. Translations are attached separately on the edit page.",
+				"This is the language the post was originally written in. Translations can be added separately.",
 			mode: "Mode",
 			modeCreating: "Creating",
 			modeEditing: "Editing",
 			editorEyebrowCreate: "New post",
 			editorEyebrowEdit: "Edit post",
-			editorTitleCreate: "Build the post before it ships",
-			editorTitleEdit: "Refine the published shape",
-			editorDescription:
-				"The editor persists real markdown, real media paths, and real post metadata to Prisma. What you preview here is what renders on the post page.",
-			storySetupEyebrow: "Story setup",
-			storySetupTitle: "Lock the metadata first",
+			editorTitleCreate: "Write your post",
+			editorTitleEdit: "Update your post",
+			editorDescription: "Use the editor to write, preview, and save the post.",
+			storySetupEyebrow: "Post setup",
+			storySetupTitle: "Fill in the basics",
 			title: "Title",
-			titlePlaceholder: "A title that deserves the click",
+			titlePlaceholder: "Post title",
 			slug: "Slug",
 			slugPlaceholder: "post-url-slug",
 			regenerate: "Regenerate",
 			finalUrl: (slug: string) => `Final URL: /post/${slug}`,
 			description: "Description",
 			generateFromContent: "Generate from content",
-			descriptionPlaceholder:
-				"What should the reader understand before opening the article?",
+			descriptionPlaceholder: "A short summary of the post.",
 			visualsEyebrow: "Visuals",
-			visualsTitle: "Set the post thumbnail",
+			visualsTitle: "Post thumbnail",
 			thumbnail: "Thumbnail",
 			thumbnailDescription:
-				"This drives the hero image on the post page and the card thumbnail everywhere else.",
+				"This image is used on the post page and in post cards.",
 			upload: "Upload",
 			uploading: "Uploading...",
 			thumbnailPreviewAlt: "Post thumbnail",
-			thumbnailEmpty: "Upload the image that should represent the post.",
+			thumbnailEmpty: "Upload an image for this post.",
 			thumbnailUploaded: "Thumbnail uploaded.",
 			thumbnailUploadError: "Unable to upload thumbnail.",
 			thumbnailAlt: "Thumbnail Alt Text",
-			thumbnailAltPlaceholder:
-				"Describe the thumbnail for accessibility and previews",
+			thumbnailAltPlaceholder: "Describe the thumbnail image",
 			bodyEyebrow: "Body",
-			bodyTitle: "Write and review in one place",
+			bodyTitle: "Write and preview",
 			bodyDescription:
-				"Write in markdown, upload inline images, and verify the final render before saving.",
+				"Write in markdown and preview the final result before saving.",
 			readTime: "Read time",
-			taxonomyEyebrow: "Taxonomy",
-			taxonomyTitle: "Place the article",
+			taxonomyEyebrow: "Tags",
+			taxonomyTitle: "Categorize the post",
 			mainTag: "Main tag",
 			tags: "Tags",
-			readinessEyebrow: "Readiness",
-			readinessTitle: "Check the essentials",
+			readinessEyebrow: "Checklist",
+			readinessTitle: "Before you publish",
 			checklistTitleSet: "Title set",
 			checklistThumbnailUploaded: "Thumbnail uploaded",
 			checklistMainTagChosen: "Main tag chosen",
 			checklistSupportingTagsAdded: "Supporting tags added",
 			checklistDescriptionReady: "Description ready",
-			checklistBodyHasSubstance: "Body has substance",
+			checklistBodyHasSubstance: "Body has content",
 			ready: "Ready",
 			missing: "Missing",
 			wordCount: (count: number) => `${count} words`,
@@ -656,39 +638,34 @@ const dictionaries = {
 			currentTarget: (status: string) => `Current target: ${status}`,
 			currentLanguage: (language: string) => `Original language: ${language}`,
 			publishEyebrow: "Publish",
-			publishTitle: "Choose the next step",
+			publishTitle: "Choose what to do next",
 			statusDraftLabel: "Save draft",
-			statusDraftDescription:
-				"Keep the post private while you shape the content.",
+			statusDraftDescription: "Keep the post private for now.",
 			statusPendingReviewLabel: "Send to review",
-			statusPendingReviewDescription:
-				"Mark the draft as ready for editorial review.",
+			statusPendingReviewDescription: "Mark the post as ready for review.",
 			statusPublishedLabel: "Publish now",
-			statusPublishedDescription:
-				"Make the post visible on the site immediately.",
+			statusPublishedDescription: "Make the post visible on the site.",
 			saving: "Saving...",
 			clearForm: "Clear form",
 			submitError: "Unable to save the post right now. Please try again.",
 			submitSuccessPublished: "Post published.",
 			submitSuccessReview: "Post sent to review.",
 			submitSuccessDraft: "Draft saved.",
-			mainTagPlaceholder: "Pick an existing topic or define a new main tag",
-			mainTagHelp:
-				"Main tags group the post across listings and recommendations.",
+			mainTagPlaceholder: "Choose a main tag",
+			mainTagHelp: "Main tags are used across listings and recommendations.",
 			tagsPlaceholder: "Add tags and press Enter",
 			tagsLimitReached: "Tag limit reached",
-			tagSlotsLeft: (count: number) =>
-				`${count} tag slots left. Use focused, searchable labels.`,
+			tagSlotsLeft: (count: number) => `${count} tag slots left.`,
 			editorControlsEyebrow: "Editor controls",
-			editorControlsTitle: "Shape the markdown with intent",
+			editorControlsTitle: "Markdown tools",
 			editorControlsDescription:
-				"Inline images stay where you insert them and render centered in both preview and the final post.",
+				"Use the toolbar to format content and insert images.",
 			modeWrite: "Write",
-			modeWriteDescription: "Focus on the markdown.",
+			modeWriteDescription: "Edit the markdown.",
 			modePreview: "Preview",
-			modePreviewDescription: "Read the final render.",
+			modePreviewDescription: "See the rendered post.",
 			modeSplit: "Split",
-			modeSplitDescription: "Write and preview together.",
+			modeSplitDescription: "Write and preview side by side.",
 			toolbarInline: "Inline",
 			toolbarBlocks: "Blocks",
 			toolbarBold: "Bold",
@@ -705,16 +682,14 @@ const dictionaries = {
 			dualPanel: "Dual panel",
 			modeBadge: (mode: string) => `${mode} mode`,
 			markdownEyebrow: "Markdown",
-			markdownDescription:
-				"Write with plain markdown and keep control of where every block and image lands.",
+			markdownDescription: "Write your post in plain markdown.",
 			editableSource: "Editable source",
 			markdownPlaceholder:
 				"Write the article in Markdown.\n\nExample:\n## Section title\n\nA paragraph with **emphasis** and a [link](https://example.com).\n",
 			previewEyebrow: "Preview",
-			previewDescription:
-				"The preview uses the same renderer as the published post page.",
+			previewDescription: "This preview matches the published post layout.",
 			finalRendering: "Final rendering",
-			emptyPreview: "Start writing to see the final post rendering.",
+			emptyPreview: "Start writing to preview the post.",
 			editorWordCount: (count: number) => `${count} words`,
 			editorReadTime: (count: number) => `${count} min read`,
 			editorCharacters: (used: number, max: number) =>
@@ -724,16 +699,15 @@ const dictionaries = {
 			imageDefaultAlt: "Image",
 			imageUploadError: "Unable to upload image.",
 			translationEyebrow: "Translations",
-			translationTitle: "Add or update a localized version",
+			translationTitle: "Add or edit a translation",
 			translationDescription:
-				"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
+				"Translations replace the title, description, thumbnail alt text, and body for readers using that language. The slug, tags, and status stay linked to the original post.",
 			translationOriginalLanguage: "Original post language",
-			translationNoLocales:
-				"All supported site languages are already covered by the original post or the saved translations.",
+			translationNoLocales: "All supported site languages are already covered.",
 			translationLanguage: "Translation language",
 			translationLanguageHelp:
-				"Choose the site language that should receive this localized version.",
-			translationExisting: "Available translations",
+				"Choose which site language this translation should be used for.",
+			translationExisting: "Saved translations",
 			translationNoneYet: "No translations saved yet.",
 			translationStatusExisting: "Editing saved translation",
 			translationStatusNew: "Creating new translation",
@@ -741,7 +715,7 @@ const dictionaries = {
 			translationCopiedFromOriginal:
 				"Original post content copied into the translation editor.",
 			translationBodyDescription:
-				"Write the translated markdown that should replace the original body for this language.",
+				"Write the translated markdown for this language.",
 			translationSave: "Save translation",
 			translationSaving: "Saving translation...",
 			translationSaveSuccess: "Translation saved.",
@@ -777,7 +751,7 @@ const dictionaries = {
 		},
 		post: {
 			relatedReading: "Related reading",
-			moreFromThisLane: "More from this lane",
+			moreFromThisLane: "More like this",
 			statusPublished: "Published",
 			statusPendingReview: "Pending review",
 			statusDraft: "Draft",
@@ -795,9 +769,9 @@ const dictionaries = {
 				relatedTopics: string[],
 			) =>
 				relatedTopics.length > 0
-					? `${name} writes around ${mainTag}, with recurring threads in ${relatedTopics.join(" and ")}.`
-					: `${name} writes around ${mainTag}.`,
-			commentSection: "Comment section",
+					? `${name} writes mostly about ${mainTag}, with posts on ${relatedTopics.join(" and ")} too.`
+					: `${name} writes mostly about ${mainTag}.`,
+			commentSection: "Comments",
 			commentPlaceholder: "Add a comment",
 			commentAs: (name: string) => `Commenting as ${name}`,
 			loginRequiredToComment: "Login required to comment",
@@ -805,8 +779,7 @@ const dictionaries = {
 			postedOn: (date: string) => `Posted ${date}`,
 			reportComment: "Report comment",
 			loginModalTitle: "You need to be logged in to do this.",
-			loginModalDescription:
-				"Get a better experience when you sign in. Join the conversation.",
+			loginModalDescription: "Sign in to continue.",
 			reportCommentTitle: "Report comment",
 			reportingCommentBy: (author: string) => `Reporting comment by ${author}:`,
 			reason: "Reason",
@@ -867,8 +840,8 @@ const dictionaries = {
 			previous: "Anterior",
 			next: "Próxima",
 			loadingProfile: "Carregando perfil",
-			preparingPage: "Preparando a página",
-			noItemsYet: "Ainda não há itens para mostrar.",
+			preparingPage: "Carregando página",
+			noItemsYet: "Nada para mostrar ainda.",
 			noDescriptionYet: "Ainda não há descrição de perfil.",
 			percentComplete: (progress: number) => `${progress}% concluído`,
 		},
@@ -879,9 +852,8 @@ const dictionaries = {
 		},
 		header: {
 			eyebrow: "Blog pessoal de desenvolvimento",
-			description:
-				"Tutoriais, opiniões, notas de frontend e projetos interativos reunidos em um só lugar.",
-			suggestTitle: "Sugerir um post (requer revisão)",
+			description: "Posts sobre frontend, UI e pequenos projetos paralelos.",
+			suggestTitle: "Sugerir um post (sujeito a revisão)",
 			homeAria: "Início",
 		},
 		nav: {
@@ -890,12 +862,12 @@ const dictionaries = {
 			closeMenu: "Fechar menu de navegação",
 		},
 		footer: {
-			title: "Posts, experimentos e trabalho de interface.",
+			title: "Posts, experimentos e UI.",
 			description:
-				"Um blog pessoal de desenvolvimento com textos, estudos de interação e um playground para ideias que são mais fáceis de mostrar do que descrever.",
+				"Um blog pessoal de desenvolvimento com artigos, experimentos de interface e pequenos projetos interativos.",
 			navigate: "Navegar",
 			socials: "Redes",
-			closing: "Artigos, experimentos de UI e trabalhos interativos paralelos.",
+			closing: "Artigos, experimentos de UI e projetos paralelos.",
 		},
 		popover: {
 			aria: "Ações do post",
@@ -906,40 +878,36 @@ const dictionaries = {
 		},
 		home: {
 			startHere: "Comece por aqui",
-			title: "Um blog pessoal de desenvolvimento com espaço para explorar",
+			title: "Um blog pessoal de desenvolvimento",
 			description:
-				"O DevBlog é onde eu publico textos sobre desenvolvimento, opiniões, tutoriais e experimentos. A página inicial destaca leituras em evidência, o que está em alta agora e atalhos para explorar o restante do blog.",
+				"O DevBlog é onde publico tutoriais, opiniões, notas e experimentos. A página inicial destaca posts em destaque, posts em alta e alguns caminhos para explorar o resto do site.",
 			featuredPosts: "Posts em destaque",
 			trendingPicks: "Destaques em alta",
 			recommended: "Recomendados",
-			trendingSnapshot: "Panorama do momento",
-			trendingTitle: "O que está recebendo atenção agora",
+			trendingSnapshot: "Em alta agora",
+			trendingTitle: "Posts chamando atenção agora",
 			trendingDescription:
-				"Uma leitura rápida dos posts que estão atraindo leitores no momento, mantidos no mesmo lugar de antes, mas com uma estrutura de seção mais clara.",
+				"Uma visão rápida dos posts que as pessoas mais estão lendo agora.",
 			exploreFurther: "Explore mais",
-			exploreTitle: "Mais caminhos para entrar no blog",
-			exploreDescription:
-				"Use estas seções para alternar entre o que é novo, o que está em alta e os posts que valem uma revisita.",
+			exploreTitle: "Mais formas de navegar",
+			exploreDescription: "Veja posts recentes, em alta ou por tag.",
 			editorPicks: "Escolhas do editor",
 			noRecommended:
-				"Ainda não há posts recomendados. Publique algumas entradas e esta seção será preenchida automaticamente pelo banco de dados ativo.",
-			noPosts:
-				"Ainda não há posts publicados. A página inicial já está conectada ao Prisma, então as seções serão preenchidas assim que existirem posts reais.",
+				"Ainda não há posts recomendados. Esta seção será atualizada quando mais posts forem publicados.",
+			noPosts: "Ainda não há posts publicados.",
 			scrollToTrending: "Ir para os posts em alta",
 			noTrending:
-				"Ainda não há posts em alta. Quando os posts publicados começarem a acumular visualizações, eles aparecerão aqui automaticamente.",
+				"Ainda não há posts em alta. Eles aparecerão aqui quando os posts publicados começarem a receber visualizações.",
 			explore: "Explorar",
 			trendingPosts: "Posts em alta",
-			trendingPostsDescription: "Veja o que está chamando mais atenção agora.",
+			trendingPostsDescription: "Veja o que as pessoas mais estão lendo agora.",
 			recentPosts: "Posts recentes",
-			recentPostsDescription:
-				"Comece pelos textos mais novos e volte a partir deles.",
+			recentPostsDescription: "Comece pelos posts mais novos.",
 			browseByTag: "Explorar por tag",
-			browseByTagDescription:
-				"Filtre o catálogo de posts ao vivo por assunto e tags de apoio.",
-			noSectionPost: "Ainda não há post disponível para esta seção.",
+			browseByTagDescription: "Filtre os posts por assunto e tag.",
+			noSectionPost: "Ainda não há posts nesta seção.",
 			noRecommendedCallouts:
-				"Os destaques recomendados aparecerão aqui depois que mais posts forem publicados.",
+				"Os posts recomendados aparecerão aqui quando mais conteúdo for publicado.",
 			viewSection: "Ver seção",
 		},
 		notFound: {
@@ -962,7 +930,7 @@ const dictionaries = {
 			ideaPlaceholder:
 				"Adicione um pequeno esboço, tópicos ou links para contexto (opcional).",
 			reviewNote:
-				"Sua sugestão será revisada antes da publicação. Evite dados sensíveis ou informações pessoais.",
+				"As sugestões passam por revisão antes de serem publicadas. Não inclua dados sensíveis nem informações pessoais.",
 			submitted: "Enviado!",
 			submitting: "Enviando...",
 			submit: "Enviar sugestão",
@@ -972,45 +940,45 @@ const dictionaries = {
 		},
 		about: {
 			eyebrow: "Sobre o devblog",
-			title: "Um lugar para escrever, experimentar e continuar publicando",
+			title: "Um lugar para escrever e construir",
 			description:
-				"Este site é onde textos, trabalho de interface e experimentos paralelos compartilham a mesma moldura. A ideia é permanecer útil, pessoal e ativo, em vez de virar um portfólio estático.",
+				"Este site reúne escrita, trabalho de UI e pequenos experimentos. É parte blog, parte playground e parte projeto pessoal.",
 			storyCards: [
 				{
 					label: "Por que ele existe",
-					title: "Um blog que eu realmente continuo usando",
-					text: "O DevBlog é o meu blog pessoal de desenvolvimento de software. É onde publico tutoriais, opiniões, experimentos, ideias de interface e as partes do desenvolvimento web que mais gosto de lapidar.",
+					title: "Um blog ao qual eu sempre volto",
+					text: "O DevBlog é meu blog pessoal de desenvolvimento de software. Uso este espaço para publicar tutoriais, opiniões, experimentos, ideias de interface e outros lados do desenvolvimento web de que gosto.",
 				},
 				{
 					label: "Como ele é construído",
-					title: "Uma stack prática com espaço para trabalho visual",
-					text: "A stack gira em torno de Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser e algumas bibliotecas de apoio para organização de dados e experimentos. O objetivo é manter o projeto prático, simples e agradável de construir sem perder o lado visual do trabalho.",
+					title: "Uma stack prática",
+					text: "O site é construído com Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser e algumas bibliotecas menores de apoio. A ideia é mantê-lo simples de cuidar, sem abrir mão do trabalho visual e interativo.",
 				},
 				{
-					label: "O que mais vive aqui",
-					title: "Ferramentas leves, esboços e ideias paralelas",
-					text: "Além dos posts, o site aposta na interatividade: descoberta por tags, recomendações, ferramentas para usuários e um playground cheio de jogos e esboços. Eu não sou desenvolvedor de jogos, mas o playground é uma boa casa para projetos de hobby e outra forma de mostrar o que consigo construir.",
+					label: "O que mais existe aqui",
+					title: "Ferramentas pequenas e projetos paralelos",
+					text: "Além dos posts, há um playground com jogos, esboços e outros experimentos. Não sou desenvolvedor de jogos, mas ele é um bom lugar para projetos de hobby e ideias que não cabem em um post comum.",
 				},
 			],
 		},
 		playgroundPage: {
-			title: "Jogos, esboços e desvios jogáveis",
+			title: "Jogos, esboços e pequenos experimentos",
 			description:
-				"Esta página é uma casa para experimentos de hobby. Eu sou principalmente um desenvolvedor web, não um desenvolvedor de jogos, mas esses pequenos projetos são uma forma útil de explorar interação, movimento e ideias de renderização no navegador.",
+				"Esta página é um espaço para projetos de hobby. Trabalho principalmente com web, mas esses experimentos são uma forma divertida de explorar movimento, interação e renderização no navegador.",
 			totalProjects: "Total de projetos",
 			projects: "Projetos",
 			playableTitle: "Jogáveis",
 			playableDescription:
-				"Experimentos práticos que você pode controlar diretamente, de jogos a pequenos sistemas.",
+				"Projetos com os quais você pode interagir diretamente.",
 			watchOnlyTitle: "Só para assistir",
 			watchOnlyDescription:
-				"Peças visuais que funcionam melhor como estudos de movimento do que como jogos com pontuação.",
+				"Experimentos visuais mais para ver do que para jogar.",
 			mode: "Modo",
 			loading: "Carregando...",
 			closeGame: "Fechar jogo",
-			mobileNoticeTitle: "Playground pensado para desktop",
+			mobileNoticeTitle: "Melhor no desktop",
 			mobileNoticeBody:
-				"Esses projetos foram pensados primeiro para telas maiores. Você ainda pode explorar por aqui, mas um computador costuma oferecer o layout e os controles pretendidos.",
+				"Esses projetos foram pensados principalmente para telas maiores. Eles podem funcionar no celular, mas a melhor experiência costuma ser no desktop.",
 			badges: {
 				playable: "Jogável",
 				watchOnly: "Só assistir",
@@ -1031,7 +999,7 @@ const dictionaries = {
 				},
 				solarSystem: {
 					name: "Solar System",
-					description: "Dança planetária",
+					description: "Movimento planetário",
 				},
 				terminal: { name: "Terminal", description: "Terminal Linux" },
 				tankShooter: {
@@ -1044,7 +1012,7 @@ const dictionaries = {
 				},
 				movingMountains: {
 					name: "Moving Mountains",
-					description: "Montanhas em movimento",
+					description: "Montanhas animadas",
 				},
 				survivalShooter: {
 					name: "Survival Shooter",
@@ -1081,30 +1049,28 @@ const dictionaries = {
 		},
 		recent: {
 			eyebrow: "Posts mais recentes",
-			title: "Os posts mais novos, em ordem",
+			title: "Posts mais novos",
 			description:
-				"Esta página é a visão mais clara do blog em ordem de publicação. Ela mantém os textos mais novos em primeiro plano, com paginação e pistas de assunto por perto quando você quiser continuar navegando.",
+				"Esta página mostra os posts por ordem de publicação, com os mais novos primeiro.",
 			postCount: "Quantidade de posts",
 			currentPage: "Página atual",
 			totalViews: "Total de visualizações",
-			latestArrival: "Última chegada",
+			latestArrival: "Post mais recente",
 			noPublished:
-				"Ainda não há posts publicados. Crie o seu primeiro post e ele aparecerá aqui como a entrada mais recente.",
+				"Ainda não há posts publicados. Seu primeiro post aparecerá aqui.",
 			readingGuide: "Guia de leitura",
-			stayOriented: "Mantenha-se orientado",
+			stayOriented: "Navegue por página",
 			stayOrientedDescription:
-				"Percorra o blog página por página, acompanhe a entrada mais recente e salte para os tópicos que aparecem com mais frequência no lote mais novo de posts.",
+				"Percorra os posts página por página e acompanhe o que foi publicado por último.",
 			showingNow: "Exibindo agora",
 			pageControls: "Controles de página",
 			freshTopics: "Tópicos recentes",
 			topicCountsLater:
-				"As contagens de tópicos aparecerão aqui depois que os posts forem publicados.",
+				"As contagens de tópicos aparecerão aqui quando houver posts publicados.",
 			recentPosts: "Posts recentes",
-			recentPostsTitle: "Entradas mais novas do devblog",
-			recentPostsDescription:
-				"Ordenados estritamente por data de publicação para que a página se comporte como um feed realmente recente, e não uma mistura aleatória.",
-			noPosts:
-				"Ainda não há posts disponíveis. Esta página agora lê diretamente do banco de dados e será preenchida assim que existirem entradas publicadas.",
+			recentPostsTitle: "Posts mais novos do DevBlog",
+			recentPostsDescription: "Posts ordenados por data de publicação.",
+			noPosts: "Ainda não há posts disponíveis.",
 			noPublishedShort: "Ainda não há posts publicados",
 			relatedTags: (count: number) =>
 				`${count} ${count === 1 ? "tag relacionada" : "tags relacionadas"}`,
@@ -1114,33 +1080,31 @@ const dictionaries = {
 		},
 		trending: {
 			eyebrow: "Em alta agora",
-			title: "O que os leitores estão acompanhando",
+			title: "Posts que os leitores estão acompanhando",
 			description:
-				"O acordeão continua sendo a assinatura da página, mas agora o restante da tela o acompanha: posts ranqueados, sinais visíveis de tópicos e razões mais claras para um post estar no topo.",
+				"Esta página mostra os posts que estão recebendo mais visualizações agora.",
 			trackedPosts: "Posts rastreados",
-			topPost: "Top post",
+			topPost: "Post líder",
 			totalViews: "Total de visualizações",
 			noTrending:
-				"Ainda não há posts em alta disponíveis. Esta seção será preenchida quando os posts publicados começarem a acumular visualizações.",
+				"Ainda não há posts em alta. Esta seção será atualizada quando os posts publicados começarem a receber visualizações.",
 			trendSignals: "Sinais de tendência",
-			topicRadar: "Radar de tópicos",
+			topicRadar: "Tópicos populares",
 			topicRadarDescription:
-				"Tópicos principais com presença mais forte na seleção atual de tendências. Use-os para chegar a posts relacionados sem perder o contexto do que está aquecido agora.",
+				"Os tópicos que mais aparecem entre os posts em alta no momento.",
 			topicSignalsLater:
-				"Os sinais de tópicos aparecerão aqui depois que os posts forem publicados.",
+				"Os dados de tópicos aparecerão aqui quando houver posts publicados.",
 			leadingPost: "Post líder",
-			leadingPostEmpty:
-				"Ainda não existe um líder em alta. Publique posts e acumule visualizações para construir esse ranking.",
+			leadingPostEmpty: "Ainda não há um post líder.",
 			ranking: "Ranking",
-			topMomentum: "Top posts por impulso",
+			topMomentum: "Mais lidos",
 			topMomentumDescription:
-				"Os posts mais lidos agora, ordenados por visualizações para que a lista reflita uma tendência real em vez de uma amostra aleatória.",
+				"Os posts mais lidos agora, ordenados por visualizações.",
 			moreToWatch: "Mais para acompanhar",
 			risingPosts: "Posts em ascensão",
 			risingPostsDescription:
-				"Posts logo abaixo do topo que ainda merecem uma apresentação clara e legível, em vez de mais uma lista densa.",
-			notEnoughPosts:
-				"Ainda não há posts suficientes para uma segunda seleção em destaque.",
+				"Posts que também estão indo bem, logo abaixo do topo.",
+			notEnoughPosts: "Ainda não há posts suficientes para uma segunda lista.",
 			readPost: "Ler post",
 			focusPost: (title: string) => `Focar em ${title}`,
 			viewsSuffix: (count: string) => `${count} visualizações`,
@@ -1148,62 +1112,61 @@ const dictionaries = {
 		search: {
 			eyebrow: "Buscar posts",
 			description:
-				"Navegue pelos posts correspondentes em todo o devblog. Os resultados usam os mesmos cards de posts do restante do site, com paginação quando a busca ocupa mais de uma tela.",
+				"Busque entre os posts do DevBlog. Os resultados aparecem com os mesmos cards usados no restante do site.",
 			matches: "Correspondências",
 			noMatch: "Sem resultado",
-			nothingFound: (query: string) => `Nada apareceu para "${query}".`,
+			nothingFound: (query: string) => `Nenhum resultado para "${query}".`,
 			noMatchDescription:
-				"Tente uma busca mais curta, procure por tag ou autor, ou volte para os posts mais recentes para continuar navegando.",
+				"Tente uma busca mais curta, procure por tag ou autor, ou navegue pelos posts recentes.",
 			seeRecentPosts: "Ver posts recentes",
 			resultsFor: (query: string) => `Resultados para "${query}"`,
 		},
 		tag: {
 			eyebrow: "Explorar por tag",
-			title: "Descubra posts por assunto",
-			description:
-				"Use tags para afunilar o blog rapidamente. Escolha um tópico principal, some algumas tags de apoio e mantenha a grade de resultados visível enquanto refina.",
+			title: "Navegue pelos posts por assunto",
+			description: "Use tags para afunilar a lista de posts.",
 			totalTags: "Total de tags",
 			selected: "Selecionadas",
 			visiblePosts: "Posts visíveis",
 			mainTopics: "Tópicos principais",
-			mainTopicsDescription: "As categorias amplas que moldam cada post.",
+			mainTopicsDescription: "A categoria principal de cada post.",
 			supportingTags: "Tags de apoio",
 			supportingTagsDescription:
-				"Use estas para afunilar a grade sem perder contexto.",
+				"Use estas para afunilar ainda mais os resultados.",
 			noPostsYet: "Ainda não há posts",
 			unlockAfterFirstPost:
-				"A navegação por tags será liberada depois do primeiro post publicado",
+				"A navegação por tags ficará disponível após o primeiro post publicado.",
 			tagBrowsingDescription:
-				"A página de tags agora lê o banco de dados real, então continuará vazia até existirem posts publicados e tags para exibir.",
+				"Esta página ficará vazia até que posts e tags sejam publicados.",
 			noMatches: "Sem resultados",
-			noPostsFit: "Nenhum post combina com esta seleção",
+			noPostsFit: "Nenhum post corresponde a essas tags",
 			noPostsFitDescription:
-				"Tente remover uma das tags ativas ou mudar para um tópico principal mais amplo. As escolhas rápidas do painel de filtro são um bom ponto de reinício.",
+				"Tente remover uma das tags selecionadas ou trocar para um assunto mais amplo.",
 			viewsSuffix: (count: string) => `${count} visualizações`,
 			filterPosts: "Filtrar posts",
 			findTopic: "Encontre um tópico",
 			filterDescription: (max: number) =>
-				`Pesquise tags, combine até ${max} e afunile a grade de posts sem sair da página.`,
+				`Pesquise tags, combine até ${max} e filtre a lista de posts.`,
 			searchTags: "Buscar tags",
 			selectedTags: "Tags selecionadas",
 			selectedTagsHint:
-				"Adicione outra tag para refinar ainda mais, ou redefina para ampliar os resultados.",
+				"Adicione outra tag para refinar os resultados ou redefina para ver mais posts.",
 			selectedTagsEmpty:
-				"Comece com um tópico amplo e depois some tags de apoio se precisar focar os resultados.",
+				"Comece com um assunto amplo e adicione mais tags para refinar os resultados.",
 			clearFilters: "Limpar filtros",
 			quickPicks: "Escolhas rápidas",
-			quickPicksDescription: "Tags populares que abrem a página rapidamente.",
-			tagGroupMainDescription: "Categorias principais que definem o post.",
-			tagGroupOtherDescription: "Detalhes secundários e assuntos relacionados.",
+			quickPicksDescription: "Tags populares para começar.",
+			tagGroupMainDescription: "Categorias principais do post.",
+			tagGroupOtherDescription: "Detalhes extras e assuntos relacionados.",
 			noTagsMatch: "Nenhuma tag corresponde à busca atual.",
 			resultsSummary: (resultsCount: number, tagCount: number) =>
 				`${resultsCount} ${resultsCount === 1 ? "post" : "posts"} correspondendo a ${tagCount} ${tagCount === 1 ? "tag" : "tags"}`,
 			showingAll: (resultsCount: number) =>
 				`Mostrando todos os ${resultsCount} ${resultsCount === 1 ? "posts" : "posts"}`,
 			resultsDescription:
-				"Remova uma tag para ampliar os resultados ou continue combinando tópicos relacionados para manter o foco.",
+				"Remova uma tag para ampliar os resultados ou continue adicionando tags para afunilar.",
 			resultsDescriptionEmpty:
-				"Use as escolhas rápidas, as faixas em movimento ou o painel de filtros para entrar em um tema específico.",
+				"Use as escolhas rápidas ou o painel de filtros para navegar por assunto.",
 			resetAll: "Redefinir tudo",
 			removeTag: (label: string) => `Remover ${label}`,
 			noActiveFilters: "Não há filtros de tags ativos.",
@@ -1241,8 +1204,8 @@ const dictionaries = {
 			overview: "Visão geral do perfil",
 			yourProfile: "Seu perfil",
 			description:
-				"Os dados reais da conta agora vêm do banco de dados, incluindo papel, provedores conectados, campos persistidos do perfil e contagens de atividade ao vivo.",
-			loadingTitle: "Preparando a página",
+				"Os detalhes da sua conta, sua atividade e seus métodos de login conectados.",
+			loadingTitle: "Carregando página",
 			unavailable: "Perfil indisponível",
 			goToLogin: "Ir para o login",
 			bookmarks: "Favoritos",
@@ -1259,7 +1222,7 @@ const dictionaries = {
 			editProfile: "Editar perfil",
 			logout: "Sair",
 			profileAlt: (name: string) => `Perfil de ${name}`,
-			recentActivity: "Atividade recente em todo o blog",
+			recentActivity: "Atividade recente",
 			noCommentsYet: "Ainda não há comentários para mostrar.",
 			editedOn: (date: string) => `Editado em ${date}`,
 			itemCount: (count: number) =>
@@ -1289,9 +1252,9 @@ const dictionaries = {
 			changePassword: "Alterar senha",
 			createPassword: "Criar senha",
 			changePasswordDescription:
-				"Atualize a senha de login por email sem perder o acesso social.",
+				"Atualize sua senha sem perder o acesso por login social.",
 			createPasswordDescription:
-				"Adicione uma senha de login por email a esta conta social.",
+				"Adicione uma senha para também poder entrar por email.",
 			optional: "Opcional",
 			currentPassword: "Senha atual",
 			newPassword: "Nova senha",
@@ -1319,16 +1282,15 @@ const dictionaries = {
 		},
 		newPost: {
 			createPageEyebrow: "Novo post",
-			createPageTitle: "Crie um artigo pronto para produção",
-			createPageDescription:
-				"Escreva o markdown real, anexe mídias reais e salve direto no backend para que a página do post renderize exatamente o mesmo conteúdo.",
+			createPageTitle: "Criar post",
+			createPageDescription: "Escreva o post, adicione mídia e salve por aqui.",
 			accessRequiredTitle: "Acesso de autor obrigatório",
 			accessRequiredDescription:
-				"Esta página é reservada para contas de colaboradores. Entre com um perfil com permissão de escrita para rascunhar, revisar e publicar posts.",
+				"Esta página está disponível apenas para contas de colaboradores.",
 			editPageEyebrow: "Editar post",
-			editPageTitle: "Atualizar artigo",
+			editPageTitle: "Editar post",
 			editPageDescription:
-				"Refine os metadados, o corpo ou a mídia e salve de volta no mesmo registro persistido do post.",
+				"Atualize o conteúdo, os metadados ou a mídia do post.",
 			editAccessDeniedTitle: "Acesso negado",
 			editAccessDeniedDescription:
 				"Apenas o autor ou administradores do site podem editar este post.",
@@ -1337,59 +1299,57 @@ const dictionaries = {
 			defaultAuthor: "Autor",
 			language: "Idioma original",
 			languageHelp:
-				"Este é o idioma em que o post foi escrito primeiro. As traduções são anexadas separadamente na página de edição.",
+				"Este é o idioma em que o post foi escrito originalmente. As traduções podem ser adicionadas separadamente.",
 			mode: "Modo",
 			modeCreating: "Criando",
 			modeEditing: "Editando",
 			editorEyebrowCreate: "Novo post",
 			editorEyebrowEdit: "Editar post",
-			editorTitleCreate: "Monte o post antes de publicá-lo",
-			editorTitleEdit: "Refine a versão publicada",
+			editorTitleCreate: "Escreva seu post",
+			editorTitleEdit: "Atualize seu post",
 			editorDescription:
-				"O editor persiste markdown real, caminhos reais de mídia e metadados reais do post no Prisma. O que você vê aqui é o que será renderizado na página do post.",
-			storySetupEyebrow: "Estrutura da história",
-			storySetupTitle: "Defina primeiro os metadados",
+				"Use o editor para escrever, visualizar e salvar o post.",
+			storySetupEyebrow: "Configuração do post",
+			storySetupTitle: "Preencha o básico",
 			title: "Título",
-			titlePlaceholder: "Um título que mereça o clique",
+			titlePlaceholder: "Título do post",
 			slug: "Slug",
 			slugPlaceholder: "slug-da-url-do-post",
 			regenerate: "Gerar novamente",
 			finalUrl: (slug: string) => `URL final: /post/${slug}`,
 			description: "Descrição",
 			generateFromContent: "Gerar a partir do conteúdo",
-			descriptionPlaceholder:
-				"O que o leitor deve entender antes de abrir o artigo?",
+			descriptionPlaceholder: "Um resumo curto do post.",
 			visualsEyebrow: "Visual",
-			visualsTitle: "Defina a miniatura do post",
+			visualsTitle: "Miniatura do post",
 			thumbnail: "Miniatura",
 			thumbnailDescription:
-				"Ela define a imagem principal da página do post e a miniatura dos cards em todo o restante do site.",
+				"Esta imagem é usada na página do post e nos cards.",
 			upload: "Enviar",
 			uploading: "Enviando...",
 			thumbnailPreviewAlt: "Miniatura do post",
-			thumbnailEmpty: "Envie a imagem que deve representar o post.",
+			thumbnailEmpty: "Envie uma imagem para este post.",
 			thumbnailUploaded: "Miniatura enviada.",
 			thumbnailUploadError: "Não foi possível enviar a miniatura.",
 			thumbnailAlt: "Texto alternativo da miniatura",
-			thumbnailAltPlaceholder:
-				"Descreva a miniatura para acessibilidade e prévias",
+			thumbnailAltPlaceholder: "Descreva a imagem da miniatura",
 			bodyEyebrow: "Corpo",
-			bodyTitle: "Escreva e revise no mesmo lugar",
+			bodyTitle: "Escreva e visualize",
 			bodyDescription:
-				"Escreva em markdown, envie imagens embutidas e verifique a renderização final antes de salvar.",
+				"Escreva em markdown e veja o resultado final antes de salvar.",
 			readTime: "Tempo de leitura",
-			taxonomyEyebrow: "Taxonomia",
-			taxonomyTitle: "Posicione o artigo",
+			taxonomyEyebrow: "Tags",
+			taxonomyTitle: "Categorize o post",
 			mainTag: "Tag principal",
 			tags: "Tags",
-			readinessEyebrow: "Prontidão",
-			readinessTitle: "Verifique o essencial",
+			readinessEyebrow: "Checklist",
+			readinessTitle: "Antes de publicar",
 			checklistTitleSet: "Título definido",
 			checklistThumbnailUploaded: "Miniatura enviada",
 			checklistMainTagChosen: "Tag principal escolhida",
 			checklistSupportingTagsAdded: "Tags de apoio adicionadas",
 			checklistDescriptionReady: "Descrição pronta",
-			checklistBodyHasSubstance: "Corpo com substância",
+			checklistBodyHasSubstance: "Corpo com conteúdo",
 			ready: "Pronto",
 			missing: "Faltando",
 			wordCount: (count: number) => `${count} palavras`,
@@ -1398,40 +1358,36 @@ const dictionaries = {
 			currentTarget: (status: string) => `Destino atual: ${status}`,
 			currentLanguage: (language: string) => `Idioma original: ${language}`,
 			publishEyebrow: "Publicar",
-			publishTitle: "Escolha o próximo passo",
+			publishTitle: "Escolha o que fazer agora",
 			statusDraftLabel: "Salvar rascunho",
-			statusDraftDescription:
-				"Mantenha o post privado enquanto você molda o conteúdo.",
+			statusDraftDescription: "Mantenha o post privado por enquanto.",
 			statusPendingReviewLabel: "Enviar para revisão",
-			statusPendingReviewDescription:
-				"Marque o rascunho como pronto para revisão editorial.",
+			statusPendingReviewDescription: "Marque o post como pronto para revisão.",
 			statusPublishedLabel: "Publicar agora",
-			statusPublishedDescription: "Torne o post visível no site imediatamente.",
+			statusPublishedDescription: "Torne o post visível no site.",
 			saving: "Salvando...",
 			clearForm: "Limpar formulário",
 			submitError: "Não foi possível salvar o post agora. Tente novamente.",
 			submitSuccessPublished: "Post publicado.",
 			submitSuccessReview: "Post enviado para revisão.",
 			submitSuccessDraft: "Rascunho salvo.",
-			mainTagPlaceholder:
-				"Escolha um tópico existente ou defina uma nova tag principal",
+			mainTagPlaceholder: "Escolha uma tag principal",
 			mainTagHelp:
-				"As tags principais agrupam o post em listagens e recomendações.",
+				"As tags principais são usadas em listagens e recomendações.",
 			tagsPlaceholder: "Adicione tags e pressione Enter",
 			tagsLimitReached: "Limite de tags atingido",
-			tagSlotsLeft: (count: number) =>
-				`Restam ${count} espaços para tags. Use rótulos focados e fáceis de buscar.`,
+			tagSlotsLeft: (count: number) => `Restam ${count} espaços para tags.`,
 			editorControlsEyebrow: "Controles do editor",
-			editorControlsTitle: "Molde o markdown com intenção",
+			editorControlsTitle: "Ferramentas de markdown",
 			editorControlsDescription:
-				"As imagens embutidas permanecem onde você as insere e são renderizadas centralizadas tanto na prévia quanto no post final.",
+				"Use a barra para formatar o conteúdo e inserir imagens.",
 			modeWrite: "Escrever",
-			modeWriteDescription: "Foque no markdown.",
+			modeWriteDescription: "Edite o markdown.",
 			modePreview: "Prévia",
-			modePreviewDescription: "Leia a renderização final.",
+			modePreviewDescription: "Veja o post renderizado.",
 			modeSplit: "Dividido",
-			modeSplitDescription: "Escreva e visualize juntos.",
-			toolbarInline: "Inline",
+			modeSplitDescription: "Escreva e visualize lado a lado.",
+			toolbarInline: "Em linha",
 			toolbarBlocks: "Blocos",
 			toolbarBold: "Negrito",
 			toolbarItalic: "Itálico",
@@ -1447,16 +1403,14 @@ const dictionaries = {
 			dualPanel: "Painel duplo",
 			modeBadge: (mode: string) => `Modo ${mode}`,
 			markdownEyebrow: "Markdown",
-			markdownDescription:
-				"Escreva com markdown puro e mantenha controle sobre onde cada bloco e imagem aparecem.",
+			markdownDescription: "Escreva seu post em markdown puro.",
 			editableSource: "Fonte editável",
 			markdownPlaceholder:
 				"Escreva o artigo em Markdown.\n\nExemplo:\n## Título da seção\n\nUm parágrafo com **ênfase** e um [link](https://example.com).\n",
 			previewEyebrow: "Prévia",
-			previewDescription:
-				"A prévia usa o mesmo renderizador da página publicada do post.",
+			previewDescription: "Esta prévia segue o layout do post publicado.",
 			finalRendering: "Renderização final",
-			emptyPreview: "Comece a escrever para ver a renderização final do post.",
+			emptyPreview: "Comece a escrever para visualizar o post.",
 			editorWordCount: (count: number) => `${count} palavras`,
 			editorReadTime: (count: number) => `${count} min de leitura`,
 			editorCharacters: (used: number, max: number) =>
@@ -1466,16 +1420,15 @@ const dictionaries = {
 			imageDefaultAlt: "Imagem",
 			imageUploadError: "Não foi possível enviar a imagem.",
 			translationEyebrow: "Traduções",
-			translationTitle: "Adicionar ou atualizar uma versão localizada",
+			translationTitle: "Adicionar ou editar tradução",
 			translationDescription:
-				"As traduções substituem o título, a descrição, o texto alternativo da miniatura e o corpo quando o leitor estiver navegando nesse idioma. O slug, as tags e o status continuam ligados ao post original.",
+				"As traduções substituem o título, a descrição, o texto alternativo da miniatura e o corpo para leitores nesse idioma. O slug, as tags e o status continuam ligados ao post original.",
 			translationOriginalLanguage: "Idioma do post original",
-			translationNoLocales:
-				"Todos os idiomas suportados já estão cobertos pelo post original ou pelas traduções salvas.",
+			translationNoLocales: "Todos os idiomas suportados já estão cobertos.",
 			translationLanguage: "Idioma da tradução",
 			translationLanguageHelp:
-				"Escolha o idioma do site que deve receber esta versão localizada.",
-			translationExisting: "Traduções disponíveis",
+				"Escolha em qual idioma do site esta tradução será usada.",
+			translationExisting: "Traduções salvas",
 			translationNoneYet: "Ainda não há traduções salvas.",
 			translationStatusExisting: "Editando tradução salva",
 			translationStatusNew: "Criando nova tradução",
@@ -1483,14 +1436,13 @@ const dictionaries = {
 			translationCopiedFromOriginal:
 				"O conteúdo do post original foi copiado para o editor de tradução.",
 			translationBodyDescription:
-				"Escreva o markdown traduzido que deve substituir o corpo original neste idioma.",
+				"Escreva o markdown traduzido para este idioma.",
 			translationSave: "Salvar tradução",
 			translationSaving: "Salvando tradução...",
 			translationSaveSuccess: "Tradução salva.",
 			translationSaveError:
 				"Não foi possível salvar a tradução agora. Tente novamente.",
-			translationMustDiffer:
-				"Escolha um idioma diferente do post original.",
+			translationMustDiffer: "Escolha um idioma diferente do post original.",
 			progressAria: (progress: number, remaining: number) =>
 				`${progress}% de progresso, ${remaining} minutos restantes`,
 		},
@@ -1522,7 +1474,7 @@ const dictionaries = {
 		},
 		post: {
 			relatedReading: "Leitura relacionada",
-			moreFromThisLane: "Mais desta linha",
+			moreFromThisLane: "Mais como este",
 			statusPublished: "Publicado",
 			statusPendingReview: "Aguardando revisão",
 			statusDraft: "Rascunho",
@@ -1540,9 +1492,9 @@ const dictionaries = {
 				relatedTopics: string[],
 			) =>
 				relatedTopics.length > 0
-					? `${name} escreve sobre ${mainTag}, com recorrência em ${relatedTopics.join(" e ")}.`
-					: `${name} escreve sobre ${mainTag}.`,
-			commentSection: "Seção de comentários",
+					? `${name} escreve principalmente sobre ${mainTag}, com posts sobre ${relatedTopics.join(" e ")} também.`
+					: `${name} escreve principalmente sobre ${mainTag}.`,
+			commentSection: "Comentários",
 			commentPlaceholder: "Adicione um comentário",
 			commentAs: (name: string) => `Comentando como ${name}`,
 			loginRequiredToComment: "Faça login para comentar",
@@ -1550,8 +1502,7 @@ const dictionaries = {
 			postedOn: (date: string) => `Publicado em ${date}`,
 			reportComment: "Reportar comentário",
 			loginModalTitle: "Você precisa estar logado para fazer isso.",
-			loginModalDescription:
-				"Tenha uma experiência melhor ao entrar. Participe da conversa.",
+			loginModalDescription: "Entre para continuar.",
 			reportCommentTitle: "Reportar comentário",
 			reportingCommentBy: (author: string) =>
 				`Reportando comentário de ${author}:`,
@@ -1613,8 +1564,8 @@ const dictionaries = {
 			previous: "Anterior",
 			next: "Siguiente",
 			loadingProfile: "Cargando perfil",
-			preparingPage: "Preparando la página",
-			noItemsYet: "Todavía no hay elementos para mostrar.",
+			preparingPage: "Cargando página",
+			noItemsYet: "Nada que mostrar todavía.",
 			noDescriptionYet: "Todavía no hay descripción del perfil.",
 			percentComplete: (progress: number) => `${progress}% completado`,
 		},
@@ -1625,8 +1576,7 @@ const dictionaries = {
 		},
 		header: {
 			eyebrow: "Blog personal de desarrollo",
-			description:
-				"Tutoriales, opiniones, notas de frontend y proyectos interactivos reunidos en un solo lugar.",
+			description: "Posts sobre frontend, UI y pequeños proyectos paralelos.",
 			suggestTitle: "Sugerir una publicación (requiere revisión)",
 			homeAria: "Inicio",
 		},
@@ -1636,12 +1586,12 @@ const dictionaries = {
 			closeMenu: "Cerrar menú de navegación",
 		},
 		footer: {
-			title: "Publicaciones, experimentos y trabajo de interfaz.",
+			title: "Publicaciones, experimentos y UI.",
 			description:
-				"Un blog personal de desarrollo con textos, estudios de interacción y un playground para ideas que son más fáciles de mostrar que de describir.",
+				"Un blog personal de desarrollo con artículos, experimentos de interfaz y pequeños proyectos interactivos.",
 			navigate: "Navegar",
 			socials: "Redes",
-			closing: "Artículos, experimentos de UI y trabajo interactivo paralelo.",
+			closing: "Artículos, experimentos de UI y proyectos paralelos.",
 		},
 		popover: {
 			aria: "Acciones de la publicación",
@@ -1652,42 +1602,37 @@ const dictionaries = {
 		},
 		home: {
 			startHere: "Empieza aquí",
-			title: "Un blog personal de desarrollo con espacio para explorar",
+			title: "Un blog personal de desarrollo",
 			description:
-				"DevBlog es donde publico textos sobre desarrollo, opiniones, tutoriales y experimentos. La portada destaca lecturas principales, lo que está en tendencia ahora y accesos rápidos para explorar el resto del blog.",
+				"DevBlog es donde publico tutoriales, opiniones, notas y experimentos. La portada destaca publicaciones destacadas, publicaciones en tendencia y varias formas de explorar el resto del sitio.",
 			featuredPosts: "Publicaciones destacadas",
 			trendingPicks: "Selecciones en tendencia",
 			recommended: "Recomendados",
-			trendingSnapshot: "Resumen de tendencias",
-			trendingTitle: "Lo que está recibiendo atención ahora",
+			trendingSnapshot: "En tendencia ahora",
+			trendingTitle: "Publicaciones que llaman la atención ahora",
 			trendingDescription:
-				"Una lectura rápida de las publicaciones que están atrayendo lectores ahora mismo, en el mismo lugar de antes pero con una estructura de sección más clara.",
-			exploreFurther: "Sigue explorando",
-			exploreTitle: "Más formas de entrar al blog",
+				"Un vistazo rápido a las publicaciones que más se están leyendo ahora.",
+			exploreFurther: "Explorar más",
+			exploreTitle: "Más formas de navegar",
 			exploreDescription:
-				"Usa estas secciones para moverte entre lo nuevo, lo que recibe atención y las publicaciones que vale la pena revisitar.",
+				"Explora publicaciones recientes, en tendencia o por tag.",
 			editorPicks: "Selecciones del editor",
 			noRecommended:
-				"Todavía no hay publicaciones recomendadas. Publica algunas entradas y esta sección se llenará sola desde la base de datos activa.",
-			noPosts:
-				"Todavía no hay publicaciones publicadas. La página principal ya está conectada a Prisma, así que las secciones se llenarán en cuanto existan publicaciones reales.",
+				"Todavía no hay publicaciones recomendadas. Esta sección se actualizará cuando se publique más contenido.",
+			noPosts: "Todavía no hay publicaciones publicadas.",
 			scrollToTrending: "Ir a las publicaciones en tendencia",
 			noTrending:
-				"Todavía no hay publicaciones en tendencia. Una vez que las publicaciones publicadas empiecen a reunir vistas, aparecerán aquí automáticamente.",
+				"Todavía no hay publicaciones en tendencia. Aparecerán aquí cuando las publicaciones publicadas empiecen a recibir vistas.",
 			explore: "Explorar",
 			trendingPosts: "Publicaciones en tendencia",
-			trendingPostsDescription:
-				"Ve qué está captando más atención ahora mismo.",
+			trendingPostsDescription: "Mira qué están leyendo más ahora.",
 			recentPosts: "Publicaciones recientes",
-			recentPostsDescription:
-				"Empieza por los textos más nuevos y retrocede desde ahí.",
+			recentPostsDescription: "Empieza por las publicaciones más nuevas.",
 			browseByTag: "Explorar por tag",
-			browseByTagDescription:
-				"Filtra el catálogo en vivo por tema y tags de apoyo.",
-			noSectionPost:
-				"Todavía no hay una publicación disponible para esta sección.",
+			browseByTagDescription: "Filtra las publicaciones por tema y tag.",
+			noSectionPost: "Todavía no hay publicaciones en esta sección.",
 			noRecommendedCallouts:
-				"Los destacados recomendados aparecerán aquí después de que se publiquen más publicaciones.",
+				"Las publicaciones recomendadas aparecerán aquí cuando se publique más contenido.",
 			viewSection: "Ver sección",
 		},
 		notFound: {
@@ -1710,7 +1655,7 @@ const dictionaries = {
 			ideaPlaceholder:
 				"Añade un pequeño esquema, viñetas o enlaces para contexto (opcional).",
 			reviewNote:
-				"Tu sugerencia será revisada antes de publicarse. Evita datos sensibles o información personal.",
+				"Las sugerencias se revisan antes de publicarse. No incluyas datos sensibles ni información personal.",
 			submitted: "Enviado",
 			submitting: "Enviando...",
 			submit: "Enviar sugerencia",
@@ -1720,45 +1665,45 @@ const dictionaries = {
 		},
 		about: {
 			eyebrow: "Sobre devblog",
-			title: "Un lugar para escribir, experimentar y seguir publicando",
+			title: "Un lugar para escribir y construir",
 			description:
-				"Este sitio es donde conviven la escritura, el trabajo de interfaz y los experimentos paralelos. La idea es que siga siendo útil, personal y activo en lugar de convertirse en un portafolio estático.",
+				"Este sitio reúne escritura, trabajo de UI y pequeños experimentos. Es parte blog, parte playground y parte proyecto personal.",
 			storyCards: [
 				{
 					label: "Por qué existe",
-					title: "Un blog que realmente sigo usando",
-					text: "DevBlog es mi blog personal de desarrollo de software. Es donde publico tutoriales, opiniones, experimentos, ideas de interfaz y las partes del desarrollo web que más disfruto pulir.",
+					title: "Un blog al que siempre vuelvo",
+					text: "DevBlog es mi blog personal de desarrollo de software. Lo uso para publicar tutoriales, opiniones, experimentos, ideas de interfaz y otras partes del desarrollo web en las que disfruto trabajar.",
 				},
 				{
 					label: "Cómo está construido",
-					title: "Una stack práctica con espacio para trabajo visual",
-					text: "La stack gira en torno a Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser y algunas librerías de apoyo para dar forma a datos y experimentos. El objetivo es mantener el proyecto práctico, simple y agradable de construir sin perder el lado visual del trabajo.",
+					title: "Una stack práctica",
+					text: "El sitio está construido con Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser y algunas librerías de apoyo más pequeñas. La idea es que sea lo bastante simple de mantener sin perder espacio para el trabajo visual e interactivo.",
 				},
 				{
-					label: "Qué más vive aquí",
-					title: "Herramientas lúdicas, bocetos e ideas paralelas",
-					text: "Además de las publicaciones, el sitio apuesta por la interactividad: descubrimiento guiado por tags, recomendaciones, herramientas para usuarios y un playground lleno de juegos y bocetos. No soy desarrollador de juegos, pero el playground es un buen lugar para proyectos de hobby y otra forma de mostrar lo que puedo construir.",
+					label: "Qué más hay aquí",
+					title: "Herramientas pequeñas y proyectos paralelos",
+					text: "Junto a las publicaciones, hay un playground con juegos, bocetos y otros experimentos. No soy desarrollador de juegos, pero es un buen lugar para proyectos personales y para probar ideas que no encajan en un post normal.",
 				},
 			],
 		},
 		playgroundPage: {
-			title: "Juegos, bocetos y desvíos jugables",
+			title: "Juegos, bocetos y pequeños experimentos",
 			description:
-				"Esta página es un hogar para experimentos de hobby. Soy principalmente desarrollador web, no desarrollador de juegos, pero estos pequeños proyectos son una forma útil de explorar interacción, movimiento e ideas de renderizado en el navegador.",
+				"Esta página es un espacio para proyectos personales. Trabajo sobre todo en la web, pero estos experimentos son una forma divertida de explorar movimiento, interacción y renderizado en el navegador.",
 			totalProjects: "Total de proyectos",
 			projects: "Proyectos",
 			playableTitle: "Jugables",
 			playableDescription:
-				"Experimentos prácticos que puedes controlar directamente, desde juegos hasta pequeños sistemas.",
+				"Proyectos con los que puedes interactuar directamente.",
 			watchOnlyTitle: "Solo para ver",
 			watchOnlyDescription:
-				"Piezas visuales que se entienden mejor como estudios de movimiento que como juegos con puntuación.",
+				"Experimentos visuales más para mirar que para jugar.",
 			mode: "Modo",
 			loading: "Cargando...",
 			closeGame: "Cerrar juego",
-			mobileNoticeTitle: "Playground pensado para escritorio",
+			mobileNoticeTitle: "Mejor en escritorio",
 			mobileNoticeBody:
-				"Estos proyectos se diseñaron primero para pantallas más grandes. Puedes seguir explorando aquí, pero en una computadora suelen verse y controlarse como fueron pensados.",
+				"Estos proyectos se diseñaron sobre todo para pantallas grandes. Pueden funcionar en móvil, pero la mejor experiencia suele estar en escritorio.",
 			badges: {
 				playable: "Jugable",
 				watchOnly: "Solo ver",
@@ -1779,7 +1724,7 @@ const dictionaries = {
 				},
 				solarSystem: {
 					name: "Solar System",
-					description: "Danza planetaria",
+					description: "Movimiento planetario",
 				},
 				terminal: { name: "Terminal", description: "Terminal Linux" },
 				tankShooter: {
@@ -1792,7 +1737,7 @@ const dictionaries = {
 				},
 				movingMountains: {
 					name: "Moving Mountains",
-					description: "Montañas en movimiento",
+					description: "Montañas animadas",
 				},
 				survivalShooter: {
 					name: "Survival Shooter",
@@ -1829,30 +1774,29 @@ const dictionaries = {
 		},
 		recent: {
 			eyebrow: "Publicaciones recientes",
-			title: "Las publicaciones más nuevas, en orden",
+			title: "Publicaciones más nuevas",
 			description:
-				"Esta página es la vista más clara del blog en orden de publicación. Mantiene los textos más nuevos en primer plano, con paginación y señales de temas cerca cuando quieras seguir navegando.",
+				"Esta página muestra las publicaciones por orden de publicación, con las más nuevas primero.",
 			postCount: "Cantidad de publicaciones",
 			currentPage: "Página actual",
 			totalViews: "Vistas totales",
-			latestArrival: "Última llegada",
+			latestArrival: "Última publicación",
 			noPublished:
-				"Todavía no hay publicaciones publicadas. Crea tu primera publicación y aparecerá aquí como la llegada más reciente.",
+				"Todavía no hay publicaciones publicadas. Tu primera publicación aparecerá aquí.",
 			readingGuide: "Guía de lectura",
-			stayOriented: "Mantén el rumbo",
+			stayOriented: "Navegar por página",
 			stayOrientedDescription:
-				"Recorre el blog página por página, sigue la entrada más reciente y salta a los temas que aparecen con más frecuencia en el lote más nuevo de publicaciones.",
+				"Recorre las publicaciones página por página y sigue las últimas incorporaciones.",
 			showingNow: "Mostrando ahora",
 			pageControls: "Controles de página",
-			freshTopics: "Temas frescos",
+			freshTopics: "Temas recientes",
 			topicCountsLater:
-				"Los conteos de temas aparecerán aquí después de que se publiquen las publicaciones.",
+				"Los conteos de temas aparecerán aquí cuando haya publicaciones publicadas.",
 			recentPosts: "Publicaciones recientes",
-			recentPostsTitle: "Entradas más nuevas en devblog",
+			recentPostsTitle: "Publicaciones más nuevas en DevBlog",
 			recentPostsDescription:
-				"Ordenadas estrictamente por fecha de publicación para que la página se comporte como un feed realmente reciente y no como una mezcla aleatoria.",
-			noPosts:
-				"Todavía no hay publicaciones disponibles. Esta página ahora lee directamente de la base de datos y se llenará en cuanto existan entradas publicadas.",
+				"Publicaciones ordenadas por fecha de publicación.",
+			noPosts: "Todavía no hay publicaciones disponibles.",
 			noPublishedShort: "Todavía no hay publicaciones publicadas",
 			relatedTags: (count: number) =>
 				`${count} ${count === 1 ? "tag relacionado" : "tags relacionados"}`,
@@ -1862,33 +1806,32 @@ const dictionaries = {
 		},
 		trending: {
 			eyebrow: "En tendencia ahora",
-			title: "Lo que los lectores están siguiendo",
+			title: "Publicaciones a las que los lectores prestan atención",
 			description:
-				"El acordeón sigue siendo la firma de la página, pero ahora el resto de la vista la acompaña: publicaciones clasificadas, señales visibles de temas y razones más claras de por qué una publicación está cerca de la cima.",
+				"Esta página muestra las publicaciones que están recibiendo más vistas ahora.",
 			trackedPosts: "Publicaciones rastreadas",
 			topPost: "Publicación líder",
 			totalViews: "Vistas totales",
 			noTrending:
-				"Todavía no hay publicaciones en tendencia disponibles. Esta sección se llenará una vez que las publicaciones publicadas empiecen a reunir vistas.",
+				"Todavía no hay publicaciones en tendencia. Esta sección se actualizará cuando las publicaciones publicadas empiecen a recibir vistas.",
 			trendSignals: "Señales de tendencia",
-			topicRadar: "Radar de temas",
+			topicRadar: "Temas populares",
 			topicRadarDescription:
-				"Temas principales con mayor presencia en la selección actual de tendencias. Úsalos para llegar a publicaciones relacionadas sin perder el contexto de lo que está caliente ahora.",
+				"Los temas que más aparecen en las publicaciones en tendencia actuales.",
 			topicSignalsLater:
-				"Las señales de temas aparecerán aquí después de que se publiquen las publicaciones.",
+				"Los datos de temas aparecerán aquí cuando haya publicaciones publicadas.",
 			leadingPost: "Publicación líder",
-			leadingPostEmpty:
-				"Todavía no hay un líder en tendencia. Publica publicaciones y acumula vistas para construir este ranking.",
+			leadingPostEmpty: "Todavía no hay una publicación líder.",
 			ranking: "Ranking",
-			topMomentum: "Mejores publicaciones por impulso",
+			topMomentum: "Más leídas",
 			topMomentumDescription:
-				"Las publicaciones más leídas ahora, ordenadas por vistas para que la lista refleje una tendencia real en lugar de una muestra aleatoria.",
+				"Las publicaciones más leídas ahora, ordenadas por vistas.",
 			moreToWatch: "Más para seguir",
 			risingPosts: "Publicaciones en ascenso",
 			risingPostsDescription:
-				"Publicaciones justo por debajo del nivel superior que aun así merecen una presentación clara y legible en lugar de otra lista densa.",
+				"Publicaciones que también van bien, justo por debajo de los primeros lugares.",
 			notEnoughPosts:
-				"Todavía no hay suficientes publicaciones para una lista secundaria destacada.",
+				"Todavía no hay suficientes publicaciones para una segunda lista.",
 			readPost: "Leer publicación",
 			focusPost: (title: string) => `Enfocar ${title}`,
 			viewsSuffix: (count: string) => `${count} vistas`,
@@ -1896,64 +1839,60 @@ const dictionaries = {
 		search: {
 			eyebrow: "Buscar publicaciones",
 			description:
-				"Explora las publicaciones coincidentes en todo devblog. Los resultados usan las mismas tarjetas que el resto del sitio, con paginación cuando una búsqueda ocupa más de una pantalla.",
+				"Busca entre las publicaciones de DevBlog. Los resultados se muestran con las mismas tarjetas que usa el resto del sitio.",
 			matches: "Coincidencias",
 			noMatch: "Sin resultados",
-			nothingFound: (query: string) => `No apareció nada para "${query}".`,
+			nothingFound: (query: string) => `No hay resultados para "${query}".`,
 			noMatchDescription:
-				"Prueba con una búsqueda más corta, busca por tag o autor, o vuelve a las publicaciones recientes para seguir navegando.",
+				"Prueba una búsqueda más corta, busca por tag o autor, o navega por las publicaciones recientes.",
 			seeRecentPosts: "Ver publicaciones recientes",
 			resultsFor: (query: string) => `Resultados para "${query}"`,
 		},
 		tag: {
 			eyebrow: "Explorar por tag",
-			title: "Descubre publicaciones por tema",
-			description:
-				"Usa tags para acotar el blog rápidamente. Elige un tema principal, añade algunos tags de apoyo y mantén la cuadrícula de resultados a la vista mientras refinas.",
+			title: "Navega las publicaciones por tema",
+			description: "Usa tags para acotar la lista de publicaciones.",
 			totalTags: "Total de tags",
 			selected: "Seleccionados",
 			visiblePosts: "Publicaciones visibles",
 			mainTopics: "Temas principales",
-			mainTopicsDescription:
-				"Las categorías amplias que dan forma a cada publicación.",
+			mainTopicsDescription: "La categoría principal de cada publicación.",
 			supportingTags: "Tags de apoyo",
-			supportingTagsDescription:
-				"Úsalos para acotar la cuadrícula sin perder contexto.",
+			supportingTagsDescription: "Úsalas para acotar aún más los resultados.",
 			noPostsYet: "Todavía no hay publicaciones",
 			unlockAfterFirstPost:
-				"La exploración por tags se desbloqueará después de la primera publicación publicada",
+				"La navegación por tags estará disponible después de la primera publicación.",
 			tagBrowsingDescription:
-				"La página de tags ahora lee la base de datos real, así que seguirá vacía hasta que existan publicaciones publicadas y tags para mostrar.",
+				"Esta página seguirá vacía hasta que se publiquen posts y tags.",
 			noMatches: "Sin coincidencias",
-			noPostsFit: "Ninguna publicación encaja con esta combinación",
+			noPostsFit: "Ninguna publicación coincide con esos tags",
 			noPostsFitDescription:
-				"Prueba quitando uno de los tags activos o cambiando a un tema principal más amplio. Las selecciones rápidas del panel de filtros son un buen punto de reinicio.",
+				"Prueba quitando uno de los tags seleccionados o cambiando a un tema más amplio.",
 			viewsSuffix: (count: string) => `${count} vistas`,
 			filterPosts: "Filtrar publicaciones",
 			findTopic: "Encuentra un tema",
 			filterDescription: (max: number) =>
-				`Busca tags, combina hasta ${max} y acota la cuadrícula de publicaciones sin salir de la página.`,
+				`Busca tags, combina hasta ${max} y filtra la lista de publicaciones.`,
 			searchTags: "Buscar tags",
 			selectedTags: "Tags seleccionados",
 			selectedTagsHint:
-				"Añade otro tag para afinar aún más, o reinicia para ampliar los resultados.",
+				"Añade otro tag para acotar los resultados o reinicia para ver más publicaciones.",
 			selectedTagsEmpty:
-				"Empieza con un tema amplio y luego suma tags de apoyo si necesitas enfocar los resultados.",
+				"Empieza con un tema amplio y añade más tags para acotar los resultados.",
 			clearFilters: "Limpiar filtros",
 			quickPicks: "Selecciones rápidas",
-			quickPicksDescription: "Tags populares que abren la página rápidamente.",
-			tagGroupMainDescription:
-				"Categorías principales que definen la publicación.",
-			tagGroupOtherDescription: "Detalles secundarios y temas relacionados.",
+			quickPicksDescription: "Tags populares para empezar.",
+			tagGroupMainDescription: "Categorías principales de la publicación.",
+			tagGroupOtherDescription: "Detalles extra y temas relacionados.",
 			noTagsMatch: "Ningún tag coincide con la búsqueda actual.",
 			resultsSummary: (resultsCount: number, tagCount: number) =>
 				`${resultsCount} ${resultsCount === 1 ? "publicación" : "publicaciones"} coinciden con ${tagCount} ${tagCount === 1 ? "tag" : "tags"}`,
 			showingAll: (resultsCount: number) =>
 				`Mostrando las ${resultsCount} ${resultsCount === 1 ? "publicación" : "publicaciones"}`,
 			resultsDescription:
-				"Quita un tag para ampliar los resultados o sigue combinando temas relacionados para mantener el foco.",
+				"Quita un tag para ampliar los resultados o sigue añadiendo tags para afinarlos.",
 			resultsDescriptionEmpty:
-				"Usa las selecciones rápidas, las filas en movimiento o el panel de filtros para entrar en un tema específico.",
+				"Usa las selecciones rápidas o el panel de filtros para navegar por tema.",
 			resetAll: "Reiniciar todo",
 			removeTag: (label: string) => `Quitar ${label}`,
 			noActiveFilters: "No hay filtros de tags activos.",
@@ -1992,8 +1931,8 @@ const dictionaries = {
 			overview: "Resumen del perfil",
 			yourProfile: "Tu perfil",
 			description:
-				"Los datos reales de la cuenta ahora están respaldados por la base de datos, incluyendo rol, proveedores conectados, campos persistidos del perfil y conteos de actividad en vivo.",
-			loadingTitle: "Preparando la página",
+				"Los datos de tu cuenta, tu actividad y tus métodos de acceso conectados.",
+			loadingTitle: "Cargando página",
 			unavailable: "Perfil no disponible",
 			goToLogin: "Ir al inicio de sesión",
 			bookmarks: "Guardados",
@@ -2010,7 +1949,7 @@ const dictionaries = {
 			editProfile: "Editar perfil",
 			logout: "Salir",
 			profileAlt: (name: string) => `Perfil de ${name}`,
-			recentActivity: "Actividad reciente en todo el blog",
+			recentActivity: "Actividad reciente",
 			noCommentsYet: "Todavía no hay comentarios para mostrar.",
 			editedOn: (date: string) => `Editado ${date}`,
 			itemCount: (count: number) =>
@@ -2040,9 +1979,9 @@ const dictionaries = {
 			changePassword: "Cambiar contraseña",
 			createPassword: "Crear contraseña",
 			changePasswordDescription:
-				"Actualiza tu contraseña de acceso por email sin perder tu inicio de sesión social.",
+				"Actualiza tu contraseña sin perder el acceso con inicio de sesión social.",
 			createPasswordDescription:
-				"Añade una contraseña de acceso por email a esta cuenta social.",
+				"Añade una contraseña para que también puedas entrar con email.",
 			optional: "Opcional",
 			currentPassword: "Contraseña actual",
 			newPassword: "Nueva contraseña",
@@ -2069,95 +2008,91 @@ const dictionaries = {
 		},
 		newPost: {
 			createPageEyebrow: "Nueva publicación",
-			createPageTitle: "Crea un artículo listo para producción",
+			createPageTitle: "Crear publicación",
 			createPageDescription:
-				"Escribe el markdown real, adjunta medios reales y guarda directamente en el backend para que la página del post renderice exactamente el mismo contenido.",
+				"Escribe tu publicación, añade medios y guárdala aquí.",
 			accessRequiredTitle: "Se requiere acceso de autor",
 			accessRequiredDescription:
-				"Esta página está reservada para cuentas colaboradoras. Inicia sesión con un perfil con permisos de escritura para redactar, revisar y publicar posts.",
+				"Esta página solo está disponible para cuentas colaboradoras.",
 			editPageEyebrow: "Editar publicación",
-			editPageTitle: "Actualizar artículo",
+			editPageTitle: "Editar publicación",
 			editPageDescription:
-				"Refina los metadatos, el cuerpo o los medios y guarda directamente en el mismo registro persistido del post.",
+				"Actualiza el contenido, los metadatos o los medios de la publicación.",
 			editAccessDeniedTitle: "Acceso denegado",
 			editAccessDeniedDescription:
 				"Solo el autor o los administradores del sitio pueden editar esta publicación.",
 			role: "Rol",
 			author: "Autor",
 			defaultAuthor: "Autor",
-			language: "Original language",
+			language: "Idioma original",
 			languageHelp:
-				"This is the language the post was first written in. Translations are attached separately on the edit page.",
+				"Este es el idioma en que se escribió originalmente la publicación. Las traducciones se pueden añadir por separado.",
 			mode: "Modo",
 			modeCreating: "Creando",
 			modeEditing: "Editando",
 			editorEyebrowCreate: "Nueva publicación",
 			editorEyebrowEdit: "Editar publicación",
-			editorTitleCreate: "Construye la publicación antes de lanzarla",
-			editorTitleEdit: "Refina la forma publicada",
+			editorTitleCreate: "Escribe tu publicación",
+			editorTitleEdit: "Actualiza tu publicación",
 			editorDescription:
-				"El editor persiste markdown real, rutas reales de medios y metadatos reales del post en Prisma. Lo que previsualizas aquí es lo que se renderiza en la página del post.",
-			storySetupEyebrow: "Configuración de la historia",
-			storySetupTitle: "Define primero los metadatos",
+				"Usa el editor para escribir, previsualizar y guardar la publicación.",
+			storySetupEyebrow: "Configuración del post",
+			storySetupTitle: "Completa lo básico",
 			title: "Título",
-			titlePlaceholder: "Un título que merezca el clic",
+			titlePlaceholder: "Título de la publicación",
 			slug: "Slug",
 			slugPlaceholder: "slug-de-la-url-del-post",
 			regenerate: "Regenerar",
 			finalUrl: (slug: string) => `URL final: /post/${slug}`,
 			description: "Descripción",
 			generateFromContent: "Generar desde el contenido",
-			descriptionPlaceholder:
-				"¿Qué debería entender el lector antes de abrir el artículo?",
+			descriptionPlaceholder: "Un breve resumen de la publicación.",
 			visualsEyebrow: "Visuales",
-			visualsTitle: "Define la miniatura del post",
+			visualsTitle: "Miniatura de la publicación",
 			thumbnail: "Miniatura",
 			thumbnailDescription:
-				"Esto define la imagen principal de la página del post y la miniatura de las tarjetas en el resto del sitio.",
+				"Esta imagen se usa en la página de la publicación y en las tarjetas.",
 			upload: "Subir",
 			uploading: "Subiendo...",
 			thumbnailPreviewAlt: "Miniatura del post",
-			thumbnailEmpty: "Sube la imagen que debe representar la publicación.",
+			thumbnailEmpty: "Sube una imagen para esta publicación.",
 			thumbnailUploaded: "Miniatura subida.",
 			thumbnailUploadError: "No se pudo subir la miniatura.",
 			thumbnailAlt: "Texto alternativo de la miniatura",
-			thumbnailAltPlaceholder:
-				"Describe la miniatura para accesibilidad y vistas previas",
+			thumbnailAltPlaceholder: "Describe la imagen de la miniatura",
 			bodyEyebrow: "Cuerpo",
-			bodyTitle: "Escribe y revisa en un solo lugar",
+			bodyTitle: "Escribe y previsualiza",
 			bodyDescription:
-				"Escribe en markdown, sube imágenes en línea y verifica el render final antes de guardar.",
+				"Escribe en markdown y previsualiza el resultado final antes de guardar.",
 			readTime: "Tiempo de lectura",
-			taxonomyEyebrow: "Taxonomía",
-			taxonomyTitle: "Ubica el artículo",
+			taxonomyEyebrow: "Tags",
+			taxonomyTitle: "Categoriza la publicación",
 			mainTag: "Tag principal",
 			tags: "Tags",
-			readinessEyebrow: "Estado",
-			readinessTitle: "Revisa lo esencial",
+			readinessEyebrow: "Lista",
+			readinessTitle: "Antes de publicar",
 			checklistTitleSet: "Título definido",
 			checklistThumbnailUploaded: "Miniatura subida",
 			checklistMainTagChosen: "Tag principal elegida",
 			checklistSupportingTagsAdded: "Tags de apoyo añadidas",
 			checklistDescriptionReady: "Descripción lista",
-			checklistBodyHasSubstance: "Cuerpo con sustancia",
+			checklistBodyHasSubstance: "El cuerpo tiene contenido",
 			ready: "Listo",
 			missing: "Falta",
 			wordCount: (count: number) => `${count} palabras`,
 			tagCount: (count: number) =>
 				`${count} tag${count === 1 ? "" : "s"} adjunta${count === 1 ? "" : "s"}`,
 			currentTarget: (status: string) => `Objetivo actual: ${status}`,
-			currentLanguage: (language: string) => `Original language: ${language}`,
+			currentLanguage: (language: string) => `Idioma original: ${language}`,
 			publishEyebrow: "Publicar",
-			publishTitle: "Elige el siguiente paso",
+			publishTitle: "Elige qué hacer después",
 			statusDraftLabel: "Guardar borrador",
-			statusDraftDescription:
-				"Mantén la publicación privada mientras das forma al contenido.",
+			statusDraftDescription: "Mantén la publicación privada por ahora.",
 			statusPendingReviewLabel: "Enviar a revisión",
 			statusPendingReviewDescription:
-				"Marca el borrador como listo para revisión editorial.",
+				"Marca la publicación como lista para revisión.",
 			statusPublishedLabel: "Publicar ahora",
-			statusPublishedDescription:
-				"Haz visible la publicación en el sitio de inmediato.",
+			statusPublishedDescription: "Haz visible la publicación en el sitio.",
 			saving: "Guardando...",
 			clearForm: "Limpiar formulario",
 			submitError:
@@ -2165,24 +2100,22 @@ const dictionaries = {
 			submitSuccessPublished: "Publicación publicada.",
 			submitSuccessReview: "Publicación enviada a revisión.",
 			submitSuccessDraft: "Borrador guardado.",
-			mainTagPlaceholder:
-				"Elige un tema existente o define una nueva tag principal",
+			mainTagPlaceholder: "Elige un tag principal",
 			mainTagHelp:
-				"Las tags principales agrupan la publicación en listados y recomendaciones.",
+				"Las tags principales se usan en listados y recomendaciones.",
 			tagsPlaceholder: "Añade tags y pulsa Enter",
 			tagsLimitReached: "Límite de tags alcanzado",
-			tagSlotsLeft: (count: number) =>
-				`Quedan ${count} espacios para tags. Usa etiquetas concretas y fáciles de buscar.`,
+			tagSlotsLeft: (count: number) => `Quedan ${count} espacios para tags.`,
 			editorControlsEyebrow: "Controles del editor",
-			editorControlsTitle: "Da forma al markdown con intención",
+			editorControlsTitle: "Herramientas de markdown",
 			editorControlsDescription:
-				"Las imágenes en línea permanecen donde las insertas y se renderizan centradas tanto en la vista previa como en el post final.",
+				"Usa la barra para dar formato al contenido e insertar imágenes.",
 			modeWrite: "Escribir",
-			modeWriteDescription: "Concéntrate en el markdown.",
+			modeWriteDescription: "Edita el markdown.",
 			modePreview: "Vista previa",
-			modePreviewDescription: "Lee el render final.",
+			modePreviewDescription: "Ve la publicación renderizada.",
 			modeSplit: "Dividido",
-			modeSplitDescription: "Escribe y previsualiza a la vez.",
+			modeSplitDescription: "Escribe y previsualiza lado a lado.",
 			toolbarInline: "En línea",
 			toolbarBlocks: "Bloques",
 			toolbarBold: "Negrita",
@@ -2199,17 +2132,15 @@ const dictionaries = {
 			dualPanel: "Panel doble",
 			modeBadge: (mode: string) => `Modo ${mode}`,
 			markdownEyebrow: "Markdown",
-			markdownDescription:
-				"Escribe con markdown puro y mantén el control de dónde cae cada bloque e imagen.",
+			markdownDescription: "Escribe tu publicación en markdown simple.",
 			editableSource: "Fuente editable",
 			markdownPlaceholder:
 				"Escribe el artículo en Markdown.\n\nEjemplo:\n## Título de sección\n\nUn párrafo con **énfasis** y un [enlace](https://example.com).\n",
 			previewEyebrow: "Vista previa",
 			previewDescription:
-				"La vista previa usa el mismo renderizador que la página publicada del post.",
+				"Esta vista previa coincide con el diseño de la publicación publicada.",
 			finalRendering: "Render final",
-			emptyPreview:
-				"Empieza a escribir para ver el render final de la publicación.",
+			emptyPreview: "Empieza a escribir para previsualizar la publicación.",
 			editorWordCount: (count: number) => `${count} palabras`,
 			editorReadTime: (count: number) => `${count} min de lectura`,
 			editorCharacters: (used: number, max: number) =>
@@ -2218,37 +2149,36 @@ const dictionaries = {
 				`${count} ${count === 1 ? "imagen insertada" : "imágenes insertadas"} en el markdown.`,
 			imageDefaultAlt: "Imagen",
 			imageUploadError: "No se pudo subir la imagen.",
-			translationEyebrow: "Translations",
-			translationTitle: "Add or update a localized version",
+			translationEyebrow: "Traducciones",
+			translationTitle: "Añadir o editar una traducción",
 			translationDescription:
-				"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
-			translationOriginalLanguage: "Original post language",
-			translationNoLocales:
-				"All supported site languages are already covered by the original post or the saved translations.",
-			translationLanguage: "Translation language",
+				"Las traducciones reemplazan el título, la descripción, el texto alternativo de la miniatura y el cuerpo para quienes navegan en ese idioma. El slug, los tags y el estado siguen ligados a la publicación original.",
+			translationOriginalLanguage: "Idioma original de la publicación",
+			translationNoLocales: "Todos los idiomas del sitio ya están cubiertos.",
+			translationLanguage: "Idioma de la traducción",
 			translationLanguageHelp:
-				"Choose the site language that should receive this localized version.",
-			translationExisting: "Available translations",
-			translationNoneYet: "No translations saved yet.",
-			translationStatusExisting: "Editing saved translation",
-			translationStatusNew: "Creating new translation",
-			translationCopyFromOriginal: "Copy original text",
+				"Elige para qué idioma del sitio se usará esta traducción.",
+			translationExisting: "Traducciones guardadas",
+			translationNoneYet: "Todavía no hay traducciones guardadas.",
+			translationStatusExisting: "Editando traducción guardada",
+			translationStatusNew: "Creando nueva traducción",
+			translationCopyFromOriginal: "Copiar texto original",
 			translationCopiedFromOriginal:
-				"Original post content copied into the translation editor.",
+				"El contenido de la publicación original se copió al editor de traducción.",
 			translationBodyDescription:
-				"Write the translated markdown that should replace the original body for this language.",
-			translationSave: "Save translation",
-			translationSaving: "Saving translation...",
-			translationSaveSuccess: "Translation saved.",
+				"Escribe el markdown traducido para este idioma.",
+			translationSave: "Guardar traducción",
+			translationSaving: "Guardando traducción...",
+			translationSaveSuccess: "Traducción guardada.",
 			translationSaveError:
-				"Unable to save the translation right now. Please try again.",
+				"No se puede guardar la traducción ahora. Inténtalo de nuevo.",
 			translationMustDiffer:
-				"Choose a language different from the original post.",
+				"Elige un idioma distinto al de la publicación original.",
 			progressAria: (progress: number, remaining: number) =>
 				`${progress}% de progreso, ${remaining} minutos restantes`,
 		},
 		postValidation: {
-			localeRequired: "Post language is required.",
+			localeRequired: "El idioma de la publicación es obligatorio.",
 			imageRequired: "La imagen es obligatoria.",
 			imageInvalid:
 				"La imagen debe ser una ruta de archivo subida o una URL válida.",
@@ -2276,13 +2206,13 @@ const dictionaries = {
 		},
 		post: {
 			relatedReading: "Lectura relacionada",
-			moreFromThisLane: "Más de esta línea",
+			moreFromThisLane: "Más como esto",
 			statusPublished: "Publicado",
 			statusPendingReview: "Pendiente de revisión",
 			statusDraft: "Borrador",
-			translatedToCurrentLanguage: "Translated to your current language",
+			translatedToCurrentLanguage: "Traducido a tu idioma actual",
 			translationFromLanguage: (language: string) =>
-				`Originally written in ${language}`,
+				`Escrito originalmente en ${language}`,
 			writtenBy: "Escrito por",
 			editPost: "Editar publicación",
 			edit: "Editar",
@@ -2294,9 +2224,9 @@ const dictionaries = {
 				relatedTopics: string[],
 			) =>
 				relatedTopics.length > 0
-					? `${name} escribe sobre ${mainTag}, con temas recurrentes en ${relatedTopics.join(" y ")}.`
-					: `${name} escribe sobre ${mainTag}.`,
-			commentSection: "Sección de comentarios",
+					? `${name} escribe sobre todo acerca de ${mainTag}, y también sobre ${relatedTopics.join(" y ")}.`
+					: `${name} escribe sobre todo acerca de ${mainTag}.`,
+			commentSection: "Comentarios",
 			commentPlaceholder: "Añade un comentario",
 			commentAs: (name: string) => `Comentando como ${name}`,
 			loginRequiredToComment: "Debes iniciar sesión para comentar",
@@ -2304,8 +2234,7 @@ const dictionaries = {
 			postedOn: (date: string) => `Publicado ${date}`,
 			reportComment: "Reportar comentario",
 			loginModalTitle: "Necesitas iniciar sesión para hacer esto.",
-			loginModalDescription:
-				"Consigue una mejor experiencia al iniciar sesión. Únete a la conversación.",
+			loginModalDescription: "Inicia sesión para continuar.",
 			reportCommentTitle: "Reportar comentario",
 			reportingCommentBy: (author: string) =>
 				`Reportando comentario de ${author}:`,
@@ -2370,8 +2299,8 @@ const germanMessages = {
 		previous: "Zurück",
 		next: "Weiter",
 		loadingProfile: "Profil wird geladen",
-		preparingPage: "Seite wird vorbereitet",
-		noItemsYet: "Noch keine Elemente zum Anzeigen.",
+		preparingPage: "Seite wird geladen",
+		noItemsYet: "Noch nichts zu zeigen.",
 		noDescriptionYet: "Noch keine Profilbeschreibung.",
 		percentComplete: (progress: number) => `${progress}% abgeschlossen`,
 	},
@@ -2384,9 +2313,8 @@ const germanMessages = {
 	header: {
 		...dictionaries.en.header,
 		eyebrow: "Persönlicher Entwicklungsblog",
-		description:
-			"Tutorials, Meinungen, Frontend-Notizen und interaktive Nebenprojekte an einem Ort.",
-		suggestTitle: "Einen Beitrag vorschlagen (mit Prüfung)",
+		description: "Beiträge über Frontend, UI und kleine Nebenprojekte.",
+		suggestTitle: "Einen Beitrag vorschlagen (Prüfung erforderlich)",
 		homeAria: "Startseite",
 	},
 	nav: {
@@ -2397,12 +2325,12 @@ const germanMessages = {
 	},
 	footer: {
 		...dictionaries.en.footer,
-		title: "Beiträge, Experimente, Interface-Arbeit.",
+		title: "Beiträge, Experimente und UI-Arbeit.",
 		description:
-			"Ein persönlicher Entwicklungsblog mit Texten, Interaktionsstudien und einer Spielwiese für Ideen, die sich leichter zeigen als beschreiben lassen.",
+			"Ein persönlicher Entwicklungsblog mit Artikeln, Interface-Experimenten und kleinen interaktiven Projekten.",
 		navigate: "Navigieren",
 		socials: "Socials",
-		closing: "Artikel, UI-Experimente und interaktive Nebenarbeiten.",
+		closing: "Artikel, UI-Experimente und Nebenprojekte.",
 	},
 	popover: {
 		...dictionaries.en.popover,
@@ -2415,41 +2343,37 @@ const germanMessages = {
 	home: {
 		...dictionaries.en.home,
 		startHere: "Hier anfangen",
-		title: "Ein persönlicher Entwicklungsblog mit Raum zum Entdecken",
+		title: "Ein persönlicher Entwicklungsblog",
 		description:
-			"DevBlog ist der Ort, an dem ich Texte über Entwicklung, Meinungen, Tutorials und Experimente veröffentliche. Die Startseite hebt empfohlene Lektüre, aktuelle Trends und schnelle Wege in den Rest des Blogs hervor.",
+			"DevBlog ist der Ort für Tutorials, Meinungen, Notizen und Experimente. Die Startseite zeigt hervorgehobene Beiträge, Trend-Beiträge und ein paar Wege durch den Rest der Seite.",
 		featuredPosts: "Ausgewählte Beiträge",
 		trendingPicks: "Trend-Auswahl",
 		recommended: "Empfohlen",
-		trendingSnapshot: "Trend-Überblick",
-		trendingTitle: "Was gerade Aufmerksamkeit bekommt",
+		trendingSnapshot: "Gerade im Trend",
+		trendingTitle: "Beiträge mit viel Aufmerksamkeit",
 		trendingDescription:
-			"Ein schneller Überblick über die Beiträge, die gerade Leser anziehen, mit klarerer Abschnittsstruktur am vertrauten Platz.",
-		exploreFurther: "Weiter entdecken",
-		exploreTitle: "Mehr Wege in den Blog",
+			"Ein kurzer Blick auf die Beiträge, die gerade am meisten gelesen werden.",
+		exploreFurther: "Mehr entdecken",
+		exploreTitle: "Mehr Wege zum Stöbern",
 		exploreDescription:
-			"Nutze diese Bereiche, um zwischen Neuem, Aktuellem und Beiträgen zu wechseln, die sich erneut lohnen.",
+			"Durchsuche neueste Beiträge, Trend-Beiträge oder Beiträge nach Tag.",
 		editorPicks: "Auswahl der Redaktion",
 		noRecommended:
-			"Noch keine empfohlenen Beiträge. Veröffentliche ein paar Einträge und dieser Bereich füllt sich automatisch aus der Live-Datenbank.",
-		noPosts:
-			"Noch keine veröffentlichten Beiträge. Die Startseite ist bereits mit Prisma verbunden und füllt sich, sobald echte Beiträge vorhanden sind.",
+			"Noch keine empfohlenen Beiträge. Dieser Bereich wird aktualisiert, sobald mehr Beiträge veröffentlicht sind.",
+		noPosts: "Noch keine veröffentlichten Beiträge.",
 		scrollToTrending: "Zu Trend-Beiträgen scrollen",
 		noTrending:
-			"Noch keine Trend-Beiträge. Sobald veröffentlichte Beiträge Aufrufe sammeln, erscheinen sie hier automatisch.",
+			"Noch keine Trend-Beiträge. Sie erscheinen hier, sobald veröffentlichte Beiträge Aufrufe sammeln.",
 		explore: "Entdecken",
 		trendingPosts: "Trend-Beiträge",
-		trendingPostsDescription:
-			"Sieh dir an, was gerade die meiste Aufmerksamkeit bekommt.",
+		trendingPostsDescription: "Sieh, was gerade am meisten gelesen wird.",
 		recentPosts: "Neueste Beiträge",
-		recentPostsDescription:
-			"Beginne mit den neuesten Texten und arbeite dich von dort zurück.",
+		recentPostsDescription: "Beginne mit den neuesten Beiträgen.",
 		browseByTag: "Nach Tag durchsuchen",
-		browseByTagDescription:
-			"Filtere den Live-Beitragskatalog nach Thema und ergänzenden Tags.",
-		noSectionPost: "Für diesen Bereich ist noch kein Beitrag verfügbar.",
+		browseByTagDescription: "Filtere Beiträge nach Thema und Tag.",
+		noSectionPost: "In diesem Bereich gibt es noch keine Beiträge.",
 		noRecommendedCallouts:
-			"Empfohlene Hinweise erscheinen hier, sobald mehr Beiträge veröffentlicht sind.",
+			"Empfohlene Beiträge erscheinen hier, sobald mehr Inhalte veröffentlicht sind.",
 		viewSection: "Bereich ansehen",
 	},
 	notFound: {
@@ -2475,7 +2399,7 @@ const germanMessages = {
 		ideaPlaceholder:
 			"Füge eine kurze Gliederung, Stichpunkte oder Links als Kontext hinzu (optional).",
 		reviewNote:
-			"Dein Vorschlag wird vor der Veröffentlichung geprüft. Bitte vermeide sensible Daten oder persönliche Informationen.",
+			"Vorschläge werden vor der Veröffentlichung geprüft. Bitte gib keine sensiblen oder persönlichen Informationen an.",
 		submitted: "Gesendet!",
 		submitting: "Wird gesendet...",
 		submit: "Vorschlag senden",
@@ -2486,43 +2410,45 @@ const germanMessages = {
 	about: {
 		...dictionaries.en.about,
 		eyebrow: "Über devblog",
-		title: "Ein Ort zum Schreiben, Experimentieren und Weiterliefern",
+		title: "Ein Ort zum Schreiben und Bauen",
 		description:
-			"Diese Seite ist der Ort, an dem Texte, Interface-Arbeit und Nebenexperimente zusammenkommen. Sie soll nützlich, persönlich und aktiv bleiben statt zu einem statischen Portfolio-Archiv zu werden.",
+			"Diese Seite bringt Schreiben, UI-Arbeit und kleine Experimente zusammen. Sie ist teils Blog, teils Spielwiese und teils persönliches Projekt.",
 		storyCards: [
 			{
 				label: "Warum es das gibt",
-				title: "Ein Blog, den ich tatsächlich weiter nutze",
-				text: "DevBlog ist mein persönlicher Blog über Softwareentwicklung. Hier veröffentliche ich Tutorials, Meinungen, Experimente, Interface-Ideen und die Bereiche der Webentwicklung, die ich am liebsten verfeinere.",
+				title: "Ein Blog, zu dem ich immer wieder zurückkehre",
+				text: "DevBlog ist mein persönlicher Blog über Softwareentwicklung. Ich nutze ihn für Tutorials, Meinungen, Experimente, Interface-Ideen und andere Bereiche der Webentwicklung, an denen ich gern arbeite.",
 			},
 			{
 				label: "Wie er gebaut ist",
-				title: "Ein praktischer Stack mit Raum für visuelle Arbeit",
-				text: "Der Stack basiert auf Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser und einigen unterstützenden Bibliotheken für Datenaufbereitung und Experimente. Ziel ist es, das Projekt praktisch, einfach und angenehm zu bauen, ohne die visuelle Seite der Arbeit zu verlieren.",
+				title: "Ein praktischer Stack",
+				text: "Die Seite ist mit Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser und einigen kleineren Hilfsbibliotheken gebaut. Sie soll einfach genug bleiben, um gut wartbar zu sein, und trotzdem Raum für visuelle und interaktive Arbeit lassen.",
 			},
 			{
-				label: "Was hier sonst noch lebt",
-				title: "Verspielte Tools, Skizzen und Nebenideen",
-				text: "Neben Beiträgen setzt die Seite auf Interaktivität: taggesteuerte Entdeckung, Empfehlungen, Nutzerwerkzeuge und eine Spielwiese voller Spiele und Skizzen. Ich bin kein Spieleentwickler, aber die Spielwiese ist ein guter Ort für Hobbyprojekte und eine weitere Möglichkeit zu zeigen, was ich bauen kann.",
+				label: "Was es hier sonst gibt",
+				title: "Kleine Tools und Nebenprojekte",
+				text: "Neben den Beiträgen gibt es eine Spielwiese mit Spielen, Skizzen und anderen Experimenten. Ich bin kein Spieleentwickler, aber sie ist ein guter Ort für Hobbyprojekte und Ideen, die nicht in einen normalen Beitrag passen.",
 			},
 		],
 	},
 	playgroundPage: {
 		...dictionaries.en.playgroundPage,
-		title: "Spiele, Skizzen und spielbare Umwege",
+		title: "Spiele, Skizzen und kleine Experimente",
 		description:
-			"Diese Seite ist ein Zuhause für Hobby-Experimente. Ich bin in erster Linie Webentwickler und kein Spieleentwickler, aber diese kleinen Projekte sind eine gute Möglichkeit, Interaktion, Bewegung und Ideen zur Browser-Darstellung zu erkunden.",
+			"Diese Seite ist ein Ort für Hobbyprojekte. Ich arbeite hauptsächlich im Web, aber diese Experimente sind eine gute Möglichkeit, Bewegung, Interaktion und Rendering im Browser zu erkunden.",
 		totalProjects: "Projekte insgesamt",
 		projects: "Projekte",
 		playableTitle: "Spielbar",
-		playableDescription:
-			"Praktische Experimente, die du direkt steuern kannst, von Spielen bis zu kleinen Systemen.",
+		playableDescription: "Projekte, mit denen du direkt interagieren kannst.",
 		watchOnlyTitle: "Nur ansehen",
 		watchOnlyDescription:
-			"Visuelle Arbeiten, die eher als Bewegungsstudien als als punktbasierte Spiele gedacht sind.",
+			"Visuelle Experimente, die eher zum Anschauen als zum Spielen gedacht sind.",
 		mode: "Modus",
 		loading: "Wird geladen...",
 		closeGame: "Spiel schließen",
+		mobileNoticeTitle: "Am besten auf dem Desktop",
+		mobileNoticeBody:
+			"Diese Projekte wurden vor allem für größere Bildschirme entworfen. Auf Mobilgeräten können sie funktionieren, aber am Desktop ist das Erlebnis meist besser.",
 		badges: {
 			playable: "Spielbar",
 			watchOnly: "Nur ansehen",
@@ -2543,7 +2469,7 @@ const germanMessages = {
 			},
 			solarSystem: {
 				name: "Solar System",
-				description: "Planetentanz",
+				description: "Planetenbewegung",
 			},
 			terminal: { name: "Terminal", description: "Linux-Terminal" },
 			tankShooter: {
@@ -2556,7 +2482,7 @@ const germanMessages = {
 			},
 			movingMountains: {
 				name: "Moving Mountains",
-				description: "Bewegte Berge",
+				description: "Animierte Berge",
 			},
 			survivalShooter: {
 				name: "Survival Shooter",
@@ -2594,30 +2520,28 @@ const germanMessages = {
 	recent: {
 		...dictionaries.en.recent,
 		eyebrow: "Neueste Beiträge",
-		title: "Die neuesten Beiträge, der Reihe nach",
+		title: "Neueste Beiträge",
 		description:
-			"Diese Seite ist die klarste Ansicht des Blogs in Veröffentlichungsreihenfolge. Sie hält die neuesten Texte im Vordergrund, mit Pagination und Themenhinweisen in Reichweite.",
+			"Diese Seite zeigt Beiträge in Veröffentlichungsreihenfolge, die neuesten zuerst.",
 		postCount: "Anzahl Beiträge",
 		currentPage: "Aktuelle Seite",
 		totalViews: "Gesamtaufrufe",
-		latestArrival: "Neuester Zugang",
+		latestArrival: "Neuester Beitrag",
 		noPublished:
-			"Noch keine veröffentlichten Beiträge. Erstelle deinen ersten Beitrag und er erscheint hier als neuester Zugang.",
+			"Noch keine veröffentlichten Beiträge. Dein erster Beitrag erscheint hier.",
 		readingGuide: "Lesehilfe",
-		stayOriented: "Den Überblick behalten",
+		stayOriented: "Seitenweise stöbern",
 		stayOrientedDescription:
-			"Bewege dich Seite für Seite durch den Blog, behalte den neuesten Eintrag im Blick und springe zu Themen, die im neuesten Beitragsstapel häufig auftauchen.",
+			"Bewege dich Seite für Seite durch die Beiträge und bleibe bei den neuesten Veröffentlichungen auf dem Laufenden.",
 		showingNow: "Aktuell sichtbar",
 		pageControls: "Seitensteuerung",
-		freshTopics: "Frische Themen",
+		freshTopics: "Aktuelle Themen",
 		topicCountsLater:
 			"Themenzahlen erscheinen hier, sobald Beiträge veröffentlicht sind.",
 		recentPosts: "Neueste Beiträge",
-		recentPostsTitle: "Neueste Einträge auf devblog",
-		recentPostsDescription:
-			"Strikt nach Veröffentlichungsdatum sortiert, damit die Seite wie ein echter Feed neuer Beiträge funktioniert.",
-		noPosts:
-			"Noch keine Beiträge verfügbar. Diese Seite liest jetzt direkt aus der Datenbank und füllt sich, sobald veröffentlichte Einträge vorhanden sind.",
+		recentPostsTitle: "Neueste Beiträge auf DevBlog",
+		recentPostsDescription: "Beiträge nach Veröffentlichungsdatum sortiert.",
+		noPosts: "Noch keine Beiträge verfügbar.",
 		noPublishedShort: "Noch keine veröffentlichten Beiträge",
 		relatedTags: (count: number) =>
 			`${count} verwandte ${count === 1 ? "Tag" : "Tags"}`,
@@ -2628,33 +2552,31 @@ const germanMessages = {
 	trending: {
 		...dictionaries.en.trending,
 		eyebrow: "Gerade im Trend",
-		title: "Worauf Leser gerade achten",
+		title: "Beiträge, auf die Leser gerade achten",
 		description:
-			"Das Akkordeon bleibt das Markenzeichen der Seite, aber der Rest unterstützt es jetzt: gerankte Beiträge, sichtbare Themensignale und klarere Gründe dafür, warum ein Beitrag weit oben steht.",
+			"Diese Seite zeigt die Beiträge mit den meisten Aufrufen im Moment.",
 		trackedPosts: "Verfolgte Beiträge",
 		topPost: "Top-Beitrag",
 		totalViews: "Gesamtaufrufe",
 		noTrending:
-			"Noch keine Trend-Beiträge verfügbar. Dieser Bereich füllt sich, sobald veröffentlichte Beiträge Aufrufe sammeln.",
+			"Noch keine Trend-Beiträge. Dieser Bereich wird aktualisiert, sobald veröffentlichte Beiträge Aufrufe sammeln.",
 		trendSignals: "Trend-Signale",
-		topicRadar: "Themenradar",
+		topicRadar: "Beliebte Themen",
 		topicRadarDescription:
-			"Hauptthemen mit der stärksten Präsenz im aktuellen Trend-Stapel. Nutze sie, um zu verwandten Beiträgen zu wechseln, ohne den Kontext dessen zu verlieren, was gerade heiß ist.",
+			"Themen, die in den aktuellen Trend-Beiträgen am häufigsten vorkommen.",
 		topicSignalsLater:
-			"Themensignale erscheinen hier, sobald Beiträge veröffentlicht sind.",
+			"Themen-Daten erscheinen hier, sobald Beiträge veröffentlicht sind.",
 		leadingPost: "Führender Beitrag",
-		leadingPostEmpty:
-			"Noch kein Trend-Spitzenreiter. Veröffentliche Beiträge und sammle Aufrufe, um dieses Ranking aufzubauen.",
+		leadingPostEmpty: "Noch kein führender Beitrag.",
 		ranking: "Ranking",
-		topMomentum: "Top-Beiträge nach Dynamik",
+		topMomentum: "Top-Beiträge",
 		topMomentumDescription:
-			"Die derzeit meistgelesenen Beiträge, nach Aufrufen sortiert, damit die Liste tatsächlich einen Trend abbildet.",
+			"Die derzeit meistgelesenen Beiträge, nach Aufrufen sortiert.",
 		moreToWatch: "Mehr im Blick behalten",
 		risingPosts: "Aufstrebende Beiträge",
 		risingPostsDescription:
-			"Beiträge knapp unter der Spitzengruppe, die dennoch eine klare, gut lesbare Darstellung verdienen.",
-		notEnoughPosts:
-			"Noch nicht genug Beiträge für eine zweite Spotlight-Liste.",
+			"Beiträge direkt hinter den Spitzenplätzen, die ebenfalls gut laufen.",
+		notEnoughPosts: "Noch nicht genug Beiträge für eine zweite Liste.",
 		readPost: "Beitrag lesen",
 		focusPost: (title: string) => `${title} fokussieren`,
 		viewsSuffix: (count: string) => `${count} Aufrufe`,
@@ -2663,63 +2585,62 @@ const germanMessages = {
 		...dictionaries.en.search,
 		eyebrow: "Beiträge suchen",
 		description:
-			"Durchsuche passende Beiträge auf devblog. Die Ergebnisse verwenden dieselben Karten wie der Rest der Seite, mit Pagination bei längeren Anfragen.",
+			"Suche in den Beiträgen auf DevBlog. Die Ergebnisse verwenden dieselben Karten wie im Rest der Seite.",
 		matches: "Treffer",
 		noMatch: "Kein Treffer",
-		nothingFound: (query: string) => `Für "${query}" wurde nichts gefunden.`,
+		nothingFound: (query: string) => `Keine Ergebnisse für "${query}".`,
 		noMatchDescription:
-			"Versuche eine kürzere Suche, suche nach Tag oder Autor oder springe zu den neuesten Beiträgen.",
+			"Versuche eine kürzere Suche, suche nach Tag oder Autor oder stöbere stattdessen in den neuesten Beiträgen.",
 		seeRecentPosts: "Neueste Beiträge ansehen",
 		resultsFor: (query: string) => `Ergebnisse für "${query}"`,
 	},
 	tag: {
 		...dictionaries.en.tag,
 		eyebrow: "Nach Tag durchsuchen",
-		title: "Beiträge nach Thema entdecken",
-		description:
-			"Nutze Tags, um den Blog schnell einzugrenzen. Wähle ein Hauptthema, kombiniere ergänzende Tags und behalte das Ergebnisraster im Blick.",
+		title: "Beiträge nach Thema durchsuchen",
+		description: "Nutze Tags, um die Beitragsliste einzugrenzen.",
 		totalTags: "Gesamtzahl Tags",
 		selected: "Ausgewählt",
 		visiblePosts: "Sichtbare Beiträge",
 		mainTopics: "Hauptthemen",
-		mainTopicsDescription: "Die breiten Kategorien, die jeden Beitrag prägen.",
+		mainTopicsDescription: "Die Hauptkategorie jedes Beitrags.",
 		supportingTags: "Ergänzende Tags",
 		supportingTagsDescription:
-			"Nutze diese, um das Raster einzugrenzen, ohne den Kontext zu verlieren.",
+			"Nutze sie, um die Ergebnisse weiter einzugrenzen.",
 		noPostsYet: "Noch keine Beiträge",
 		unlockAfterFirstPost:
-			"Die Tag-Ansicht wird nach dem ersten veröffentlichten Beitrag freigeschaltet",
+			"Die Tag-Ansicht ist nach dem ersten veröffentlichten Beitrag verfügbar.",
 		tagBrowsingDescription:
-			"Die Tag-Seite liest jetzt die echte Datenbank und bleibt leer, bis veröffentlichte Beiträge und Tags vorhanden sind.",
+			"Diese Seite bleibt leer, bis Beiträge und Tags veröffentlicht wurden.",
 		noMatches: "Keine Treffer",
-		noPostsFit: "Keine Beiträge passen zu dieser Kombination",
+		noPostsFit: "Keine Beiträge passen zu diesen Tags",
 		noPostsFitDescription:
-			"Entferne einen aktiven Tag oder wechsle zu einem breiteren Hauptthema. Die Schnellwahl im Filterbereich ist ein guter Reset-Punkt.",
+			"Entferne einen ausgewählten Tag oder wechsle zu einem breiteren Thema.",
 		viewsSuffix: (count: string) => `${count} Aufrufe`,
 		filterPosts: "Beiträge filtern",
 		findTopic: "Thema finden",
 		filterDescription: (max: number) =>
-			`Suche Tags, kombiniere bis zu ${max} und verenge das Beitragsraster, ohne die Seite zu verlassen.`,
+			`Suche Tags, kombiniere bis zu ${max} und filtere die Beitragsliste.`,
 		searchTags: "Tags suchen",
 		selectedTags: "Ausgewählte Tags",
 		selectedTagsHint:
-			"Füge einen weiteren Tag hinzu, um stärker zu filtern, oder setze zurück, um die Ergebnisse zu erweitern.",
+			"Füge einen weiteren Tag hinzu, um die Ergebnisse einzugrenzen, oder setze zurück, um mehr Beiträge zu sehen.",
 		selectedTagsEmpty:
-			"Beginne mit einem breiten Thema und ergänze unterstützende Tags, wenn du die Ergebnisse eingrenzen möchtest.",
+			"Beginne mit einem breiten Thema und füge weitere Tags hinzu, um die Ergebnisse einzugrenzen.",
 		clearFilters: "Filter löschen",
 		quickPicks: "Schnellauswahl",
-		quickPicksDescription: "Beliebte Tags, die die Seite schnell öffnen.",
-		tagGroupMainDescription: "Primäre Kategorien, die den Beitrag definieren.",
-		tagGroupOtherDescription: "Sekundäre Details und verwandte Themen.",
+		quickPicksDescription: "Beliebte Tags für den Einstieg.",
+		tagGroupMainDescription: "Hauptkategorien des Beitrags.",
+		tagGroupOtherDescription: "Zusätzliche Details und verwandte Themen.",
 		noTagsMatch: "Keine Tags passen zur aktuellen Suche.",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${resultsCount} ${resultsCount === 1 ? "Beitrag" : "Beiträge"} passend zu ${tagCount} ${tagCount === 1 ? "Tag" : "Tags"}`,
 		showingAll: (resultsCount: number) =>
 			`Alle ${resultsCount} ${resultsCount === 1 ? "Beitrag" : "Beiträge"} werden angezeigt`,
 		resultsDescription:
-			"Entferne einen Tag, um die Ergebnisse zu erweitern, oder kombiniere verwandte Themen, um fokussiert zu bleiben.",
+			"Entferne einen Tag, um die Ergebnisse zu erweitern, oder füge weitere Tags hinzu, um sie einzugrenzen.",
 		resultsDescriptionEmpty:
-			"Nutze Schnellwahl, markante Reihen oder das Filterpanel, um in ein bestimmtes Thema einzusteigen.",
+			"Nutze Schnellauswahl oder Filterpanel, um nach Themen zu stöbern.",
 		resetAll: "Alles zurücksetzen",
 		removeTag: (label: string) => `${label} entfernen`,
 		noActiveFilters: "Keine aktiven Tag-Filter.",
@@ -2760,9 +2681,8 @@ const germanMessages = {
 		...dictionaries.en.profile,
 		overview: "Profilübersicht",
 		yourProfile: "Dein Profil",
-		description:
-			"Echte Kontodaten werden jetzt aus der Datenbank geladen, einschließlich Rolle, verbundener Anbieter, gespeicherter Profilfelder und Live-Aktivitätszahlen.",
-		loadingTitle: "Seite wird vorbereitet",
+		description: "Deine Kontodaten, Aktivität und verbundenen Anmeldemethoden.",
+		loadingTitle: "Seite wird geladen",
 		unavailable: "Profil nicht verfügbar",
 		goToLogin: "Zur Anmeldung",
 		bookmarks: "Lesezeichen",
@@ -2779,7 +2699,7 @@ const germanMessages = {
 		editProfile: "Profil bearbeiten",
 		logout: "Abmelden",
 		profileAlt: (name: string) => `${name}-Profil`,
-		recentActivity: "Letzte Aktivität im gesamten Blog",
+		recentActivity: "Letzte Aktivität",
 		noCommentsYet: "Noch keine Kommentare zum Anzeigen.",
 		editedOn: (date: string) => `Bearbeitet ${date}`,
 		itemCount: (count: number) =>
@@ -2810,9 +2730,9 @@ const germanMessages = {
 		changePassword: "Passwort ändern",
 		createPassword: "Passwort erstellen",
 		changePasswordDescription:
-			"Aktualisiere dein E-Mail-Login-Passwort, ohne dein Social-Login zu verlieren.",
+			"Aktualisiere dein Passwort, ohne den Social-Login zu verlieren.",
 		createPasswordDescription:
-			"Füge diesem Social-Konto ein E-Mail-Login-Passwort hinzu.",
+			"Füge ein Passwort hinzu, damit du dich auch per E-Mail anmelden kannst.",
 		optional: "Optional",
 		currentPassword: "Aktuelles Passwort",
 		newPassword: "Neues Passwort",
@@ -2841,91 +2761,91 @@ const germanMessages = {
 	newPost: {
 		...dictionaries.en.newPost,
 		createPageEyebrow: "Neuer Beitrag",
-		createPageTitle: "Einen produktionsreifen Artikel erstellen",
+		createPageTitle: "Beitrag erstellen",
 		createPageDescription:
-			"Schreibe echtes Markdown, hänge echte Medien an und speichere direkt ins Backend, damit die Beitragsseite exakt denselben Inhalt rendert.",
+			"Schreibe deinen Beitrag, füge Medien hinzu und speichere alles hier.",
 		accessRequiredTitle: "Autorenzugang erforderlich",
 		accessRequiredDescription:
-			"Diese Seite ist für Beitragende reserviert. Melde dich mit einem Profil mit Schreibrechten an, um Beiträge zu entwerfen, zu prüfen und zu veröffentlichen.",
+			"Diese Seite ist nur für Konten von Beitragenden verfügbar.",
 		editPageEyebrow: "Beitrag bearbeiten",
-		editPageTitle: "Artikel aktualisieren",
+		editPageTitle: "Beitrag bearbeiten",
 		editPageDescription:
-			"Verfeinere Metadaten, Inhalt oder Medien und speichere direkt zurück in denselben persistenten Beitrag.",
+			"Aktualisiere Inhalt, Metadaten oder Medien des Beitrags.",
 		editAccessDeniedTitle: "Zugriff verweigert",
 		editAccessDeniedDescription:
 			"Nur der Autor oder Administratoren der Website dürfen diesen Beitrag bearbeiten.",
 		role: "Rolle",
 		author: "Autor",
 		defaultAuthor: "Autor",
+		language: "Originalsprache",
+		languageHelp:
+			"In dieser Sprache wurde der Beitrag ursprünglich geschrieben. Übersetzungen kannst du separat hinzufügen.",
 		mode: "Modus",
 		modeCreating: "Erstellen",
 		modeEditing: "Bearbeiten",
 		editorEyebrowCreate: "Neuer Beitrag",
 		editorEyebrowEdit: "Beitrag bearbeiten",
-		editorTitleCreate: "Baue den Beitrag fertig, bevor er online geht",
-		editorTitleEdit: "Die veröffentlichte Form verfeinern",
+		editorTitleCreate: "Schreibe deinen Beitrag",
+		editorTitleEdit: "Aktualisiere deinen Beitrag",
 		editorDescription:
-			"Der Editor speichert echtes Markdown, echte Medienpfade und echte Beitragsmetadaten in Prisma. Was du hier siehst, ist das, was auf der Beitragsseite gerendert wird.",
-		storySetupEyebrow: "Beitragsaufbau",
-		storySetupTitle: "Zuerst die Metadaten festlegen",
+			"Nutze den Editor, um den Beitrag zu schreiben, anzusehen und zu speichern.",
+		storySetupEyebrow: "Beitrags-Setup",
+		storySetupTitle: "Fülle zuerst das Wichtigste aus",
 		title: "Titel",
-		titlePlaceholder: "Ein Titel, der den Klick verdient",
+		titlePlaceholder: "Beitragstitel",
 		slug: "Slug",
 		slugPlaceholder: "beitrags-url-slug",
 		regenerate: "Neu erzeugen",
 		finalUrl: (slug: string) => `Endgültige URL: /post/${slug}`,
 		description: "Beschreibung",
 		generateFromContent: "Aus dem Inhalt erzeugen",
-		descriptionPlaceholder:
-			"Was soll der Leser verstehen, bevor er den Artikel öffnet?",
-		visualsEyebrow: "Visuals",
-		visualsTitle: "Beitrags-Thumbnail festlegen",
-		thumbnail: "Thumbnail",
+		descriptionPlaceholder: "Eine kurze Zusammenfassung des Beitrags.",
+		visualsEyebrow: "Bild",
+		visualsTitle: "Beitragsbild",
+		thumbnail: "Beitragsbild",
 		thumbnailDescription:
-			"Es steuert das Hero-Bild auf der Beitragsseite und das Karten-Thumbnail an allen anderen Stellen.",
+			"Dieses Bild wird auf der Beitragsseite und in Beitragskarten verwendet.",
 		upload: "Hochladen",
 		uploading: "Wird hochgeladen...",
-		thumbnailPreviewAlt: "Beitrags-Thumbnail",
-		thumbnailEmpty: "Lade das Bild hoch, das den Beitrag repräsentieren soll.",
-		thumbnailUploaded: "Thumbnail hochgeladen.",
-		thumbnailUploadError: "Thumbnail konnte nicht hochgeladen werden.",
-		thumbnailAlt: "Alternativtext des Thumbnails",
-		thumbnailAltPlaceholder:
-			"Beschreibe das Thumbnail für Barrierefreiheit und Vorschauen",
+		thumbnailPreviewAlt: "Beitragsbild",
+		thumbnailEmpty: "Lade ein Bild für diesen Beitrag hoch.",
+		thumbnailUploaded: "Bild hochgeladen.",
+		thumbnailUploadError: "Bild konnte nicht hochgeladen werden.",
+		thumbnailAlt: "Alt-Text des Beitragsbilds",
+		thumbnailAltPlaceholder: "Beschreibe das Beitragsbild",
 		bodyEyebrow: "Inhalt",
-		bodyTitle: "Schreiben und prüfen an einem Ort",
+		bodyTitle: "Schreiben und Vorschau",
 		bodyDescription:
-			"Schreibe in Markdown, lade eingebettete Bilder hoch und prüfe das finale Rendering vor dem Speichern.",
+			"Schreibe in Markdown und prüfe das Ergebnis vor dem Speichern.",
 		readTime: "Lesezeit",
-		taxonomyEyebrow: "Taxonomie",
-		taxonomyTitle: "Den Artikel einordnen",
+		taxonomyEyebrow: "Tags",
+		taxonomyTitle: "Beitrag einordnen",
 		mainTag: "Haupt-Tag",
 		tags: "Tags",
-		readinessEyebrow: "Bereitschaft",
-		readinessTitle: "Das Wesentliche prüfen",
+		readinessEyebrow: "Checkliste",
+		readinessTitle: "Vor der Veröffentlichung",
 		checklistTitleSet: "Titel gesetzt",
 		checklistThumbnailUploaded: "Thumbnail hochgeladen",
 		checklistMainTagChosen: "Haupt-Tag gewählt",
 		checklistSupportingTagsAdded: "Ergänzende Tags hinzugefügt",
 		checklistDescriptionReady: "Beschreibung fertig",
-		checklistBodyHasSubstance: "Inhalt hat Substanz",
+		checklistBodyHasSubstance: "Inhalt vorhanden",
 		ready: "Bereit",
 		missing: "Fehlt",
 		wordCount: (count: number) => `${count} Wörter`,
 		tagCount: (count: number) =>
 			`${count} ${count === 1 ? "Tag" : "Tags"} angehängt`,
 		currentTarget: (status: string) => `Aktuelles Ziel: ${status}`,
+		currentLanguage: (language: string) => `Originalsprache: ${language}`,
 		publishEyebrow: "Veröffentlichen",
-		publishTitle: "Nächsten Schritt wählen",
+		publishTitle: "Wähle den nächsten Schritt",
 		statusDraftLabel: "Entwurf speichern",
-		statusDraftDescription:
-			"Halte den Beitrag privat, während du den Inhalt formst.",
+		statusDraftDescription: "Halte den Beitrag vorerst privat.",
 		statusPendingReviewLabel: "Zur Prüfung senden",
 		statusPendingReviewDescription:
-			"Markiere den Entwurf als bereit für die redaktionelle Prüfung.",
+			"Markiere den Beitrag als bereit für die Prüfung.",
 		statusPublishedLabel: "Jetzt veröffentlichen",
-		statusPublishedDescription:
-			"Den Beitrag sofort auf der Website sichtbar machen.",
+		statusPublishedDescription: "Mache den Beitrag auf der Website sichtbar.",
 		saving: "Wird gespeichert...",
 		clearForm: "Formular leeren",
 		submitError:
@@ -2933,25 +2853,22 @@ const germanMessages = {
 		submitSuccessPublished: "Beitrag veröffentlicht.",
 		submitSuccessReview: "Beitrag zur Prüfung gesendet.",
 		submitSuccessDraft: "Entwurf gespeichert.",
-		mainTagPlaceholder:
-			"Ein bestehendes Thema wählen oder einen neuen Haupt-Tag definieren",
-		mainTagHelp:
-			"Haupt-Tags gruppieren den Beitrag in Listen und Empfehlungen.",
+		mainTagPlaceholder: "Wähle einen Haupt-Tag",
+		mainTagHelp: "Haupt-Tags werden in Listen und Empfehlungen verwendet.",
 		tagsPlaceholder: "Tags hinzufügen und Enter drücken",
 		tagsLimitReached: "Tag-Limit erreicht",
-		tagSlotsLeft: (count: number) =>
-			`Noch ${count} freie Tag-Plätze. Nutze präzise, gut auffindbare Begriffe.`,
+		tagSlotsLeft: (count: number) => `Noch ${count} freie Tag-Plätze.`,
 		editorControlsEyebrow: "Editor-Steuerung",
-		editorControlsTitle: "Markdown mit Absicht formen",
+		editorControlsTitle: "Markdown-Werkzeuge",
 		editorControlsDescription:
-			"Eingebettete Bilder bleiben an der Stelle, an der du sie einfügst, und werden sowohl in der Vorschau als auch im finalen Beitrag zentriert gerendert.",
+			"Nutze die Leiste, um Inhalte zu formatieren und Bilder einzufügen.",
 		modeWrite: "Schreiben",
-		modeWriteDescription: "Auf das Markdown konzentrieren.",
+		modeWriteDescription: "Markdown bearbeiten.",
 		modePreview: "Vorschau",
-		modePreviewDescription: "Das finale Rendering lesen.",
+		modePreviewDescription: "Den gerenderten Beitrag ansehen.",
 		modeSplit: "Geteilt",
-		modeSplitDescription: "Schreiben und Vorschau gleichzeitig.",
-		toolbarInline: "Inline",
+		modeSplitDescription: "Schreiben und Vorschau nebeneinander.",
+		toolbarInline: "Im Text",
 		toolbarBlocks: "Blöcke",
 		toolbarBold: "Fett",
 		toolbarItalic: "Kursiv",
@@ -2967,17 +2884,16 @@ const germanMessages = {
 		dualPanel: "Doppelansicht",
 		modeBadge: (mode: string) => `${mode}-Modus`,
 		markdownEyebrow: "Markdown",
-		markdownDescription:
-			"Schreibe in reinem Markdown und behalte die Kontrolle darüber, wo jeder Block und jedes Bild landet.",
+		markdownDescription: "Schreibe deinen Beitrag in einfachem Markdown.",
 		editableSource: "Bearbeitbare Quelle",
 		markdownPlaceholder:
 			"Schreibe den Artikel in Markdown.\n\nBeispiel:\n## Abschnittstitel\n\nEin Absatz mit **Hervorhebung** und einem [Link](https://example.com).\n",
 		previewEyebrow: "Vorschau",
 		previewDescription:
-			"Die Vorschau verwendet denselben Renderer wie die veröffentlichte Beitragsseite.",
+			"Diese Vorschau entspricht dem Layout des veröffentlichten Beitrags.",
 		finalRendering: "Finales Rendering",
 		emptyPreview:
-			"Beginne zu schreiben, um das finale Rendering des Beitrags zu sehen.",
+			"Beginne zu schreiben, um den Beitrag in der Vorschau zu sehen.",
 		editorWordCount: (count: number) => `${count} Wörter`,
 		editorReadTime: (count: number) => `${count} Min Lesezeit`,
 		editorCharacters: (used: number, max: number) => `${used}/${max} Zeichen`,
@@ -2985,11 +2901,37 @@ const germanMessages = {
 			`${count} ${count === 1 ? "Bild" : "Bilder"} in das Markdown eingefügt.`,
 		imageDefaultAlt: "Bild",
 		imageUploadError: "Bild konnte nicht hochgeladen werden.",
+		translationEyebrow: "Übersetzungen",
+		translationTitle: "Übersetzung hinzufügen oder bearbeiten",
+		translationDescription:
+			"Übersetzungen ersetzen Titel, Beschreibung, Alt-Text des Beitragsbilds und Inhalt für Leser in dieser Sprache. Slug, Tags und Status bleiben mit dem Originalbeitrag verknüpft.",
+		translationOriginalLanguage: "Originalsprache des Beitrags",
+		translationNoLocales: "Alle unterstützten Sprachen sind bereits abgedeckt.",
+		translationLanguage: "Übersetzungssprache",
+		translationLanguageHelp:
+			"Wähle, für welche Seitensprache diese Übersetzung gilt.",
+		translationExisting: "Gespeicherte Übersetzungen",
+		translationNoneYet: "Noch keine Übersetzungen gespeichert.",
+		translationStatusExisting: "Gespeicherte Übersetzung wird bearbeitet",
+		translationStatusNew: "Neue Übersetzung wird erstellt",
+		translationCopyFromOriginal: "Originaltext kopieren",
+		translationCopiedFromOriginal:
+			"Der Inhalt des Originalbeitrags wurde in den Übersetzungseditor kopiert.",
+		translationBodyDescription:
+			"Schreibe das übersetzte Markdown für diese Sprache.",
+		translationSave: "Übersetzung speichern",
+		translationSaving: "Übersetzung wird gespeichert...",
+		translationSaveSuccess: "Übersetzung gespeichert.",
+		translationSaveError:
+			"Die Übersetzung kann derzeit nicht gespeichert werden. Bitte versuche es erneut.",
+		translationMustDiffer:
+			"Wähle eine andere Sprache als die des Originalbeitrags.",
 		progressAria: (progress: number, remaining: number) =>
 			`${progress}% Fortschritt, ${remaining} Minuten verbleibend`,
 	},
 	postValidation: {
 		...dictionaries.en.postValidation,
+		localeRequired: "Die Beitragssprache ist erforderlich.",
 		imageRequired: "Ein Bild ist erforderlich.",
 		imageInvalid:
 			"Das Bild muss ein hochgeladener Dateipfad oder eine gültige URL sein.",
@@ -3017,10 +2959,13 @@ const germanMessages = {
 	post: {
 		...dictionaries.en.post,
 		relatedReading: "Verwandte Lektüre",
-		moreFromThisLane: "Mehr aus diesem Bereich",
+		moreFromThisLane: "Mehr wie dieser",
 		statusPublished: "Veröffentlicht",
 		statusPendingReview: "In Prüfung",
 		statusDraft: "Entwurf",
+		translatedToCurrentLanguage: "In deine aktuelle Sprache übersetzt",
+		translationFromLanguage: (language: string) =>
+			`Ursprünglich geschrieben in ${language}`,
 		writtenBy: "Geschrieben von",
 		editPost: "Beitrag bearbeiten",
 		edit: "Bearbeiten",
@@ -3032,9 +2977,9 @@ const germanMessages = {
 			relatedTopics: string[],
 		) =>
 			relatedTopics.length > 0
-				? `${name} schreibt rund um ${mainTag}, mit wiederkehrenden Themen in ${relatedTopics.join(" und ")}.`
-				: `${name} schreibt rund um ${mainTag}.`,
-		commentSection: "Kommentarbereich",
+				? `${name} schreibt vor allem über ${mainTag}, aber auch über ${relatedTopics.join(" und ")}.`
+				: `${name} schreibt vor allem über ${mainTag}.`,
+		commentSection: "Kommentare",
 		commentPlaceholder: "Kommentar hinzufügen",
 		commentAs: (name: string) => `Kommentierst als ${name}`,
 		loginRequiredToComment: "Zum Kommentieren anmelden",
@@ -3042,8 +2987,7 @@ const germanMessages = {
 		postedOn: (date: string) => `Veröffentlicht ${date}`,
 		reportComment: "Kommentar melden",
 		loginModalTitle: "Du musst dafür angemeldet sein.",
-		loginModalDescription:
-			"Mit Anmeldung wird die Erfahrung besser. Mach bei der Unterhaltung mit.",
+		loginModalDescription: "Melde dich an, um fortzufahren.",
 		reportCommentTitle: "Kommentar melden",
 		reportingCommentBy: (author: string) =>
 			`Kommentar von ${author} wird gemeldet:`,
@@ -3108,8 +3052,8 @@ const russianMessages = {
 		previous: "Назад",
 		next: "Вперёд",
 		loadingProfile: "Профиль загружается",
-		preparingPage: "Подготовка страницы",
-		noItemsYet: "Пока нечего показывать.",
+		preparingPage: "Загрузка страницы",
+		noItemsYet: "Пока ничего нет.",
 		noDescriptionYet: "Описание профиля пока отсутствует.",
 		percentComplete: (progress: number) => `${progress}% завершено`,
 	},
@@ -3122,8 +3066,7 @@ const russianMessages = {
 	header: {
 		...dictionaries.en.header,
 		eyebrow: "Личный блог о разработке",
-		description:
-			"Туториалы, мнения, заметки по фронтенду и интерактивные сайд-проекты в одном месте.",
+		description: "Посты о фронтенде, UI и небольших сайд-проектах.",
 		suggestTitle: "Предложить пост (требуется проверка)",
 		homeAria: "Главная",
 	},
@@ -3135,12 +3078,12 @@ const russianMessages = {
 	},
 	footer: {
 		...dictionaries.en.footer,
-		title: "Посты, эксперименты, работа над интерфейсом.",
+		title: "Посты, эксперименты и UI.",
 		description:
-			"Личный блог о разработке с текстами, исследованиями взаимодействия и песочницей для идей, которые проще показать, чем описать.",
+			"Личный блог о разработке со статьями, экспериментами с интерфейсом и небольшими интерактивными проектами.",
 		navigate: "Навигация",
 		socials: "Соцсети",
-		closing: "Статьи, UI-эксперименты и интерактивные побочные проекты.",
+		closing: "Статьи, UI-эксперименты и сайд-проекты.",
 	},
 	popover: {
 		...dictionaries.en.popover,
@@ -3153,41 +3096,36 @@ const russianMessages = {
 	home: {
 		...dictionaries.en.home,
 		startHere: "Начните здесь",
-		title: "Личный блог о разработке с пространством для исследования",
+		title: "Личный блог о разработке",
 		description:
-			"DevBlog это место, где я публикую тексты о разработке, мнения, туториалы и эксперименты. Главная страница выделяет важные материалы, то, что сейчас в тренде, и быстрые пути к остальным разделам блога.",
+			"DevBlog это место, где я публикую туториалы, мнения, заметки и эксперименты. На главной собраны избранные посты, трендовые посты и несколько способов перейти к остальным разделам сайта.",
 		featuredPosts: "Избранные посты",
 		trendingPicks: "Трендовые подборки",
 		recommended: "Рекомендуемое",
-		trendingSnapshot: "Снимок трендов",
-		trendingTitle: "Что сейчас получает внимание",
+		trendingSnapshot: "Сейчас в тренде",
+		trendingTitle: "Посты, которые замечают прямо сейчас",
 		trendingDescription:
-			"Быстрый обзор постов, которые прямо сейчас привлекают читателей, в том же месте, но с более чёткой структурой разделов.",
-		exploreFurther: "Исследовать дальше",
-		exploreTitle: "Больше путей в блог",
-		exploreDescription:
-			"Используйте эти разделы, чтобы переключаться между новым, популярным и тем, к чему стоит вернуться.",
+			"Короткий взгляд на посты, которые сейчас читают чаще всего.",
+		exploreFurther: "Смотреть дальше",
+		exploreTitle: "Больше способов посмотреть сайт",
+		exploreDescription: "Смотрите новые посты, тренды или подборки по тегам.",
 		editorPicks: "Выбор редактора",
 		noRecommended:
-			"Рекомендованных постов пока нет. Опубликуйте несколько записей, и этот раздел заполнится из живой базы данных.",
-		noPosts:
-			"Опубликованных постов пока нет. Главная уже подключена к Prisma, поэтому разделы заполнятся сразу после появления реальных постов.",
+			"Рекомендованных постов пока нет. Раздел обновится, когда появится больше опубликованных материалов.",
+		noPosts: "Опубликованных постов пока нет.",
 		scrollToTrending: "Прокрутить к трендовым постам",
 		noTrending:
-			"Трендовых постов пока нет. Как только опубликованные посты начнут набирать просмотры, они появятся здесь автоматически.",
+			"Трендовых постов пока нет. Они появятся здесь, когда опубликованные посты начнут набирать просмотры.",
 		explore: "Исследовать",
 		trendingPosts: "Трендовые посты",
-		trendingPostsDescription:
-			"Посмотрите, что привлекает больше всего внимания прямо сейчас.",
+		trendingPostsDescription: "Посмотрите, что сейчас читают чаще всего.",
 		recentPosts: "Недавние посты",
-		recentPostsDescription:
-			"Начните с самых свежих текстов и двигайтесь назад.",
-		browseByTag: "Поиск по тегам",
-		browseByTagDescription:
-			"Фильтруйте живой каталог постов по темам и дополнительным тегам.",
+		recentPostsDescription: "Начните с самых новых постов.",
+		browseByTag: "По тегам",
+		browseByTagDescription: "Фильтруйте посты по теме и тегам.",
 		noSectionPost: "Для этого раздела пока нет доступных постов.",
 		noRecommendedCallouts:
-			"Рекомендованные карточки появятся здесь после публикации большего числа постов.",
+			"Рекомендованные посты появятся здесь, когда будет опубликовано больше материалов.",
 		viewSection: "Открыть раздел",
 	},
 	notFound: {
@@ -3213,7 +3151,7 @@ const russianMessages = {
 		ideaPlaceholder:
 			"Добавьте краткий план, пункты или ссылки для контекста (необязательно).",
 		reviewNote:
-			"Ваше предложение будет проверено перед публикацией. Пожалуйста, избегайте чувствительных данных и личной информации.",
+			"Предложения проверяются перед публикацией. Пожалуйста, не указывайте чувствительные данные или личную информацию.",
 		submitted: "Отправлено!",
 		submitting: "Отправка...",
 		submit: "Отправить предложение",
@@ -3224,43 +3162,46 @@ const russianMessages = {
 	about: {
 		...dictionaries.en.about,
 		eyebrow: "О devblog",
-		title: "Место, чтобы писать, экспериментировать и продолжать выпускать",
+		title: "Место, чтобы писать и собирать",
 		description:
-			"Этот сайт это место, где тексты, работа над интерфейсами и побочные эксперименты живут в одной рамке. Он должен оставаться полезным, личным и живым, а не превращаться в статичный архив-портфолио.",
+			"Этот сайт соединяет тексты, UI-работу и небольшие эксперименты. Это одновременно блог, песочница и личный проект.",
 		storyCards: [
 			{
 				label: "Зачем он существует",
-				title: "Блог, которым я действительно продолжаю пользоваться",
-				text: "DevBlog это мой личный блог о разработке программного обеспечения. Здесь я публикую туториалы, мнения, эксперименты, идеи интерфейсов и те части веб-разработки, которые мне особенно нравится доводить до ума.",
+				title: "Блог, к которому я постоянно возвращаюсь",
+				text: "DevBlog это мой личный блог о разработке ПО. Здесь я публикую туториалы, мнения, эксперименты, идеи интерфейсов и другие части веб-разработки, над которыми мне нравится работать.",
 			},
 			{
 				label: "Как он построен",
-				title: "Практичный стек с местом для визуальной работы",
-				text: "Стек построен вокруг Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser и нескольких вспомогательных библиотек для работы с данными и экспериментов. Цель в том, чтобы проект оставался практичным, простым и приятным в разработке, не теряя визуальную сторону работы.",
+				title: "Практичный стек",
+				text: "Сайт построен на Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser и нескольких небольших вспомогательных библиотеках. Цель в том, чтобы проект было достаточно просто поддерживать и при этом не терять пространство для визуальной и интерактивной работы.",
 			},
 			{
-				label: "Что ещё здесь живёт",
-				title: "Игровые инструменты, наброски и побочные идеи",
-				text: "Помимо постов, сайт опирается на интерактивность: поиск по тегам, рекомендации, инструменты для пользователей и песочницу, полную игр и набросков. Я не разработчик игр, но песочница хорошо подходит для хобби-проектов и ещё одного способа показать, что я могу построить.",
+				label: "Что ещё здесь есть",
+				title: "Небольшие инструменты и сайд-проекты",
+				text: "Помимо постов, здесь есть песочница с играми, набросками и другими экспериментами. Я не разработчик игр, но это хорошее место для хобби-проектов и идей, которым тесно в обычном посте.",
 			},
 		],
 	},
 	playgroundPage: {
 		...dictionaries.en.playgroundPage,
-		title: "Игры, наброски и интерактивные обходные тропы",
+		title: "Игры, наброски и небольшие эксперименты",
 		description:
-			"Эта страница служит домом для хобби-экспериментов. Я в первую очередь веб-разработчик, а не разработчик игр, но эти небольшие проекты помогают исследовать взаимодействие, движение и идеи рендеринга в браузере.",
+			"Эта страница отведена под хобби-проекты. Я в первую очередь веб-разработчик, но такие эксперименты помогают исследовать движение, взаимодействие и рендеринг в браузере.",
 		totalProjects: "Всего проектов",
 		projects: "Проекты",
 		playableTitle: "Играбельные",
 		playableDescription:
-			"Практические эксперименты, которыми можно управлять напрямую, от игр до небольших систем.",
+			"Проекты, с которыми можно взаимодействовать напрямую.",
 		watchOnlyTitle: "Только смотреть",
 		watchOnlyDescription:
-			"Визуальные работы, которые лучше воспринимать как исследования движения, а не как игры с очками.",
+			"Визуальные эксперименты, на которые скорее смотришь, чем играешь.",
 		mode: "Режим",
 		loading: "Загрузка...",
 		closeGame: "Закрыть игру",
+		mobileNoticeTitle: "Лучше на десктопе",
+		mobileNoticeBody:
+			"Эти проекты в первую очередь рассчитаны на большие экраны. На мобильных они могут работать, но лучший опыт обычно на десктопе.",
 		badges: {
 			playable: "Играбельно",
 			watchOnly: "Только смотреть",
@@ -3281,7 +3222,7 @@ const russianMessages = {
 			},
 			solarSystem: {
 				name: "Solar System",
-				description: "Планетарный танец",
+				description: "Движение планет",
 			},
 			terminal: { name: "Terminal", description: "Терминал Linux" },
 			tankShooter: {
@@ -3294,7 +3235,7 @@ const russianMessages = {
 			},
 			movingMountains: {
 				name: "Moving Mountains",
-				description: "Движущиеся горы",
+				description: "Анимированные горы",
 			},
 			survivalShooter: {
 				name: "Survival Shooter",
@@ -3332,29 +3273,27 @@ const russianMessages = {
 	recent: {
 		...dictionaries.en.recent,
 		eyebrow: "Последние посты",
-		title: "Самые новые посты по порядку",
+		title: "Новые посты",
 		description:
-			"Эта страница это самый понятный вид блога в порядке публикации. Она держит новые тексты на первом плане, а пагинация и тематические подсказки остаются рядом.",
+			"Эта страница показывает посты в порядке публикации, начиная с самых новых.",
 		postCount: "Количество постов",
 		currentPage: "Текущая страница",
 		totalViews: "Всего просмотров",
-		latestArrival: "Последнее поступление",
+		latestArrival: "Последний пост",
 		noPublished:
-			"Опубликованных постов пока нет. Создайте первый пост, и он появится здесь как самое свежее поступление.",
+			"Опубликованных постов пока нет. Ваш первый пост появится здесь.",
 		readingGuide: "Гид по чтению",
-		stayOriented: "Не теряйте ориентир",
+		stayOriented: "Листать по страницам",
 		stayOrientedDescription:
-			"Листайте блог страницу за страницей, следите за самым новым материалом и переходите к темам, которые чаще всего встречаются в последней подборке постов.",
+			"Листайте посты страницу за страницей и следите за последними публикациями.",
 		showingNow: "Сейчас показано",
 		pageControls: "Управление страницами",
-		freshTopics: "Свежие темы",
+		freshTopics: "Недавние темы",
 		topicCountsLater: "Счётчики тем появятся здесь после публикации постов.",
 		recentPosts: "Недавние посты",
-		recentPostsTitle: "Самые новые записи на devblog",
-		recentPostsDescription:
-			"Строго отсортировано по дате публикации, чтобы страница работала как настоящая лента новых постов.",
-		noPosts:
-			"Постов пока нет. Эта страница теперь читает данные напрямую из базы и заполнится, как только появятся опубликованные записи.",
+		recentPostsTitle: "Новые посты на DevBlog",
+		recentPostsDescription: "Посты отсортированы по дате публикации.",
+		noPosts: "Постов пока нет.",
 		noPublishedShort: "Опубликованных постов пока нет",
 		relatedTags: (count: number) =>
 			`${count} связанных ${count === 1 ? "тега" : "тегов"}`,
@@ -3365,32 +3304,31 @@ const russianMessages = {
 	trending: {
 		...dictionaries.en.trending,
 		eyebrow: "Сейчас в тренде",
-		title: "На что читатели обращают внимание",
+		title: "Посты, на которые читатели смотрят сейчас",
 		description:
-			"Аккордеон остаётся фирменной частью страницы, но теперь остальной интерфейс поддерживает его: ранжированные посты, заметные тематические сигналы и более понятные причины, почему пост находится вверху.",
+			"Эта страница показывает посты, которые сейчас получают больше всего просмотров.",
 		trackedPosts: "Отслеживаемые посты",
 		topPost: "Топ-пост",
 		totalViews: "Всего просмотров",
 		noTrending:
-			"Трендовых постов пока нет. Этот раздел заполнится, когда опубликованные посты начнут набирать просмотры.",
+			"Трендовых постов пока нет. Раздел обновится, когда опубликованные посты начнут набирать просмотры.",
 		trendSignals: "Сигналы тренда",
-		topicRadar: "Радар тем",
+		topicRadar: "Популярные темы",
 		topicRadarDescription:
-			"Основные темы с самым сильным присутствием в текущей трендовой подборке. Используйте их, чтобы переходить к связанным постам, не теряя контекст того, что сейчас горячо.",
+			"Темы, которые чаще всего встречаются в текущих трендовых постах.",
 		topicSignalsLater:
-			"Тематические сигналы появятся здесь после публикации постов.",
+			"Данные по темам появятся здесь, когда посты будут опубликованы.",
 		leadingPost: "Лидирующий пост",
-		leadingPostEmpty:
-			"Лидера трендов пока нет. Публикуйте посты и накапливайте просмотры, чтобы сформировать этот рейтинг.",
+		leadingPostEmpty: "Лидирующего поста пока нет.",
 		ranking: "Рейтинг",
-		topMomentum: "Топ-посты по импульсу",
+		topMomentum: "Топ-посты",
 		topMomentumDescription:
-			"Самые читаемые посты прямо сейчас, отсортированные по просмотрам, чтобы список действительно отражал тренд.",
+			"Самые читаемые посты прямо сейчас, отсортированные по просмотрам.",
 		moreToWatch: "Ещё стоит посмотреть",
 		risingPosts: "Растущие посты",
 		risingPostsDescription:
-			"Посты чуть ниже верхнего уровня, которые всё равно заслуживают ясного и читаемого представления.",
-		notEnoughPosts: "Пока недостаточно постов для второго списка с акцентом.",
+			"Посты сразу за лидерами, которые тоже показывают хороший результат.",
+		notEnoughPosts: "Пока недостаточно постов для второго списка.",
 		readPost: "Читать пост",
 		focusPost: (title: string) => `Фокус на ${title}`,
 		viewsSuffix: (count: string) => `${count} просмотров`,
@@ -3399,64 +3337,62 @@ const russianMessages = {
 		...dictionaries.en.search,
 		eyebrow: "Поиск постов",
 		description:
-			"Ищите подходящие посты по всему devblog. Результаты используют те же карточки, что и остальная часть сайта, с пагинацией для длинных запросов.",
+			"Ищите по постам на DevBlog. Результаты показываются на тех же карточках, что и на остальной части сайта.",
 		matches: "Совпадения",
 		noMatch: "Нет совпадений",
-		nothingFound: (query: string) => `По запросу "${query}" ничего не найдено.`,
+		nothingFound: (query: string) => `Нет результатов по запросу "${query}".`,
 		noMatchDescription:
-			"Попробуйте более короткий запрос, ищите по тегу или автору либо перейдите к последним постам.",
+			"Попробуйте более короткий запрос, поиск по тегу или автору, либо перейдите к последним постам.",
 		seeRecentPosts: "Посмотреть последние посты",
 		resultsFor: (query: string) => `Результаты для "${query}"`,
 	},
 	tag: {
 		...dictionaries.en.tag,
-		eyebrow: "Поиск по тегам",
-		title: "Открывайте посты по темам",
-		description:
-			"Используйте теги, чтобы быстро сузить блог. Выберите основную тему, добавьте несколько вспомогательных тегов и держите сетку результатов перед глазами, пока уточняете выбор.",
+		eyebrow: "По тегам",
+		title: "Смотреть посты по темам",
+		description: "Используйте теги, чтобы сузить список постов.",
 		totalTags: "Всего тегов",
 		selected: "Выбрано",
 		visiblePosts: "Видимые посты",
 		mainTopics: "Основные темы",
-		mainTopicsDescription: "Широкие категории, которые формируют каждый пост.",
+		mainTopicsDescription: "Главная категория каждого поста.",
 		supportingTags: "Дополнительные теги",
 		supportingTagsDescription:
-			"Используйте их, чтобы сузить сетку, не теряя контекст.",
+			"Используйте их, чтобы сузить результаты ещё сильнее.",
 		noPostsYet: "Постов пока нет",
 		unlockAfterFirstPost:
-			"Просмотр по тегам откроется после первого опубликованного поста",
+			"Навигация по тегам станет доступна после первого опубликованного поста.",
 		tagBrowsingDescription:
-			"Страница тегов теперь читает реальные данные из базы, поэтому она останется пустой, пока не появятся опубликованные посты и теги.",
+			"Страница останется пустой, пока не появятся опубликованные посты и теги.",
 		noMatches: "Нет совпадений",
-		noPostsFit: "Нет постов под это сочетание",
+		noPostsFit: "Нет постов с такими тегами",
 		noPostsFitDescription:
-			"Попробуйте убрать один из активных тегов или переключиться на более широкую основную тему. Быстрые подборки в панели фильтров хороший способ сброса.",
+			"Попробуйте убрать один из выбранных тегов или переключиться на более широкую тему.",
 		viewsSuffix: (count: string) => `${count} просмотров`,
 		filterPosts: "Фильтровать посты",
 		findTopic: "Найти тему",
 		filterDescription: (max: number) =>
-			`Ищите теги, комбинируйте до ${max} и сужайте сетку постов, не покидая страницу.`,
+			`Ищите теги, комбинируйте до ${max} и фильтруйте список постов.`,
 		searchTags: "Искать теги",
 		selectedTags: "Выбранные теги",
 		selectedTagsHint:
-			"Добавьте ещё один тег для более точной выборки или сбросьте фильтры, чтобы расширить результаты.",
+			"Добавьте ещё один тег, чтобы сузить результаты, или сбросьте фильтры, чтобы увидеть больше постов.",
 		selectedTagsEmpty:
-			"Начните с широкой темы, затем добавьте вспомогательные теги, если нужно сфокусировать результаты.",
+			"Начните с широкой темы, а потом добавьте теги, чтобы сузить результаты.",
 		clearFilters: "Очистить фильтры",
 		quickPicks: "Быстрые подборки",
-		quickPicksDescription:
-			"Популярные теги, которые быстро открывают страницу.",
-		tagGroupMainDescription: "Основные категории, определяющие пост.",
-		tagGroupOtherDescription: "Вторичные детали и связанные темы.",
+		quickPicksDescription: "Популярные теги для быстрого старта.",
+		tagGroupMainDescription: "Основные категории поста.",
+		tagGroupOtherDescription: "Дополнительные детали и связанные темы.",
 		noTagsMatch: "Ни один тег не соответствует текущему поиску.",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${resultsCount} ${resultsCount === 1 ? "пост" : "постов"} по ${tagCount} ${tagCount === 1 ? "тегу" : "тегам"}`,
 		showingAll: (resultsCount: number) =>
 			`Показаны все ${resultsCount} ${resultsCount === 1 ? "пост" : "постов"}`,
 		resultsDescription:
-			"Уберите тег, чтобы расширить результаты, или продолжайте комбинировать связанные темы, чтобы оставаться сфокусированным.",
+			"Уберите тег, чтобы расширить результаты, или добавьте ещё тегов, чтобы сузить их.",
 		resultsDescriptionEmpty:
-			"Используйте быстрые подборки, заметные ряды или панель фильтров, чтобы углубиться в конкретную тему.",
+			"Используйте быстрые подборки или панель фильтров, чтобы смотреть посты по темам.",
 		resetAll: "Сбросить всё",
 		removeTag: (label: string) => `Убрать ${label}`,
 		noActiveFilters: "Нет активных фильтров по тегам.",
@@ -3497,9 +3433,8 @@ const russianMessages = {
 		...dictionaries.en.profile,
 		overview: "Обзор профиля",
 		yourProfile: "Ваш профиль",
-		description:
-			"Реальные данные аккаунта теперь поддерживаются базой данных, включая роль, подключённые провайдеры, сохранённые поля профиля и живые счётчики активности.",
-		loadingTitle: "Подготовка страницы",
+		description: "Данные аккаунта, активность и подключённые способы входа.",
+		loadingTitle: "Загрузка страницы",
 		unavailable: "Профиль недоступен",
 		goToLogin: "Перейти ко входу",
 		bookmarks: "Закладки",
@@ -3516,7 +3451,7 @@ const russianMessages = {
 		editProfile: "Редактировать профиль",
 		logout: "Выйти",
 		profileAlt: (name: string) => `Профиль ${name}`,
-		recentActivity: "Недавняя активность по всему блогу",
+		recentActivity: "Недавняя активность",
 		noCommentsYet: "Комментариев пока нет.",
 		editedOn: (date: string) => `Изменено ${date}`,
 		itemCount: (count: number) =>
@@ -3547,9 +3482,9 @@ const russianMessages = {
 		changePassword: "Изменить пароль",
 		createPassword: "Создать пароль",
 		changePasswordDescription:
-			"Обновите пароль для входа по email, не теряя социальный вход.",
+			"Обновите пароль, не убирая возможность входа через соцсети.",
 		createPasswordDescription:
-			"Добавьте пароль для входа по email к этому социальному аккаунту.",
+			"Добавьте пароль, чтобы можно было входить и по email.",
 		optional: "Необязательно",
 		currentPassword: "Текущий пароль",
 		newPassword: "Новый пароль",
@@ -3579,113 +3514,111 @@ const russianMessages = {
 	newPost: {
 		...dictionaries.en.newPost,
 		createPageEyebrow: "Новый пост",
-		createPageTitle: "Создайте статью, готовую к публикации",
+		createPageTitle: "Создать пост",
 		createPageDescription:
-			"Пишите реальный markdown, прикрепляйте реальные медиа и сохраняйте прямо в backend, чтобы страница поста рендерила тот же самый контент.",
+			"Пишите пост, добавляйте медиа и сохраняйте всё здесь.",
 		accessRequiredTitle: "Требуется доступ автора",
 		accessRequiredDescription:
-			"Эта страница предназначена для аккаунтов авторов. Войдите с профилем, у которого есть права на создание, чтобы писать черновики, отправлять на проверку и публиковать посты.",
+			"Эта страница доступна только аккаунтам участников команды.",
 		editPageEyebrow: "Редактировать пост",
-		editPageTitle: "Обновить статью",
+		editPageTitle: "Редактировать пост",
 		editPageDescription:
-			"Уточняйте метаданные, содержимое или медиа и сохраняйте напрямую в ту же запись поста.",
+			"Обновляйте содержимое, метаданные и медиа этого поста.",
 		editAccessDeniedTitle: "Доступ запрещён",
 		editAccessDeniedDescription:
 			"Редактировать этот пост может только автор или администраторы сайта.",
 		role: "Роль",
 		author: "Автор",
 		defaultAuthor: "Автор",
+		language: "Исходный язык",
+		languageHelp:
+			"Это язык, на котором пост был написан изначально. Переводы можно добавить отдельно.",
 		mode: "Режим",
 		modeCreating: "Создание",
 		modeEditing: "Редактирование",
 		editorEyebrowCreate: "Новый пост",
 		editorEyebrowEdit: "Редактировать пост",
-		editorTitleCreate: "Соберите пост до публикации",
-		editorTitleEdit: "Уточните опубликованную форму",
+		editorTitleCreate: "Напишите свой пост",
+		editorTitleEdit: "Обновите свой пост",
 		editorDescription:
-			"Редактор сохраняет реальный markdown, реальные пути к медиа и реальные метаданные поста в Prisma. То, что вы видите здесь, будет отрисовано на странице поста.",
-		storySetupEyebrow: "Настройка материала",
-		storySetupTitle: "Сначала зафиксируйте метаданные",
+			"Используйте редактор, чтобы писать, смотреть превью и сохранять пост.",
+		storySetupEyebrow: "Настройка поста",
+		storySetupTitle: "Сначала заполните основное",
 		title: "Заголовок",
-		titlePlaceholder: "Заголовок, достойный клика",
-		slug: "Slug",
+		titlePlaceholder: "Заголовок поста",
+		slug: "Слаг",
 		slugPlaceholder: "slug-url-posta",
 		regenerate: "Сгенерировать заново",
 		finalUrl: (slug: string) => `Итоговый URL: /post/${slug}`,
 		description: "Описание",
 		generateFromContent: "Сгенерировать из контента",
-		descriptionPlaceholder: "Что читатель должен понять до открытия статьи?",
+		descriptionPlaceholder: "Короткое описание поста.",
 		visualsEyebrow: "Визуал",
-		visualsTitle: "Задайте миниатюру поста",
+		visualsTitle: "Миниатюра поста",
 		thumbnail: "Миниатюра",
 		thumbnailDescription:
-			"Она определяет hero-изображение на странице поста и миниатюру карточки в остальных местах сайта.",
+			"Это изображение используется на странице поста и в карточках.",
 		upload: "Загрузить",
 		uploading: "Загрузка...",
 		thumbnailPreviewAlt: "Миниатюра поста",
-		thumbnailEmpty:
-			"Загрузите изображение, которое должно представлять этот пост.",
+		thumbnailEmpty: "Загрузите изображение для этого поста.",
 		thumbnailUploaded: "Миниатюра загружена.",
 		thumbnailUploadError: "Не удалось загрузить миниатюру.",
 		thumbnailAlt: "Alt-текст миниатюры",
-		thumbnailAltPlaceholder:
-			"Опишите миниатюру для доступности и предпросмотров",
-		bodyEyebrow: "Тело",
-		bodyTitle: "Пишите и проверяйте в одном месте",
+		thumbnailAltPlaceholder: "Опишите изображение миниатюры",
+		bodyEyebrow: "Содержимое",
+		bodyTitle: "Пишите и смотрите превью",
 		bodyDescription:
-			"Пишите в markdown, загружайте встроенные изображения и проверяйте итоговый рендер перед сохранением.",
+			"Пишите в markdown и смотрите итоговый результат перед сохранением.",
 		readTime: "Время чтения",
-		taxonomyEyebrow: "Таксономия",
-		taxonomyTitle: "Разместите статью",
+		taxonomyEyebrow: "Теги",
+		taxonomyTitle: "Категория поста",
 		mainTag: "Основной тег",
 		tags: "Теги",
-		readinessEyebrow: "Готовность",
-		readinessTitle: "Проверьте главное",
+		readinessEyebrow: "Проверка",
+		readinessTitle: "Перед публикацией",
 		checklistTitleSet: "Заголовок задан",
 		checklistThumbnailUploaded: "Миниатюра загружена",
 		checklistMainTagChosen: "Основной тег выбран",
 		checklistSupportingTagsAdded: "Дополнительные теги добавлены",
 		checklistDescriptionReady: "Описание готово",
-		checklistBodyHasSubstance: "Текст достаточно содержательный",
+		checklistBodyHasSubstance: "Контент заполнен",
 		ready: "Готово",
 		missing: "Отсутствует",
 		wordCount: (count: number) => `${count} слов`,
 		tagCount: (count: number) =>
 			`${count} ${count === 1 ? "тег" : "тегов"} прикреплено`,
 		currentTarget: (status: string) => `Текущая цель: ${status}`,
+		currentLanguage: (language: string) => `Исходный язык: ${language}`,
 		publishEyebrow: "Публикация",
-		publishTitle: "Выберите следующий шаг",
+		publishTitle: "Выберите, что делать дальше",
 		statusDraftLabel: "Сохранить черновик",
-		statusDraftDescription:
-			"Держите пост приватным, пока дорабатываете содержимое.",
+		statusDraftDescription: "Пока оставьте пост приватным.",
 		statusPendingReviewLabel: "Отправить на проверку",
-		statusPendingReviewDescription:
-			"Пометьте черновик как готовый к редакторской проверке.",
+		statusPendingReviewDescription: "Отметьте пост как готовый к проверке.",
 		statusPublishedLabel: "Опубликовать сейчас",
-		statusPublishedDescription: "Сделать пост видимым на сайте немедленно.",
+		statusPublishedDescription: "Сделать пост видимым на сайте.",
 		saving: "Сохранение...",
 		clearForm: "Очистить форму",
 		submitError: "Сейчас не удаётся сохранить пост. Попробуйте ещё раз.",
 		submitSuccessPublished: "Пост опубликован.",
 		submitSuccessReview: "Пост отправлен на проверку.",
 		submitSuccessDraft: "Черновик сохранён.",
-		mainTagPlaceholder:
-			"Выберите существующую тему или задайте новый основной тег",
-		mainTagHelp: "Основные теги группируют пост в списках и рекомендациях.",
+		mainTagPlaceholder: "Выберите основной тег",
+		mainTagHelp: "Основные теги используются в списках и рекомендациях.",
 		tagsPlaceholder: "Добавьте теги и нажмите Enter",
 		tagsLimitReached: "Достигнут лимит тегов",
-		tagSlotsLeft: (count: number) =>
-			`Осталось ${count} мест для тегов. Используйте точные и удобные для поиска метки.`,
+		tagSlotsLeft: (count: number) => `Осталось ${count} мест для тегов.`,
 		editorControlsEyebrow: "Управление редактором",
-		editorControlsTitle: "Формируйте markdown осознанно",
+		editorControlsTitle: "Инструменты markdown",
 		editorControlsDescription:
-			"Встроенные изображения остаются там, где вы их вставили, и рендерятся по центру как в предпросмотре, так и в финальном посте.",
+			"Используйте панель, чтобы форматировать текст и вставлять изображения.",
 		modeWrite: "Писать",
-		modeWriteDescription: "Сфокусироваться на markdown.",
+		modeWriteDescription: "Редактировать markdown.",
 		modePreview: "Предпросмотр",
-		modePreviewDescription: "Посмотреть итоговый рендер.",
+		modePreviewDescription: "Посмотреть готовый пост.",
 		modeSplit: "Разделить",
-		modeSplitDescription: "Писать и смотреть одновременно.",
+		modeSplitDescription: "Писать и смотреть бок о бок.",
 		toolbarInline: "В строке",
 		toolbarBlocks: "Блоки",
 		toolbarBold: "Жирный",
@@ -3702,16 +3635,15 @@ const russianMessages = {
 		dualPanel: "Две панели",
 		modeBadge: (mode: string) => `Режим ${mode}`,
 		markdownEyebrow: "Markdown",
-		markdownDescription:
-			"Пишите на чистом markdown и сохраняйте контроль над тем, где оказывается каждый блок и каждое изображение.",
+		markdownDescription: "Пишите пост в простом markdown.",
 		editableSource: "Редактируемый исходник",
 		markdownPlaceholder:
 			"Пишите статью в Markdown.\n\nПример:\n## Заголовок раздела\n\nАбзац с **выделением** и [ссылкой](https://example.com).\n",
 		previewEyebrow: "Предпросмотр",
 		previewDescription:
-			"Предпросмотр использует тот же рендерер, что и опубликованная страница поста.",
+			"Этот предпросмотр совпадает с макетом опубликованного поста.",
 		finalRendering: "Финальный рендер",
-		emptyPreview: "Начните писать, чтобы увидеть финальный рендер поста.",
+		emptyPreview: "Начните писать, чтобы увидеть превью поста.",
 		editorWordCount: (count: number) => `${count} слов`,
 		editorReadTime: (count: number) => `${count} мин чтения`,
 		editorCharacters: (used: number, max: number) => `${used}/${max} символов`,
@@ -3719,11 +3651,36 @@ const russianMessages = {
 			`${count} ${count === 1 ? "изображение вставлено" : "изображений вставлено"} в markdown.`,
 		imageDefaultAlt: "Изображение",
 		imageUploadError: "Не удалось загрузить изображение.",
+		translationEyebrow: "Переводы",
+		translationTitle: "Добавить или изменить перевод",
+		translationDescription:
+			"Переводы заменяют заголовок, описание, alt-текст миниатюры и содержимое для читателей на этом языке. Слаг, теги и статус остаются привязаны к исходному посту.",
+		translationOriginalLanguage: "Исходный язык поста",
+		translationNoLocales: "Все поддерживаемые языки уже покрыты.",
+		translationLanguage: "Язык перевода",
+		translationLanguageHelp:
+			"Выберите, для какого языка сайта использовать этот перевод.",
+		translationExisting: "Сохранённые переводы",
+		translationNoneYet: "Сохранённых переводов пока нет.",
+		translationStatusExisting: "Редактируется сохранённый перевод",
+		translationStatusNew: "Создаётся новый перевод",
+		translationCopyFromOriginal: "Копировать исходный текст",
+		translationCopiedFromOriginal:
+			"Содержимое исходного поста скопировано в редактор перевода.",
+		translationBodyDescription:
+			"Напишите переведённый markdown для этого языка.",
+		translationSave: "Сохранить перевод",
+		translationSaving: "Сохранение перевода...",
+		translationSaveSuccess: "Перевод сохранён.",
+		translationSaveError:
+			"Сейчас не удаётся сохранить перевод. Попробуйте ещё раз.",
+		translationMustDiffer: "Выберите язык, отличный от языка исходного поста.",
 		progressAria: (progress: number, remaining: number) =>
 			`${progress}% прогресса, осталось ${remaining} мин.`,
 	},
 	postValidation: {
 		...dictionaries.en.postValidation,
+		localeRequired: "Язык поста обязателен.",
 		imageRequired: "Изображение обязательно.",
 		imageInvalid:
 			"Изображение должно быть путём к загруженному файлу или корректным URL.",
@@ -3751,10 +3708,13 @@ const russianMessages = {
 	post: {
 		...dictionaries.en.post,
 		relatedReading: "Связанное чтение",
-		moreFromThisLane: "Ещё из этого направления",
+		moreFromThisLane: "Похожие посты",
 		statusPublished: "Опубликовано",
 		statusPendingReview: "На проверке",
 		statusDraft: "Черновик",
+		translatedToCurrentLanguage: "Переведено на ваш текущий язык",
+		translationFromLanguage: (language: string) =>
+			`Изначально написано на ${language}`,
 		writtenBy: "Автор",
 		editPost: "Редактировать пост",
 		edit: "Изменить",
@@ -3766,9 +3726,9 @@ const russianMessages = {
 			relatedTopics: string[],
 		) =>
 			relatedTopics.length > 0
-				? `${name} пишет вокруг ${mainTag}, регулярно возвращаясь к темам ${relatedTopics.join(" и ")}.`
-				: `${name} пишет вокруг ${mainTag}.`,
-		commentSection: "Раздел комментариев",
+				? `${name} пишет в основном о ${mainTag}, а ещё о ${relatedTopics.join(" и ")}.`
+				: `${name} пишет в основном о ${mainTag}.`,
+		commentSection: "Комментарии",
 		commentPlaceholder: "Добавьте комментарий",
 		commentAs: (name: string) => `Комментируете как ${name}`,
 		loginRequiredToComment: "Для комментария нужен вход",
@@ -3776,8 +3736,7 @@ const russianMessages = {
 		postedOn: (date: string) => `Опубликовано ${date}`,
 		reportComment: "Пожаловаться на комментарий",
 		loginModalTitle: "Для этого нужно войти в систему.",
-		loginModalDescription:
-			"После входа пользоваться сайтом удобнее. Присоединяйтесь к разговору.",
+		loginModalDescription: "Войдите, чтобы продолжить.",
 		reportCommentTitle: "Пожаловаться на комментарий",
 		reportingCommentBy: (author: string) =>
 			`Жалоба на комментарий автора ${author}:`,
@@ -3842,8 +3801,8 @@ const frenchMessages = {
 		previous: "Précédent",
 		next: "Suivant",
 		loadingProfile: "Chargement du profil",
-		preparingPage: "Préparation de la page",
-		noItemsYet: "Aucun élément à afficher pour le moment.",
+		preparingPage: "Chargement de la page",
+		noItemsYet: "Rien à afficher pour le moment.",
 		noDescriptionYet: "Aucune description de profil pour le moment.",
 		percentComplete: (progress: number) => `${progress}% terminé`,
 	},
@@ -3856,9 +3815,8 @@ const frenchMessages = {
 	header: {
 		...dictionaries.en.header,
 		eyebrow: "Blog perso de développement",
-		description:
-			"Tutoriels, opinions, notes frontend et projets interactifs réunis au même endroit.",
-		suggestTitle: "Suggérer un article (avec relecture)",
+		description: "Posts sur le frontend, l'UI et de petits projets parallèles.",
+		suggestTitle: "Suggérer un article (relecture requise)",
 		homeAria: "Accueil",
 	},
 	nav: {
@@ -3869,12 +3827,12 @@ const frenchMessages = {
 	},
 	footer: {
 		...dictionaries.en.footer,
-		title: "Articles, expériences, travail d'interface.",
+		title: "Articles, expériences et travail UI.",
 		description:
-			"Un blog personnel de développement avec des textes, des études d'interaction et un playground pour les idées plus faciles à montrer qu'à décrire.",
+			"Un blog personnel de développement avec des articles, des expériences d'interface et de petits projets interactifs.",
 		navigate: "Naviguer",
 		socials: "Réseaux",
-		closing: "Articles, expériences UI et projets interactifs secondaires.",
+		closing: "Articles, expériences UI et projets parallèles.",
 	},
 	popover: {
 		...dictionaries.en.popover,
@@ -3886,41 +3844,38 @@ const frenchMessages = {
 	},
 	home: {
 		startHere: "Commencer ici",
-		title: "Un blog de développement personnel avec de la place pour explorer",
+		title: "Un blog personnel de développement",
 		description:
-			"DevBlog est l'endroit où je publie des écrits sur le développement, des opinions, des tutoriels et des expériences. La page d'accueil met en avant les lectures phares, ce qui attire l'attention en ce moment et des chemins rapides vers le reste du blog.",
+			"DevBlog est l'endroit où je publie des tutoriels, des opinions, des notes et des expériences. La page d'accueil met en avant des posts, des tendances et plusieurs façons de parcourir le reste du site.",
 		featuredPosts: "Articles à la une",
 		trendingPicks: "Sélection tendance",
 		recommended: "Recommandés",
-		trendingSnapshot: "Aperçu tendance",
-		trendingTitle: "Ce qui attire l'attention maintenant",
+		trendingSnapshot: "En ce moment",
+		trendingTitle: "Les posts qui attirent l'attention",
 		trendingDescription:
-			"Un aperçu rapide des articles qui attirent les lecteurs en ce moment, avec une structure de section plus claire.",
-		exploreFurther: "Aller plus loin",
-		exploreTitle: "Plus de portes d'entrée dans le blog",
+			"Un coup d'oeil rapide aux posts les plus lus en ce moment.",
+		exploreFurther: "Explorer plus",
+		exploreTitle: "Plus de façons de parcourir",
 		exploreDescription:
-			"Utilisez ces sections pour passer de ce qui est nouveau à ce qui attire l'attention, puis aux articles à revisiter.",
+			"Parcourez les posts récents, les tendances ou les posts par tag.",
 		editorPicks: "Choix de l'éditeur",
 		noRecommended:
-			"Aucun article recommandé pour le moment. Publiez quelques entrées et cette section se remplira automatiquement à partir de la base de données active.",
-		noPosts:
-			"Aucun article n'est encore publié. La page d'accueil est maintenant connectée à Prisma, donc les sections se rempliront dès que de vrais articles existeront.",
+			"Aucun article recommandé pour le moment. Cette section se mettra à jour quand davantage de posts seront publiés.",
+		noPosts: "Aucun article publié pour le moment.",
 		scrollToTrending: "Faire défiler jusqu'aux articles tendance",
 		noTrending:
-			"Aucun article tendance pour le moment. Dès que les articles publiés commenceront à accumuler des vues, ils apparaîtront ici automatiquement.",
+			"Aucun article tendance pour le moment. Ils apparaîtront ici dès que les posts publiés commenceront à cumuler des vues.",
 		explore: "Explorer",
 		trendingPosts: "Articles tendance",
 		trendingPostsDescription:
-			"Découvrez ce qui attire le plus l'attention en ce moment.",
+			"Découvrez ce que les gens lisent le plus en ce moment.",
 		recentPosts: "Articles récents",
-		recentPostsDescription:
-			"Commencez par les textes les plus récents puis remontez à partir de là.",
+		recentPostsDescription: "Commencez par les posts les plus récents.",
 		browseByTag: "Parcourir par tag",
-		browseByTagDescription:
-			"Filtrez le catalogue d'articles en direct par sujet et par tags secondaires.",
+		browseByTagDescription: "Filtrez les posts par sujet et par tag.",
 		noSectionPost: "Aucun article n'est encore disponible pour cette section.",
 		noRecommendedCallouts:
-			"Les encarts recommandés apparaîtront ici après la publication de davantage d'articles.",
+			"Les posts recommandés apparaîtront ici quand davantage de contenu sera publié.",
 		viewSection: "Voir la section",
 	},
 	notFound: {
@@ -3946,7 +3901,7 @@ const frenchMessages = {
 		ideaPlaceholder:
 			"Ajoutez un court plan, quelques points clés ou des liens de contexte (optionnel).",
 		reviewNote:
-			"Votre suggestion sera relue avant publication. Merci d'éviter les données sensibles ou personnelles.",
+			"Les suggestions sont relues avant publication. N'incluez pas d'informations sensibles ou personnelles.",
 		submitted: "Envoyé !",
 		submitting: "Envoi...",
 		submit: "Envoyer la suggestion",
@@ -3957,43 +3912,46 @@ const frenchMessages = {
 	about: {
 		...dictionaries.en.about,
 		eyebrow: "À propos de devblog",
-		title: "Un endroit pour écrire, expérimenter et continuer à publier",
+		title: "Un endroit pour écrire et construire",
 		description:
-			"Ce site rassemble écriture, travail d'interface et expériences parallèles dans un même cadre. L'idée est de rester utile, personnel et vivant au lieu de devenir un simple portfolio figé.",
+			"Ce site réunit écriture, travail UI et petits essais. C'est à la fois un blog, un playground et un projet personnel.",
 		storyCards: [
 			{
 				label: "Pourquoi il existe",
-				title: "Un blog que j'utilise vraiment",
-				text: "DevBlog est mon blog personnel sur le développement logiciel. J'y publie des tutoriels, des opinions, des expériences, des idées d'interface et les aspects du développement web que j'aime le plus affiner.",
+				title: "Un blog vers lequel je reviens toujours",
+				text: "DevBlog est mon blog personnel sur le développement logiciel. J'y publie des tutoriels, des opinions, des expériences, des idées d'interface et d'autres aspects du développement web que j'aime travailler.",
 			},
 			{
 				label: "Comment il est construit",
-				title: "Une stack pratique avec de la place pour le visuel",
-				text: "La stack s'appuie sur Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser et quelques bibliothèques utiles pour les données et les expériences. L'objectif est de garder le projet pratique, simple et agréable à construire sans perdre sa dimension visuelle.",
+				title: "Une stack pratique",
+				text: "Le site est construit avec Next.js, React, Tailwind CSS, Prisma, NextAuth, Phaser et quelques petites bibliothèques d'appui. L'idée est de le garder assez simple à maintenir tout en laissant de la place au travail visuel et interactif.",
 			},
 			{
-				label: "Ce qui vit aussi ici",
-				title: "Outils ludiques, esquisses et idées parallèles",
-				text: "Au-delà des articles, le site mise sur l'interactivité: découverte par tags, recommandations, outils pour les utilisateurs et un playground rempli de jeux et d'esquisses. Je ne suis pas développeur de jeux, mais ce playground est un bon terrain pour les projets hobby et une autre façon de montrer ce que je peux construire.",
+				label: "Ce qu'on trouve aussi ici",
+				title: "Petits outils et projets parallèles",
+				text: "À côté des articles, il y a un playground avec des jeux, des esquisses et d'autres expériences. Je ne suis pas développeur de jeux, mais c'est un bon endroit pour des projets hobby et pour tester des idées qui ne rentrent pas dans un article classique.",
 			},
 		],
 	},
 	playgroundPage: {
 		...dictionaries.en.playgroundPage,
-		title: "Jeux, esquisses et détours interactifs",
+		title: "Jeux, esquisses et petites expériences",
 		description:
-			"Cette page sert de maison aux expérimentations hobby. Je suis surtout développeur web, pas développeur de jeux, mais ces petits projets sont une bonne façon d'explorer l'interaction, le mouvement et le rendu dans le navigateur.",
+			"Cette page sert de terrain pour les projets hobby. Je travaille surtout sur le web, mais ces expériences sont une façon agréable d'explorer le mouvement, l'interaction et le rendu dans le navigateur.",
 		totalProjects: "Total des projets",
 		projects: "Projets",
 		playableTitle: "Jouables",
 		playableDescription:
-			"Des expériences interactives que vous pouvez contrôler directement, des jeux aux petits systèmes.",
+			"Des projets avec lesquels vous pouvez interagir directement.",
 		watchOnlyTitle: "À regarder",
 		watchOnlyDescription:
-			"Des pièces visuelles qui se lisent mieux comme des études de mouvement que comme des jeux à score.",
+			"Des expériences visuelles plus faites pour regarder que pour jouer.",
 		mode: "Mode",
 		loading: "Chargement...",
 		closeGame: "Fermer le jeu",
+		mobileNoticeTitle: "Mieux sur desktop",
+		mobileNoticeBody:
+			"Ces projets ont surtout été pensés pour les grands écrans. Ils peuvent fonctionner sur mobile, mais l'expérience est généralement meilleure sur ordinateur.",
 		badges: {
 			playable: "Jouable",
 			watchOnly: "À regarder",
@@ -4014,7 +3972,7 @@ const frenchMessages = {
 			},
 			solarSystem: {
 				name: "Système solaire",
-				description: "Danse planétaire",
+				description: "Mouvement planétaire",
 			},
 			terminal: { name: "Terminal", description: "Terminal Linux" },
 			tankShooter: {
@@ -4027,7 +3985,7 @@ const frenchMessages = {
 			},
 			movingMountains: {
 				name: "Montagnes mouvantes",
-				description: "Montagnes en mouvement",
+				description: "Montagnes animées",
 			},
 			survivalShooter: {
 				name: "Tir de survie",
@@ -4063,31 +4021,29 @@ const frenchMessages = {
 		},
 	},
 	recent: {
-		eyebrow: "Derniers articles",
-		title: "Les articles les plus récents, dans l'ordre",
+		eyebrow: "Articles récents",
+		title: "Articles les plus récents",
 		description:
-			"Cette page est la vue la plus nette du blog par ordre de publication. Elle garde les derniers textes au premier plan, avec la pagination et les repères de sujet à portée de main.",
+			"Cette page montre les articles dans l'ordre de publication, du plus récent au plus ancien.",
 		postCount: "Nombre d'articles",
 		currentPage: "Page actuelle",
 		totalViews: "Total des vues",
-		latestArrival: "Dernière arrivée",
+		latestArrival: "Dernier post",
 		readingGuide: "Guide de lecture",
 		noPublished:
-			"Aucun article publié pour le moment. Créez votre premier article et il apparaîtra ici comme la dernière arrivée.",
-		stayOriented: "Garder le cap",
+			"Aucun article publié pour le moment. Votre premier post apparaîtra ici.",
+		stayOriented: "Parcourir page par page",
 		stayOrientedDescription:
-			"Parcourez le blog page par page, gardez un oeil sur l'entrée la plus récente et sautez vers les sujets qui reviennent le plus souvent dans le dernier lot de publications.",
+			"Parcourez les posts page par page et suivez les dernières publications.",
 		showingNow: "Affichage actuel",
 		pageControls: "Contrôles de page",
 		freshTopics: "Sujets récents",
 		topicCountsLater:
 			"Les compteurs de sujets apparaîtront ici une fois des articles publiés.",
 		recentPosts: "Articles récents",
-		recentPostsTitle: "Les entrées les plus récentes de devblog",
-		recentPostsDescription:
-			"Classées strictement par date de publication afin que la page se comporte comme un vrai flux de nouveautés, et non comme un mélange aléatoire.",
-		noPosts:
-			"Aucun article n'est encore disponible. Cette page lit maintenant directement la base de données et se remplira dès qu'il y aura des entrées publiées.",
+		recentPostsTitle: "Les posts les plus récents sur DevBlog",
+		recentPostsDescription: "Posts triés par date de publication.",
+		noPosts: "Aucun article disponible pour le moment.",
 		noPublishedShort: "Aucun article publié pour le moment",
 		relatedTags: (count: number) =>
 			`${count} ${count === 1 ? "tag connexe" : "tags connexes"}`,
@@ -4097,33 +4053,32 @@ const frenchMessages = {
 	},
 	trending: {
 		eyebrow: "En tendance",
-		title: "Ce que les lecteurs regardent en ce moment",
+		title: "Les posts que les lecteurs regardent en ce moment",
 		description:
-			"L'accordéon reste la signature de la page, mais le reste l'accompagne désormais: articles classés, signaux de sujet visibles et raisons plus claires de leur position.",
+			"Cette page montre les posts qui reçoivent le plus de vues en ce moment.",
 		trackedPosts: "Articles suivis",
 		topPost: "Article principal",
 		totalViews: "Total des vues",
 		noTrending:
-			"Aucun article tendance n'est encore disponible. Cette section se remplira lorsque les articles publiés commenceront à accumuler des vues.",
+			"Aucun article tendance pour le moment. Cette section se mettra à jour quand les posts publiés commenceront à recevoir des vues.",
 		trendSignals: "Signaux de tendance",
-		topicRadar: "Radar des sujets",
+		topicRadar: "Sujets populaires",
 		topicRadarDescription:
-			"Les sujets principaux les plus présents dans la sélection tendance actuelle. Utilisez-les pour basculer vers des articles liés sans perdre le contexte de ce qui fonctionne en ce moment.",
+			"Les sujets qui reviennent le plus dans les posts tendance du moment.",
 		topicSignalsLater:
-			"Les signaux de sujet apparaîtront ici une fois des articles publiés.",
+			"Les données de sujet apparaîtront ici une fois les articles publiés.",
 		leadingPost: "Article en tête",
-		leadingPostEmpty:
-			"Aucun leader de tendance pour le moment. Publiez des articles et accumulez des vues pour construire ce classement.",
+		leadingPostEmpty: "Pas encore de post en tête.",
 		ranking: "Classement",
-		topMomentum: "Top articles par dynamique",
+		topMomentum: "Top articles",
 		topMomentumDescription:
-			"Les articles les plus lus du moment, ordonnés par vues pour que la liste reflète réellement une tendance plutôt qu'un échantillon aléatoire.",
+			"Les articles les plus lus en ce moment, triés par vues.",
 		moreToWatch: "À surveiller aussi",
 		risingPosts: "Articles en progression",
 		risingPostsDescription:
-			"Des articles juste sous le sommet qui méritent quand même une présentation claire et lisible plutôt qu'une liste dense.",
+			"Des articles juste sous le haut du classement qui fonctionnent eux aussi très bien.",
 		notEnoughPosts:
-			"Il n'y a pas encore assez d'articles pour une seconde sélection mise en avant.",
+			"Il n'y a pas encore assez d'articles pour une seconde liste.",
 		readPost: "Lire l'article",
 		focusPost: (title: string) => `Mettre en avant ${title}`,
 		viewsSuffix: (count: string) => `${count} vues`,
@@ -4131,64 +4086,60 @@ const frenchMessages = {
 	search: {
 		eyebrow: "Rechercher des articles",
 		description:
-			"Parcourez les articles correspondants sur tout devblog. Les résultats utilisent les mêmes cartes que le reste du site, avec pagination si la requête dépasse une page.",
+			"Recherchez dans les posts sur DevBlog. Les résultats utilisent les mêmes cartes que le reste du site.",
 		matches: "Correspondances",
 		noMatch: "Aucun résultat",
 		nothingFound: (query: string) => `Aucun résultat pour "${query}".`,
 		noMatchDescription:
-			"Essayez une requête plus courte, recherchez par tag ou par auteur, ou revenez aux derniers articles pour continuer à parcourir.",
+			"Essayez une recherche plus courte, recherchez par tag ou auteur, ou parcourez plutôt les articles récents.",
 		seeRecentPosts: "Voir les articles récents",
 		resultsFor: (query: string) => `Résultats pour "${query}"`,
 	},
 	tag: {
 		eyebrow: "Parcourir par tag",
-		title: "Découvrir les articles par sujet",
-		description:
-			"Utilisez les tags pour filtrer rapidement le blog. Choisissez un sujet principal, ajoutez quelques tags secondaires et gardez la grille de résultats sous les yeux.",
+		title: "Parcourir les articles par sujet",
+		description: "Utilisez les tags pour affiner la liste des posts.",
 		totalTags: "Total des tags",
 		selected: "Sélectionnés",
 		visiblePosts: "Articles visibles",
 		mainTopics: "Sujets principaux",
-		mainTopicsDescription:
-			"Les grandes catégories qui structurent chaque article.",
+		mainTopicsDescription: "La catégorie principale de chaque article.",
 		supportingTags: "Tags secondaires",
 		supportingTagsDescription:
-			"Utilisez-les pour affiner la grille sans perdre le contexte.",
+			"Utilisez-les pour affiner davantage les résultats.",
 		noPostsYet: "Pas encore d'articles",
 		unlockAfterFirstPost:
-			"La navigation par tags sera disponible après le premier article publié",
+			"La navigation par tags sera disponible après le premier article publié.",
 		tagBrowsingDescription:
-			"La page tags lit maintenant la base de données réelle, elle restera donc vide tant qu'il n'y aura pas d'articles publiés et de tags à afficher.",
+			"La page restera vide tant qu'il n'y aura pas de posts publiés et de tags à afficher.",
 		noMatches: "Aucun résultat",
-		noPostsFit: "Aucun article ne correspond à cette combinaison",
+		noPostsFit: "Aucun article ne correspond à ces tags",
 		noPostsFitDescription:
-			"Essayez de retirer l'un des tags actifs ou revenez à un sujet principal plus large. Les choix rapides du panneau de filtres sont un bon point de réinitialisation.",
+			"Essayez de retirer l'un des tags sélectionnés ou revenez à un sujet plus large.",
 		filterPosts: "Filtrer les articles",
 		findTopic: "Trouver un sujet",
 		filterDescription: (max: number) =>
-			`Recherchez des tags, combinez-en jusqu'à ${max}, et affinez la grille sans quitter la page.`,
+			`Recherchez des tags, combinez-en jusqu'à ${max} et filtrez la liste des posts.`,
 		searchTags: "Rechercher des tags",
 		selectedTags: "Tags sélectionnés",
 		selectedTagsHint:
-			"Ajoutez un autre tag pour affiner davantage, ou réinitialisez pour élargir les résultats.",
+			"Ajoutez un autre tag pour resserrer les résultats, ou réinitialisez pour voir plus de posts.",
 		selectedTagsEmpty:
-			"Commencez par un sujet large, puis ajoutez des tags secondaires si vous avez besoin de resserrer les résultats.",
+			"Commencez par un sujet large, puis ajoutez d'autres tags pour affiner les résultats.",
 		clearFilters: "Effacer les filtres",
 		quickPicks: "Choix rapides",
-		quickPicksDescription:
-			"Des tags populaires qui ouvrent rapidement la page.",
-		tagGroupMainDescription:
-			"Les catégories principales qui définissent l'article.",
-		tagGroupOtherDescription: "Détails secondaires et sujets liés.",
+		quickPicksDescription: "Des tags populaires pour commencer.",
+		tagGroupMainDescription: "Les catégories principales du post.",
+		tagGroupOtherDescription: "Détails en plus et sujets liés.",
 		noTagsMatch: "Aucun tag ne correspond à la recherche actuelle.",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${resultsCount} ${resultsCount === 1 ? "article" : "articles"} correspondant à ${tagCount} ${tagCount === 1 ? "tag" : "tags"}`,
 		showingAll: (resultsCount: number) =>
 			`Affichage de tous les ${resultsCount} ${resultsCount === 1 ? "article" : "articles"}`,
 		resultsDescription:
-			"Retirez un tag pour élargir les résultats ou continuez à combiner des sujets proches pour rester ciblé.",
+			"Retirez un tag pour élargir les résultats, ou ajoutez-en d'autres pour les resserrer.",
 		resultsDescriptionEmpty:
-			"Utilisez les choix rapides, les bandes défilantes ou le panneau de filtres pour entrer dans un thème précis.",
+			"Utilisez les choix rapides ou le panneau de filtres pour parcourir par thème.",
 		resetAll: "Tout réinitialiser",
 		removeTag: (label: string) => `Retirer ${label}`,
 		noActiveFilters: "Aucun filtre actif.",
@@ -4229,8 +4180,8 @@ const frenchMessages = {
 		overview: "Vue d'ensemble du profil",
 		yourProfile: "Votre profil",
 		description:
-			"Les données réelles du compte viennent maintenant de la base de données, avec le rôle, les fournisseurs connectés, les champs persistés et l'activité en direct.",
-		loadingTitle: "Préparation de la page",
+			"Les informations de votre compte, votre activité et vos méthodes de connexion liées.",
+		loadingTitle: "Chargement de la page",
 		unavailable: "Profil indisponible",
 		goToLogin: "Aller à la connexion",
 		bookmarks: "Favoris",
@@ -4247,7 +4198,7 @@ const frenchMessages = {
 		editProfile: "Modifier le profil",
 		logout: "Déconnexion",
 		profileAlt: (name: string) => `Profil de ${name}`,
-		recentActivity: "Activité récente sur le blog",
+		recentActivity: "Activité récente",
 		noCommentsYet: "Aucun commentaire à afficher pour le moment.",
 		editedOn: (date: string) => `Modifié ${date}`,
 		itemCount: (count: number) =>
@@ -4277,9 +4228,9 @@ const frenchMessages = {
 		changePassword: "Changer le mot de passe",
 		createPassword: "Créer un mot de passe",
 		changePasswordDescription:
-			"Mettez à jour votre mot de passe email sans perdre la connexion sociale.",
+			"Mettez à jour votre mot de passe sans perdre l'accès via la connexion sociale.",
 		createPasswordDescription:
-			"Ajoutez un mot de passe email à ce compte social.",
+			"Ajoutez un mot de passe pour pouvoir aussi vous connecter par e-mail.",
 		optional: "Optionnel",
 		currentPassword: "Mot de passe actuel",
 		newPassword: "Nouveau mot de passe",
@@ -4307,95 +4258,91 @@ const frenchMessages = {
 	},
 	newPost: {
 		createPageEyebrow: "Nouveau post",
-		createPageTitle: "Créer un article prêt pour la production",
+		createPageTitle: "Créer un post",
 		createPageDescription:
-			"Rédigez le vrai markdown, joignez de vrais médias et enregistrez directement dans le backend pour que la page de l'article affiche exactement ce contenu.",
+			"Écrivez votre post, ajoutez des médias et enregistrez-le ici.",
 		accessRequiredTitle: "Accès auteur requis",
 		accessRequiredDescription:
-			"Cette page est réservée aux comptes contributeurs. Connectez-vous avec un profil autorisé à écrire pour rédiger, relire et publier des articles.",
+			"Cette page est réservée aux comptes contributeurs.",
 		editPageEyebrow: "Modifier le post",
-		editPageTitle: "Mettre à jour l'article",
+		editPageTitle: "Modifier le post",
 		editPageDescription:
-			"Affinez les métadonnées, le corps ou les médias et réenregistrez directement sur le même enregistrement persistant.",
+			"Mettez à jour le contenu, les métadonnées ou les médias du post.",
 		editAccessDeniedTitle: "Accès refusé",
 		editAccessDeniedDescription:
 			"Seul l'auteur ou les administrateurs du site peuvent modifier ce post.",
 		role: "Rôle",
 		author: "Auteur",
 		defaultAuthor: "Auteur",
-		language: "Original language",
+		language: "Langue d'origine",
 		languageHelp:
-			"This is the language the post was first written in. Translations are attached separately on the edit page.",
+			"C'est la langue dans laquelle le post a été écrit à l'origine. Les traductions peuvent être ajoutées séparément.",
 		mode: "Mode",
 		modeCreating: "Création",
 		modeEditing: "Édition",
 		editorEyebrowCreate: "Nouveau post",
 		editorEyebrowEdit: "Modifier le post",
-		editorTitleCreate: "Construire le post avant sa mise en ligne",
-		editorTitleEdit: "Affiner la version publiée",
+		editorTitleCreate: "Écrire votre post",
+		editorTitleEdit: "Mettre à jour votre post",
 		editorDescription:
-			"L'éditeur enregistre le vrai markdown, les vrais chemins média et les vraies métadonnées dans Prisma. Ce que vous prévisualisez ici est ce qui sera rendu sur la page du post.",
-		storySetupEyebrow: "Mise en place",
-		storySetupTitle: "Verrouiller d'abord les métadonnées",
+			"Utilisez l'éditeur pour écrire, prévisualiser et enregistrer le post.",
+		storySetupEyebrow: "Configuration du post",
+		storySetupTitle: "Remplir l'essentiel",
 		title: "Titre",
-		titlePlaceholder: "Un titre qui mérite le clic",
+		titlePlaceholder: "Titre du post",
 		slug: "Slug",
 		slugPlaceholder: "slug-url-du-post",
 		regenerate: "Régénérer",
 		finalUrl: (slug: string) => `URL finale : /post/${slug}`,
 		description: "Description",
 		generateFromContent: "Générer depuis le contenu",
-		descriptionPlaceholder:
-			"Que doit comprendre le lecteur avant d'ouvrir l'article ?",
+		descriptionPlaceholder: "Un court résumé du post.",
 		visualsEyebrow: "Visuel",
-		visualsTitle: "Définir la miniature du post",
+		visualsTitle: "Miniature du post",
 		thumbnail: "Miniature",
 		thumbnailDescription:
-			"Elle pilote l'image principale sur la page du post et la miniature des cartes ailleurs sur le site.",
+			"Cette image est utilisée sur la page du post et dans les cartes.",
 		upload: "Téléverser",
 		uploading: "Téléversement...",
 		thumbnailPreviewAlt: "Miniature du post",
-		thumbnailEmpty: "Téléversez l'image qui doit représenter ce post.",
+		thumbnailEmpty: "Téléversez une image pour ce post.",
 		thumbnailUploaded: "Miniature téléversée.",
 		thumbnailUploadError: "Impossible de téléverser la miniature.",
 		thumbnailAlt: "Texte alternatif de la miniature",
-		thumbnailAltPlaceholder:
-			"Décrivez la miniature pour l'accessibilité et les aperçus",
+		thumbnailAltPlaceholder: "Décrivez l'image de la miniature",
 		bodyEyebrow: "Corps",
-		bodyTitle: "Écrire et relire au même endroit",
+		bodyTitle: "Écrire et prévisualiser",
 		bodyDescription:
-			"Écrivez en markdown, téléversez des images intégrées et vérifiez le rendu final avant d'enregistrer.",
+			"Écrivez en markdown et prévisualisez le résultat avant d'enregistrer.",
 		readTime: "Temps de lecture",
-		taxonomyEyebrow: "Taxonomie",
-		taxonomyTitle: "Positionner l'article",
+		taxonomyEyebrow: "Tags",
+		taxonomyTitle: "Classer le post",
 		mainTag: "Tag principal",
 		tags: "Étiquettes",
-		readinessEyebrow: "Prêt à publier",
-		readinessTitle: "Vérifier l'essentiel",
+		readinessEyebrow: "Checklist",
+		readinessTitle: "Avant publication",
 		checklistTitleSet: "Titre défini",
 		checklistThumbnailUploaded: "Miniature téléversée",
 		checklistMainTagChosen: "Tag principal choisi",
 		checklistSupportingTagsAdded: "Tags secondaires ajoutés",
 		checklistDescriptionReady: "Description prête",
-		checklistBodyHasSubstance: "Le corps a de la substance",
+		checklistBodyHasSubstance: "Le corps contient du contenu",
 		ready: "Prêt",
 		missing: "Manquant",
 		wordCount: (count: number) => `${count} mots`,
 		tagCount: (count: number) =>
 			`${count} tag${count === 1 ? "" : "s"} attaché${count === 1 ? "" : "s"}`,
 		currentTarget: (status: string) => `Cible actuelle : ${status}`,
-		currentLanguage: (language: string) => `Original language: ${language}`,
+		currentLanguage: (language: string) => `Langue d'origine : ${language}`,
 		publishEyebrow: "Publication",
-		publishTitle: "Choisir la prochaine étape",
+		publishTitle: "Choisir la suite",
 		statusDraftLabel: "Enregistrer le brouillon",
-		statusDraftDescription:
-			"Gardez le post privé pendant que vous façonnez le contenu.",
+		statusDraftDescription: "Gardez le post privé pour le moment.",
 		statusPendingReviewLabel: "Envoyer en relecture",
 		statusPendingReviewDescription:
-			"Marquez le brouillon comme prêt pour une relecture éditoriale.",
+			"Marquez le post comme prêt pour la relecture.",
 		statusPublishedLabel: "Publier maintenant",
-		statusPublishedDescription:
-			"Rendre le post visible immédiatement sur le site.",
+		statusPublishedDescription: "Rendre le post visible sur le site.",
 		saving: "Enregistrement...",
 		clearForm: "Vider le formulaire",
 		submitError:
@@ -4403,24 +4350,22 @@ const frenchMessages = {
 		submitSuccessPublished: "Post publié.",
 		submitSuccessReview: "Post envoyé en relecture.",
 		submitSuccessDraft: "Brouillon enregistré.",
-		mainTagPlaceholder:
-			"Choisissez un sujet existant ou définissez un nouveau tag principal",
+		mainTagPlaceholder: "Choisissez un tag principal",
 		mainTagHelp:
-			"Les tags principaux regroupent le post dans les listes et recommandations.",
+			"Les tags principaux sont utilisés dans les listes et recommandations.",
 		tagsPlaceholder: "Ajoutez des tags puis appuyez sur Entrée",
 		tagsLimitReached: "Limite de tags atteinte",
-		tagSlotsLeft: (count: number) =>
-			`Il reste ${count} emplacements de tags. Utilisez des libellés précis et faciles à rechercher.`,
+		tagSlotsLeft: (count: number) => `Il reste ${count} emplacements de tags.`,
 		editorControlsEyebrow: "Contrôles de l'éditeur",
-		editorControlsTitle: "Façonner le markdown avec intention",
+		editorControlsTitle: "Outils markdown",
 		editorControlsDescription:
-			"Les images intégrées restent là où vous les insérez et se rendent centrées à la fois dans l'aperçu et dans le post final.",
+			"Utilisez la barre pour mettre en forme le contenu et insérer des images.",
 		modeWrite: "Écrire",
-		modeWriteDescription: "Se concentrer sur le markdown.",
+		modeWriteDescription: "Modifier le markdown.",
 		modePreview: "Aperçu",
-		modePreviewDescription: "Lire le rendu final.",
+		modePreviewDescription: "Voir le post rendu.",
 		modeSplit: "Divisé",
-		modeSplitDescription: "Écrire et prévisualiser ensemble.",
+		modeSplitDescription: "Écrire et prévisualiser côte à côte.",
 		toolbarInline: "En ligne",
 		toolbarBlocks: "Blocs",
 		toolbarBold: "Gras",
@@ -4437,16 +4382,14 @@ const frenchMessages = {
 		dualPanel: "Double panneau",
 		modeBadge: (mode: string) => `Mode ${mode}`,
 		markdownEyebrow: "Markdown",
-		markdownDescription:
-			"Écrivez en pur markdown et gardez le contrôle de l'endroit où chaque bloc et image se placent.",
+		markdownDescription: "Écrivez votre post en markdown simple.",
 		editableSource: "Source modifiable",
 		markdownPlaceholder:
 			"Rédigez l'article en Markdown.\n\nExemple:\n## Titre de section\n\nUn paragraphe avec **mise en valeur** et un [lien](https://example.com).\n",
 		previewEyebrow: "Aperçu",
-		previewDescription:
-			"L'aperçu utilise le même moteur de rendu que la page du post publié.",
+		previewDescription: "Cet aperçu reprend la mise en page du post publié.",
 		finalRendering: "Rendu final",
-		emptyPreview: "Commencez à écrire pour voir le rendu final du post.",
+		emptyPreview: "Commencez à écrire pour prévisualiser le post.",
 		editorWordCount: (count: number) => `${count} mots`,
 		editorReadTime: (count: number) => `${count} min de lecture`,
 		editorCharacters: (used: number, max: number) =>
@@ -4455,37 +4398,37 @@ const frenchMessages = {
 			`${count} ${count === 1 ? "image insérée" : "images insérées"} dans le markdown.`,
 		imageDefaultAlt: "Image",
 		imageUploadError: "Impossible de téléverser l'image.",
-		translationEyebrow: "Translations",
-		translationTitle: "Add or update a localized version",
+		translationEyebrow: "Traductions",
+		translationTitle: "Ajouter ou modifier une traduction",
 		translationDescription:
-			"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
-		translationOriginalLanguage: "Original post language",
+			"Les traductions remplacent le titre, la description, le texte alternatif de la miniature et le corps pour les lecteurs dans cette langue. Le slug, les tags et le statut restent liés au post d'origine.",
+		translationOriginalLanguage: "Langue d'origine du post",
 		translationNoLocales:
-			"All supported site languages are already covered by the original post or the saved translations.",
-		translationLanguage: "Translation language",
+			"Toutes les langues prises en charge sont déjà couvertes.",
+		translationLanguage: "Langue de la traduction",
 		translationLanguageHelp:
-			"Choose the site language that should receive this localized version.",
-		translationExisting: "Available translations",
-		translationNoneYet: "No translations saved yet.",
-		translationStatusExisting: "Editing saved translation",
-		translationStatusNew: "Creating new translation",
-		translationCopyFromOriginal: "Copy original text",
+			"Choisissez pour quelle langue du site utiliser cette traduction.",
+		translationExisting: "Traductions enregistrées",
+		translationNoneYet: "Aucune traduction enregistrée pour le moment.",
+		translationStatusExisting: "Modification d'une traduction enregistrée",
+		translationStatusNew: "Création d'une nouvelle traduction",
+		translationCopyFromOriginal: "Copier le texte d'origine",
 		translationCopiedFromOriginal:
-			"Original post content copied into the translation editor.",
+			"Le contenu du post d'origine a été copié dans l'éditeur de traduction.",
 		translationBodyDescription:
-			"Write the translated markdown that should replace the original body for this language.",
-		translationSave: "Save translation",
-		translationSaving: "Saving translation...",
-		translationSaveSuccess: "Translation saved.",
+			"Rédigez le markdown traduit pour cette langue.",
+		translationSave: "Enregistrer la traduction",
+		translationSaving: "Enregistrement de la traduction...",
+		translationSaveSuccess: "Traduction enregistrée.",
 		translationSaveError:
-			"Unable to save the translation right now. Please try again.",
+			"Impossible d'enregistrer la traduction pour le moment. Veuillez réessayer.",
 		translationMustDiffer:
-			"Choose a language different from the original post.",
+			"Choisissez une langue différente de celle du post d'origine.",
 		progressAria: (progress: number, remaining: number) =>
 			`${progress}% de progression, ${remaining} minutes restantes`,
 	},
 	postValidation: {
-		localeRequired: "Post language is required.",
+		localeRequired: "La langue du post est requise.",
 		imageRequired: "L'image est requise.",
 		imageInvalid:
 			"L'image doit être un chemin de fichier téléversé ou une URL valide.",
@@ -4514,13 +4457,13 @@ const frenchMessages = {
 	},
 	post: {
 		relatedReading: "Lecture liée",
-		moreFromThisLane: "Plus dans cette veine",
+		moreFromThisLane: "Plus comme ça",
 		statusPublished: "Publié",
 		statusPendingReview: "En relecture",
 		statusDraft: "Brouillon",
-		translatedToCurrentLanguage: "Translated to your current language",
+		translatedToCurrentLanguage: "Traduit dans votre langue actuelle",
 		translationFromLanguage: (language: string) =>
-			`Originally written in ${language}`,
+			`Écrit à l'origine en ${language}`,
 		writtenBy: "Écrit par",
 		editPost: "Modifier le post",
 		edit: "Modifier",
@@ -4532,9 +4475,9 @@ const frenchMessages = {
 			relatedTopics: string[],
 		) =>
 			relatedTopics.length > 0
-				? `${name} écrit autour de ${mainTag}, avec des thèmes récurrents comme ${relatedTopics.join(" et ")}.`
-				: `${name} écrit autour de ${mainTag}.`,
-		commentSection: "Section des commentaires",
+				? `${name} écrit surtout sur ${mainTag}, mais aussi sur ${relatedTopics.join(" et ")}.`
+				: `${name} écrit surtout sur ${mainTag}.`,
+		commentSection: "Commentaires",
 		commentPlaceholder: "Ajouter un commentaire",
 		commentAs: (name: string) => `Commenter en tant que ${name}`,
 		loginRequiredToComment: "Connexion requise pour commenter",
@@ -4542,8 +4485,7 @@ const frenchMessages = {
 		postedOn: (date: string) => `Publié ${date}`,
 		reportComment: "Signaler le commentaire",
 		loginModalTitle: "Vous devez être connecté pour faire cela.",
-		loginModalDescription:
-			"Connectez-vous pour profiter d'une meilleure expérience et rejoindre la conversation.",
+		loginModalDescription: "Connectez-vous pour continuer.",
 		reportCommentTitle: "Signaler le commentaire",
 		reportingCommentBy: (author: string) =>
 			`Signalement du commentaire de ${author} :`,
@@ -4608,7 +4550,7 @@ const japaneseMessages = {
 		previous: "前へ",
 		next: "次へ",
 		loadingProfile: "プロフィールを読み込み中",
-		preparingPage: "ページを準備中",
+		preparingPage: "ページを読み込み中",
 		noItemsYet: "まだ表示できる項目はありません。",
 		noDescriptionYet: "プロフィール説明はまだありません。",
 		percentComplete: (progress: number) => `${progress}% 完了`,
@@ -4623,7 +4565,7 @@ const japaneseMessages = {
 		...dictionaries.en.header,
 		eyebrow: "個人開発ブログ",
 		description:
-			"チュートリアル、意見、フロントエンドのメモ、インタラクティブなサイドプロジェクトをひとつの場所にまとめています。",
+			"フロントエンド、UI、小さなサイドプロジェクトについての投稿をまとめています。",
 		suggestTitle: "記事を提案する（確認が必要）",
 		homeAria: "ホーム",
 	},
@@ -4635,12 +4577,12 @@ const japaneseMessages = {
 	},
 	footer: {
 		...dictionaries.en.footer,
-		title: "記事、実験、インターフェース制作。",
+		title: "記事、実験、UI制作。",
 		description:
-			"文章、インタラクションの試作、そして説明するより見せたほうが早いアイデアのためのプレイグラウンドを備えた個人開発ブログです。",
+			"記事、インターフェース実験、小さなインタラクティブ作品をまとめた個人開発ブログです。",
 		navigate: "移動",
 		socials: "SNS",
-		closing: "記事、UI実験、インタラクティブなサイドワーク。",
+		closing: "記事、UI実験、サイドプロジェクト。",
 	},
 	popover: {
 		...dictionaries.en.popover,
@@ -4652,40 +4594,35 @@ const japaneseMessages = {
 	},
 	home: {
 		startHere: "ここから始める",
-		title: "探索の余地がある個人開発ブログ",
+		title: "個人開発ブログ",
 		description:
-			"DevBlog は、開発に関する文章、意見、チュートリアル、実験を公開する場所です。トップページでは注目の読み物、今読まれているもの、そしてブログ全体へ広がる導線をまとめています。",
+			"DevBlog は、チュートリアル、意見、メモ、実験を公開する場所です。トップページでは注目投稿、トレンド投稿、サイトをたどるためのいくつかの入口をまとめています。",
 		featuredPosts: "注目の記事",
 		trendingPicks: "トレンド選出",
 		recommended: "おすすめ",
-		trendingSnapshot: "トレンド概要",
-		trendingTitle: "今注目を集めているもの",
-		trendingDescription:
-			"今まさに読者を引きつけている投稿をすばやく確認できる一覧です。以前と同じ場所に置きつつ、セクション構成をより明確にしています。",
-		exploreFurther: "さらに探索",
-		exploreTitle: "ブログに入る別の道",
-		exploreDescription:
-			"新着、注目、そして再読する価値のある投稿の間をこのセクションで行き来できます。",
+		trendingSnapshot: "いま注目",
+		trendingTitle: "いま読まれている投稿",
+		trendingDescription: "いま最も読まれている投稿を手早く確認できます。",
+		exploreFurther: "もっと見る",
+		exploreTitle: "ほかの見方",
+		exploreDescription: "新着、トレンド、タグ別の投稿から探せます。",
 		editorPicks: "編集部のおすすめ",
 		noRecommended:
-			"おすすめの記事はまだありません。いくつか投稿を公開すると、このセクションはライブデータベースから自動で埋まります。",
-		noPosts:
-			"公開済みの投稿はまだありません。トップページはすでに Prisma に接続されているため、実際の投稿が存在すれば各セクションに表示されます。",
+			"おすすめ記事はまだありません。公開済みコンテンツが増えると、この欄に表示されます。",
+		noPosts: "公開済みの投稿はまだありません。",
 		scrollToTrending: "注目記事までスクロール",
 		noTrending:
-			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、ここに自動で表示されます。",
+			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、ここに表示されます。",
 		explore: "探索",
 		trendingPosts: "注目記事",
-		trendingPostsDescription: "今いちばん注目を集めている投稿を確認できます。",
+		trendingPostsDescription: "いま最も読まれている投稿を見られます。",
 		recentPosts: "新着記事",
-		recentPostsDescription:
-			"いちばん新しい文章から読み始めて、そこからさかのぼれます。",
+		recentPostsDescription: "いちばん新しい投稿から見ていけます。",
 		browseByTag: "タグで探す",
-		browseByTagDescription:
-			"公開中の投稿カタログをトピックと補助タグで絞り込みます。",
+		browseByTagDescription: "トピックやタグで投稿を絞り込みます。",
 		noSectionPost: "このセクションに表示できる投稿はまだありません。",
 		noRecommendedCallouts:
-			"おすすめの注目枠は、さらに投稿が公開されるとここに表示されます。",
+			"おすすめ投稿は、さらにコンテンツが増えるとここに表示されます。",
 		viewSection: "セクションを見る",
 	},
 	notFound: {
@@ -4722,43 +4659,44 @@ const japaneseMessages = {
 	about: {
 		...dictionaries.en.about,
 		eyebrow: "devblog について",
-		title: "書き、試し、出し続けるための場所",
+		title: "書いて、作るための場所",
 		description:
-			"このサイトは、文章、インターフェース制作、サイド実験が同じフレームに収まる場所です。静的なポートフォリオ保管庫ではなく、実用的で個人的で、動き続けるものとして保つことを目指しています。",
+			"このサイトは、文章、UI制作、小さな実験をひとつにまとめた場所です。ブログであり、プレイグラウンドであり、個人プロジェクトでもあります。",
 		storyCards: [
 			{
 				label: "なぜ存在するのか",
-				title: "実際に使い続けているブログ",
-				text: "DevBlog は、私個人のソフトウェア開発ブログです。ここでチュートリアル、意見、実験、インターフェースのアイデア、そして特に磨くのが好きな Web 開発の領域について公開しています。",
+				title: "何度も戻ってくるブログ",
+				text: "DevBlog は、私個人のソフトウェア開発ブログです。ここでチュートリアル、意見、実験、インターフェースのアイデア、そして好きな Web 開発の話題を公開しています。",
 			},
 			{
 				label: "どう作られているか",
-				title: "視覚表現の余地を残した実用的なスタック",
-				text: "このスタックは Next.js、React、Tailwind CSS、Prisma、NextAuth、Phaser、そしてデータ整理や実験向けのいくつかの補助ライブラリを中心に組み立てています。目標は、視覚面を損なわずに、実用的でシンプルかつ作っていて気持ちのいいプロジェクトに保つことです。",
+				title: "実用的なスタック",
+				text: "このサイトは Next.js、React、Tailwind CSS、Prisma、NextAuth、Phaser、そしていくつかの小さな補助ライブラリで組み立てています。保守しやすさを保ちつつ、見た目やインタラクションにも余白を残すのが狙いです。",
 			},
 			{
 				label: "ここにある他のもの",
-				title: "遊び心のあるツール、スケッチ、脇道のアイデア",
-				text: "投稿以外にも、このサイトはインタラクティブ性を重視しています。タグベースの探索、レコメンド、ユーザーツール、そしてゲームやスケッチを集めたプレイグラウンドがあります。私はゲーム開発者ではありませんが、このプレイグラウンドは趣味のプロジェクトを置くのにちょうどよく、自分が作れるものを別の形で見せる場にもなっています。",
+				title: "小さなツールとサイドプロジェクト",
+				text: "投稿のほかに、ゲームやスケッチ、そのほかの実験を置くプレイグラウンドがあります。私はゲーム開発者ではありませんが、趣味の作品や通常のブログ記事に収まらないアイデアを試すにはちょうどいい場所です。",
 			},
 		],
 	},
 	playgroundPage: {
 		...dictionaries.en.playgroundPage,
-		title: "ゲーム、スケッチ、遊べる寄り道",
+		title: "ゲーム、スケッチ、小さな実験",
 		description:
-			"このページは趣味の実験のための場所です。私は主に Web 開発者でゲーム開発者ではありませんが、こうした小さな作品はインタラクション、動き、ブラウザ描画の考え方を試すのに役立ちます。",
+			"このページは趣味のプロジェクト置き場です。私は主に Web 開発者ですが、こうした実験は動きやインタラクション、ブラウザでの描画を試すのにちょうどいい場になっています。",
 		totalProjects: "総プロジェクト数",
 		projects: "プロジェクト",
 		playableTitle: "操作可能",
-		playableDescription:
-			"ゲームや小さなシステムなど、直接操作できる体験型の実験です。",
+		playableDescription: "直接触って試せるプロジェクトです。",
 		watchOnlyTitle: "鑑賞用",
-		watchOnlyDescription:
-			"スコアを競うゲームというより、動きのスタディとして見るほうが合うビジュアル作品です。",
+		watchOnlyDescription: "遊ぶというより眺めるのに向いたビジュアル実験です。",
 		mode: "モード",
 		loading: "読み込み中...",
 		closeGame: "ゲームを閉じる",
+		mobileNoticeTitle: "デスクトップ向き",
+		mobileNoticeBody:
+			"これらの作品は主に大きな画面向けに作られています。モバイルでも動く場合はありますが、体験としてはデスクトップのほうが向いています。",
 		badges: {
 			playable: "操作可能",
 			watchOnly: "鑑賞用",
@@ -4779,7 +4717,7 @@ const japaneseMessages = {
 			},
 			solarSystem: {
 				name: "太陽系",
-				description: "惑星のダンス",
+				description: "惑星の動き",
 			},
 			terminal: { name: "ターミナル", description: "Linux ターミナル" },
 			tankShooter: {
@@ -4792,7 +4730,7 @@ const japaneseMessages = {
 			},
 			movingMountains: {
 				name: "動く山々",
-				description: "動く山々",
+				description: "アニメーションする山",
 			},
 			survivalShooter: {
 				name: "サバイバルシューター",
@@ -4829,30 +4767,27 @@ const japaneseMessages = {
 	},
 	recent: {
 		eyebrow: "最新の投稿",
-		title: "新しい投稿を順番に",
-		description:
-			"このページは公開順でブログを見る最も分かりやすい一覧です。新しい文章を前面に置きつつ、ページ移動やトピックの手がかりも近くに保っています。",
+		title: "最新の投稿",
+		description: "このページでは公開順に、最新の投稿から順番に見られます。",
 		postCount: "投稿数",
 		currentPage: "現在のページ",
 		totalViews: "総閲覧数",
-		latestArrival: "最新追加",
+		latestArrival: "最新の投稿",
 		noPublished:
-			"公開済みの投稿はまだありません。最初の投稿を作成すると、ここに最新の追加として表示されます。",
+			"公開済みの投稿はまだありません。最初の投稿がここに表示されます。",
 		readingGuide: "読書ガイド",
-		stayOriented: "見失わない",
+		stayOriented: "ページごとに見る",
 		stayOrientedDescription:
-			"ページごとにブログをたどり、最新エントリーを把握しながら、直近の投稿群でよく現れるトピックへ飛べます。",
+			"ページごとに投稿をたどりながら、最新の追加を追えます。",
 		showingNow: "現在の表示範囲",
 		pageControls: "ページ操作",
-		freshTopics: "新しいトピック",
+		freshTopics: "最近のトピック",
 		topicCountsLater:
 			"投稿が公開されると、トピックの件数がここに表示されます。",
 		recentPosts: "新着投稿",
-		recentPostsTitle: "devblog の最新エントリー",
-		recentPostsDescription:
-			"公開日順に厳密に並べているため、ランダムな寄せ集めではなく本当の新着フィードとして機能します。",
-		noPosts:
-			"まだ利用可能な投稿はありません。このページは現在データベースを直接参照しており、公開済みエントリーができ次第表示されます。",
+		recentPostsTitle: "DevBlog の最新投稿",
+		recentPostsDescription: "投稿は公開日順に並んでいます。",
+		noPosts: "まだ利用できる投稿はありません。",
 		noPublishedShort: "公開済みの投稿はまだありません",
 		relatedTags: (count: number) =>
 			`${count} 件の関連${count === 1 ? "タグ" : "タグ"}`,
@@ -4862,31 +4797,27 @@ const japaneseMessages = {
 	},
 	trending: {
 		eyebrow: "現在の注目",
-		title: "読者が注目しているもの",
-		description:
-			"このページの特徴であるアコーディオンはそのままに、ランキング、トピックの気配、なぜ上位なのかがより分かりやすくなりました。",
+		title: "読者がいま見ている投稿",
+		description: "このページでは、いま最も閲覧されている投稿を見られます。",
 		trackedPosts: "追跡中の投稿",
 		topPost: "トップ投稿",
 		totalViews: "総閲覧数",
 		noTrending:
-			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、このセクションに表示されます。",
+			"トレンド記事はまだありません。公開済みの投稿に閲覧数が集まり始めると、この欄に表示されます。",
 		trendSignals: "トレンド指標",
-		topicRadar: "トピックレーダー",
-		topicRadarDescription:
-			"現在のトレンド群で特に存在感の強い主要トピックです。今熱いものの文脈を保ったまま、関連投稿へ分岐できます。",
-		topicSignalsLater: "投稿が公開されると、トピック指標がここに表示されます。",
+		topicRadar: "人気トピック",
+		topicRadarDescription: "現在のトレンド投稿で特によく見られるトピックです。",
+		topicSignalsLater: "投稿が公開されると、トピック情報がここに表示されます。",
 		leadingPost: "先頭の投稿",
-		leadingPostEmpty:
-			"まだトレンドの先頭記事はありません。投稿を公開して閲覧数を積み上げると、このランキングが形成されます。",
+		leadingPostEmpty: "まだ先頭の投稿はありません。",
 		ranking: "ランキング",
-		topMomentum: "勢いのある投稿",
+		topMomentum: "上位の投稿",
 		topMomentumDescription:
-			"現在もっとも読まれている投稿を閲覧数順に並べ、トレンドが実際に反映されるようにしています。",
+			"いま最も読まれている投稿を閲覧数順に並べています。",
 		moreToWatch: "あわせて注目",
 		risingPosts: "上昇中の投稿",
-		risingPostsDescription:
-			"最上位のすぐ下にいる投稿も、密なリストではなく読みやすい形で把握できます。",
-		notEnoughPosts: "二次的な注目リストを作るには、まだ投稿数が足りません。",
+		risingPostsDescription: "上位のすぐ下で好調な投稿です。",
+		notEnoughPosts: "二つ目の一覧を作るには、まだ投稿数が足りません。",
 		readPost: "投稿を読む",
 		focusPost: (title: string) => `${title} に注目する`,
 		viewsSuffix: (count: string) => `${count} 閲覧`,
@@ -4894,61 +4825,59 @@ const japaneseMessages = {
 	search: {
 		eyebrow: "投稿を検索",
 		description:
-			"devblog 全体から一致する投稿を探します。結果は他ページと同じカードで表示され、必要ならページ分割されます。",
+			"DevBlog 内の投稿を横断して検索します。結果はサイト全体で使っているのと同じカードで表示されます。",
 		matches: "一致",
 		noMatch: "一致なし",
 		nothingFound: (query: string) =>
 			`「${query}」に一致するものは見つかりませんでした。`,
 		noMatchDescription:
-			"より短いクエリを試すか、タグや著者で検索するか、最新投稿に戻って閲覧を続けてください。",
+			"検索語を短くするか、タグや著者で探すか、新着投稿を見てください。",
 		seeRecentPosts: "新着投稿を見る",
 		resultsFor: (query: string) => `「${query}」の検索結果`,
 	},
 	tag: {
 		eyebrow: "タグで探す",
-		title: "トピックごとに投稿を見つける",
-		description:
-			"タグを使ってブログを素早く絞り込みます。大きなトピックを選び、補助タグを重ね、結果グリッドを見ながら調整できます。",
+		title: "トピックごとに投稿を見る",
+		description: "タグを使って投稿一覧を絞り込めます。",
 		totalTags: "タグ総数",
 		selected: "選択済み",
 		visiblePosts: "表示中の投稿",
 		mainTopics: "主要トピック",
-		mainTopicsDescription: "各投稿の軸になる大きなカテゴリです。",
+		mainTopicsDescription: "各投稿の主なカテゴリです。",
 		supportingTags: "補助タグ",
-		supportingTagsDescription:
-			"文脈を失わずに結果グリッドを絞り込むために使います。",
+		supportingTagsDescription: "さらに細かく結果を絞り込むために使います。",
 		noPostsYet: "まだ投稿がありません",
-		unlockAfterFirstPost: "タグ閲覧は最初の公開投稿の後に利用可能になります",
+		unlockAfterFirstPost: "タグ閲覧は最初の公開投稿の後に利用できます。",
 		tagBrowsingDescription:
-			"タグページは現在実際のデータベースを読んでいるため、公開済み投稿と表示可能なタグができるまでは空のままです。",
+			"タグページは、公開済みの投稿と表示できるタグが揃うまで空のままです。",
 		noMatches: "一致なし",
 		noPostsFit: "この組み合わせに合う投稿はありません",
 		noPostsFitDescription:
-			"有効なタグをひとつ外すか、もっと広い主要トピックに切り替えてみてください。フィルターパネルのクイック選択がよいリセット地点です。",
+			"選択中のタグをひとつ外すか、もっと広いトピックに切り替えてみてください。",
 		filterPosts: "投稿を絞り込む",
 		findTopic: "トピックを探す",
 		filterDescription: (max: number) =>
-			`タグを検索し、最大 ${max} 個まで組み合わせて、ページを離れずに投稿グリッドを絞り込めます。`,
+			`タグを検索し、最大 ${max} 個まで組み合わせて、投稿一覧を絞り込めます。`,
 		searchTags: "タグを検索",
 		selectedTags: "選択中のタグ",
 		selectedTagsHint:
-			"さらに絞り込むには別のタグを追加するか、結果を広げるにはリセットしてください。",
+			"さらに絞るにはタグを追加し、広げるにはリセットしてください。",
 		selectedTagsEmpty:
-			"まずは広いトピックから始め、必要なら補助タグを重ねて結果を絞り込んでください。",
+			"まずは広いトピックから始め、必要ならタグを足して絞り込んでください。",
 		clearFilters: "フィルターをクリア",
 		quickPicks: "クイック選択",
-		quickPicksDescription: "ページをすばやく開く人気タグです。",
-		tagGroupMainDescription: "投稿を定義する主要カテゴリです。",
-		tagGroupOtherDescription: "副次的な詳細や関連テーマです。",
+		quickPicksDescription: "最初に使いやすい人気タグです。",
+		tagGroupMainDescription: "投稿の主なカテゴリです。",
+		tagGroupOtherDescription: "追加の詳細や関連テーマです。",
 		noTagsMatch: "現在の検索に一致するタグはありません。",
 		resultsSummary: (resultsCount: number, tagCount: number) =>
 			`${tagCount} 個のタグに一致する ${resultsCount} 件の${resultsCount === 1 ? "投稿" : "投稿"}`,
 		showingAll: (resultsCount: number) =>
 			`全 ${resultsCount} 件の${resultsCount === 1 ? "投稿" : "投稿"}を表示中`,
 		resultsDescription:
-			"タグを外して結果を広げるか、関連トピックをさらに組み合わせて焦点を保ってください。",
+			"タグを外して結果を広げるか、さらにタグを加えて絞り込んでください。",
 		resultsDescriptionEmpty:
-			"クイック選択、流れる行、またはフィルターパネルを使って特定のテーマに入っていけます。",
+			"クイック選択やフィルターパネルを使ってテーマから探せます。",
 		resetAll: "すべてリセット",
 		removeTag: (label: string) => `${label} を外す`,
 		noActiveFilters: "有効なタグフィルターはありません。",
@@ -4989,8 +4918,8 @@ const japaneseMessages = {
 		overview: "プロフィール概要",
 		yourProfile: "あなたのプロフィール",
 		description:
-			"実際のアカウントデータは現在データベースから取得され、役割、連携プロバイダー、保存済みプロフィール項目、ライブな活動数を含みます。",
-		loadingTitle: "ページを準備中",
+			"アカウント情報、活動状況、連携済みのログイン方法をまとめて確認できます。",
+		loadingTitle: "ページを読み込み中",
 		unavailable: "プロフィールを利用できません",
 		goToLogin: "ログインへ移動",
 		bookmarks: "ブックマーク",
@@ -5007,7 +4936,7 @@ const japaneseMessages = {
 		editProfile: "プロフィールを編集",
 		logout: "ログアウト",
 		profileAlt: (name: string) => `${name} のプロフィール`,
-		recentActivity: "ブログ全体での最近の活動",
+		recentActivity: "最近の活動",
 		loadLoginRequired: "プロフィールにアクセスするにはログインしてください。",
 		loadNotFound: "このプロフィールは見つかりませんでした。",
 		loadError: "現在このプロフィールを読み込めません。",
@@ -5036,9 +4965,9 @@ const japaneseMessages = {
 		changePassword: "パスワードを変更",
 		createPassword: "パスワードを作成",
 		changePasswordDescription:
-			"ソーシャルログインを失わずに、メールログイン用のパスワードを更新します。",
+			"ソーシャルログインを維持したまま、パスワードを更新します。",
 		createPasswordDescription:
-			"このソーシャルアカウントにメールログイン用パスワードを追加します。",
+			"メールでもログインできるようにパスワードを追加します。",
 		optional: "任意",
 		currentPassword: "現在のパスワード",
 		newPassword: "新しいパスワード",
@@ -5065,115 +4994,106 @@ const japaneseMessages = {
 	},
 	newPost: {
 		createPageEyebrow: "新規投稿",
-		createPageTitle: "本番向けの記事を作成",
+		createPageTitle: "投稿を作成",
 		createPageDescription:
-			"実際の Markdown を書き、実際のメディアを添付し、バックエンドへ直接保存して、投稿ページに同じ内容を表示します。",
+			"投稿を書き、メディアを追加し、この画面から保存します。",
 		accessRequiredTitle: "著者権限が必要です",
-		accessRequiredDescription:
-			"このページは寄稿者アカウント専用です。下書き、レビュー、公開ができる書き込み権限付きプロフィールでログインしてください。",
+		accessRequiredDescription: "このページは寄稿者アカウントのみ利用できます。",
 		editPageEyebrow: "投稿を編集",
-		editPageTitle: "記事を更新",
-		editPageDescription:
-			"メタデータ、本文、メディアを調整し、同じ永続的な投稿レコードへ保存し直します。",
+		editPageTitle: "投稿を編集",
+		editPageDescription: "投稿の本文、メタデータ、メディアを更新します。",
 		editAccessDeniedTitle: "アクセス拒否",
 		editAccessDeniedDescription:
 			"この投稿を編集できるのは著者またはサイト管理者のみです。",
 		role: "役割",
 		author: "著者",
 		defaultAuthor: "著者",
-		language: "Original language",
-		languageHelp:
-			"This is the language the post was first written in. Translations are attached separately on the edit page.",
+		language: "元の言語",
+		languageHelp: "この投稿が最初に書かれた言語です。翻訳は別途追加できます。",
 		mode: "モード",
 		modeCreating: "作成中",
 		modeEditing: "編集中",
 		editorEyebrowCreate: "新規投稿",
 		editorEyebrowEdit: "投稿を編集",
-		editorTitleCreate: "公開前に投稿を組み立てる",
-		editorTitleEdit: "公開済みの形を整える",
+		editorTitleCreate: "投稿を書く",
+		editorTitleEdit: "投稿を更新する",
 		editorDescription:
-			"エディターは実際の markdown、実際のメディアパス、実際の投稿メタデータを Prisma に保存します。ここで見るプレビューがそのまま投稿ページで表示されます。",
-		storySetupEyebrow: "記事設定",
-		storySetupTitle: "まずメタデータを固める",
+			"エディターで本文を書き、プレビューし、そのまま保存できます。",
+		storySetupEyebrow: "投稿設定",
+		storySetupTitle: "まず基本情報を入力",
 		title: "タイトル",
-		titlePlaceholder: "クリックしたくなるタイトル",
+		titlePlaceholder: "投稿タイトル",
 		slug: "スラッグ",
 		slugPlaceholder: "post-url-slug",
 		regenerate: "再生成",
 		finalUrl: (slug: string) => `最終 URL: /post/${slug}`,
 		description: "説明",
 		generateFromContent: "本文から生成",
-		descriptionPlaceholder:
-			"記事を開く前に読者に理解してほしいことは何ですか？",
+		descriptionPlaceholder: "投稿の短い要約",
 		visualsEyebrow: "ビジュアル",
-		visualsTitle: "投稿サムネイルを設定",
+		visualsTitle: "投稿サムネイル",
 		thumbnail: "サムネイル",
-		thumbnailDescription:
-			"投稿ページのヒーロー画像と、他の一覧に出るカードサムネイルに使われます。",
+		thumbnailDescription: "この画像は投稿ページと投稿カードで使われます。",
 		upload: "アップロード",
 		uploading: "アップロード中...",
 		thumbnailPreviewAlt: "投稿サムネイル",
-		thumbnailEmpty: "この投稿を表す画像をアップロードしてください。",
+		thumbnailEmpty: "この投稿用の画像をアップロードしてください。",
 		thumbnailUploaded: "サムネイルをアップロードしました。",
 		thumbnailUploadError: "サムネイルをアップロードできません。",
 		thumbnailAlt: "サムネイル代替テキスト",
-		thumbnailAltPlaceholder:
-			"アクセシビリティとプレビューのためにサムネイルを説明してください",
+		thumbnailAltPlaceholder: "サムネイル画像を説明してください",
 		bodyEyebrow: "本文",
-		bodyTitle: "ひとつの場所で書いて確認する",
-		bodyDescription:
-			"Markdown で書き、インライン画像をアップロードし、保存前に最終レンダリングを確認できます。",
+		bodyTitle: "書いてプレビューする",
+		bodyDescription: "Markdown で書いて、保存前に結果を確認できます。",
 		readTime: "読了時間",
-		taxonomyEyebrow: "分類",
-		taxonomyTitle: "記事を配置する",
+		taxonomyEyebrow: "タグ",
+		taxonomyTitle: "投稿を分類する",
 		mainTag: "メインタグ",
 		tags: "タグ",
-		readinessEyebrow: "準備状況",
-		readinessTitle: "基本項目を確認する",
+		readinessEyebrow: "チェック",
+		readinessTitle: "公開前の確認",
 		checklistTitleSet: "タイトル設定済み",
 		checklistThumbnailUploaded: "サムネイルアップロード済み",
 		checklistMainTagChosen: "メインタグ選択済み",
 		checklistSupportingTagsAdded: "補助タグ追加済み",
 		checklistDescriptionReady: "説明文準備完了",
-		checklistBodyHasSubstance: "本文に十分な内容がある",
+		checklistBodyHasSubstance: "本文が入っている",
 		ready: "準備完了",
 		missing: "不足",
 		wordCount: (count: number) => `${count} 語`,
 		tagCount: (count: number) => `${count} 個のタグを設定`,
 		currentTarget: (status: string) => `現在の対象: ${status}`,
-		currentLanguage: (language: string) => `Original language: ${language}`,
+		currentLanguage: (language: string) => `元の言語: ${language}`,
 		publishEyebrow: "公開",
-		publishTitle: "次のステップを選ぶ",
+		publishTitle: "次にすることを選ぶ",
 		statusDraftLabel: "下書きを保存",
-		statusDraftDescription: "内容を整えている間は投稿を非公開に保ちます。",
+		statusDraftDescription: "今は非公開のままにします。",
 		statusPendingReviewLabel: "レビューに送る",
 		statusPendingReviewDescription:
-			"下書きを編集レビュー準備完了としてマークします。",
+			"投稿をレビュー可能な状態としてマークします。",
 		statusPublishedLabel: "今すぐ公開",
-		statusPublishedDescription: "投稿をすぐにサイト上で見える状態にします。",
+		statusPublishedDescription: "投稿をサイト上で公開します。",
 		saving: "保存中...",
 		clearForm: "フォームをクリア",
 		submitError: "現在投稿を保存できません。もう一度お試しください。",
 		submitSuccessPublished: "投稿を公開しました。",
 		submitSuccessReview: "投稿をレビューに送りました。",
 		submitSuccessDraft: "下書きを保存しました。",
-		mainTagPlaceholder:
-			"既存のトピックを選ぶか、新しいメインタグを定義してください",
-		mainTagHelp: "メインタグは一覧やおすすめ全体で投稿をまとめます。",
+		mainTagPlaceholder: "メインタグを選んでください",
+		mainTagHelp: "メインタグは一覧やおすすめで使われます。",
 		tagsPlaceholder: "タグを追加して Enter を押してください",
 		tagsLimitReached: "タグ上限に達しました",
-		tagSlotsLeft: (count: number) =>
-			`残り ${count} 枠です。検索しやすく焦点の合ったラベルを使ってください。`,
+		tagSlotsLeft: (count: number) => `残り ${count} 枠です。`,
 		editorControlsEyebrow: "エディター操作",
-		editorControlsTitle: "意図をもって markdown を整える",
+		editorControlsTitle: "Markdown ツール",
 		editorControlsDescription:
-			"インライン画像は挿入した場所に残り、プレビューでも最終投稿でも中央にレンダリングされます。",
+			"ツールバーを使って書式設定や画像挿入ができます。",
 		modeWrite: "執筆",
-		modeWriteDescription: "Markdown に集中する。",
+		modeWriteDescription: "Markdown を編集する。",
 		modePreview: "プレビュー",
-		modePreviewDescription: "最終レンダリングを読む。",
+		modePreviewDescription: "完成形を見る。",
 		modeSplit: "分割",
-		modeSplitDescription: "書きながら同時に確認する。",
+		modeSplitDescription: "左右で書いて確認する。",
 		toolbarInline: "インライン",
 		toolbarBlocks: "ブロック",
 		toolbarBold: "太字",
@@ -5190,17 +5110,14 @@ const japaneseMessages = {
 		dualPanel: "2画面",
 		modeBadge: (mode: string) => `${mode} モード`,
 		markdownEyebrow: "Markdown",
-		markdownDescription:
-			"プレーンな Markdown で書き、各ブロックや画像の配置を自分で管理できます。",
+		markdownDescription: "プレーンな Markdown で投稿を書けます。",
 		editableSource: "編集可能なソース",
 		markdownPlaceholder:
 			"Markdown で記事を書いてください。\n\n例:\n## セクション見出し\n\n**強調** と [リンク](https://example.com) を含む段落。\n",
 		previewEyebrow: "プレビュー",
-		previewDescription:
-			"プレビューは公開済み投稿ページと同じレンダラーを使用します。",
+		previewDescription: "このプレビューは公開後のレイアウトに合わせています。",
 		finalRendering: "最終レンダリング",
-		emptyPreview:
-			"書き始めると、最終的な投稿レンダリングがここに表示されます。",
+		emptyPreview: "書き始めると投稿プレビューがここに表示されます。",
 		editorWordCount: (count: number) => `${count} 語`,
 		editorReadTime: (count: number) => `${count} 分で読了`,
 		editorCharacters: (used: number, max: number) => `${used}/${max} 文字`,
@@ -5208,37 +5125,34 @@ const japaneseMessages = {
 			`${count} ${count === 1 ? "枚の画像を" : "枚の画像を"} markdown に挿入しました。`,
 		imageDefaultAlt: "画像",
 		imageUploadError: "画像をアップロードできません。",
-		translationEyebrow: "Translations",
-		translationTitle: "Add or update a localized version",
+		translationEyebrow: "翻訳",
+		translationTitle: "翻訳を追加または編集",
 		translationDescription:
-			"Translations override the title, description, thumbnail alt text, and body when a reader is browsing in that language. The slug, tags, and status stay tied to the original post.",
-		translationOriginalLanguage: "Original post language",
-		translationNoLocales:
-			"All supported site languages are already covered by the original post or the saved translations.",
-		translationLanguage: "Translation language",
+			"翻訳を追加すると、その言語で閲覧している読者にはタイトル、説明、サムネイル代替テキスト、本文が置き換わります。スラッグ、タグ、状態は元の投稿に紐づいたままです。",
+		translationOriginalLanguage: "元の投稿言語",
+		translationNoLocales: "対応言語はすべてすでにカバーされています。",
+		translationLanguage: "翻訳先の言語",
 		translationLanguageHelp:
-			"Choose the site language that should receive this localized version.",
-		translationExisting: "Available translations",
-		translationNoneYet: "No translations saved yet.",
-		translationStatusExisting: "Editing saved translation",
-		translationStatusNew: "Creating new translation",
-		translationCopyFromOriginal: "Copy original text",
+			"どのサイト言語でこの翻訳を使うかを選んでください。",
+		translationExisting: "保存済みの翻訳",
+		translationNoneYet: "保存済みの翻訳はまだありません。",
+		translationStatusExisting: "保存済み翻訳を編集中",
+		translationStatusNew: "新しい翻訳を作成中",
+		translationCopyFromOriginal: "原文をコピー",
 		translationCopiedFromOriginal:
-			"Original post content copied into the translation editor.",
+			"元の投稿内容を翻訳エディターにコピーしました。",
 		translationBodyDescription:
-			"Write the translated markdown that should replace the original body for this language.",
-		translationSave: "Save translation",
-		translationSaving: "Saving translation...",
-		translationSaveSuccess: "Translation saved.",
-		translationSaveError:
-			"Unable to save the translation right now. Please try again.",
-		translationMustDiffer:
-			"Choose a language different from the original post.",
+			"この言語向けの翻訳 markdown を入力してください。",
+		translationSave: "翻訳を保存",
+		translationSaving: "翻訳を保存中...",
+		translationSaveSuccess: "翻訳を保存しました。",
+		translationSaveError: "現在翻訳を保存できません。もう一度お試しください。",
+		translationMustDiffer: "元の投稿とは別の言語を選んでください。",
 		progressAria: (progress: number, remaining: number) =>
 			`${progress}% 進行中、残り ${remaining} 分`,
 	},
 	postValidation: {
-		localeRequired: "Post language is required.",
+		localeRequired: "投稿言語は必須です。",
 		imageRequired: "画像は必須です。",
 		imageInvalid:
 			"画像はアップロード済みファイルパスまたは有効な URL である必要があります。",
@@ -5248,8 +5162,9 @@ const japaneseMessages = {
 		titleMin: "タイトルは 3 文字以上必要です。",
 		titleMax: (max: number) =>
 			`タイトルは ${max} 文字以下である必要があります。`,
-		slugMax: (max: number) => `Slug は ${max} 文字以下である必要があります。`,
-		slugInvalid: "Slug に使えるのは小文字、数字、ハイフンのみです。",
+		slugMax: (max: number) =>
+			`スラッグは ${max} 文字以下である必要があります。`,
+		slugInvalid: "スラッグに使えるのは小文字、数字、ハイフンのみです。",
 		contentMin: "本文は 30 文字以上必要です。",
 		contentMax: (max: number) => `本文は ${max} 文字以下である必要があります。`,
 		thumbnailAltMax: (max: number) =>
@@ -5263,13 +5178,13 @@ const japaneseMessages = {
 	},
 	post: {
 		relatedReading: "関連する読み物",
-		moreFromThisLane: "この系統の続きを見る",
+		moreFromThisLane: "似た投稿を見る",
 		statusPublished: "公開済み",
 		statusPendingReview: "レビュー待ち",
 		statusDraft: "下書き",
-		translatedToCurrentLanguage: "Translated to your current language",
+		translatedToCurrentLanguage: "現在の言語向けに翻訳済み",
 		translationFromLanguage: (language: string) =>
-			`Originally written in ${language}`,
+			`元は ${language} で書かれました`,
 		writtenBy: "著者",
 		editPost: "投稿を編集",
 		edit: "編集",
@@ -5281,8 +5196,8 @@ const japaneseMessages = {
 			relatedTopics: string[],
 		) =>
 			relatedTopics.length > 0
-				? `${name} は ${mainTag} を中心に書き、${relatedTopics.join(" と ")} にも繰り返し触れています。`
-				: `${name} は ${mainTag} を中心に書いています。`,
+				? `${name} は主に ${mainTag} について書き、${relatedTopics.join(" と ")} にも触れています。`
+				: `${name} は主に ${mainTag} について書いています。`,
 		commentSection: "コメント欄",
 		commentPlaceholder: "コメントを追加",
 		commentAs: (name: string) => `${name} としてコメント`,
@@ -5291,8 +5206,7 @@ const japaneseMessages = {
 		postedOn: (date: string) => `${date} に投稿`,
 		reportComment: "コメントを報告",
 		loginModalTitle: "この操作にはログインが必要です。",
-		loginModalDescription:
-			"ログインするとより良い体験になります。会話に参加しましょう。",
+		loginModalDescription: "続けるにはログインしてください。",
 		reportCommentTitle: "コメントを報告",
 		reportingCommentBy: (author: string) => `${author} のコメントを報告中:`,
 		reason: "理由",

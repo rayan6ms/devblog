@@ -707,7 +707,9 @@ function mountVoronoiWall(
 	bridge: Bridge,
 ) {
 	let game: PhaserGame | null = null;
-	const lastSize = resolveHostSize(host);
+	let observer: ResizeObserver | null = null;
+	let lastSize = resolveHostSize(host);
+	let sceneRef: VoronoiWallScene | null = null;
 
 	class VoronoiWallScene extends PhaserLib.Scene {
 		private surface: Surface | null = null;
@@ -725,6 +727,7 @@ function mountVoronoiWall(
 		}
 
 		create() {
+			sceneRef = this;
 			this.cameras.main.setBackgroundColor("#070a12");
 			this.rebuild(lastSize);
 			this.events.once(PhaserLib.Scenes.Events.SHUTDOWN, this.cleanup, this);
@@ -742,6 +745,11 @@ function mountVoronoiWall(
 					paletteSize: this.board.palette.cells.length,
 				});
 			};
+		}
+
+		handleResize(size: Size) {
+			this.cameras.main.setSize(size.width, size.height);
+			this.rebuild(size);
 		}
 
 		update(_time: number, deltaMs: number) {
@@ -799,6 +807,9 @@ function mountVoronoiWall(
 			destroySurface(this, this.surface);
 			this.surface = null;
 			this.board = null;
+			if (sceneRef === this) {
+				sceneRef = null;
+			}
 			bridge.newBoardRef.current = undefined;
 			bridge.remixPaletteRef.current = undefined;
 		}
@@ -831,7 +842,25 @@ function mountVoronoiWall(
 		game.canvas.style.imageRendering = "auto";
 	}
 
+	observer = new ResizeObserver(() => {
+		const nextSize = resolveHostSize(host);
+		if (
+			nextSize.width === lastSize.width &&
+			nextSize.height === lastSize.height
+		) {
+			return;
+		}
+
+		lastSize = nextSize;
+		game?.scale.resize(nextSize.width, nextSize.height);
+		sceneRef?.handleResize(nextSize);
+	});
+	observer.observe(host);
+
 	return () => {
+		observer?.disconnect();
+		observer = null;
+		sceneRef = null;
 		bridge.newBoardRef.current = undefined;
 		bridge.remixPaletteRef.current = undefined;
 		game?.destroy(true);

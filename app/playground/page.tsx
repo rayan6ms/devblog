@@ -375,61 +375,99 @@ const Playground: React.FC = () => {
 		}
 
 		let cancelled = false;
+		let ready = false;
 		let rafId = 0;
-		let stableFrames = 0;
+		let observer: ResizeObserver | null = null;
+		let observedNode: HTMLDivElement | null = null;
+		let stableSince = 0;
 		let lastSignature = "";
 		let attempts = 0;
+		const MIN_VIEWPORT_WIDTH = 320;
+		const MIN_VIEWPORT_HEIGHT = 240;
+		const STABLE_FOR_MS = 160;
+
+		const stopObserving = () => {
+			observer?.disconnect();
+			observer = null;
+			observedNode = null;
+		};
+
+		const markReady = () => {
+			if (cancelled || ready) {
+				return;
+			}
+
+			ready = true;
+			stopObserving();
+			setIsGameMountReady(true);
+			setGameMountVersion((version) => version + 1);
+		};
+
+		const scheduleCheck = () => {
+			window.cancelAnimationFrame(rafId);
+			rafId = window.requestAnimationFrame(waitForStableViewport);
+		};
 
 		const waitForStableViewport = () => {
-			if (cancelled) {
+			if (cancelled || ready) {
 				return;
 			}
 
 			const viewport = gameViewportRef.current;
 			if (!viewport) {
-				rafId = window.requestAnimationFrame(waitForStableViewport);
+				scheduleCheck();
 				return;
+			}
+
+			if (observedNode !== viewport) {
+				stopObserving();
+				observer = new ResizeObserver(() => {
+					if (ready || cancelled) return;
+					attempts = 0;
+					scheduleCheck();
+				});
+				observer.observe(viewport);
+				observedNode = viewport;
 			}
 
 			const rect = viewport.getBoundingClientRect();
 			const width = Math.round(rect.width);
 			const height = Math.round(rect.height);
-			const hasUsableSize = width >= 320 && height >= 240;
+			const hasUsableSize =
+				width >= MIN_VIEWPORT_WIDTH && height >= MIN_VIEWPORT_HEIGHT;
 
 			if (!hasUsableSize) {
-				stableFrames = 0;
+				stableSince = 0;
 				lastSignature = "";
 			} else {
 				const nextSignature = `${width}x${height}`;
+				const now = performance.now();
 				if (nextSignature === lastSignature) {
-					stableFrames += 1;
+					if (stableSince > 0 && now - stableSince >= STABLE_FOR_MS) {
+						markReady();
+						return;
+					}
 				} else {
 					lastSignature = nextSignature;
-					stableFrames = 1;
-				}
-
-				if (stableFrames >= 2) {
-					setIsGameMountReady(true);
-					setGameMountVersion((version) => version + 1);
-					return;
+					stableSince = now;
 				}
 			}
 
 			attempts += 1;
-			if (attempts >= 45 && hasUsableSize) {
-				setIsGameMountReady(true);
-				setGameMountVersion((version) => version + 1);
+			if (attempts >= 90 && hasUsableSize) {
+				markReady();
 				return;
 			}
 
-			rafId = window.requestAnimationFrame(waitForStableViewport);
+			scheduleCheck();
 		};
 
 		setIsGameMountReady(false);
-		rafId = window.requestAnimationFrame(waitForStableViewport);
+		scheduleCheck();
 
 		return () => {
 			cancelled = true;
+			stopObserving();
 			window.cancelAnimationFrame(rafId);
 		};
 	}, [isOpen, selectedGame?.id, isMobileViewport]);
