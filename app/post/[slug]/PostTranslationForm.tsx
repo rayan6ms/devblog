@@ -1,11 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
 import { FaFileLines, FaGlobe, FaLanguage } from "react-icons/fa6";
 import type { z } from "zod";
 import { useI18n } from "@/components/LocaleProvider";
+import {
+	createPendingImageUrl,
+	type ImageUploadResponse,
+	uploadImageFile,
+	validateImageFile,
+} from "@/lib/image-upload";
 import { getLocaleLabel, localeOptions, type Locale } from "@/lib/i18n";
 import {
 	buildPostTranslationSchema,
@@ -44,10 +50,11 @@ type SubmitState = {
 	message: string;
 };
 
-type UploadResponse = {
-	url: string;
+type PendingContentImage = {
+	file: File;
 	name: string;
-	size: number;
+	placeholderUrl: string;
+	previewUrl: string;
 };
 
 function getLocaleOptions(originalLocale: Locale) {
@@ -79,14 +86,24 @@ export default function PostTranslationForm({
 		tone: null,
 		message: "",
 	});
+	const [isResolvingUploads, setIsResolvingUploads] = useState(false);
+	const [pendingContentImages, setPendingContentImages] = useState<
+		Record<string, PendingContentImage>
+	>({});
+	const previousPendingContentImagesRef = useRef<
+		Record<string, PendingContentImage>
+	>({});
 
 	const {
 		control,
+		getValues,
 		handleSubmit,
 		register,
 		reset,
 		setError,
 		clearErrors,
+		setValue,
+		watch,
 		formState: { errors, isSubmitting },
 	} = useForm<TranslationFormData>({
 		resolver: zodResolver(schema),
@@ -106,6 +123,7 @@ export default function PostTranslationForm({
 		[localTranslations],
 	);
 	const activeTranslation = translationsByLocale.get(selectedLocale);
+	const content = watch("content") || "";
 
 	useEffect(() => {
 		reset({
@@ -117,29 +135,112 @@ export default function PostTranslationForm({
 		clearErrors();
 	}, [activeTranslation, clearErrors, reset, selectedLocale]);
 
-	async function uploadImage(file: File): Promise<UploadResponse> {
-		const body = new FormData();
-		body.append("file", file);
+	useEffect(() => {
+		const previous = previousPendingContentImagesRef.current;
+		for (const [placeholderUrl, upload] of Object.entries(previous)) {
+			if (!pendingContentImages[placeholderUrl]) {
+				URL.revokeObjectURL(upload.previewUrl);
+			}
+		}
 
-		const response = await fetch("/api/upload", {
-			method: "POST",
-			body,
+		previousPendingContentImagesRef.current = pendingContentImages;
+	}, [pendingContentImages]);
+
+	useEffect(
+		() => () => {
+			for (const upload of Object.values(previousPendingContentImagesRef.current)) {
+				URL.revokeObjectURL(upload.previewUrl);
+			}
+		},
+		[],
+	);
+
+	useEffect(() => {
+		setPendingContentImages((current) => {
+			let changed = false;
+			const next = { ...current };
+
+			for (const placeholderUrl of Object.keys(current)) {
+				if (content.includes(placeholderUrl)) {
+					continue;
+				}
+
+				delete next[placeholderUrl];
+				changed = true;
+			}
+
+			return changed ? next : current;
 		});
+	}, [content]);
 
-		const data = (await response.json().catch(() => null)) as
-			| UploadResponse
-			| { error?: string }
-			| null;
-
-		if (!response.ok || !data || typeof data !== "object" || !("url" in data)) {
+	async function uploadImage(file: File): Promise<ImageUploadResponse> {
+		try {
+			return await uploadImageFile(file);
+		} catch (error) {
 			throw new Error(
-				data && "error" in data && typeof data.error === "string"
-					? data.error
+				error instanceof Error
+					? translateTranslationFieldError(error.message, messages)
 					: messages.newPost.imageUploadError,
 			);
 		}
+	}
 
-		return data;
+	function queueInlineImages(files: File[]) {
+		for (const file of files) {
+			const validationError = validateImageFile(file);
+			if (validationError) {
+				throw new Error(translateTranslationFieldError(validationError, messages));
+			}
+		}
+
+		const queuedUploads = files.map((file) => {
+			const placeholderUrl = createPendingImageUrl(crypto.randomUUID());
+			return {
+				file,
+				name: file.name,
+				placeholderUrl,
+				previewUrl: URL.createObjectURL(file),
+			};
+		});
+
+		setPendingContentImages((current) => {
+			const next = { ...current };
+			for (const upload of queuedUploads) {
+				next[upload.placeholderUrl] = upload;
+			}
+			return next;
+		});
+
+		return queuedUploads.map((upload) => ({
+			name: upload.name,
+			url: upload.placeholderUrl,
+		}));
+	}
+
+	function resolveEditorImageSrc(src: string) {
+		return pendingContentImages[src]?.previewUrl || src;
+	}
+
+	async function resolvePendingContentUploads() {
+		let nextContent = getValues("content") || "";
+		const activeUploads = Object.values(pendingContentImages).filter((upload) =>
+			nextContent.includes(upload.placeholderUrl),
+		);
+
+		for (const upload of activeUploads) {
+			const resolved = await uploadImage(upload.file);
+			nextContent = nextContent.split(upload.placeholderUrl).join(resolved.url);
+			setValue("content", nextContent, { shouldValidate: true });
+			setPendingContentImages((current) => {
+				if (!current[upload.placeholderUrl]) {
+					return current;
+				}
+
+				const next = { ...current };
+				delete next[upload.placeholderUrl];
+				return next;
+			});
+		}
 	}
 
 	function applyServerFieldErrors(
@@ -186,16 +287,33 @@ export default function PostTranslationForm({
 	}
 
 	async function saveTranslation() {
-		await handleSubmit(async (data) => {
-			setSubmitState({ tone: null, message: "" });
-			clearErrors();
+		setSubmitState({ tone: null, message: "" });
+		clearErrors();
 
+		try {
+			setIsResolvingUploads(true);
+			await resolvePendingContentUploads();
+		} catch (error) {
+			setSubmitState({
+				tone: "error",
+				message:
+					error instanceof Error
+						? error.message
+						: messages.newPost.imageUploadError,
+			});
+			return;
+		} finally {
+			setIsResolvingUploads(false);
+		}
+
+		await handleSubmit(async (data) => {
 			const response = await fetch(`/api/post/${postSlug}/translations`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					locale: selectedLocale,
 					...data,
+					content: getValues("content") || data.content,
 				}),
 			});
 
@@ -236,7 +354,7 @@ export default function PostTranslationForm({
 						title: data.title.trim(),
 						description: data.description?.trim() || "",
 						thumbnailAlt: data.thumbnailAlt?.trim() || "",
-						content: data.content.trim(),
+						content: (getValues("content") || data.content).trim(),
 						updatedAt: new Date().toISOString(),
 					},
 				].sort((left, right) => left.locale.localeCompare(right.locale));
@@ -446,8 +564,9 @@ export default function PostTranslationForm({
 													value={field.value || ""}
 													onChange={field.onChange}
 													maxLength={MAX_POST_CONTENT}
-													disabled={isSubmitting}
-													onUploadImage={uploadImage}
+													disabled={isSubmitting || isResolvingUploads}
+													onInsertImages={queueInlineImages}
+													resolveImageSrc={resolveEditorImageSrc}
 												/>
 											)}
 										/>
@@ -462,10 +581,10 @@ export default function PostTranslationForm({
 						<button
 							type="button"
 							onClick={() => void saveTranslation()}
-							disabled={isSubmitting}
+							disabled={isSubmitting || isResolvingUploads}
 							className="rounded-full border border-purpleContrast/40 bg-purpleContrast/16 px-5 py-3 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/24 disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							{isSubmitting
+							{isSubmitting || isResolvingUploads
 								? messages.newPost.translationSaving
 								: messages.newPost.translationSave}
 						</button>
@@ -486,6 +605,15 @@ function translateTranslationFieldError(
 		case "Please correct the translation fields.":
 		case "Unable to save the translation right now.":
 			return messages.newPost.translationSaveError;
+		case "Unable to upload image.":
+		case "Unable to upload image right now.":
+		case "BLOB_READ_WRITE_TOKEN is not configured.":
+		case "Image file is required.":
+		case "Only JPG, PNG, WEBP, and GIF files are supported.":
+		case "Images must be 4MB or smaller.":
+		case "Unauthorized":
+		case "You do not have permission to upload images.":
+			return messages.newPost.imageUploadError;
 		case "Translations must use a different language from the original post.":
 			return messages.newPost.translationMustDiffer;
 		default:

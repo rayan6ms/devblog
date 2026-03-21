@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
 import {
 	FaArrowsRotate,
@@ -18,6 +18,13 @@ import {
 import type { z } from "zod";
 import { useI18n } from "@/components/LocaleProvider";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import {
+	ACCEPTED_IMAGE_TYPES,
+	createPendingImageUrl,
+	type ImageUploadResponse,
+	uploadImageFile,
+	validateImageFile,
+} from "@/lib/image-upload";
 import { localeOptions } from "@/lib/i18n";
 import {
 	getReadingTimeMinutes,
@@ -50,10 +57,16 @@ type FormProps = {
 	existingSlug?: string;
 };
 
-type UploadResponse = {
-	url: string;
+type PendingContentImage = {
+	file: File;
 	name: string;
-	size: number;
+	placeholderUrl: string;
+	previewUrl: string;
+};
+
+type PendingThumbnailImage = {
+	file: File;
+	previewUrl: string;
 };
 
 type SubmitState = {
@@ -77,14 +90,23 @@ export default function Form({
 		tone: null,
 		message: "",
 	});
-	const [isThumbnailUploading, setIsThumbnailUploading] = useState(false);
-	const [thumbnailMessage, setThumbnailMessage] = useState("");
+	const [isResolvingUploads, setIsResolvingUploads] = useState(false);
 	const [slugTouched, setSlugTouched] = useState(
 		Boolean(initialValues?.slug?.trim()),
 	);
+	const [pendingContentImages, setPendingContentImages] = useState<
+		Record<string, PendingContentImage>
+	>({});
+	const [pendingThumbnail, setPendingThumbnail] =
+		useState<PendingThumbnailImage | null>(null);
+	const previousPendingContentImagesRef = useRef<
+		Record<string, PendingContentImage>
+	>({});
+	const previousPendingThumbnailRef = useRef<PendingThumbnailImage | null>(null);
 
 	const {
 		control,
+		getValues,
 		handleSubmit,
 		register,
 		reset,
@@ -119,6 +141,7 @@ export default function Form({
 	const status = watch("status") || "draft";
 	const thumbnail = watch("thumbnail") || "";
 	const thumbnailAlt = watch("thumbnailAlt") || "";
+	const thumbnailPreview = pendingThumbnail?.previewUrl || thumbnail;
 	const titleLength = title?.length || 0;
 	const descriptionLength = description.length;
 	const thumbnailAltLength = thumbnailAlt.length;
@@ -155,29 +178,140 @@ export default function Form({
 		});
 	}, [slugTouched, title, setValue]);
 
-	async function uploadImage(file: File): Promise<UploadResponse> {
-		const body = new FormData();
-		body.append("file", file);
+	useEffect(() => {
+		const previous = previousPendingContentImagesRef.current;
+		for (const [placeholderUrl, upload] of Object.entries(previous)) {
+			if (!pendingContentImages[placeholderUrl]) {
+				URL.revokeObjectURL(upload.previewUrl);
+			}
+		}
 
-		const response = await fetch("/api/upload", {
-			method: "POST",
-			body,
+		previousPendingContentImagesRef.current = pendingContentImages;
+	}, [pendingContentImages]);
+
+	useEffect(() => {
+		const previous = previousPendingThumbnailRef.current;
+		if (previous && previous !== pendingThumbnail) {
+			URL.revokeObjectURL(previous.previewUrl);
+		}
+
+		previousPendingThumbnailRef.current = pendingThumbnail;
+	}, [pendingThumbnail]);
+
+	useEffect(
+		() => () => {
+			for (const upload of Object.values(previousPendingContentImagesRef.current)) {
+				URL.revokeObjectURL(upload.previewUrl);
+			}
+
+			if (previousPendingThumbnailRef.current) {
+				URL.revokeObjectURL(previousPendingThumbnailRef.current.previewUrl);
+			}
+		},
+		[],
+	);
+
+	useEffect(() => {
+		setPendingContentImages((current) => {
+			let changed = false;
+			const next = { ...current };
+
+			for (const placeholderUrl of Object.keys(current)) {
+				if (content.includes(placeholderUrl)) {
+					continue;
+				}
+
+				delete next[placeholderUrl];
+				changed = true;
+			}
+
+			return changed ? next : current;
 		});
+	}, [content]);
 
-		const data = (await response.json().catch(() => null)) as
-			| UploadResponse
-			| { error?: string }
-			| null;
-
-		if (!response.ok || !data || typeof data !== "object" || !("url" in data)) {
+	async function uploadImage(file: File): Promise<ImageUploadResponse> {
+		try {
+			return await uploadImageFile(file);
+		} catch (error) {
 			const message =
-				data && "error" in data && typeof data.error === "string"
-					? translatePostFieldError(data.error, messages)
+				error instanceof Error
+					? translatePostFieldError(error.message, messages)
 					: messages.newPost.imageUploadError;
 			throw new Error(message);
 		}
+	}
 
-		return data;
+	function queueInlineImages(files: File[]) {
+		for (const file of files) {
+			const validationError = validateImageFile(file);
+			if (validationError) {
+				throw new Error(translatePostFieldError(validationError, messages));
+			}
+		}
+
+		const queuedUploads = files.map((file) => {
+			const placeholderUrl = createPendingImageUrl(crypto.randomUUID());
+			return {
+				file,
+				name: file.name,
+				placeholderUrl,
+				previewUrl: URL.createObjectURL(file),
+			};
+		});
+
+		setPendingContentImages((current) => {
+			const next = { ...current };
+			for (const upload of queuedUploads) {
+				next[upload.placeholderUrl] = upload;
+			}
+			return next;
+		});
+
+		return queuedUploads.map((upload) => ({
+			name: upload.name,
+			url: upload.placeholderUrl,
+		}));
+	}
+
+	function resolveEditorImageSrc(src: string) {
+		return pendingContentImages[src]?.previewUrl || src;
+	}
+
+	async function resolvePendingAssets() {
+		let nextContent = getValues("content") || "";
+		let nextThumbnail = getValues("thumbnail") || "";
+
+		if (pendingThumbnail) {
+			const upload = await uploadImage(pendingThumbnail.file);
+			nextThumbnail = upload.url;
+			setValue("thumbnail", upload.url, { shouldValidate: true });
+			clearErrors("thumbnail");
+			setPendingThumbnail(null);
+		}
+
+		const activeContentUploads = Object.values(pendingContentImages).filter(
+			(upload) => nextContent.includes(upload.placeholderUrl),
+		);
+
+		for (const upload of activeContentUploads) {
+			const resolved = await uploadImage(upload.file);
+			nextContent = nextContent.split(upload.placeholderUrl).join(resolved.url);
+			setValue("content", nextContent, { shouldValidate: true });
+			setPendingContentImages((current) => {
+				if (!current[upload.placeholderUrl]) {
+					return current;
+				}
+
+				const next = { ...current };
+				delete next[upload.placeholderUrl];
+				return next;
+			});
+		}
+
+		return {
+			content: nextContent,
+			thumbnail: nextThumbnail,
+		};
 	}
 
 	async function handleThumbnailSelected(
@@ -188,21 +322,25 @@ export default function Form({
 			return;
 		}
 
-		setIsThumbnailUploading(true);
-		setThumbnailMessage("");
-
 		try {
-			const upload = await uploadImage(file);
-			setValue("thumbnail", upload.url, { shouldValidate: true });
+			const validationError = validateImageFile(file);
+			if (validationError) {
+				throw new Error(validationError);
+			}
+
+			setValue("thumbnail", "", { shouldValidate: false });
 			clearErrors("thumbnail");
+			setPendingThumbnail({
+				file,
+				previewUrl: URL.createObjectURL(file),
+			});
 			if (!thumbnailAlt.trim()) {
 				setValue(
 					"thumbnailAlt",
-					upload.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
+					file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
 					{ shouldValidate: true },
 				);
 			}
-			setThumbnailMessage(messages.newPost.thumbnailUploaded);
 		} catch (error) {
 			setError("thumbnail", {
 				type: "manual",
@@ -211,11 +349,9 @@ export default function Form({
 						? translatePostFieldError(error.message, messages)
 						: messages.newPost.thumbnailUploadError,
 			});
-			setThumbnailMessage("");
-		} finally {
-			setIsThumbnailUploading(false);
-			event.target.value = "";
 		}
+
+		event.target.value = "";
 	}
 
 	function applyServerFieldErrors(
@@ -241,11 +377,26 @@ export default function Form({
 
 	async function submitPost(nextStatus: PostStatus) {
 		setValue("status", nextStatus, { shouldValidate: true });
+		setSubmitState({ tone: null, message: "" });
+		clearErrors();
+
+		try {
+			setIsResolvingUploads(true);
+			await resolvePendingAssets();
+		} catch (error) {
+			setSubmitState({
+				tone: "error",
+				message:
+					error instanceof Error
+						? error.message
+						: messages.newPost.imageUploadError,
+			});
+			return;
+		} finally {
+			setIsResolvingUploads(false);
+		}
 
 		await handleSubmit(async (data) => {
-			setSubmitState({ tone: null, message: "" });
-			clearErrors();
-
 			const response = await fetch(
 				mode === "edit" && existingSlug
 					? `/api/post/${existingSlug}`
@@ -253,7 +404,12 @@ export default function Form({
 				{
 					method: mode === "edit" ? "PATCH" : "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ ...data, status: nextStatus }),
+					body: JSON.stringify({
+						...data,
+						status: nextStatus,
+						content: getValues("content") || data.content,
+						thumbnail: getValues("thumbnail") || data.thumbnail,
+					}),
 				},
 			);
 
@@ -298,7 +454,7 @@ export default function Form({
 		},
 		{
 			label: messages.newPost.checklistThumbnailUploaded,
-			done: Boolean(thumbnail),
+			done: Boolean(thumbnailPreview),
 		},
 		{
 			label: messages.newPost.checklistMainTagChosen,
@@ -551,22 +707,20 @@ export default function Form({
 									<label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-purpleContrast/35 bg-purpleContrast/18 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/26 sm:shrink-0">
 										<input
 											type="file"
-											accept="image/jpeg,image/png,image/webp,image/gif"
+											accept={ACCEPTED_IMAGE_TYPES.join(",")}
 											className="hidden"
 											onChange={handleThumbnailSelected}
 										/>
 										<FaImage className="text-sm" />
-										{isThumbnailUploading
-											? messages.newPost.uploading
-											: messages.newPost.upload}
+										{messages.newPost.upload}
 									</label>
 								</div>
 
 								<input type="hidden" {...register("thumbnail")} />
-								{thumbnail ? (
+								{thumbnailPreview ? (
 									<div className="mt-4 overflow-hidden rounded-[24px] border border-zinc-700/50 bg-darkBg/45">
 										<img
-											src={thumbnail}
+											src={thumbnailPreview}
 											alt={thumbnailAlt || messages.newPost.thumbnailPreviewAlt}
 											className="aspect-[16/10] w-full object-cover"
 										/>
@@ -579,11 +733,6 @@ export default function Form({
 								<p className="mt-3 text-sm text-red-400">
 									{errors.thumbnail?.message}
 								</p>
-								{thumbnailMessage ? (
-									<p className="mt-1 text-sm text-emerald-400">
-										{thumbnailMessage}
-									</p>
-								) : null}
 							</div>
 
 							<label className="block">
@@ -649,8 +798,9 @@ export default function Form({
 									value={field.value || ""}
 									onChange={field.onChange}
 									maxLength={MAX_POST_CONTENT}
-									disabled={isSubmitting}
-									onUploadImage={uploadImage}
+									disabled={isSubmitting || isResolvingUploads}
+									onInsertImages={queueInlineImages}
+									resolveImageSrc={resolveEditorImageSrc}
 								/>
 							)}
 						/>
@@ -801,7 +951,7 @@ export default function Form({
 									key={nextStatus}
 									type="button"
 									onClick={() => void submitPost(nextStatus)}
-									disabled={isSubmitting || isThumbnailUploading}
+									disabled={isSubmitting || isResolvingUploads}
 									className={`rounded-[22px] border px-4 py-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 										status === nextStatus
 											? "border-purpleContrast/40 bg-purpleContrast/16"
@@ -809,7 +959,7 @@ export default function Form({
 									}`}
 								>
 									<p className="text-sm font-semibold text-zinc-100">
-										{isSubmitting && status === nextStatus
+										{(isSubmitting && status === nextStatus) || isResolvingUploads
 											? messages.newPost.saving
 											: details.label}
 									</p>
@@ -826,8 +976,9 @@ export default function Form({
 								onClick={() => {
 									reset();
 									setSlugTouched(false);
-									setThumbnailMessage("");
 									setSubmitState({ tone: null, message: "" });
+									setPendingContentImages({});
+									setPendingThumbnail(null);
 								}}
 								className="mt-4 w-full rounded-full border border-zinc-700/60 bg-darkBg/55 px-4 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat"
 							>
@@ -875,6 +1026,7 @@ function translatePostFieldError(
 			return messages.newPost.thumbnailUploadError;
 		case "Unable to upload image.":
 		case "Unable to upload image right now.":
+		case "BLOB_READ_WRITE_TOKEN is not configured.":
 		case "Image file is required.":
 		case "Only JPG, PNG, WEBP, and GIF files are supported.":
 		case "Images must be 4MB or smaller.":

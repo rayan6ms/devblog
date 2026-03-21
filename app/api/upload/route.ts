@@ -3,15 +3,8 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 import { auth } from "@/lib/auth";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/lib/image-upload";
 import { canWriteRole } from "@/lib/post-shared";
-
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Map([
-	["image/jpeg", "jpg"],
-	["image/png", "png"],
-	["image/webp", "webp"],
-	["image/gif", "gif"],
-]);
 
 export async function POST(request: Request) {
 	const session = await auth();

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { IconType } from "react-icons";
 import {
 	FaBold,
@@ -21,6 +21,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useI18n } from "@/components/LocaleProvider";
+import { ACCEPTED_IMAGE_TYPES } from "@/lib/image-upload";
 import { MARKDOWN_ARTICLE_CLASS, markdownComponents } from "@/lib/markdown";
 import { getReadingTimeMinutes, stripMarkdown } from "@/lib/post-shared";
 
@@ -39,7 +40,8 @@ type MarkdownEditorProps = {
 	onChange: (value: string) => void;
 	maxLength: number;
 	disabled?: boolean;
-	onUploadImage: (file: File) => Promise<UploadedImage>;
+	onInsertImages: (files: File[]) => Promise<UploadedImage[]> | UploadedImage[];
+	resolveImageSrc?: (src: string) => string;
 };
 
 type EditorMode = "write" | "preview" | "split";
@@ -62,7 +64,8 @@ export default function MarkdownEditor({
 	onChange,
 	maxLength,
 	disabled = false,
-	onUploadImage,
+	onInsertImages,
+	resolveImageSrc,
 }: MarkdownEditorProps) {
 	const { messages } = useI18n();
 	const [mode, setMode] = useState<EditorMode>("split");
@@ -70,6 +73,16 @@ export default function MarkdownEditor({
 	const [isUploading, setIsUploading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	useLayoutEffect(() => {
+		const textarea = textareaRef.current;
+		if (!textarea) {
+			return;
+		}
+
+		textarea.style.height = "auto";
+		textarea.style.height = `${Math.max(textarea.scrollHeight, 512)}px`;
+	}, [value, mode]);
 
 	function updateSelection(nextValue: string, cursorPosition: number) {
 		onChange(nextValue);
@@ -125,10 +138,7 @@ export default function MarkdownEditor({
 		setFeedback(null);
 
 		try {
-			const uploads: UploadedImage[] = [];
-			for (const file of files) {
-				uploads.push(await onUploadImage(file));
-			}
+			const uploads = await onInsertImages(files);
 
 			const markdownBlock = uploads
 				.map(
@@ -384,8 +394,8 @@ export default function MarkdownEditor({
 							value={value}
 							onChange={(event) => onChange(event.target.value)}
 							disabled={disabled}
-							rows={20}
-							className="min-h-[32rem] w-full resize-y bg-transparent px-4 py-4 text-zinc-100 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
+							rows={1}
+							className="min-h-[32rem] w-full resize-none overflow-hidden bg-transparent px-4 py-4 text-zinc-100 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
 							placeholder={messages.newPost.markdownPlaceholder}
 						/>
 					</div>
@@ -412,7 +422,30 @@ export default function MarkdownEditor({
 								<div className={MARKDOWN_ARTICLE_CLASS}>
 									<ReactMarkdown
 										remarkPlugins={[remarkGfm]}
-										components={markdownComponents}
+										components={{
+											...markdownComponents,
+											img({ alt, src }) {
+												if (!src || typeof src !== "string") {
+													return null;
+												}
+
+												const resolvedSrc = resolveImageSrc?.(src) || src;
+												return (
+													<figure className="my-8 flex flex-col items-center gap-3">
+														<img
+															src={resolvedSrc}
+															alt={alt || ""}
+															className="max-h-[32rem] w-auto max-w-full rounded-[24px] border border-zinc-700/50 bg-darkBg/45 object-contain shadow-lg shadow-zinc-950/15"
+														/>
+														{alt ? (
+															<figcaption className="text-center text-sm text-zinc-500">
+																{alt}
+															</figcaption>
+														) : null}
+													</figure>
+												);
+											},
+										}}
 									>
 										{value}
 									</ReactMarkdown>
@@ -459,7 +492,7 @@ export default function MarkdownEditor({
 			<input
 				ref={fileInputRef}
 				type="file"
-				accept="image/jpeg,image/png,image/webp,image/gif"
+				accept={ACCEPTED_IMAGE_TYPES.join(",")}
 				multiple
 				className="hidden"
 				onChange={handleFilesSelected}
