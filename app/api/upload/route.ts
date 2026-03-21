@@ -6,6 +6,18 @@ import { auth } from "@/lib/auth";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/lib/image-upload";
 import { canWriteRole } from "@/lib/post-shared";
 
+function maskToken(token: string | undefined) {
+	if (!token) {
+		return null;
+	}
+
+	if (token.length <= 12) {
+		return token;
+	}
+
+	return `${token.slice(0, 12)}...${token.slice(-6)}`;
+}
+
 export async function POST(request: Request) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -43,7 +55,23 @@ export async function POST(request: Request) {
 	}
 
 	try {
-		if (!process.env.BLOB_READ_WRITE_TOKEN) {
+		const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+		const debugContext = {
+			hasToken: Boolean(blobToken),
+			tokenPreview: maskToken(blobToken),
+			tokenLength: blobToken?.length ?? 0,
+			fileName: file.name,
+			fileType: file.type,
+			fileSize: file.size,
+			nodeEnv: process.env.NODE_ENV,
+			vercelEnv: process.env.VERCEL_ENV ?? null,
+			vercelRegion: process.env.VERCEL_REGION ?? null,
+		};
+
+		console.log("[upload] starting blob upload", debugContext);
+
+		if (!blobToken) {
+			console.error("[upload] missing blob token", debugContext);
 			return NextResponse.json(
 				{ error: "BLOB_READ_WRITE_TOKEN is not configured." },
 				{ status: 500 },
@@ -60,6 +88,13 @@ export async function POST(request: Request) {
 			access: "public",
 			addRandomSuffix: false,
 			contentType: file.type,
+			token: blobToken,
+		});
+
+		console.log("[upload] blob upload succeeded", {
+			...debugContext,
+			pathname: blob.pathname,
+			blobUrl: blob.url,
 		});
 
 		return NextResponse.json({
@@ -67,7 +102,23 @@ export async function POST(request: Request) {
 			name: file.name,
 			size: file.size,
 		});
-	} catch {
+	} catch (error) {
+		console.error("[upload] blob upload failed", {
+			error,
+			errorName: error instanceof Error ? error.name : "unknown",
+			errorMessage: error instanceof Error ? error.message : String(error),
+			errorStack: error instanceof Error ? error.stack : null,
+			hasToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+			tokenPreview: maskToken(process.env.BLOB_READ_WRITE_TOKEN),
+			tokenLength: process.env.BLOB_READ_WRITE_TOKEN?.length ?? 0,
+			nodeEnv: process.env.NODE_ENV,
+			vercelEnv: process.env.VERCEL_ENV ?? null,
+			vercelRegion: process.env.VERCEL_REGION ?? null,
+			fileName: file.name,
+			fileType: file.type,
+			fileSize: file.size,
+		});
+
 		return NextResponse.json(
 			{ error: "Unable to upload image right now." },
 			{ status: 500 },

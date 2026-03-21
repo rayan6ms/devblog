@@ -473,6 +473,23 @@ export default function Form({
 			done: content.trim().length >= 120,
 		},
 	];
+	function renderSubmitFeedback() {
+		if (!submitState.message) {
+			return null;
+		}
+
+		return (
+			<div
+				className={`rounded-[22px] border px-4 py-3 text-sm ${
+					submitState.tone === "error"
+						? "border-red-500/25 bg-red-500/10 text-red-200"
+						: "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
+				}`}
+			>
+				{submitState.message}
+			</div>
+		);
+	}
 
 	return (
 		<form className="w-full" onSubmit={(event) => event.preventDefault()}>
@@ -517,18 +534,6 @@ export default function Form({
 								</p>
 							</div>
 						</div>
-
-						{submitState.message ? (
-							<div
-								className={`mt-5 rounded-[22px] border px-4 py-3 text-sm ${
-									submitState.tone === "error"
-										? "border-red-500/25 bg-red-500/10 text-red-200"
-										: "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
-								}`}
-							>
-								{submitState.message}
-							</div>
-						) : null}
 					</section>
 
 					<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/80 p-6 shadow-lg shadow-zinc-950/10 sm:p-7">
@@ -815,6 +820,9 @@ export default function Form({
 								remaining={MAX_POST_CONTENT - content.length}
 							/>
 						</div>
+						{submitState.message ? (
+							<div className="mt-4">{renderSubmitFeedback()}</div>
+						) : null}
 					</section>
 				</div>
 
@@ -969,6 +977,9 @@ export default function Form({
 								</button>
 							))}
 						</div>
+						{submitState.message ? (
+							<div className="mt-4">{renderSubmitFeedback()}</div>
+						) : null}
 
 						{mode === "create" ? (
 							<button
