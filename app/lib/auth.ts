@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import prisma from "@/database/prisma";
+import { resolveRoleForAuthenticatedUser } from "@/lib/admin";
 import { verifyPassword } from "@/lib/password";
 import {
 	ensureUserIdentityFields,
@@ -20,11 +21,18 @@ async function syncAuthenticatedUser(user: {
 	email?: string | null;
 	image?: string | null;
 }) {
-	const { username, slug } = await ensureUserIdentityFields({
-		id: user.id,
-		name: user.name ?? null,
-		email: user.email ?? null,
-	});
+	const [identityFields, existingUser] = await Promise.all([
+		ensureUserIdentityFields({
+			id: user.id,
+			name: user.name ?? null,
+			email: user.email ?? null,
+		}),
+		prisma.user.findUnique({
+			where: { id: user.id },
+			select: { role: true },
+		}),
+	]);
+	const { username, slug } = identityFields;
 
 	await prisma.user.upsert({
 		where: { id: user.id },
@@ -33,6 +41,10 @@ async function syncAuthenticatedUser(user: {
 			email: user.email ? normalizeEmail(user.email) : null,
 			username,
 			slug,
+			role: resolveRoleForAuthenticatedUser({
+				currentRole: existingUser?.role,
+				email: user.email ?? null,
+			}),
 			...(user.image
 				? {
 						image: user.image,
@@ -46,7 +58,10 @@ async function syncAuthenticatedUser(user: {
 			image: user.image,
 			username,
 			slug,
-			role: "member",
+			role: resolveRoleForAuthenticatedUser({
+				currentRole: "member",
+				email: user.email ?? null,
+			}),
 		},
 	});
 }

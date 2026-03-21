@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/database/prisma";
+import { resolveRoleForNewUser } from "@/lib/admin";
 import { hashPassword } from "@/lib/password";
 import {
 	ensureUniqueSlug,
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 			passwordHash: hashPassword(password),
 			username,
 			slug,
-			role: "member",
+			role: resolveRoleForNewUser(email),
 		},
 		select: {
 			id: true,

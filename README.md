@@ -43,7 +43,10 @@ NEXT_PUBLIC_SITE_URL=https://your-production-domain.example
 BLOB_READ_WRITE_TOKEN=...
 AUTH_URL=https://your-production-domain.example
 NEXTAUTH_URL=https://your-production-domain.example
+OWNER_EMAIL=owner@example.com
 ```
+
+`OWNER_EMAIL` is optional. That account is promoted to `owner` when it registers or signs in. The owner can then promote the first admin from the `/admin` page, and admins can manage lower roles from there.
 
 If you want to test social login locally, also configure the provider credentials required by Auth.js for the GitHub and Google providers used in `app/api/auth/[...nextauth]/route.ts`.
 

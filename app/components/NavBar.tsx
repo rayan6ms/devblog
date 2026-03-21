@@ -8,9 +8,12 @@ import {
 	FaLightbulb,
 	FaPlus,
 	FaRightToBracket,
+	FaShieldHalved,
 	FaUser,
 } from "react-icons/fa6";
+import { getAdminCopy } from "@/admin/copy";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { canManageUsers } from "@/lib/admin";
 import HamburgerMenu from "./HamburgerMenu";
 import Icons from "./Icons";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -68,14 +71,16 @@ export default function NavBar() {
 		pathname === "/register" ||
 		pathname === "/not-found";
 	const inPost = pathname.includes("/post/");
-	const { activeUser, canWrite, isAuthed } = useClientAuth();
-	const { messages } = useI18n();
+	const { activeUser, canWrite, isAuthed, role } = useClientAuth();
+	const { locale, messages } = useI18n();
 	const { localizeHref } = useLocaleNavigation();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isScrolled, setIsScrolled] = useState(false);
 	const [progress, setProgress] = useState(0);
 	const [isSuggestOpen, setIsSuggestOpen] = useState(false);
 	const [hasModalOpen, setHasModalOpen] = useState(false);
+	const canManageRoles = canManageUsers(role);
+	const adminCopy = getAdminCopy(locale);
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -244,6 +249,17 @@ export default function NavBar() {
 									</LocalizedLink>
 								) : null}
 
+								{isAuthed && canManageRoles ? (
+									<LocalizedLink
+										href="/admin"
+										onClick={() => setIsMenuOpen(false)}
+										className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
+									>
+										<FaShieldHalved className="text-xs" />
+										{adminCopy.navLabel}
+									</LocalizedLink>
+								) : null}
+
 								{isAuthed ? (
 									canWrite ? (
 										<LocalizedLink
@@ -359,6 +375,16 @@ export default function NavBar() {
 										>
 											<FaUser className="text-xs" />
 											{messages.common.profile}
+										</LocalizedLink>
+									) : null}
+
+									{isAuthed && canManageRoles ? (
+										<LocalizedLink
+											href="/admin"
+											className="hidden items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat md:inline-flex"
+										>
+											<FaShieldHalved className="text-xs" />
+											{adminCopy.navLabel}
 										</LocalizedLink>
 									) : null}
 

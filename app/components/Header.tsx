@@ -9,9 +9,12 @@ import {
 	FaPaperPlane,
 	FaPlus,
 	FaRightToBracket,
+	FaShieldHalved,
 	FaUser,
 } from "react-icons/fa6";
+import { getAdminCopy } from "@/admin/copy";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { canManageUsers } from "@/lib/admin";
 import Icons from "./Icons";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useI18n } from "./LocaleProvider";
@@ -25,10 +28,12 @@ export default function Header() {
 		pathname === "/login" ||
 		pathname === "/register" ||
 		pathname === "/not-found";
-	const { activeUser, canWrite, isAuthed } = useClientAuth();
-	const { messages } = useI18n();
+	const { activeUser, canWrite, isAuthed, role } = useClientAuth();
+	const { locale, messages } = useI18n();
 	const { localizeHref } = useLocaleNavigation();
 	const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+	const canManageRoles = canManageUsers(role);
+	const adminCopy = getAdminCopy(locale);
 
 	if (hideHeader) return null;
 
@@ -36,28 +41,17 @@ export default function Header() {
 		<>
 			<header className="bg-darkBg px-4 pt-8 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-[1440px] rounded-t-[30px] border border-b-0 border-zinc-700/50 bg-lessDarkBg/90">
-					<div className="relative border-b border-zinc-700/50 px-6 py-6 sm:px-8">
-						<LanguageSwitcher className="absolute right-6 top-3.5 z-10 hidden min-[340px]:block sm:right-8" />
-						<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-							<div className="max-w-3xl pr-16 sm:pr-20">
+					<div className="border-b border-zinc-700/50 px-6 py-6 sm:px-8">
+						<div className="grid gap-4 lg:gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+							<div className="min-w-0">
 								<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
 									{messages.header.eyebrow}
 								</p>
-								<div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-									<div>
-										<LocalizedLink
-											href="/"
-											aria-label={messages.header.homeAria}
-										>
-											<h1 className="text-5xl font-somerton text-wheat sm:text-6xl">
-												devblog
-											</h1>
-										</LocalizedLink>
-										<p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-											{messages.header.description}
-										</p>
-									</div>
-								</div>
+								<LocalizedLink href="/" aria-label={messages.header.homeAria}>
+									<h1 className="mt-2 text-5xl font-somerton text-wheat sm:text-6xl">
+										devblog
+									</h1>
+								</LocalizedLink>
 							</div>
 
 							<div className="flex flex-wrap items-center gap-3 lg:justify-end">
@@ -71,6 +65,16 @@ export default function Header() {
 									>
 										<FaUser className="text-xs" />
 										{messages.common.profile}
+									</LocalizedLink>
+								) : null}
+
+								{isAuthed && canManageRoles ? (
+									<LocalizedLink
+										href="/admin"
+										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
+									>
+										<FaShieldHalved className="text-xs" />
+										{adminCopy.navLabel}
 									</LocalizedLink>
 								) : null}
 
@@ -128,6 +132,17 @@ export default function Header() {
 									<FaPaperPlane className="text-xs" />
 									{messages.common.telegram}
 								</a>
+
+								<div className="min-[340px]:hidden">
+									<LanguageSwitcher />
+								</div>
+							</div>
+
+							<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6 lg:col-span-2">
+								<p className="max-w-2xl text-sm leading-7 text-zinc-400 sm:self-end sm:text-base">
+									{messages.header.description}
+								</p>
+								<LanguageSwitcher className="hidden shrink-0 min-[340px]:block" />
 							</div>
 						</div>
 					</div>
