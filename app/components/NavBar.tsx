@@ -55,12 +55,14 @@ function LinkPill({
 			aria-label={label}
 			title={label}
 			className={`border font-semibold uppercase transition-colors ${
+				iconOnly ? "inline-flex items-center justify-center leading-none" : ""
+			} ${
 				compact
 					? iconOnly
-						? "rounded-2xl px-2.5 py-2 text-xs tracking-[0.15em]"
+						? "h-9 w-9 rounded-2xl text-xs"
 						: "rounded-2xl px-3 py-2 text-xs tracking-[0.15em]"
 					: iconOnly
-						? "rounded-full px-3 py-2 text-sm tracking-[0.18em]"
+						? "h-10 w-10 rounded-full text-sm"
 						: "rounded-full px-4 py-2 text-sm tracking-[0.18em]"
 			} ${
 				active
@@ -69,8 +71,8 @@ function LinkPill({
 			}`}
 		>
 			{iconOnly ? (
-				<span className="inline-flex items-center justify-center">
-					<FaGamepad aria-hidden="true" className="text-base" />
+				<span className="flex h-full w-full items-center justify-center">
+					<FaGamepad aria-hidden="true" className="text-xl" />
 					<span className="sr-only">{label}</span>
 				</span>
 			) : (
