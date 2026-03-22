@@ -1,37 +1,20 @@
 "use client";
 
-import Image from "next/image";
-import { FaChevronDown, FaChevronUp, FaFlag } from "react-icons/fa6";
-import slugify from "slugify";
+import { FaArrowTrendUp } from "react-icons/fa6";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
+import type { PostComment } from "@/lib/comments";
 import { getIntlLocale } from "@/lib/i18n";
 
-interface CommentProps {
-	id: number;
-	author: string;
-	date: string;
-	commentText: string;
-	upvotes: number;
-	downvotes: number;
-	avatar: string;
-	votes: Record<number, number>;
-	userVotes: Record<number, "up" | "down" | null>;
-	onVote: (id: number, action: "up" | "down") => void;
-	onFlag: (id: number) => void;
+function getInitials(name: string) {
+	return name
+		.split(" ")
+		.slice(0, 2)
+		.map((part) => part.charAt(0).toUpperCase())
+		.join("");
 }
 
-export default function Comment({
-	id,
-	author,
-	date,
-	commentText,
-	avatar,
-	votes,
-	userVotes,
-	onVote,
-	onFlag,
-}: CommentProps) {
+export default function Comment({ author, postedAt, score, text }: PostComment) {
 	const { locale, messages } = useI18n();
 	const formattedDate = (d: string) =>
 		new Date(d).toLocaleDateString(getIntlLocale(locale), {
@@ -48,77 +31,50 @@ export default function Comment({
 			year: "numeric",
 		});
 
-	function formattedAuthor(a: string) {
-		const result = a.length > 20 ? `${a.slice(0, 20)}...` : a;
+	function formattedAuthor(name: string) {
+		const result = name.length > 20 ? `${name.slice(0, 20)}...` : name;
 		return result.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
 	}
 
 	const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 	return (
-		<div className="flex mt-7 items-start">
-			<div className="flex flex-col mr-3">
+		<article className="mt-7 rounded-[24px] border border-zinc-700/50 bg-greyBg/55 p-5">
+			<div className="flex items-start justify-between gap-4">
 				<LocalizedLink
-					href={`/profile/${slugify(author, { lower: true, strict: true })}`}
+					href={`/profile/${author.slug}`}
+					className="flex items-center gap-3"
 				>
-					<Image
-						className="w-10 h-10 object-cover rounded-full"
-						src={avatar}
-						alt={author}
-						title={author}
-						width={40}
-						height={40}
-					/>
-				</LocalizedLink>
-				<div className="flex flex-col items-center mt-2">
-					<button
-						type="button"
-						onClick={() => onVote(id, "up")}
-						className={`text-gray-300 ${userVotes[id] === "up" && "text-purpleContrast"} hover:text-purpleContrast transition-all`}
-					>
-						<FaChevronUp />
-					</button>
-					<span>{votes[id]}</span>
-					<button
-						type="button"
-						onClick={() => onVote(id, "down")}
-						className={`text-gray-300 ${userVotes[id] === "down" && "text-purpleContrast"} hover:text-purpleContrast transition-all`}
-					>
-						<FaChevronDown />
-					</button>
-				</div>
-			</div>
-
-			<div className="flex flex-col w-full h-full px-4">
-				<div className="flex justify-between items-center mb-2">
+					{author.profilePicture ? (
+						<img
+							className="h-11 w-11 rounded-full border border-zinc-700/60 object-cover"
+							src={author.profilePicture}
+							alt={author.name}
+							title={author.name}
+						/>
+					) : (
+						<div className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700/60 bg-darkBg/75 text-sm font-semibold text-wheat">
+							{getInitials(author.name)}
+						</div>
+					)}
 					<div>
-						<LocalizedLink
-							href={`/profile/${slugify(author, { lower: true, strict: true })}`}
-							rel="author"
-							className="text-gray-100 font-bold text-lg hover:text-purpleContrast transition-all ease-in-out"
-						>
-							{formattedAuthor(author)}
-						</LocalizedLink>
-						<p className="flex gap-1 font-europa text-zinc-300 text-sm">
-							<span title={capitalize(fullFormattedDate(date))}>
-								{messages.post.postedOn(formattedDate(date))}
+						<p className="text-lg font-semibold text-zinc-100 transition-all ease-in-out hover:text-purpleContrast">
+							{formattedAuthor(author.name)}
+						</p>
+						<p className="flex gap-1 text-sm text-zinc-400">
+							<span title={capitalize(fullFormattedDate(postedAt))}>
+								{messages.post.postedOn(formattedDate(postedAt))}
 							</span>
 						</p>
 					</div>
-
-					<button
-						type="button"
-						onClick={() => onFlag(id)}
-						className="hover:text-purpleContrast transition-all ease-in-out"
-						aria-label={messages.post.reportComment}
-						title={messages.post.reportComment}
-					>
-						<FaFlag />
-					</button>
+				</LocalizedLink>
+				<div className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/55 px-3 py-1.5 text-sm text-zinc-300">
+					<FaArrowTrendUp className={score > 0 ? "text-purpleContrast" : ""} />
+					<span>{score}</span>
 				</div>
-
-				<p className="text-zinc-400">{commentText}</p>
 			</div>
-		</div>
+
+			<p className="mt-4 text-zinc-300">{text}</p>
+		</article>
 	);
 }

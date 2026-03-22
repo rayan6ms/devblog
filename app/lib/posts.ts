@@ -250,48 +250,67 @@ function mapPostForList(
 		date: post.postedAt.toISOString(),
 		views: post.views,
 		bookmarks: post.bookmarks,
+		isBookmarked: false,
 		hasStartedReading: false,
 		percentRead: 0,
 		description: localized.description,
 	};
 }
 
-async function hydratePostReadingProgress(
+async function hydratePostUserState(
 	posts: PostListItem[],
 	userId?: string | null,
 ) {
-	if (!userId || posts.length === 0) {
+	if (posts.length === 0) {
 		return posts;
 	}
 
-	const progressRows = await prisma.progress.findMany({
-		where: {
-			userId,
-			postId: {
-				in: posts.map((post) => post.id),
+	if (!userId) {
+		return posts.map((post) => ({
+			...post,
+			isBookmarked: false,
+		}));
+	}
+
+	const [progressRows, bookmarkRows] = await Promise.all([
+		prisma.progress.findMany({
+			where: {
+				userId,
+				postId: {
+					in: posts.map((post) => post.id),
+				},
 			},
-		},
-		select: {
-			postId: true,
-			percentageRead: true,
-		},
-	});
+			select: {
+				postId: true,
+				percentageRead: true,
+			},
+		}),
+		prisma.userBookmark.findMany({
+			where: {
+				userId,
+				postId: {
+					in: posts.map((post) => post.id),
+				},
+			},
+			select: {
+				postId: true,
+			},
+		}),
+	]);
 	const progressByPostId = new Map(
 		progressRows
 			.filter((row) => shouldPersistReadingProgress(row.percentageRead))
 			.map((row) => [row.postId, clampReadingProgress(row.percentageRead)]),
 	);
+	const bookmarkedPostIds = new Set(bookmarkRows.map((row) => row.postId));
 
 	return posts.map((post) => {
 		const percentRead = progressByPostId.get(post.id);
-		if (typeof percentRead !== "number") {
-			return post;
-		}
-
 		return {
 			...post,
-			hasStartedReading: true,
-			percentRead,
+			isBookmarked: bookmarkedPostIds.has(post.id),
+			hasStartedReading: typeof percentRead === "number",
+			percentRead: typeof percentRead === "number" ? percentRead : 0,
 		};
 	});
 }
@@ -463,7 +482,7 @@ export async function getPostCatalog(options?: {
 		options?.sort === "trending"
 			? sortTrendingPosts(filtered)
 			: sortRecentPosts(filtered);
-	const hydrated = await hydratePostReadingProgress(
+	const hydrated = await hydratePostUserState(
 		paginatePosts(sorted, options?.page, options?.limit),
 		options?.userId,
 	);
@@ -607,7 +626,7 @@ export async function getRecommendedPostCatalog(options?: {
 }): Promise<PostCatalogResponse> {
 	const limit = options?.limit ?? 10;
 	const allPosts = await getPublishedPostsWithAuthor(options?.locale);
-	const fallbackPosts = await hydratePostReadingProgress(
+	const fallbackPosts = await hydratePostUserState(
 		sortFallbackRecommendedPosts(
 			allPosts.map((post) => mapPostForList(post, options?.locale)),
 			limit,
@@ -646,7 +665,7 @@ export async function getRecommendedPostCatalog(options?: {
 		.map((entry) => mapPostForList(entry.post, options?.locale));
 
 	const posts = mergeUniquePostLists([scoredPosts, fallbackPosts], limit);
-	const hydratedPosts = await hydratePostReadingProgress(
+	const hydratedPosts = await hydratePostUserState(
 		posts,
 		options?.userId,
 	);

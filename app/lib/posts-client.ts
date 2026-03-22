@@ -38,6 +38,7 @@ function normalizePost(post: IPost): IPost {
 		tags: Array.isArray(post.tags) ? post.tags : [],
 		views: typeof post.views === "number" ? post.views : 0,
 		bookmarks: typeof post.bookmarks === "number" ? post.bookmarks : 0,
+		isBookmarked: Boolean(post.isBookmarked),
 		hasStartedReading: Boolean(post.hasStartedReading),
 		percentRead: typeof post.percentRead === "number" ? post.percentRead : 0,
 	};

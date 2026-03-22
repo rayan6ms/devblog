@@ -32,6 +32,7 @@ export type PostListItem = {
 	date: string;
 	views: number;
 	bookmarks: number;
+	isBookmarked: boolean;
 	hasStartedReading: boolean;
 	percentRead: number;
 	description: string;

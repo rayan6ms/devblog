@@ -59,6 +59,10 @@ export default function Profile() {
 	const params = useParams<{ id: string }>();
 	const { replace } = useLocaleNavigation();
 	const profileId = params.id;
+	const showDraftPosts = Boolean(user?.isCurrentUser);
+	const showPendingReviewQueue = Boolean(
+		user?.isCurrentUser && (user.role === "admin" || user.role === "owner"),
+	);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -278,6 +282,25 @@ export default function Profile() {
 									items={user.viewedPosts}
 								/>
 							</div>
+
+							{showDraftPosts || showPendingReviewQueue ? (
+								<div className="grid gap-6 xl:grid-cols-2">
+									{showDraftPosts ? (
+										<Slider
+											title={messages.post.statusDraft}
+											iconKey="drafts"
+											items={user.draftPosts}
+										/>
+									) : null}
+									{showPendingReviewQueue ? (
+										<Slider
+											title={messages.post.statusPendingReview}
+											iconKey="pendingReview"
+											items={user.pendingReviewPosts}
+										/>
+									) : null}
+								</div>
+							) : null}
 
 							<Comments comments={user.comments} />
 						</div>

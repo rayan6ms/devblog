@@ -17,6 +17,8 @@ export type ProfilePost = {
 	mainTag: string;
 	tags: string[];
 	description: string | null;
+	authorName?: string | null;
+	authorSlug?: string | null;
 };
 
 export type ProfileComment = {
@@ -58,6 +60,8 @@ export type ProfileUser = {
 	stats: ProfileStats;
 	bookmarks: ProfilePost[];
 	viewedPosts: ProfilePost[];
+	draftPosts: ProfilePost[];
+	pendingReviewPosts: ProfilePost[];
 	comments: ProfileComment[];
 	isCurrentUser: boolean;
 };

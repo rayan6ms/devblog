@@ -157,7 +157,7 @@ export default function RecentItem({
 					>
 						{mainTag}
 					</button>
-					<Popover iconSize="lg" />
+					<Popover post={post} iconSize="lg" />
 				</div>
 			)}
 			<div className={`flex ${isBig ? "mt-8 items-start" : "items-start"}`}>
@@ -167,7 +167,7 @@ export default function RecentItem({
 				>
 					{title}
 				</p>
-				{isBig && <Popover iconSize="xl" />}
+				{isBig && <Popover post={post} iconSize="xl" />}
 			</div>
 			<div
 				className={`flex gap-4 pt-2 text-sm text-zinc-400 font-europa ${isBig ? "mx-auto mb-4" : ""}`}

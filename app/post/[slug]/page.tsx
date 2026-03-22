@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import LocalizedLink from "@/components/LocalizedLink";
 import { auth } from "@/lib/auth";
+import { getCommentsForPost } from "@/lib/comments";
 import { getMessages } from "@/lib/i18n";
 import { canViewPost, slugifyPostValue } from "@/lib/post-shared";
 import {
@@ -75,7 +76,12 @@ export default async function Page({ params }: PostPageProps) {
 	}
 
 	const post = mapPostForPage(postRecord, locale);
-	const relatedPosts = await getRelatedPosts(postRecord, locale, 3);
+	const [relatedPosts, comments] = await Promise.all([
+		getRelatedPosts(postRecord, locale, 3),
+		postRecord.status === "published"
+			? getCommentsForPost(postRecord.id)
+			: Promise.resolve([]),
+	]);
 	const articleJsonLd = {
 		"@context": "https://schema.org",
 		"@type": "BlogPosting",
@@ -125,9 +131,13 @@ export default async function Page({ params }: PostPageProps) {
 
 						<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
 							<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
-								<ReadingProgressTracker postId={post.id} />
+								{post.status === "published" ? (
+									<ReadingProgressTracker postId={post.id} postSlug={post.slug} />
+								) : null}
 								<PostBody markdown={post.content} />
-								<CommentSection />
+								{post.status === "published" ? (
+									<CommentSection postId={post.id} initialComments={comments} />
+								) : null}
 							</div>
 
 							<aside className="grid gap-6 xl:sticky xl:top-28 xl:self-start">

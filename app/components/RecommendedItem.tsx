@@ -51,7 +51,7 @@ export default function RecommendedItem({
 					>
 						{mainTag}
 					</button>
-					<Popover iconSize="lg" />
+					<Popover post={post} iconSize="lg" />
 				</div>
 				<h3
 					className="w-full max-h-[70px] text-lg font-sans font-semibold leading-6 line-clamp-3"

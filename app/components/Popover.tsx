@@ -2,26 +2,28 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { IconType } from "react-icons";
-import {
-	FaBookmark,
-	FaEllipsisVertical,
-	FaShareNodes,
-	FaThumbsDown,
-	FaThumbsUp,
-} from "react-icons/fa6";
+import { FaBookmark, FaEllipsisVertical, FaShareNodes } from "react-icons/fa6";
+import { emitClientAuthChange, useClientAuth } from "@/components/useClientAuth";
+import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { getPostHref, type IPost } from "@/lib/posts-client";
 import { useI18n } from "./LocaleProvider";
 
 type PopoverProps = {
+	post: IPost;
 	iconSize?: "lg" | "xl" | number;
 	hoverBg?: string;
 };
 
 export default function Popover({
+	post,
 	iconSize,
 	hoverBg = "greyBg",
 }: PopoverProps) {
 	const { messages } = useI18n();
+	const { isAuthed } = useClientAuth();
+	const { push } = useLocaleNavigation();
 	const [isOpen, setIsOpen] = useState(false);
+	const [isBookmarked, setIsBookmarked] = useState(Boolean(post.isBookmarked));
 	const ref = useRef<HTMLDivElement>(null);
 	const menuId = useId();
 	const hoverClass =
@@ -39,32 +41,63 @@ export default function Popover({
 		setIsOpen((prev) => !prev);
 	}
 
-	// TODO - Rewrite buttons onClick to a single function
-	function handleBookmark(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+	async function handleBookmark(
+		e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+	) {
 		e.preventDefault();
 		e.stopPropagation();
-		console.log("Bookmark clicked");
+
+		if (!isAuthed) {
+			setIsOpen(false);
+			push("/login");
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/post/${encodeURIComponent(post.slug)}/bookmark`,
+				{
+					method: "POST",
+					cache: "no-store",
+				},
+			);
+			if (response.status === 401) {
+				setIsOpen(false);
+				push("/login");
+				return;
+			}
+
+			if (!response.ok) {
+				return;
+			}
+
+			const result = (await response.json()) as {
+				bookmarked?: boolean;
+			};
+			setIsBookmarked(Boolean(result.bookmarked));
+			emitClientAuthChange();
+		} catch {}
+
 		setIsOpen(false);
 	}
 
-	function handleShare(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+	async function handleShare(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
 		e.preventDefault();
 		e.stopPropagation();
-		console.log("Share clicked");
-		setIsOpen(false);
-	}
 
-	function handleShowMore(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-		e.preventDefault();
-		e.stopPropagation();
-		console.log("Show more clicked");
-		setIsOpen(false);
-	}
+		const shareUrl = new URL(getPostHref(post), window.location.origin).toString();
 
-	function handleShowLess(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-		e.preventDefault();
-		e.stopPropagation();
-		console.log("Show less clicked");
+		try {
+			if (navigator.share) {
+				await navigator.share({
+					title: post.title,
+					url: shareUrl,
+				});
+			} else if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(shareUrl);
+			}
+		} catch {}
+
 		setIsOpen(false);
 	}
 
@@ -82,16 +115,6 @@ export default function Popover({
 			icon: FaShareNodes,
 			text: messages.popover.share,
 			onClick: handleShare,
-		},
-		{
-			icon: FaThumbsUp,
-			text: messages.popover.moreLikeThis,
-			onClick: handleShowMore,
-		},
-		{
-			icon: FaThumbsDown,
-			text: messages.popover.lessLikeThis,
-			onClick: handleShowLess,
 		},
 	];
 
@@ -161,7 +184,13 @@ export default function Popover({
 									role="menuitem"
 									onClick={button.onClick}
 								>
-									<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-700/70 bg-darkBg/80 text-zinc-200">
+									<span
+										className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-700/70 bg-darkBg/80 text-zinc-200 ${
+											button.icon === FaBookmark && isBookmarked
+												? "border-purpleContrast/60 text-purpleContrast"
+												: ""
+										}`}
+									>
 										<Icon className="shrink-0" />
 									</span>
 									<span className="min-w-0 text-sm font-medium text-wheat">

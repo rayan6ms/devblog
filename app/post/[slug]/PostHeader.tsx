@@ -52,7 +52,7 @@ export default async function PostHeader({
 
 	return (
 		<section className="overflow-hidden rounded-[28px] border border-zinc-700/50 bg-greyBg/80 shadow-lg shadow-zinc-950/10">
-			<div className="grid gap-6 border-b border-zinc-700/50 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
+			<div className="grid gap-6 border-b border-zinc-700/50 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
 				<div>
 					<div className="flex flex-wrap items-start justify-between gap-3">
 						<div className="flex flex-wrap gap-2">
@@ -95,61 +95,55 @@ export default async function PostHeader({
 					<p className="mt-4 max-w-3xl text-base leading-8 text-zinc-300">
 						{post.description}
 					</p>
-				</div>
 
-				<div className="rounded-[24px] border border-zinc-700/50 bg-darkBg/50 p-5">
-					<div className="flex items-center gap-4">
-						{post.author.profilePicture ? (
-							<img
-								src={post.author.profilePicture}
-								alt={post.author.name}
-								className="h-14 w-14 rounded-full border border-zinc-600/60 object-cover"
-							/>
-						) : (
-							<div className="flex h-14 w-14 items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/80 text-sm font-semibold text-wheat">
-								{getInitials(post.author.name)}
-							</div>
-						)}
-						<div>
-							<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-								{messages.post.writtenBy}
-							</p>
-							<LocalizedLink
-								href={`/profile/${post.author.slug}`}
-								className="mt-1 block text-lg font-semibold text-zinc-100 transition-colors hover:text-wheat"
-							>
-								{post.author.name}
-							</LocalizedLink>
+					<div className="mt-6 flex flex-wrap gap-3">
+						<LocalizedLink
+							href={`/profile/${post.author.slug}`}
+							className="inline-flex items-center gap-3 rounded-full border border-zinc-700/60 bg-darkBg/55 px-3 py-2 text-sm text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+						>
+							{post.author.profilePicture ? (
+								<img
+									src={post.author.profilePicture}
+									alt={post.author.name}
+									className="h-9 w-9 rounded-full border border-zinc-600/60 object-cover"
+								/>
+							) : (
+								<div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-600/60 bg-greyBg/80 text-xs font-semibold text-wheat">
+									{getInitials(post.author.name)}
+								</div>
+							)}
+							<span className="min-w-0">
+								<span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+									{messages.post.writtenBy}
+								</span>
+								<span className="block truncate font-semibold text-zinc-100">
+									{post.author.name}
+								</span>
+							</span>
+						</LocalizedLink>
+
+						<div className="inline-flex flex-wrap items-center gap-3 rounded-full border border-zinc-700/60 bg-darkBg/55 px-4 py-2 text-sm text-zinc-300">
+							<span className="inline-flex items-center gap-2">
+								<FaClock />
+								{readTime} {messages.common.minutesShort}
+							</span>
+							<span className="inline-flex items-center gap-2">
+								<FaEye />
+								{formatViews(post.views)}
+							</span>
+							<span className="inline-flex items-center gap-2">
+								<FaBookmark />
+								{formatViews(post.bookmarks)}
+							</span>
 						</div>
 					</div>
+				</div>
 
-					<div className="mt-5 grid gap-3 text-sm text-zinc-400">
+				<div className="rounded-[24px] border border-zinc-700/50 bg-darkBg/50 p-4">
+					<div className="grid gap-3 text-sm text-zinc-400 sm:grid-cols-2 lg:grid-cols-1">
 						<div className="flex items-center justify-between">
 							<span>{dateLabel}</span>
 							<time dateTime={post.postedAt}>{formattedDate}</time>
-						</div>
-						<div className="flex items-center justify-between">
-							<span className="inline-flex items-center gap-2">
-								<FaClock />
-								{messages.common.readTime}
-							</span>
-							<span>
-								{readTime} {messages.common.minutesShort}
-							</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span className="inline-flex items-center gap-2">
-								<FaEye />
-								{messages.common.views}
-							</span>
-							<span>{formatViews(post.views)}</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span className="inline-flex items-center gap-2">
-								<FaBookmark />
-								{messages.common.bookmarks}
-							</span>
-							<span>{formatViews(post.bookmarks)}</span>
 						</div>
 						{post.edited && post.lastEditedAt ? (
 							<div className="flex items-center justify-between">

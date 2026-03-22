@@ -2,7 +2,7 @@
 
 import type React from "react";
 import type { IconType } from "react-icons";
-import { FaBookmark, FaEye } from "react-icons/fa6";
+import { FaBookmark, FaClock, FaEye, FaFileLines } from "react-icons/fa6";
 import slugify from "slugify";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
@@ -11,13 +11,15 @@ import type { ProfilePost } from "@/profile/types";
 
 type SliderProps = {
 	title: string;
-	iconKey: "bookmarks" | "viewedPosts";
+	iconKey: "bookmarks" | "viewedPosts" | "drafts" | "pendingReview";
 	items?: ProfilePost[] | null;
 };
 
 const icons: Record<SliderProps["iconKey"], IconType> = {
 	viewedPosts: FaEye,
 	bookmarks: FaBookmark,
+	drafts: FaFileLines,
+	pendingReview: FaClock,
 };
 
 function SliderItem({ item }: { item: ProfilePost }) {
@@ -57,6 +59,11 @@ function SliderItem({ item }: { item: ProfilePost }) {
 				<p className="line-clamp-3 text-sm leading-7 text-zinc-300">
 					{item.description || messages.common.noItemsYet}
 				</p>
+				{item.authorName ? (
+					<p className="mt-3 text-xs uppercase tracking-[0.14em] text-zinc-500">
+						{item.authorName}
+					</p>
+				) : null}
 				<div className="mt-3 flex flex-wrap gap-2">
 					{item.tags.slice(0, 3).map((tag) => (
 						<span

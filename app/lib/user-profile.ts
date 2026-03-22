@@ -2,6 +2,7 @@ import type { Prisma, Role, User } from "@prisma/client";
 import slugify from "slugify";
 import prisma from "@/database/prisma";
 import { buildLetterAvatar, isGeneratedAvatar } from "@/lib/avatar";
+import { canManageAllPosts } from "@/lib/post-shared";
 import {
 	emptySocialLinks,
 	normalizeSocialLinks,
@@ -43,6 +44,11 @@ const publicProfileSelect = {
 		},
 	},
 	bookmarks: {
+		where: {
+			post: {
+				status: "published",
+			},
+		},
 		orderBy: {
 			createdAt: "desc",
 		},
@@ -61,6 +67,11 @@ const publicProfileSelect = {
 		},
 	},
 	views: {
+		where: {
+			post: {
+				status: "published",
+			},
+		},
 		orderBy: {
 			createdAt: "desc",
 		},
@@ -79,6 +90,11 @@ const publicProfileSelect = {
 		},
 	},
 	comments: {
+		where: {
+			post: {
+				status: "published",
+			},
+		},
 		orderBy: {
 			postedAt: "desc",
 		},
@@ -153,13 +169,14 @@ export function resolveAvatarMode(user: {
 export function resolveProfilePicture(user: {
 	name?: string | null;
 	email?: string | null;
+	username?: string | null;
 	image?: string | null;
 	profilePic?: string | null;
 }) {
 	return (
 		user.profilePic ||
 		user.image ||
-		buildLetterAvatar(user.name || user.email || "User")
+		buildLetterAvatar(user.name || user.email || user.username || "User")
 	);
 }
 
@@ -230,6 +247,11 @@ function mapPost(post: {
 	mainTag: string;
 	tags: string[];
 	description: string | null;
+	author?: {
+		name: string | null;
+		username?: string | null;
+		slug: string | null;
+	};
 }): ProfilePost {
 	return {
 		id: post.id,
@@ -238,6 +260,12 @@ function mapPost(post: {
 		mainTag: post.mainTag,
 		tags: post.tags,
 		description: post.description,
+		authorName:
+			post.author?.name?.trim() ||
+			post.author?.username?.trim() ||
+			post.author?.slug?.trim() ||
+			null,
+		authorSlug: post.author?.slug || null,
 	};
 }
 
@@ -281,6 +309,8 @@ export function serializeProfile(
 	options?: {
 		isCurrentUser?: boolean;
 		includePrivateFields?: boolean;
+		draftPosts?: ProfilePost[];
+		pendingReviewPosts?: ProfilePost[];
 	},
 ): ProfileUser {
 	const socialLinks = normalizeSocialLinks(user.socialLinks) as SocialLinks;
@@ -317,8 +347,63 @@ export function serializeProfile(
 		},
 		bookmarks: user.bookmarks.map((bookmark) => mapPost(bookmark.post)),
 		viewedPosts: user.views.map((view) => mapPost(view.post)),
+		draftPosts: options?.draftPosts || [],
+		pendingReviewPosts: options?.pendingReviewPosts || [],
 		comments: user.comments.map(mapComment),
 		isCurrentUser: Boolean(options?.isCurrentUser),
+	};
+}
+
+async function getPrivateProfilePostCollections(user: {
+	id: string;
+	role?: Role | string | null;
+}) {
+	const [draftPosts, pendingReviewPosts] = await Promise.all([
+		prisma.post.findMany({
+			where: {
+				authorId: user.id,
+				status: "draft",
+			},
+			orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+			take: 12,
+			select: {
+				id: true,
+				title: true,
+				slug: true,
+				mainTag: true,
+				tags: true,
+				description: true,
+			},
+		}),
+		canManageAllPosts(user.role)
+			? prisma.post.findMany({
+					where: {
+						status: "pending_review",
+					},
+					orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+					take: 12,
+					select: {
+						id: true,
+						title: true,
+						slug: true,
+						mainTag: true,
+						tags: true,
+						description: true,
+						author: {
+							select: {
+								name: true,
+								username: true,
+								slug: true,
+							},
+						},
+					},
+				})
+			: Promise.resolve([]),
+	]);
+
+	return {
+		draftPosts: draftPosts.map(mapPost),
+		pendingReviewPosts: pendingReviewPosts.map(mapPost),
 	};
 }
 
@@ -332,9 +417,12 @@ export async function getCurrentUserProfile(userId: string) {
 		return null;
 	}
 
+	const privateCollections = await getPrivateProfilePostCollections(user);
+
 	return serializeProfile(user, {
 		isCurrentUser: true,
 		includePrivateFields: true,
+		...privateCollections,
 	});
 }
 
@@ -350,8 +438,17 @@ export async function findUserProfile(profileKey: string, viewerId?: string) {
 		return null;
 	}
 
+	const privateCollections =
+		viewerId === user.id
+			? await getPrivateProfilePostCollections(user)
+			: {
+					draftPosts: [],
+					pendingReviewPosts: [],
+				};
+
 	return serializeProfile(user, {
 		isCurrentUser: viewerId === user.id,
 		includePrivateFields: viewerId === user.id,
+		...privateCollections,
 	});
 }

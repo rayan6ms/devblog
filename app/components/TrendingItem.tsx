@@ -72,7 +72,7 @@ export default function TrendingItem({
 					>
 						{mainTag}
 					</button>
-					<Popover iconSize="lg" hoverBg="[#34373d]" />
+					<Popover post={post} iconSize="lg" hoverBg="[#34373d]" />
 				</div>
 				<h3
 					className="w-full max-h-[70px] break-words text-lg font-sans font-semibold leading-6 line-clamp-3 hyphens-auto"

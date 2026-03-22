@@ -10,6 +10,7 @@ import {
 
 const AUTOSAVE_DELAY_MS = 4000;
 const ARTICLE_SELECTOR = '[data-reading-progress-root="true"]';
+const VIEWED_POSTS_STORAGE_PREFIX = "devblog:tracked-post-views:";
 
 function getReadingProgress() {
 	const article = document.querySelector<HTMLElement>(ARTICLE_SELECTOR);
@@ -48,12 +49,51 @@ function getReadingProgress() {
 	return clampReadingProgress(rawProgress);
 }
 
-export default function ReadingProgressTracker({ postId }: { postId: string }) {
+export default function ReadingProgressTracker({
+	postId,
+	postSlug,
+}: {
+	postId: string;
+	postSlug: string;
+}) {
 	const { data: session, status } = useSession();
 	const maxProgressRef = useRef(0);
 	const lastSyncedRef = useRef<number | null>(null);
 	const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const frameRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		if (status === "loading") {
+			return;
+		}
+
+		const viewerKey = session?.user?.id || "anon";
+		const storageKey = `${VIEWED_POSTS_STORAGE_PREFIX}${viewerKey}`;
+
+		try {
+			const storedIds = new Set<string>(
+				JSON.parse(localStorage.getItem(storageKey) || "[]") as string[],
+			);
+			if (storedIds.has(postId)) {
+				return;
+			}
+
+			void fetch(`/api/post/${encodeURIComponent(postSlug)}/view`, {
+				method: "POST",
+				cache: "no-store",
+				credentials: "same-origin",
+			})
+				.then((response) => {
+					if (!response.ok) {
+						return;
+					}
+
+					storedIds.add(postId);
+					localStorage.setItem(storageKey, JSON.stringify(Array.from(storedIds)));
+				})
+				.catch(() => {});
+		} catch {}
+	}, [postId, postSlug, session?.user?.id, status]);
 
 	useEffect(() => {
 		if (status !== "authenticated" || !session?.user?.id) {
