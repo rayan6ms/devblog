@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
 	FaArrowRightFromBracket,
+	FaGamepad,
 	FaLightbulb,
 	FaPlus,
 	FaRightToBracket,
@@ -29,7 +30,7 @@ const NAV_LINKS = [
 	{ href: "/trending", key: "trending" },
 	{ href: "/tag", key: "tags" },
 	{ href: "/about", key: "about" },
-	{ href: "/playground", key: "playground" },
+	{ href: "/playground", key: "playground", iconOnly: true },
 ];
 
 function LinkPill({
@@ -38,28 +39,43 @@ function LinkPill({
 	label,
 	onClick,
 	compact = false,
+	iconOnly = false,
 }: {
 	active: boolean;
 	href: string;
 	label: string;
 	onClick?: () => void;
 	compact?: boolean;
+	iconOnly?: boolean;
 }) {
 	return (
 		<LocalizedLink
 			href={href}
 			onClick={onClick}
+			aria-label={label}
+			title={label}
 			className={`border font-semibold uppercase transition-colors ${
 				compact
-					? "rounded-2xl px-3 py-2 text-xs tracking-[0.15em]"
-					: "rounded-full px-4 py-2 text-sm tracking-[0.18em]"
+					? iconOnly
+						? "rounded-2xl px-2.5 py-2 text-xs tracking-[0.15em]"
+						: "rounded-2xl px-3 py-2 text-xs tracking-[0.15em]"
+					: iconOnly
+						? "rounded-full px-3 py-2 text-sm tracking-[0.18em]"
+						: "rounded-full px-4 py-2 text-sm tracking-[0.18em]"
 			} ${
 				active
 					? "border-purpleContrast/50 bg-purpleContrast/15 text-wheat"
 					: "border-zinc-700/60 bg-greyBg/55 text-zinc-300 hover:border-zinc-500/70 hover:text-wheat"
 			}`}
 		>
-			{label}
+			{iconOnly ? (
+				<span className="inline-flex items-center justify-center">
+					<FaGamepad aria-hidden="true" className="text-base" />
+					<span className="sr-only">{label}</span>
+				</span>
+			) : (
+				label
+			)}
 		</LocalizedLink>
 	);
 }
@@ -168,6 +184,7 @@ export default function NavBar() {
 											active={pathname === item.href}
 											href={item.href}
 											label={item.label}
+											iconOnly={item.iconOnly}
 										/>
 									</li>
 								))}
@@ -346,6 +363,7 @@ export default function NavBar() {
 												href={item.href}
 												label={item.label}
 												compact
+												iconOnly={item.iconOnly}
 											/>
 										</li>
 									))}

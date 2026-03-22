@@ -2,7 +2,6 @@ import type { Prisma, Role, User } from "@prisma/client";
 import slugify from "slugify";
 import prisma from "@/database/prisma";
 import { buildLetterAvatar, isGeneratedAvatar } from "@/lib/avatar";
-import { canManageAllPosts } from "@/lib/post-shared";
 import {
 	emptySocialLinks,
 	normalizeSocialLinks,
@@ -310,7 +309,6 @@ export function serializeProfile(
 		isCurrentUser?: boolean;
 		includePrivateFields?: boolean;
 		draftPosts?: ProfilePost[];
-		pendingReviewPosts?: ProfilePost[];
 	},
 ): ProfileUser {
 	const socialLinks = normalizeSocialLinks(user.socialLinks) as SocialLinks;
@@ -348,7 +346,6 @@ export function serializeProfile(
 		bookmarks: user.bookmarks.map((bookmark) => mapPost(bookmark.post)),
 		viewedPosts: user.views.map((view) => mapPost(view.post)),
 		draftPosts: options?.draftPosts || [],
-		pendingReviewPosts: options?.pendingReviewPosts || [],
 		comments: user.comments.map(mapComment),
 		isCurrentUser: Boolean(options?.isCurrentUser),
 	};
@@ -356,54 +353,26 @@ export function serializeProfile(
 
 async function getPrivateProfilePostCollections(user: {
 	id: string;
-	role?: Role | string | null;
 }) {
-	const [draftPosts, pendingReviewPosts] = await Promise.all([
-		prisma.post.findMany({
-			where: {
-				authorId: user.id,
-				status: "draft",
-			},
-			orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-			take: 12,
-			select: {
-				id: true,
-				title: true,
-				slug: true,
-				mainTag: true,
-				tags: true,
-				description: true,
-			},
-		}),
-		canManageAllPosts(user.role)
-			? prisma.post.findMany({
-					where: {
-						status: "pending_review",
-					},
-					orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-					take: 12,
-					select: {
-						id: true,
-						title: true,
-						slug: true,
-						mainTag: true,
-						tags: true,
-						description: true,
-						author: {
-							select: {
-								name: true,
-								username: true,
-								slug: true,
-							},
-						},
-					},
-				})
-			: Promise.resolve([]),
-	]);
+	const draftPosts = await prisma.post.findMany({
+		where: {
+			authorId: user.id,
+			status: "draft",
+		},
+		orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+		take: 12,
+		select: {
+			id: true,
+			title: true,
+			slug: true,
+			mainTag: true,
+			tags: true,
+			description: true,
+		},
+	});
 
 	return {
 		draftPosts: draftPosts.map(mapPost),
-		pendingReviewPosts: pendingReviewPosts.map(mapPost),
 	};
 }
 
@@ -443,7 +412,6 @@ export async function findUserProfile(profileKey: string, viewerId?: string) {
 			? await getPrivateProfilePostCollections(user)
 			: {
 					draftPosts: [],
-					pendingReviewPosts: [],
 				};
 
 	return serializeProfile(user, {

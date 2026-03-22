@@ -23,6 +23,7 @@ export default function CommentSection({
 	const [submitError, setSubmitError] = useState("");
 	const currentUser = profile?.name || "Guest";
 	const avatarLetter = currentUser.charAt(0).toUpperCase() || "G";
+	const avatarSrc = profile?.profilePicture || "";
 
 	const handleComment = async () => {
 		if (!isAuthed) {
@@ -77,9 +78,17 @@ export default function CommentSection({
 			</h2>
 
 			<div className="mb-12 mt-5 flex items-start gap-4">
-				<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-zinc-700/60 bg-greyBg/75 text-sm font-semibold text-wheat">
-					{avatarLetter}
-				</div>
+				{avatarSrc ? (
+					<img
+						src={avatarSrc}
+						alt={currentUser}
+						className="h-12 w-12 shrink-0 rounded-full border border-zinc-700/60 object-cover"
+					/>
+				) : (
+					<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-zinc-700/60 bg-greyBg/75 text-sm font-semibold text-wheat">
+						{avatarLetter}
+					</div>
+				)}
 				<div className="flex h-full w-full flex-col overflow-hidden rounded-[24px] border border-zinc-700/50 bg-greyBg/90 shadow-md shadow-zinc-900">
 					<textarea
 						value={draft}

@@ -1,5 +1,6 @@
 import type { Role } from "@prisma/client";
 import Footer from "@/components/Footer";
+import LocalizedLink from "@/components/LocalizedLink";
 import prisma from "@/database/prisma";
 import AdminRoleManager from "@/admin/AdminRoleManager";
 import { getAdminCopy } from "@/admin/copy";
@@ -81,6 +82,28 @@ export default async function AdminPage() {
 		orderBy: [{ createdAt: "desc" }],
 	});
 	const initialUsers = users.map(mapManagedUser);
+	const pendingReviewPosts = await prisma.post.findMany({
+		where: {
+			status: "pending_review",
+		},
+		orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+		take: 12,
+		select: {
+			id: true,
+			title: true,
+			slug: true,
+			mainTag: true,
+			description: true,
+			updatedAt: true,
+			author: {
+				select: {
+					name: true,
+					username: true,
+					slug: true,
+				},
+			},
+		},
+	});
 
 	return (
 		<>
@@ -128,6 +151,84 @@ export default async function AdminPage() {
 						<p className="mt-3 max-w-3xl text-sm leading-7 text-zinc-400 sm:text-base">
 							{copy.ownerDescription}
 						</p>
+					</section>
+
+					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-6 shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="flex flex-wrap items-end justify-between gap-4">
+							<div>
+								<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+									{copy.pageEyebrow}
+								</p>
+								<h2 className="mt-3 text-3xl font-somerton text-wheat sm:text-4xl">
+									{copy.reviewTitle}
+								</h2>
+								<p className="mt-3 max-w-3xl text-sm leading-7 text-zinc-400 sm:text-base">
+									{copy.reviewDescription}
+								</p>
+							</div>
+							<div className="rounded-2xl border border-zinc-700/60 bg-greyBg/70 px-4 py-3">
+								<p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+									{copy.reviewTitle}
+								</p>
+								<p className="mt-1 text-lg font-semibold text-zinc-100">
+									{pendingReviewPosts.length}
+								</p>
+							</div>
+						</div>
+
+						<div className="mt-6 grid gap-4 xl:grid-cols-2">
+							{pendingReviewPosts.map((post) => {
+								const authorName =
+									post.author.name?.trim() ||
+									post.author.username?.trim() ||
+									post.author.slug?.trim() ||
+									"User";
+
+								return (
+									<article
+										key={post.id}
+										className="rounded-[24px] border border-zinc-700/50 bg-greyBg/70 p-5"
+									>
+										<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+											{post.mainTag}
+										</p>
+										<h3 className="mt-3 text-2xl font-somerton uppercase text-wheat">
+											{post.title}
+										</h3>
+										<p className="mt-3 text-sm leading-7 text-zinc-400">
+											{post.description || copy.reviewDescription}
+										</p>
+										<div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-zinc-400">
+											<span>
+												{copy.reviewBy} {authorName}
+											</span>
+											<time dateTime={post.updatedAt.toISOString()}>
+												{post.updatedAt.toLocaleDateString()}
+											</time>
+										</div>
+										<div className="mt-5 flex flex-wrap gap-3">
+											<LocalizedLink
+												href={`/post/${post.slug}/edit`}
+												className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
+											>
+												{copy.reviewEdit}
+											</LocalizedLink>
+											<LocalizedLink
+												href={`/post/${post.slug}`}
+												className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-4 py-2 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+											>
+												{copy.reviewView}
+											</LocalizedLink>
+										</div>
+									</article>
+								);
+							})}
+							{pendingReviewPosts.length === 0 ? (
+								<div className="rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/45 px-5 py-6 text-sm text-zinc-400">
+									{copy.reviewEmpty}
+								</div>
+							) : null}
+						</div>
 					</section>
 
 					<AdminRoleManager

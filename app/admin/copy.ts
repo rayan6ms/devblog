@@ -5,6 +5,12 @@ type AdminCopy = {
 	pageEyebrow: string;
 	pageTitle: string;
 	pageDescription: string;
+	reviewTitle: string;
+	reviewDescription: string;
+	reviewEmpty: string;
+	reviewBy: string;
+	reviewEdit: string;
+	reviewView: string;
 	ownerTitle: string;
 	ownerDescription: string;
 	accessEyebrow: string;
@@ -44,6 +50,13 @@ const en: AdminCopy = {
 	pageTitle: "Manage user roles",
 	pageDescription:
 		"Review registered users, promote trusted authors, and keep sensitive permissions in one guarded place.",
+	reviewTitle: "Pending review",
+	reviewDescription:
+		"Posts waiting for an admin or owner to review before publication.",
+	reviewEmpty: "No posts are currently waiting for review.",
+	reviewBy: "By",
+	reviewEdit: "Review post",
+	reviewView: "Open post",
 	ownerTitle: "Owner bootstrap",
 	ownerDescription:
 		"Set OWNER_EMAIL in your .env. That account becomes owner when it registers or signs in, and can promote the first admin from this page.",
@@ -86,6 +99,13 @@ const ptBR: AdminCopy = {
 	pageTitle: "Gerenciar papéis dos usuários",
 	pageDescription:
 		"Revise usuários cadastrados, promova autores confiáveis e mantenha permissões sensíveis em uma área protegida.",
+	reviewTitle: "Aguardando revisão",
+	reviewDescription:
+		"Posts esperando a revisão de um admin ou owner antes da publicação.",
+	reviewEmpty: "Nenhum post está aguardando revisão no momento.",
+	reviewBy: "Por",
+	reviewEdit: "Revisar post",
+	reviewView: "Abrir post",
 	ownerTitle: "Bootstrap do owner",
 	ownerDescription:
 		"Defina OWNER_EMAIL no seu .env. Essa conta vira owner quando se registra ou faz login, e pode promover o primeiro admin nesta página.",
@@ -128,6 +148,13 @@ const es: AdminCopy = {
 	pageTitle: "Gestionar roles de usuarios",
 	pageDescription:
 		"Revisa usuarios registrados, promueve autores de confianza y mantén los permisos sensibles en un solo lugar protegido.",
+	reviewTitle: "Pendientes de revisión",
+	reviewDescription:
+		"Posts esperando la revisión de un admin u owner antes de publicarse.",
+	reviewEmpty: "No hay posts esperando revisión ahora mismo.",
+	reviewBy: "Por",
+	reviewEdit: "Revisar post",
+	reviewView: "Abrir post",
 	ownerTitle: "Bootstrap del owner",
 	ownerDescription:
 		"Configura OWNER_EMAIL en tu .env. Esa cuenta se convierte en owner cuando se registra o inicia sesión, y puede promover al primer admin desde esta página.",

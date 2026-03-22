@@ -61,7 +61,6 @@ export type ProfileUser = {
 	bookmarks: ProfilePost[];
 	viewedPosts: ProfilePost[];
 	draftPosts: ProfilePost[];
-	pendingReviewPosts: ProfilePost[];
 	comments: ProfileComment[];
 	isCurrentUser: boolean;
 };
