@@ -18,40 +18,42 @@ type StaticRoute = {
 	priority: number;
 };
 
+const APP_DIRECTORY = path.join(process.cwd(), "app");
+
 const STATIC_ROUTES: StaticRoute[] = [
 	{
 		path: "/",
-		source: "app/page.tsx",
+		source: "page.tsx",
 		changeFrequency: "daily",
 		priority: 1,
 	},
 	{
 		path: "/about",
-		source: "app/about/page.tsx",
+		source: "about/page.tsx",
 		changeFrequency: "monthly",
 		priority: 0.6,
 	},
 	{
 		path: "/recent",
-		source: "app/recent/page.tsx",
+		source: "recent/page.tsx",
 		changeFrequency: "daily",
 		priority: 0.9,
 	},
 	{
 		path: "/trending",
-		source: "app/trending/page.tsx",
+		source: "trending/page.tsx",
 		changeFrequency: "daily",
 		priority: 0.8,
 	},
 	{
 		path: "/tag",
-		source: "app/tag/page.tsx",
+		source: "tag/page.tsx",
 		changeFrequency: "daily",
 		priority: 0.8,
 	},
 	{
 		path: "/playground",
-		source: "app/playground/page.tsx",
+		source: "playground/page.tsx",
 		changeFrequency: "weekly",
 		priority: 0.7,
 	},
@@ -69,7 +71,7 @@ function uniqueLocales(locales: Array<string | null | undefined>) {
 
 async function getFileModifiedDate(relativePath: string) {
 	try {
-		const { mtime } = await stat(path.join(process.cwd(), relativePath));
+		const { mtime } = await stat(path.join(APP_DIRECTORY, relativePath));
 		return mtime;
 	} catch {
 		return undefined;

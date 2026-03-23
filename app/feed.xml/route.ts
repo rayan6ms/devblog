@@ -1,9 +1,18 @@
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
+import type { Element, Root } from "hast";
+import rehypeHighlight from "rehype-highlight";
+import rehypeStringify from "rehype-stringify";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { type Plugin, unified } from "unified";
+import { visit } from "unist-util-visit";
 import { getPublishedPostsForFeed } from "@/lib/posts";
 import { markdownRemarkPlugins } from "@/lib/markdown";
-import { buildLocalizedUrl, getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
+import {
+	buildLocalizedUrl,
+	getSiteUrl,
+	SITE_DESCRIPTION,
+	SITE_NAME,
+} from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -21,7 +30,14 @@ function escapeCdata(value: string) {
 }
 
 function absolutizeMarkdownUrl(url: string, postUrl: string) {
-	const safeUrl = defaultUrlTransform(url);
+	const safeUrl = url.trim();
+	if (!safeUrl) {
+		return safeUrl;
+	}
+
+	if (/^(?:javascript|vbscript|data):/i.test(safeUrl)) {
+		return "";
+	}
 
 	if (/^[a-z][a-z\d+.-]*:/i.test(safeUrl)) {
 		return safeUrl;
@@ -30,17 +46,45 @@ function absolutizeMarkdownUrl(url: string, postUrl: string) {
 	return new URL(safeUrl, postUrl).toString();
 }
 
-function renderFeedHtml(markdown: string, postUrl: string) {
-	return renderToStaticMarkup(
-		createElement(
-			ReactMarkdown,
-			{
-				remarkPlugins: markdownRemarkPlugins,
-				urlTransform: (url) => absolutizeMarkdownUrl(url, postUrl),
-			},
-			markdown,
-		),
-	);
+function createRehypeAbsolutizeUrls(postUrl: string): Plugin<[], Root> {
+	return function rehypeAbsolutizeUrls() {
+		return (tree: Root) => {
+			visit(tree, "element", (node: Element) => {
+				if (!node.properties) {
+					return;
+				}
+
+				const propertyNames =
+					node.tagName === "a"
+						? ["href"]
+						: node.tagName === "img"
+							? ["src"]
+							: [];
+
+				for (const propertyName of propertyNames) {
+					const value = node.properties[propertyName];
+					if (typeof value !== "string") {
+						continue;
+					}
+
+					node.properties[propertyName] = absolutizeMarkdownUrl(value, postUrl);
+				}
+			});
+		};
+	};
+}
+
+async function renderFeedHtml(markdown: string, postUrl: string) {
+	const result = await unified()
+		.use(remarkParse)
+		.use(markdownRemarkPlugins)
+		.use(remarkRehype)
+		.use(rehypeHighlight, { detect: true })
+		.use(createRehypeAbsolutizeUrls(postUrl))
+		.use(rehypeStringify)
+		.process(markdown);
+
+	return String(result);
 }
 
 export async function GET() {
@@ -52,10 +96,10 @@ export async function GET() {
 			.map((post) => post.lastEditedAt || post.postedAt)
 			.sort((a, b) => b.localeCompare(a))[0] || new Date().toISOString();
 
-	const items = posts
-		.map((post) => {
+	const items = await Promise.all(
+		posts.map(async (post) => {
 			const postUrl = buildLocalizedUrl(`/post/${post.slug}`, post.originalLocale);
-			const fullContent = renderFeedHtml(post.content, postUrl);
+			const fullContent = await renderFeedHtml(post.content, postUrl);
 			const categories = [post.mainTag, ...post.tags]
 				.filter(Boolean)
 				.map((tag) => `<category>${escapeXml(tag)}</category>`)
@@ -70,8 +114,8 @@ export async function GET() {
 <content:encoded><![CDATA[${escapeCdata(fullContent)}]]></content:encoded>
 ${categories}
 </item>`;
-		})
-		.join("\n");
+		}),
+	);
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -83,7 +127,7 @@ ${categories}
 <atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml" />
 <lastBuildDate>${new Date(lastBuildDate).toUTCString()}</lastBuildDate>
 <generator>Next.js</generator>
-${items}
+${items.join("\n")}
 </channel>
 </rss>`;
 
