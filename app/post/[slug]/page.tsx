@@ -5,7 +5,7 @@ import LocalizedLink from "@/components/LocalizedLink";
 import { auth } from "@/lib/auth";
 import { getCommentsForPost } from "@/lib/comments";
 import { getMessages } from "@/lib/i18n";
-import { canViewPost, slugifyPostValue } from "@/lib/post-shared";
+import { canEditPost, canViewPost, slugifyPostValue } from "@/lib/post-shared";
 import {
 	getLocalizedPostBySlugWithAuthor,
 	getRelatedPosts,
@@ -76,6 +76,7 @@ export default async function Page({ params }: PostPageProps) {
 	}
 
 	const post = mapPostForPage(postRecord, locale);
+	const canEditCurrentPost = canEditPost(postRecord, session?.user);
 	const [relatedPosts, comments] = await Promise.all([
 		getRelatedPosts(postRecord, locale, 3),
 		postRecord.status === "published"
@@ -121,11 +122,7 @@ export default async function Page({ params }: PostPageProps) {
 						<PostHeader
 							post={post}
 							editAction={
-								<PostEditButton
-									slug={slug}
-									authorName={post.author.name}
-									authorSlug={post.author.slug}
-								/>
+								canEditCurrentPost ? <PostEditButton slug={slug} /> : null
 							}
 						/>
 

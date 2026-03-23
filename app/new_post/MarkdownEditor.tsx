@@ -19,10 +19,14 @@ import {
 	FaTableColumns,
 } from "react-icons/fa6";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useI18n } from "@/components/LocaleProvider";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/image-upload";
-import { MARKDOWN_ARTICLE_CLASS, markdownComponents } from "@/lib/markdown";
+import {
+	createMarkdownComponents,
+	MARKDOWN_ARTICLE_CLASS,
+	markdownRehypePlugins,
+	markdownRemarkPlugins,
+} from "@/lib/markdown";
 import { getReadingTimeMinutes, stripMarkdown } from "@/lib/post-shared";
 
 type UploadedImage = {
@@ -429,32 +433,10 @@ export default function MarkdownEditor({
 							{value.trim() ? (
 								<div className={MARKDOWN_ARTICLE_CLASS}>
 									<ReactMarkdown
-										remarkPlugins={[remarkGfm]}
+										remarkPlugins={markdownRemarkPlugins}
+										rehypePlugins={markdownRehypePlugins}
 										urlTransform={allowPreviewImageUrls}
-										components={{
-											...markdownComponents,
-											img({ alt, src }) {
-												if (!src || typeof src !== "string") {
-													return null;
-												}
-
-												const resolvedSrc = resolveImageSrc?.(src) || src;
-												return (
-													<figure className="my-8 flex flex-col items-center gap-3">
-														<img
-															src={resolvedSrc}
-															alt={alt || ""}
-															className="max-h-[32rem] w-auto max-w-full rounded-[24px] border border-zinc-700/50 bg-darkBg/45 object-contain shadow-lg shadow-zinc-950/15"
-														/>
-														{alt ? (
-															<figcaption className="text-center text-sm text-zinc-500">
-																{alt}
-															</figcaption>
-														) : null}
-													</figure>
-												);
-											},
-										}}
+										components={createMarkdownComponents({ resolveImageSrc })}
 									>
 										{value}
 									</ReactMarkdown>

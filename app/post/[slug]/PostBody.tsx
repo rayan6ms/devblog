@@ -1,6 +1,10 @@
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { MARKDOWN_ARTICLE_CLASS, markdownComponents } from "@/lib/markdown";
+import {
+	MARKDOWN_ARTICLE_CLASS,
+	markdownComponents,
+	markdownRehypePlugins,
+	markdownRemarkPlugins,
+} from "@/lib/markdown";
 
 export default function PostBody({ markdown }: { markdown: string }) {
 	return (
@@ -9,7 +13,8 @@ export default function PostBody({ markdown }: { markdown: string }) {
 			data-reading-progress-root="true"
 		>
 			<ReactMarkdown
-				remarkPlugins={[remarkGfm]}
+				remarkPlugins={markdownRemarkPlugins}
+				rehypePlugins={markdownRehypePlugins}
 				components={markdownComponents}
 			>
 				{markdown}

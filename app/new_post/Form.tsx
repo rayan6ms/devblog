@@ -27,6 +27,7 @@ import {
 } from "@/lib/image-upload";
 import { localeOptions } from "@/lib/i18n";
 import {
+	generatePostDescription,
 	getReadingTimeMinutes,
 	slugifyPostValue,
 	stripMarkdown,
@@ -657,7 +658,10 @@ export default function Form({
 									<button
 										type="button"
 										onClick={() => {
-											const generated = stripMarkdown(content).slice(0, 220);
+											const generated = generatePostDescription(
+												content,
+												MAX_POST_DESCRIPTION,
+											);
 											setValue("description", generated, {
 												shouldValidate: true,
 											});

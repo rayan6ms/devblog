@@ -342,6 +342,13 @@ export const getPublishedPostList = cache(
 	},
 );
 
+export const getPublishedPostsForFeed = cache(async (): Promise<PostPageData[]> => {
+	const posts = await getPublishedPostsWithAuthor();
+	return posts.map((post) =>
+		mapPostForPage(post, normalizePostLocale(post.locale)),
+	);
+});
+
 function sortRecentPosts(posts: PostListItem[]) {
 	return [...posts].sort((a, b) => b.date.localeCompare(a.date));
 }

@@ -15,6 +15,24 @@ import {
 } from "@/lib/user-profile";
 import { loginSchema } from "@/lib/validation/auth";
 
+const AUTH_TOKEN_REFRESH_MS = 60_000;
+
+type AuthUserSnapshot = {
+	id: string;
+	name: string | null;
+	email: string | null;
+	slug: string;
+	role: ReturnType<typeof resolveUserRole>;
+	picture: string;
+};
+
+type AuthUserCacheEntry = {
+	expiresAt: number;
+	user: AuthUserSnapshot;
+};
+
+const authUserCache = new Map<string, AuthUserCacheEntry>();
+
 async function syncAuthenticatedUser(user: {
 	id: string;
 	name?: string | null;
@@ -64,6 +82,73 @@ async function syncAuthenticatedUser(user: {
 			}),
 		},
 	});
+}
+
+function mapAuthUserSnapshot(user: {
+	id: string;
+	name: string | null;
+	email: string | null;
+	image: string | null;
+	profilePic: string | null;
+	role: Role | null;
+	slug: string | null;
+}) {
+	return {
+		id: user.id,
+		name: user.name,
+		email: user.email,
+		slug: user.slug || user.id,
+		role: resolveUserRole(user.role),
+		picture: resolveProfilePicture(user),
+	} satisfies AuthUserSnapshot;
+}
+
+function applyAuthUserSnapshot(
+	token: Record<string, unknown>,
+	user: AuthUserSnapshot,
+) {
+	token.sub = user.id;
+	token.role = user.role;
+	token.slug = user.slug;
+	token.picture = user.picture;
+	token.name = user.name || token.name;
+	token.email = user.email || token.email;
+	token.profileSyncedAt = Date.now();
+
+	return token;
+}
+
+async function getAuthUserSnapshot(userId: string, forceRefresh = false) {
+	const cached = authUserCache.get(userId);
+	if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
+		return cached.user;
+	}
+
+	const dbUser = await prisma.user.findUnique({
+		where: { id: userId },
+		select: {
+			id: true,
+			name: true,
+			email: true,
+			image: true,
+			profilePic: true,
+			role: true,
+			slug: true,
+		},
+	});
+
+	if (!dbUser) {
+		authUserCache.delete(userId);
+		return null;
+	}
+
+	const snapshot = mapAuthUserSnapshot(dbUser);
+	authUserCache.set(userId, {
+		user: snapshot,
+		expiresAt: Date.now() + AUTH_TOKEN_REFRESH_MS,
+	});
+
+	return snapshot;
 }
 
 const providers = [
@@ -149,45 +234,43 @@ export const authConfig = {
 			return true;
 		},
 		async jwt({ token, user }) {
-			if (typeof user?.id === "string") {
-				await syncAuthenticatedUser({
-					id: user.id,
-					name: user.name ?? null,
-					email: user.email ?? null,
-					image: user.image ?? null,
-				});
-			}
-
 			const userId = user?.id || token.sub;
 			if (!userId) {
 				return token;
 			}
 
-			const dbUser = await prisma.user.findUnique({
-				where: { id: userId },
-				select: {
-					id: true,
-					name: true,
-					email: true,
-					image: true,
-					profilePic: true,
-					role: true,
-					slug: true,
-				},
-			});
+			const needsRefresh =
+				Boolean(user) ||
+				typeof token.role !== "string" ||
+				typeof token.slug !== "string" ||
+				typeof token.picture !== "string" ||
+				typeof token.profileSyncedAt !== "number" ||
+				Date.now() - token.profileSyncedAt > AUTH_TOKEN_REFRESH_MS;
 
-			if (!dbUser) {
+			if (!needsRefresh) {
 				return token;
 			}
 
-			token.sub = dbUser.id;
-			token.role = resolveUserRole(dbUser.role);
-			token.slug = dbUser.slug || dbUser.id;
-			token.picture = resolveProfilePicture(dbUser);
-			token.name = dbUser.name || token.name;
-			token.email = dbUser.email || token.email;
+			try {
+				if (typeof user?.id === "string") {
+					await syncAuthenticatedUser({
+						id: user.id,
+						name: user.name ?? null,
+						email: user.email ?? null,
+						image: user.image ?? null,
+					});
+				}
 
-			return token;
+				const snapshot = await getAuthUserSnapshot(userId, Boolean(user));
+				if (!snapshot) {
+					return token;
+				}
+
+				return applyAuthUserSnapshot(token, snapshot);
+			} catch (error) {
+				console.error("[auth] Failed to refresh JWT session user", error);
+				return token;
+			}
 		},
 		async session({ session, token }) {
 			if (!session.user || !token.sub) {

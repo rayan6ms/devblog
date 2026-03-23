@@ -35,6 +35,16 @@ export const metadata: Metadata = {
 	description: SITE_DESCRIPTION,
 	applicationName: SITE_NAME,
 	category: "technology",
+	alternates: {
+		types: {
+			"application/rss+xml": [
+				{
+					url: "/feed.xml",
+					title: `${SITE_NAME} RSS Feed`,
+				},
+			],
+		},
+	},
 	openGraph: {
 		type: "website",
 		url: getSiteUrl(),
