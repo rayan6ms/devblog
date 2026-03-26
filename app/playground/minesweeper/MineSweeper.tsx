@@ -2094,9 +2094,8 @@ export default function MineSweeper() {
 
 	return (
 		<div
-			className="flex h-full min-h-[720px] w-full flex-col overflow-hidden rounded-[30px] border shadow-[0_18px_60px_rgba(0,0,0,0.24)] lg:min-h-[760px]"
+			className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:min-h-0"
 			style={{
-				borderColor: theme.panelEdge,
 				backgroundImage: `linear-gradient(180deg, ${theme.backgroundTop} 0%, ${theme.backgroundBottom} 100%)`,
 				color: theme.text,
 			}}
@@ -2106,47 +2105,18 @@ export default function MineSweeper() {
 				style={{ borderColor: theme.panelEdge, backgroundColor: "rgba(10,12,18,0.22)" }}
 			>
 				<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-					<div className="min-w-0">
-						<div
-							className="text-[11px] font-semibold uppercase tracking-[0.26em]"
-							style={{ color: theme.muted }}
-						>
-							Playground
-						</div>
-						<h2 className="mt-2 font-mono text-2xl font-semibold uppercase tracking-[0.1em]">
-							Minesweeper
-						</h2>
-						<div className="mt-2 text-sm leading-6" style={{ color: theme.muted }}>
-							{statusLabel} • {uiState.solverLabel} • risk {uiState.solverRiskText}
-						</div>
+					<div className="min-w-0 text-sm leading-6" style={{ color: theme.muted }}>
+						{statusLabel} • {uiState.solverLabel} • risk {uiState.solverRiskText}
 					</div>
 
-					<div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[520px]">
-						{[
-							{ label: "Mines", value: `${uiState.minesLeft}` },
-							{ label: "Time", value: `${uiState.elapsedSec}s` },
-							{ label: "Points", value: `${uiState.score}` },
-							{ label: "Clear", value: `${uiState.progress.toFixed(0)}%` },
-						].map((item) => (
-							<div
-								key={item.label}
-								className="rounded-[18px] border px-4 py-3"
-								style={{
-									borderColor: theme.panelEdge,
-									backgroundColor: "rgba(8,10,16,0.16)",
-								}}
-							>
-								<div
-									className="text-[10px] font-semibold uppercase tracking-[0.2em]"
-									style={{ color: theme.muted }}
-								>
-									{item.label}
-								</div>
-								<div className="mt-1 font-mono text-xl font-semibold">
-									{item.value}
-								</div>
-							</div>
-						))}
+					<div
+						className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.18em]"
+						style={{ color: theme.muted }}
+					>
+						<span>Mines <span style={{ color: theme.text }}>{uiState.minesLeft}</span></span>
+						<span>Time <span style={{ color: theme.text }}>{uiState.elapsedSec}s</span></span>
+						<span>Points <span style={{ color: theme.text }}>{uiState.score}</span></span>
+						<span>Clear <span style={{ color: theme.text }}>{uiState.progress.toFixed(0)}%</span></span>
 					</div>
 				</div>
 			</div>

@@ -1279,7 +1279,7 @@ export default function FallingSand() {
 
 			<div
 				ref={hostRef}
-				className="min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-900 shadow-xl"
+				className="min-h-0 flex-1 overflow-hidden bg-neutral-900"
 			/>
 		</div>
 	);

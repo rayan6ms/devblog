@@ -2,12 +2,12 @@
 
 import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
+import { getMessages } from "@/lib/i18n";
 import {
-	getMessages,
 	LOCALE_QUERY_PARAM,
 	type Locale,
 	resolveLocale,
-} from "@/lib/i18n";
+} from "@/lib/i18n-shared";
 
 type LocaleContextValue = {
 	locale: Locale;

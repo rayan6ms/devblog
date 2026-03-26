@@ -1,7 +1,7 @@
 import { FaComment } from "react-icons/fa6";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n-shared";
 import type { ProfileComment } from "@/profile/types";
 
 type CommentsProps = {

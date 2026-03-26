@@ -1309,42 +1309,26 @@ export default function MovinMountains() {
 	}, []);
 
 	return (
-		<div className="relative flex h-full min-h-[540px] w-full overflow-hidden rounded-[30px] border border-[#243347] bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+		<div className="relative flex h-full min-h-0 w-full overflow-hidden bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100">
 			<div ref={hostRef} className="absolute inset-0" />
 
 			<div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex flex-col gap-3 sm:inset-x-5">
-				<div className="pointer-events-auto flex flex-wrap items-center gap-3 rounded-[22px] border border-[#223048] bg-[#07111d]/72 px-4 py-3 backdrop-blur-xl">
-					<div className="mr-auto min-w-44">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							Moving Mountains
-						</div>
-						<div className="font-mono text-[11px] text-slate-400">
-							Watch-only spectral ridges rendered in Phaser with layered color motion.
-						</div>
+				<div className="pointer-events-auto flex flex-wrap items-center gap-3 border-b border-[#223048] bg-[#07111d]/60 px-3 py-3 text-[11px] uppercase tracking-[0.16em] text-slate-300 backdrop-blur-xl">
+					<div className="mr-auto text-slate-400">
+						Watch-only spectral ridges rendered in Phaser with layered color motion.
 					</div>
-					<div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-slate-300">
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5">
-							Watch Only
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5">
-							Layers {uiState.layers}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5">
-							Samples {uiState.pointsPerLayer}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5">
-							Palette {uiState.paletteLabel}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5">
-							Act {uiState.actLabel}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5">
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+						<span>Layers <span className="text-slate-100">{uiState.layers}</span></span>
+						<span>Samples <span className="text-slate-100">{uiState.pointsPerLayer}</span></span>
+						<span>Palette <span className="text-slate-100">{uiState.paletteLabel}</span></span>
+						<span>Act <span className="text-slate-100">{uiState.actLabel}</span></span>
+						<span className="text-slate-100">
 							{status === "loading"
 								? "Loading"
 								: status === "error"
 									? "Error"
 									: "Ready"}
-						</div>
+						</span>
 					</div>
 				</div>
 

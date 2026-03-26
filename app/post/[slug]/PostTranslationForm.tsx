@@ -12,7 +12,11 @@ import {
 	uploadImageFile,
 	validateImageFile,
 } from "@/lib/image-upload";
-import { getLocaleLabel, localeOptions, type Locale } from "@/lib/i18n";
+import {
+	getLocaleLabel,
+	localeOptions,
+	type Locale,
+} from "@/lib/i18n-shared";
 import {
 	buildPostTranslationSchema,
 	MAX_POST_CONTENT,

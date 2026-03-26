@@ -1230,8 +1230,8 @@ export default function ChessPhaser() {
 	}
 
 	return (
-		<div className="w-full max-w-6xl mx-auto">
-			<div className="w-fit mx-auto mt-1 mb-2 rounded-xl border border-zinc-700/50 bg-zinc-900/60 px-3 py-3 flex flex-wrap items-center gap-3">
+		<div className="flex h-full w-full flex-col">
+			<div className="mb-2 flex flex-wrap items-center gap-3 border-b border-zinc-700/50 bg-zinc-900/40 px-3 py-3">
 				<div className="flex items-center gap-2">
 					<span className="text-sm text-zinc-300">Play as</span>
 					<div className="inline-flex rounded-lg overflow-hidden border border-zinc-700/60">

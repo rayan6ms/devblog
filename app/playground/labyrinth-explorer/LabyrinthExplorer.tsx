@@ -2784,13 +2784,7 @@ function RunOverlay({
 	return (
 		<div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
 			<div className="pointer-events-auto w-full max-w-[30rem] rounded-[28px] border border-[#33576e] bg-[#05111a]/92 p-5 text-center shadow-[0_24px_60px_rgba(0,0,0,0.38)] backdrop-blur-md sm:p-6">
-				<div
-					className="text-[11px] uppercase tracking-[0.3em] text-slate-400"
-					style={{ fontFamily: FONT_STACK }}
-				>
-					Labyrinth Explorer
-				</div>
-				<div className="mt-3 text-3xl text-slate-50">{title}</div>
+				<div className="text-3xl text-slate-50">{title}</div>
 				<div className="mt-3 text-sm leading-6 text-slate-300">{description}</div>
 				<div className="mt-4 grid grid-cols-2 gap-2 text-left sm:grid-cols-4">
 					{[
@@ -3004,65 +2998,37 @@ export default function LabyrinthExplorer() {
 	}, []);
 
 	return (
-		<div className="relative h-full min-h-[720px] w-full overflow-hidden rounded-[32px] border border-[#234053] bg-[radial-gradient(circle_at_top,#173e55_0%,#07111d_44%,#02050c_100%)] text-slate-100 shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
+		<div className="relative h-full min-h-0 w-full overflow-hidden bg-[radial-gradient(circle_at_top,#173e55_0%,#07111d_44%,#02050c_100%)] text-slate-100">
 			<div ref={hostRef} className="absolute inset-0" />
 
 			<div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2.5 sm:p-3">
 				<div className="flex flex-col gap-2">
-					<div className="pointer-events-auto w-full max-w-[18rem] rounded-[22px] border border-[#2b5568] bg-[#06121c]/76 px-3 py-2.5 backdrop-blur-md">
+					<div className="pointer-events-auto w-full max-w-[28rem] border-b border-[#2b5568] bg-[#06121c]/60 px-3 py-2.5 backdrop-blur-md">
 						<div
-							className="text-[10px] uppercase tracking-[0.26em] text-slate-500"
+							className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] uppercase tracking-[0.22em] text-slate-400"
 							style={{ fontFamily: FONT_STACK }}
 						>
-							Labyrinth Explorer
+							<span>Score <span className="text-[#f8e39e]">{uiState.score}</span></span>
+							<span>Time <span className="text-[#ffe3a0]">{formatTime(uiState.timeLeft)}</span></span>
+							<span>Mode <span className="text-[#f3f6fc]">{uiState.variantLabel}</span></span>
+							<span>Shards <span className="text-[#8fe9ff]">{uiState.pickupsFound}/{uiState.pickupsTotal}</span></span>
 						</div>
-						<div className="mt-2 grid grid-cols-2 gap-1.5">
-							{[
-								{ label: "Score", value: uiState.score, tone: "text-[#f8e39e]" },
-								{
-									label: "Time",
-									value: formatTime(uiState.timeLeft),
-									tone: "text-[#ffe3a0]",
-								},
-								{ label: "Mode", value: uiState.variantLabel, tone: "text-[#f3f6fc]" },
-								{
-									label: "Shards",
-									value: `${uiState.pickupsFound}/${uiState.pickupsTotal}`,
-									tone: "text-[#8fe9ff]",
-								},
-							].map((item) => (
-								<div
-									key={item.label}
-									className="rounded-2xl border border-[#1d3847] bg-[#040b12]/88 px-2.5 py-2"
-								>
-									<div
-										className="text-[9px] uppercase tracking-[0.2em] text-slate-500"
-										style={{ fontFamily: FONT_STACK }}
-									>
-										{item.label}
-									</div>
-									<div className={`mt-1 text-sm sm:text-[15px] ${item.tone}`}>
-										{item.value}
-									</div>
-								</div>
-							))}
-						</div>
-						<div className="mt-2 flex items-center gap-1.5">
+						<div className="mt-2 flex flex-wrap items-center gap-1.5">
 							<div
-								className="rounded-full border border-[#274859] bg-[#08131b]/84 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+								className="border border-[#274859] bg-[#08131b]/84 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
 								style={{ fontFamily: FONT_STACK }}
 							>
 								{uiState.themeLabel}
 							</div>
 							<div
-								className="rounded-full border border-[#274859] bg-[#08131b]/84 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+								className="border border-[#274859] bg-[#08131b]/84 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
 								style={{ fontFamily: FONT_STACK }}
 							>
 								Exit {uiState.goalDistance.toFixed(1)}m
 							</div>
 							{uiState.lastGain > 0 ? (
 								<div
-									className="rounded-full border border-[#3f7050] bg-[#0d2018]/84 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-[#88f2b3]"
+									className="border border-[#3f7050] bg-[#0d2018]/84 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-[#88f2b3]"
 									style={{ fontFamily: FONT_STACK }}
 								>
 									+{uiState.lastGain}

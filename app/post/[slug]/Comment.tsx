@@ -4,7 +4,7 @@ import { FaArrowTrendUp } from "react-icons/fa6";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
 import type { PostComment } from "@/lib/comments";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n-shared";
 
 function getInitials(name: string) {
 	return name

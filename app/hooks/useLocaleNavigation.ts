@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/LocaleProvider";
-import { type Locale, withLocaleQuery } from "@/lib/i18n";
+import { type Locale, withLocaleQuery } from "@/lib/i18n-shared";
 
 function buildRelativeHref(pathname: string, href: string, search: string) {
 	if (href.startsWith("?")) {

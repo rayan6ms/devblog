@@ -3043,7 +3043,7 @@ export default function AntSimulator() {
 				: uiState.accent;
 
 	return (
-		<div className="relative isolate flex h-full min-h-0 w-full select-none flex-col overflow-hidden rounded-[34px] border border-[#253347] bg-[#040812] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.48)]">
+		<div className="relative isolate flex h-full min-h-0 w-full select-none flex-col overflow-hidden bg-[#040812] text-slate-100">
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(79,255,216,0.14),transparent_36%),radial-gradient(circle_at_top_right,rgba(251,191,36,0.1),transparent_30%),radial-gradient(circle_at_bottom,rgba(251,113,133,0.14),transparent_40%),linear-gradient(180deg,#08111e_0%,#050910_100%)]" />
 			<div className="pointer-events-none absolute inset-0 opacity-80 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0_1px,transparent_1px)] [background-size:22px_22px]" />
 			<div
@@ -3051,49 +3051,17 @@ export default function AntSimulator() {
 				style={{ backgroundColor: uiState.panelTint }}
 			>
 				<div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-					<div className="min-w-0">
-						<div className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-300">
-							Watch Only
-						</div>
-						<div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-							<div className="text-2xl font-semibold tracking-[0.02em] text-white">
-								Ant Simulator
-							</div>
-							<div className="font-mono text-[11px] uppercase tracking-[0.18em] text-slate-400">
-								{uiState.paletteName}
-							</div>
-						</div>
-						<div className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
-							{uiState.biome} · neutral-lane food race, ants swarm and spiders intercept
-						</div>
+					<div className="min-w-0 text-xs uppercase tracking-[0.16em] text-slate-400">
+						{uiState.biome} · neutral-lane food race, ants swarm and spiders intercept
 					</div>
 
-					<div className="grid gap-2 sm:grid-cols-5">
-						<MetricCard
-							label="Ant Food"
-							value={`${uiState.points}/${uiState.target}`}
-							tone={uiState.secondaryAccent}
-						/>
-						<MetricCard
-							label="Spider Food"
-							value={`${uiState.spiderFood}/${uiState.target}`}
-							tone={uiState.dangerAccent}
-						/>
-						<MetricCard
-							label="Round"
-							value={`${uiState.round}`}
-							tone={uiState.accent}
-						/>
-						<MetricCard
-							label="Run"
-							value={`${uiState.roundsSurvived}`}
-							tone={uiState.accent}
-						/>
-						<MetricCard
-							label="Best"
-							value={`${uiState.bestRounds}`}
-							tone={uiState.dangerAccent}
-						/>
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300">
+						<span>Palette <span className="text-white">{uiState.paletteName}</span></span>
+						<span>Ant Food <span style={{ color: uiState.secondaryAccent }}>{uiState.points}/{uiState.target}</span></span>
+						<span>Spider Food <span style={{ color: uiState.dangerAccent }}>{uiState.spiderFood}/{uiState.target}</span></span>
+						<span>Round <span style={{ color: uiState.accent }}>{uiState.round}</span></span>
+						<span>Run <span style={{ color: uiState.accent }}>{uiState.roundsSurvived}</span></span>
+						<span>Best <span style={{ color: uiState.dangerAccent }}>{uiState.bestRounds}</span></span>
 					</div>
 				</div>
 			</div>

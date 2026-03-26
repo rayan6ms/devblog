@@ -6,7 +6,7 @@ import { FaArrowRight, FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n-shared";
 import { getAuthorHref, getPostHref, type IPost } from "@/lib/posts-client";
 
 type AccordionProps = {

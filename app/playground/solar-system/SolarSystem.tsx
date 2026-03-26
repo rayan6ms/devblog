@@ -74,25 +74,20 @@ export default function SolarSystem() {
 	};
 
 	return (
-		<div className="relative isolate flex h-full min-h-[720px] w-full select-none flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[#040814] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.5)]">
-			<div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,#173150_0%,#08111d_38%,#03060d_100%)]" />
+		<div className="relative isolate flex h-full min-h-0 w-full select-none flex-col overflow-hidden bg-[#040814] text-slate-100">
+			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#173150_0%,#08111d_38%,#03060d_100%)]" />
 			<div
-				className="pointer-events-none absolute inset-0 rounded-[30px] opacity-90"
+				className="pointer-events-none absolute inset-0 opacity-90"
 				style={STAR_FIELD_STYLE}
 			/>
 			<div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-[#3b82f6]/14 blur-3xl" />
 			<div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-[#f59e0b]/12 blur-3xl" />
 			<div className="pointer-events-none absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-[#38bdf8]/12 blur-3xl" />
 
-			<div className="relative z-10 rounded-t-[30px] border-b border-[#233247] bg-[#07111d]/86 backdrop-blur-xl">
+			<div className="relative z-10 border-b border-[#233247] bg-[#07111d]/86 backdrop-blur-xl">
 				<div className="flex flex-col gap-4 px-4 py-4 sm:px-5">
-					<div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							<div>Solar System</div>
-							<div className="mt-2 max-w-2xl text-xs font-normal tracking-[0.18em] text-slate-400">
-								A watch-mode miniature observatory with a stronger star field and a quieter HUD.
-							</div>
-						</div>
+					<div className="font-mono text-xs tracking-[0.18em] text-slate-400">
+						A watch-mode miniature observatory with a stronger star field and a quieter HUD.
 					</div>
 
 					<div className="grid gap-3 rounded-[24px] border border-[#1a2740] bg-[#07111d]/80 p-4 backdrop-blur-xl sm:grid-cols-[auto_minmax(170px,220px)] sm:items-end">
@@ -173,7 +168,7 @@ export default function SolarSystem() {
 			<div className="relative min-h-0 flex-1">
 				<Canvas
 					camera={{ position: DEFAULT_CAMERA, fov: 46 }}
-					className="absolute inset-0 rounded-b-[30px]"
+					className="absolute inset-0"
 					dpr={[1, 1.5]}
 					performance={{ min: 0.6 }}
 					gl={{ antialias: false }}
@@ -193,7 +188,7 @@ export default function SolarSystem() {
 					className="pointer-events-none absolute inset-0 opacity-75 mix-blend-screen"
 					style={SCENE_STAR_OVERLAY_STYLE}
 				/>
-				<div className="pointer-events-none absolute inset-0 rounded-b-[30px] bg-[radial-gradient(circle_at_center,transparent_34%,rgba(2,6,23,0.44)_100%)]" />
+				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_34%,rgba(2,6,23,0.44)_100%)]" />
 
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
 					<div className="max-w-md rounded-[24px] border border-[#1a2740] bg-[#07111d]/78 p-4 backdrop-blur-xl">

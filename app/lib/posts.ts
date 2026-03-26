@@ -454,13 +454,34 @@ function buildTagOptions(
 	tags: string[],
 	counts: Map<string, number>,
 ): PostTagOption[] {
-	return tags
-		.map((tag) => ({
-			name: tag,
-			slug: getPostSlug(tag),
-			count: counts.get(getPostSlug(tag)) ?? 0,
-		}))
-		.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+	const uniqueBySlug = new Map<string, PostTagOption>();
+
+	for (const rawTag of tags) {
+		const name = rawTag.trim();
+		if (!name) {
+			continue;
+		}
+
+		const slug = getPostSlug(name);
+		const existing = uniqueBySlug.get(slug);
+		const nextOption = {
+			name,
+			slug,
+			count: counts.get(slug) ?? 0,
+		};
+
+		if (
+			!existing ||
+			nextOption.count > existing.count ||
+			nextOption.name.localeCompare(existing.name) < 0
+		) {
+			uniqueBySlug.set(slug, nextOption);
+		}
+	}
+
+	return Array.from(uniqueBySlug.values()).sort(
+		(a, b) => b.count - a.count || a.name.localeCompare(b.name),
+	);
 }
 
 export async function getPostCatalog(options?: {

@@ -952,27 +952,16 @@ export default function FlappyBird(): React.JSX.Element {
 	}, []);
 
 	return (
-		<div className="relative flex h-full min-h-[700px] w-full flex-col overflow-hidden rounded-[30px] border border-[#204560] bg-[radial-gradient(circle_at_top,#1f5f8b_0%,#13324f_34%,#08101b_100%)] text-slate-100 shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
+		<div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,#1f5f8b_0%,#13324f_34%,#08101b_100%)] text-slate-100">
 			<div className="border-b border-[#2a4e68] bg-[#08131f]/72 backdrop-blur">
 				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
-					<div className="mr-auto min-w-52">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-[#fff4bf]">
-							Flappy Bird
-						</div>
-						<div className="font-mono text-xs text-slate-300">
-							Space, click, or tap to flap. P pauses. R resets the round.
-						</div>
+					<div className="mr-auto font-mono text-xs text-slate-300">
+						Space, click, or tap to flap. P pauses. R resets the round.
 					</div>
-					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-100">
-						<div className="rounded-full border border-[#34556d] bg-[#0b1825] px-3 py-1.5 text-[#fef3c7]">
-							Score {uiState.score}
-						</div>
-						<div className="rounded-full border border-[#34556d] bg-[#0b1825] px-3 py-1.5 text-[#fef3c7]">
-							Best {uiState.best}
-						</div>
-						<div className="rounded-full border border-[#34556d] bg-[#0b1825] px-3 py-1.5 text-slate-200">
-							{statusLabel(uiState, status)}
-						</div>
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-300">
+						<span>Score <span className="text-[#fef3c7]">{uiState.score}</span></span>
+						<span>Best <span className="text-[#fef3c7]">{uiState.best}</span></span>
+						<span className="text-slate-100">{statusLabel(uiState, status)}</span>
 					</div>
 				</div>
 

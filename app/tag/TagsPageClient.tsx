@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n-shared";
 import {
 	getAuthorHref,
 	getPostHref,
@@ -44,6 +44,23 @@ function matchesTagSearch(tag: TagOption, query: string) {
 		tag.slug.includes(query) ||
 		tag.name.toLowerCase().includes(query.toLowerCase())
 	);
+}
+
+function dedupeTagOptions(tags: TagOption[]) {
+	const uniqueBySlug = new Map<string, TagOption>();
+
+	for (const tag of tags) {
+		const existing = uniqueBySlug.get(tag.slug);
+		if (
+			!existing ||
+			tag.count > existing.count ||
+			tag.name.localeCompare(existing.name) < 0
+		) {
+			uniqueBySlug.set(tag.slug, tag);
+		}
+	}
+
+	return Array.from(uniqueBySlug.values());
 }
 
 function TagPostCard({
@@ -118,7 +135,9 @@ function TagPostCard({
 				</div>
 
 				<div className="mt-5 flex flex-wrap gap-2">
-					{post.tags.slice(0, 4).map((tag) => (
+					{Array.from(new Set(post.tags.map((tag) => tag.trim()).filter(Boolean)))
+						.slice(0, 4)
+						.map((tag) => (
 						<button
 							key={tag}
 							type="button"
@@ -127,7 +146,7 @@ function TagPostCard({
 						>
 							{tag}
 						</button>
-					))}
+						))}
 				</div>
 			</div>
 		</article>
@@ -147,8 +166,14 @@ export default function TagsPageClient({
 	const { push } = useLocaleNavigation();
 	const [tagQuery, setTagQuery] = useState("");
 	const deferredTagQuery = useDeferredValue(tagQuery);
-	const mainTags = tagCatalog.mainTags;
-	const otherTags = tagCatalog.otherTags;
+	const mainTags = useMemo(
+		() => dedupeTagOptions(tagCatalog.mainTags),
+		[tagCatalog.mainTags],
+	);
+	const otherTags = useMemo(
+		() => dedupeTagOptions(tagCatalog.otherTags),
+		[tagCatalog.otherTags],
+	);
 	const allTags = useMemo(
 		() =>
 			Array.from(new Set([...mainTags, ...otherTags].map((tag) => tag.name))),
@@ -190,7 +215,7 @@ export default function TagsPageClient({
 	);
 	const featuredTags = useMemo(
 		() =>
-			[...mainTags, ...otherTags]
+			dedupeTagOptions([...mainTags, ...otherTags])
 				.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 				.slice(0, 8),
 		[mainTags, otherTags],

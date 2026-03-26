@@ -1498,28 +1498,17 @@ export default function Tetris() {
 	}, []);
 
 	return (
-		<div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[28px] border border-[#273244] bg-[radial-gradient(circle_at_top,#15304f_0%,#09111d_38%,#05070d_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+		<div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,#15304f_0%,#09111d_38%,#05070d_100%)] text-slate-100">
 			<div className="border-b border-[#263244] bg-[#07101b]/90 backdrop-blur">
 				<div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-					<div className="mr-auto min-w-40">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							Tetris
-						</div>
-						<div className="font-mono text-xs text-slate-400">
-							WASD or arrow keys for play. Buttons handle the rest.
-						</div>
+					<div className="mr-auto font-mono text-xs text-slate-400">
+						WASD or arrow keys for play. Buttons handle the rest.
 					</div>
-					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Score {uiState.score}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Lines {uiState.lines}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Level {uiState.level}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">
+						<span>Score <span className="text-slate-100">{uiState.score}</span></span>
+						<span>Lines <span className="text-slate-100">{uiState.lines}</span></span>
+						<span>Level <span className="text-slate-100">{uiState.level}</span></span>
+						<span className="text-slate-200">
 							{status === "loading"
 								? "Loading"
 								: status === "error"
@@ -1529,7 +1518,7 @@ export default function Tetris() {
 										: uiState.paused
 											? "Paused"
 											: "Ready"}
-						</div>
+						</span>
 						<button
 							type="button"
 							onClick={() => controlsRef.current?.toggleAutoplay()}

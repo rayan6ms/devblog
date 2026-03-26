@@ -1530,32 +1530,19 @@ export default function Game2048({ className = "" }: { className?: string }) {
 
 	return (
 		<div
-			className={`flex h-full min-h-[620px] w-full flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ${className}`}
+			className={`flex h-full min-h-0 w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 ${className}`}
 		>
 			<div className="border-b border-[#233247] bg-[#07111d]/92 backdrop-blur">
 				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
-					<div className="mr-auto min-w-48">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							2048
-						</div>
-						<div className="font-mono text-xs text-slate-400">
-							Arrow keys or swipe to play. Space toggles autoplay, Z undoes.
-						</div>
+					<div className="mr-auto font-mono text-xs text-slate-400">
+						Arrow keys or swipe to play. Space toggles autoplay, Z undoes.
 					</div>
-					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Score {uiState.score}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Best {uiState.best}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Moves {uiState.moves}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Max {uiState.maxTile || 2}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">
+						<span>Score <span className="text-slate-100">{uiState.score}</span></span>
+						<span>Best <span className="text-slate-100">{uiState.best}</span></span>
+						<span>Moves <span className="text-slate-100">{uiState.moves}</span></span>
+						<span>Max <span className="text-slate-100">{uiState.maxTile || 2}</span></span>
+						<span className="text-slate-200">
 							{status === "loading"
 								? "Loading"
 								: status === "error"
@@ -1565,7 +1552,7 @@ export default function Game2048({ className = "" }: { className?: string }) {
 										: uiState.status === "won"
 											? "Won"
 											: "Ready"}
-						</div>
+						</span>
 					</div>
 				</div>
 

@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { type HTMLAttributes, useEffect, useId, useRef, useState } from "react";
 import { FaCheck, FaGlobe } from "react-icons/fa6";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
-import { localeOptions } from "@/lib/i18n";
+import { localeOptions } from "@/lib/i18n-shared";
 import { useI18n } from "./LocaleProvider";
 
 type MenuPosition = {

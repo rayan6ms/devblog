@@ -2255,7 +2255,7 @@ export default function SnakePhaser({
 
 	return (
 		<div
-			className={`snake-root flex h-full min-h-0 w-full select-none flex-col overflow-hidden rounded-[30px] border border-[#243347] bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ${className}`}
+			className={`snake-root flex h-full min-h-0 w-full select-none flex-col overflow-hidden bg-[radial-gradient(circle_at_top,#173150_0%,#0b1422_35%,#050810_100%)] text-slate-100 ${className}`}
 		>
 			<style jsx>{`
 				.snake-root,
@@ -2266,36 +2266,17 @@ export default function SnakePhaser({
 			`}</style>
 			<div className="border-b border-[#233247] bg-[#07111d]/92 backdrop-blur">
 				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
-					<div className="mr-auto min-w-48">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							Snake Grid
-						</div>
-						<div className="font-mono text-xs text-slate-400">
-							Classic snake, plenty of snake palettes, and a responsive square stage.
-						</div>
+					<div className="mr-auto font-mono text-xs text-slate-400">
+						Classic snake, plenty of snake palettes, and a responsive square stage.
 					</div>
-					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Score {score}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Length {length}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Steps {steps}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Mode {autoPlay ? "Auto" : "Manual"}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Theme {boardTheme.label}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Snake {theme.label}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							{sessionLabel}
-						</div>
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">
+						<span>Score <span className="text-slate-100">{score}</span></span>
+						<span>Length <span className="text-slate-100">{length}</span></span>
+						<span>Steps <span className="text-slate-100">{steps}</span></span>
+						<span>Mode <span className="text-slate-100">{autoPlay ? "Auto" : "Manual"}</span></span>
+						<span>Theme <span className="text-slate-100">{boardTheme.label}</span></span>
+						<span>Snake <span className="text-slate-100">{theme.label}</span></span>
+						<span className="text-slate-200">{sessionLabel}</span>
 					</div>
 				</div>
 

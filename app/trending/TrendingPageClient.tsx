@@ -8,7 +8,7 @@ import slugify from "slugify";
 import Footer from "@/components/Footer";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n-shared";
 import { getAuthorHref, getPostHref, type IPost } from "@/lib/posts-client";
 
 const Accordion = dynamic(() => import("@/trending/Accordion"), { ssr: false });

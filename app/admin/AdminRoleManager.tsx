@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { FaCheck, FaShieldHalved, FaTriangleExclamation } from "react-icons/fa6";
 import type { AdminCopy } from "@/admin/copy";
 import type { AdminManagedUser } from "@/admin/types";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-shared";
 import type { UserRole } from "@/profile/types";
 
 const USER_ROLE_OPTIONS: UserRole[] = [

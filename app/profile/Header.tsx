@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa6";
 import { useI18n } from "@/components/LocaleProvider";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-shared";
 import type { ProfileUser } from "@/profile/types";
 import SocialLinks from "./SocialLinks";
 

@@ -25,7 +25,7 @@ import {
 	uploadImageFile,
 	validateImageFile,
 } from "@/lib/image-upload";
-import { localeOptions } from "@/lib/i18n";
+import { localeOptions } from "@/lib/i18n-shared";
 import {
 	generatePostDescription,
 	getReadingTimeMinutes,

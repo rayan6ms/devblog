@@ -1373,7 +1373,7 @@ export default function NewtonCannon() {
 	}, []);
 
 	return (
-		<div className="relative h-full min-h-[640px] w-full overflow-hidden rounded-[30px] border border-[#203749] bg-[radial-gradient(circle_at_top,#173c57_0%,#0a1422_42%,#040913_100%)] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.42)]">
+		<div className="relative h-full min-h-0 w-full overflow-hidden bg-[radial-gradient(circle_at_top,#173c57_0%,#0a1422_42%,#040913_100%)] text-slate-100">
 			<div ref={hostRef} className="absolute inset-0" />
 
 			<div className="pointer-events-none absolute inset-0 p-3 sm:p-4">

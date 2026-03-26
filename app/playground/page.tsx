@@ -1,8 +1,16 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import Image from "next/image";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	memo,
+	startTransition,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { FaXmark } from "react-icons/fa6";
 import Footer from "@/components/Footer";
 import { useI18n } from "@/components/LocaleProvider";
@@ -159,6 +167,7 @@ const games: Game[] = [
 function useCardTilt(maxTiltDeg = 16, hoverScale = 1.06) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const innerRef = useRef<HTMLDivElement | null>(null);
+	const boundsRef = useRef<DOMRect | null>(null);
 	const rafRef = useRef<number | null>(null);
 
 	const setTransform = (rx: number, ry: number, scale = hoverScale) => {
@@ -167,13 +176,19 @@ function useCardTilt(maxTiltDeg = 16, hoverScale = 1.06) {
 		el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) scale(${scale})`;
 	};
 
+	const handlePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+		if (e.pointerType === "touch") return;
+		boundsRef.current = containerRef.current?.getBoundingClientRect() ?? null;
+	};
+
 	const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
 		if (e.pointerType === "touch") return;
 		const container = containerRef.current;
 		const inner = innerRef.current;
 		if (!container || !inner) return;
 
-		const rect = container.getBoundingClientRect();
+		const rect = boundsRef.current ?? container.getBoundingClientRect();
+		boundsRef.current = rect;
 		const px = (e.clientX - rect.left) / rect.width;
 		const py = (e.clientY - rect.top) / rect.height;
 
@@ -186,19 +201,43 @@ function useCardTilt(maxTiltDeg = 16, hoverScale = 1.06) {
 
 	const handlePointerLeave = () => {
 		if (rafRef.current) cancelAnimationFrame(rafRef.current);
+		boundsRef.current = null;
 		requestAnimationFrame(() => setTransform(0, 0, 1));
 	};
 
-	return { containerRef, innerRef, handlePointerMove, handlePointerLeave };
+	useEffect(
+		() => () => {
+			if (rafRef.current) cancelAnimationFrame(rafRef.current);
+		},
+		[],
+	);
+
+	return {
+		containerRef,
+		innerRef,
+		handlePointerEnter,
+		handlePointerMove,
+		handlePointerLeave,
+	};
 }
 
-const GameCard: React.FC<{
+const GameCard = memo(function GameCard({
+	game,
+	onClick,
+	tiltEnabled,
+}: {
 	game: Game;
 	onClick: (g: Game) => void;
-}> = ({ game, onClick }) => {
+	tiltEnabled: boolean;
+}) {
 	const { messages } = useI18n();
-	const { containerRef, innerRef, handlePointerMove, handlePointerLeave } =
-		useCardTilt(16, 1.06);
+	const {
+		containerRef,
+		innerRef,
+		handlePointerEnter,
+		handlePointerMove,
+		handlePointerLeave,
+	} = useCardTilt(16, 1.06);
 	const gameText = messages.playgroundPage.games[game.id];
 
 	const badge =
@@ -212,26 +251,32 @@ const GameCard: React.FC<{
 					cls: "bg-sky-600/80",
 				};
 
-	return (
-		<div
-			ref={containerRef}
-			className="group relative h-64 w-full max-w-[240px] select-none cursor-pointer [perspective:1200px]"
-			onPointerMove={handlePointerMove}
-			onPointerLeave={handlePointerLeave}
-			onClick={() => onClick(game)}
-		>
+		return (
+			<div
+				ref={containerRef}
+				className="group relative h-64 w-full max-w-[240px] select-none cursor-pointer [perspective:1200px]"
+				onPointerEnter={tiltEnabled ? handlePointerEnter : undefined}
+				onPointerMove={tiltEnabled ? handlePointerMove : undefined}
+				onPointerLeave={tiltEnabled ? handlePointerLeave : undefined}
+				onClick={() => onClick(game)}
+			>
 			<div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500/20 via-purpleContrast/25 to-amber-300/15 blur-md will-change-transform" />
 
 			<div
 				ref={innerRef}
-				className="relative h-full w-full overflow-hidden rounded-[24px] border border-zinc-200/10 bg-zinc-950/70 transition-transform duration-150 ease-out will-change-transform transform-gpu [transform-style:preserve-3d] group-hover:brightness-110"
+				className={`relative h-full w-full overflow-hidden rounded-[24px] border border-zinc-200/10 bg-zinc-950/70 transition-transform duration-150 ease-out transform-gpu [transform-style:preserve-3d] group-hover:brightness-110 ${tiltEnabled ? "will-change-transform" : ""}`}
 			>
-				<img
-					src={game.img}
+				<Image
+					src={`/${game.img}`}
 					alt={gameText.name}
+					fill
+					loading="lazy"
+					sizes="(max-width: 640px) 80vw, 240px"
 					className="absolute inset-0 h-full w-full object-cover"
 					style={{
-						transform: "translateZ(30px) scale(1.06)",
+						transform: tiltEnabled
+							? "translateZ(30px) scale(1.06)"
+							: "scale(1.04)",
 						transformStyle: "preserve-3d",
 					}}
 					draggable={false}
@@ -253,14 +298,15 @@ const GameCard: React.FC<{
 			</div>
 		</div>
 	);
-};
+});
 
 const GameShelf: React.FC<{
 	title: string;
 	description: string;
 	games: Game[];
 	onOpen: (g: Game) => void;
-}> = ({ title, description, games, onOpen }) => {
+	tiltEnabled: boolean;
+}> = ({ title, description, games, onOpen, tiltEnabled }) => {
 	const { messages } = useI18n();
 
 	return (
@@ -288,7 +334,12 @@ const GameShelf: React.FC<{
 			</div>
 			<div className="mt-8 flex flex-wrap justify-center gap-6 xl:justify-start">
 				{games.map((game) => (
-					<GameCard key={game.id} game={game} onClick={onOpen} />
+					<GameCard
+						key={game.id}
+						game={game}
+						onClick={onOpen}
+						tiltEnabled={tiltEnabled}
+					/>
 				))}
 			</div>
 		</section>
@@ -301,6 +352,7 @@ const Playground: React.FC = () => {
 	const [SelectedComponent, setSelectedComponent] =
 		useState<React.ComponentType | null>(null);
 	const [isMobileViewport, setIsMobileViewport] = useState(false);
+	const [isCardTiltEnabled, setIsCardTiltEnabled] = useState(false);
 	const [isGameMountReady, setIsGameMountReady] = useState(false);
 	const [gameMountVersion, setGameMountVersion] = useState(0);
 	const contentRef = useRef<HTMLDivElement | null>(null);
@@ -327,29 +379,51 @@ const Playground: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
-		let cancelled = false;
-
-		if (selectedGame) {
-			const Dyn = dynamic(selectedGame.importer, {
-				ssr: false,
-				loading: () => (
-					<p className="text-zinc-200">{messages.playgroundPage.loading}</p>
-				),
-			});
-			if (!cancelled) setSelectedComponent(() => Dyn);
-		} else {
+		if (!selectedGame) {
 			setSelectedComponent(null);
+			return;
 		}
+
+		let cancelled = false;
+		setSelectedComponent(null);
+
+		void selectedGame.importer().then((module) => {
+			if (!cancelled) {
+				setSelectedComponent(() => module.default);
+			}
+		});
 
 		return () => {
 			cancelled = true;
 		};
 	}, [selectedGame]);
 
-	const openGame = useCallback((g: Game) => setSelectedGame(g), []);
+	useEffect(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		const motionQuery = window.matchMedia(
+			"(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
+		);
+		const syncTilt = () => setIsCardTiltEnabled(motionQuery.matches);
+
+		syncTilt();
+		motionQuery.addEventListener("change", syncTilt);
+
+		return () => {
+			motionQuery.removeEventListener("change", syncTilt);
+		};
+	}, []);
+
+	const openGame = useCallback((g: Game) => {
+		startTransition(() => setSelectedGame(g));
+	}, []);
 	const closeGame = useCallback(() => {
-		setSelectedGame(null);
-		setSelectedComponent(null);
+		startTransition(() => {
+			setSelectedGame(null);
+			setSelectedComponent(null);
+		});
 	}, []);
 	const selectedGameText = selectedGame
 		? messages.playgroundPage.games[selectedGame.id]
@@ -586,6 +660,7 @@ const Playground: React.FC = () => {
 									description={messages.playgroundPage.playableDescription}
 									games={playable}
 									onOpen={openGame}
+									tiltEnabled={isCardTiltEnabled}
 								/>
 								{watchOnly.length > 0 && (
 									<GameShelf
@@ -593,6 +668,7 @@ const Playground: React.FC = () => {
 										description={messages.playgroundPage.watchOnlyDescription}
 										games={watchOnly}
 										onOpen={openGame}
+										tiltEnabled={isCardTiltEnabled}
 									/>
 								)}
 							</div>
@@ -634,10 +710,13 @@ const Playground: React.FC = () => {
 									onClick={(e) => e.stopPropagation()}
 								>
 									<div className="relative z-20 border-b border-zinc-800 bg-lessDarkBg px-4 py-3 md:px-5 md:py-4">
-										<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
+										<div className="flex items-center gap-3 pr-12 md:pr-16">
 											<div className="min-w-0">
 												<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-													{messages.common.playground}
+													{messages.common.playground} /{" "}
+													{selectedGame?.mode === "play"
+														? messages.playgroundPage.badges.playable
+														: messages.playgroundPage.badges.watchOnly}
 												</p>
 												<h3
 													id="game-title"
@@ -646,16 +725,6 @@ const Playground: React.FC = () => {
 												>
 													{selectedGameText?.name}
 												</h3>
-											</div>
-											<div className="rounded-2xl border border-zinc-800 bg-darkBg px-3 py-2">
-												<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-													{messages.playgroundPage.mode}
-												</p>
-												<p className="mt-1 text-sm font-semibold text-wheat">
-													{selectedGame?.mode === "play"
-														? messages.playgroundPage.badges.playable
-														: messages.playgroundPage.badges.watchOnly}
-												</p>
 											</div>
 										</div>
 									</div>

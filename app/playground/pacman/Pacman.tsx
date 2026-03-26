@@ -1207,8 +1207,8 @@ export default function Pacman(): React.JSX.Element {
 	}, []);
 
 	return (
-		<div className="relative h-full w-full overflow-hidden rounded-[1.5rem] bg-slate-950 p-6">
-			<div ref={hostRef} className="h-full w-full rounded-[1rem]" />
+		<div className="relative h-full w-full overflow-hidden bg-slate-950">
+			<div ref={hostRef} className="h-full w-full" />
 
 			{status === "loading" ? (
 				<div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm font-semibold tracking-[0.3em] text-slate-300">

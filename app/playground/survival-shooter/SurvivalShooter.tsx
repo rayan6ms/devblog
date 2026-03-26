@@ -3534,7 +3534,7 @@ export default function SurvivalShooter({
 
 	return (
 		<div
-			className={`relative h-full w-full overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 ${className}`}
+			className={`relative h-full w-full overflow-hidden bg-slate-950 ${className}`}
 		>
 			<div ref={hostRef} className="absolute inset-0" />
 

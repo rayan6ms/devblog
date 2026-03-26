@@ -1158,9 +1158,8 @@ export default function BinaryPong() {
 
 	return (
 		<div
-			className="flex h-full min-h-[640px] w-full select-none flex-col overflow-hidden rounded-[30px] border shadow-[0_28px_90px_rgba(0,0,0,0.45)]"
+			className="flex h-full min-h-0 w-full select-none flex-col overflow-hidden"
 			style={{
-				borderColor: cssWithAlpha(uiState.palette.frame, 0.86),
 				background: `radial-gradient(circle at top, ${cssWithAlpha(
 					uiState.palette.teams[1].glow,
 					0.12,
@@ -1169,26 +1168,15 @@ export default function BinaryPong() {
 		>
 			<div className="border-b border-[#233247] bg-[#07111d]/92 backdrop-blur">
 				<div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-					<div className="mr-auto min-w-40">
-						<div className="font-mono text-sm font-semibold uppercase tracking-[0.28em] text-slate-100">
-							Binary Pong
-						</div>
-						<div className="font-mono text-xs text-slate-400">
-							Two autonomous balls rebound off opposing territory until one color owns the board.
-						</div>
+					<div className="mr-auto font-mono text-xs text-slate-400">
+						Two autonomous balls rebound off opposing territory until one color owns the board.
 					</div>
 
-					<div className="flex flex-wrap items-center gap-2 font-mono text-xs text-slate-200">
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Cycle {uiState.cycle}
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Balls 2
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
-							Grid Hidden
-						</div>
-						<div className="rounded-full border border-[#1b2535] bg-[#0b1320] px-3 py-1.5 text-slate-300">
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">
+						<span>Cycle <span className="text-slate-100">{uiState.cycle}</span></span>
+						<span>Balls <span className="text-slate-100">2</span></span>
+						<span>Grid <span className="text-slate-100">Hidden</span></span>
+						<span className="text-slate-200">
 							{status === "loading"
 								? "Loading"
 								: status === "error"
@@ -1196,7 +1184,7 @@ export default function BinaryPong() {
 									: paused
 										? "Paused"
 										: "Autopilot"}
-						</div>
+						</span>
 					</div>
 				</div>
 

@@ -572,18 +572,15 @@ export default function Terminal() {
 	}
 
 	return (
-		<div className="flex h-full w-full items-center justify-center">
+		<div className="flex h-full w-full">
 			<section
 				style={getThemeStyle(currentTheme)}
-				className="flex h-full min-h-[540px] w-full max-w-5xl flex-col overflow-hidden rounded-[20px] border border-[var(--term-border)]"
+				className="flex h-full min-h-0 w-full flex-col overflow-hidden"
 				onClick={focusInput}
 			>
 				<header className="shrink-0 border-b border-[var(--term-border)] bg-[var(--term-panel-alt)] px-4 py-3 sm:px-5">
 					<div className="flex items-center justify-between gap-3">
 						<div className="min-w-0">
-							<p className="text-[11px] uppercase tracking-[0.3em] text-[var(--term-muted)]">
-								Linux Terminal Playground
-							</p>
 							<p className="truncate text-sm text-[var(--term-text)]">
 								{getPrompt(shellState.cwd)}
 							</p>

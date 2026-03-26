@@ -459,14 +459,7 @@ export default function SineWaves() {
 		<div className="flex h-full min-h-0 w-full flex-col bg-slate-950 text-slate-100">
 			<div className="border-b border-white/10 bg-slate-950/85 backdrop-blur">
 				<div className="mx-auto flex max-w-screen-2xl flex-wrap items-center gap-4 px-4 py-3">
-					<div className="min-w-36">
-						<div className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-200">
-							Sine Waves
-						</div>
-						<div className="text-xs text-slate-400">
-							Epicycles feeding a live waveform.
-						</div>
-					</div>
+					<div className="text-xs text-slate-400">Epicycles feeding a live waveform.</div>
 
 					<div className="flex items-center gap-2">
 						{(["classic", "square-ish", "bloom"] as const).map((preset) => (

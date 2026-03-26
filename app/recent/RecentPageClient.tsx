@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n-shared";
 import { getAuthorHref, getPostHref, type IPost } from "@/lib/posts-client";
 
 const MAX_PAGE_BUTTONS = 5;
