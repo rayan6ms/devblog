@@ -85,6 +85,34 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		blendMode: GlobalCompositeOperation;
 	};
 
+	const DIRTY_FILL_STYLE = 1 << 0;
+	const DIRTY_STROKE_STYLE = 1 << 1;
+	const DIRTY_LINE_WIDTH = 1 << 2;
+	const DIRTY_LINE_JOIN = 1 << 3;
+	const DIRTY_LINE_CAP = 1 << 4;
+	const DIRTY_TEXT_ALIGN = 1 << 5;
+	const DIRTY_TEXT_BASELINE = 1 << 6;
+	const DIRTY_FONT = 1 << 7;
+	const DIRTY_BLEND_MODE = 1 << 8;
+	const DIRTY_ALL =
+		DIRTY_FILL_STYLE |
+		DIRTY_STROKE_STYLE |
+		DIRTY_LINE_WIDTH |
+		DIRTY_LINE_JOIN |
+		DIRTY_LINE_CAP |
+		DIRTY_TEXT_ALIGN |
+		DIRTY_TEXT_BASELINE |
+		DIRTY_FONT |
+		DIRTY_BLEND_MODE;
+	const DIRTY_PATH_STATE =
+		DIRTY_FILL_STYLE |
+		DIRTY_STROKE_STYLE |
+		DIRTY_LINE_WIDTH |
+		DIRTY_LINE_JOIN |
+		DIRTY_LINE_CAP |
+		DIRTY_BLEND_MODE;
+	const DIRTY_TEXT_STATE = DIRTY_PATH_STATE | DIRTY_TEXT_ALIGN | DIRTY_TEXT_BASELINE | DIRTY_FONT;
+
 	const defaultDrawState = (): DrawState => ({
 		fillEnabled: true,
 		fillStyle: "rgba(255,255,255,1)",
@@ -103,12 +131,31 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	});
 
 	let drawState = defaultDrawState();
+	let drawStateDirty = DIRTY_ALL;
 	const stateStack: DrawState[] = [];
-	let shapeVertices: Array<[number, number]> = [];
+	let shapeVertices: number[] = [];
 
 	const clampByte = (value: number) => Math.max(0, Math.min(255, Math.round(value)));
 	const colorArgs = (values: any[]) =>
 		values.length === 1 && Array.isArray(values[0]) ? values[0] : values;
+	const COLOR_CACHE_LIMIT = 256;
+	const colorCache = new Map<number | string, string>();
+
+	const colorCacheKey = (r: number, g: number, b: number, a: number) =>
+		Number.isInteger(a)
+			? ((((a & 255) << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0
+			: r + "|" + g + "|" + b + "|" + a;
+
+	const cacheCanvasColor = (r: number, g: number, b: number, a: number) => {
+		const key = colorCacheKey(r, g, b, a);
+		const cached = colorCache.get(key);
+		if (cached) return cached;
+		const next =
+			"rgba(" + r + ", " + g + ", " + b + ", " + a / 255 + ")";
+		if (colorCache.size >= COLOR_CACHE_LIMIT) colorCache.clear();
+		colorCache.set(key, next);
+		return next;
+	};
 
 	const toCanvasColor = (...input: any[]) => {
 		const values = colorArgs(input);
@@ -129,26 +176,44 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			b = Number(values[2] ?? 0);
 			a = Number(values[3] ?? 255);
 		}
-		return "rgba(" + clampByte(r) + ", " + clampByte(g) + ", " + clampByte(b) + ", " + Math.max(0, Math.min(255, a)) / 255 + ")";
+		return cacheCanvasColor(
+			clampByte(r),
+			clampByte(g),
+			clampByte(b),
+			Math.max(0, Math.min(255, a)),
+		);
 	};
 
-	const syncDrawState = () => {
+	const markDrawStateDirty = (mask: number) => {
+		drawStateDirty |= mask;
+	};
+
+	const fontString = (state: DrawState) =>
+		state.fontWeight + " " + state.fontSize + "px " + state.fontFamily;
+
+	const syncDrawState = (mask = DIRTY_ALL) => {
 		if (!drawingContext) return;
-		drawingContext.fillStyle = drawState.fillStyle;
-		drawingContext.strokeStyle = drawState.strokeStyle;
-		drawingContext.lineWidth = drawState.lineWidth;
-		drawingContext.lineJoin = drawState.lineJoin;
-		drawingContext.lineCap = drawState.lineCap;
-		drawingContext.textAlign = drawState.textAlign;
-		drawingContext.textBaseline = drawState.textBaseline;
-		drawingContext.font = drawState.fontWeight + " " + drawState.fontSize + "px " + drawState.fontFamily;
-		drawingContext.globalCompositeOperation = drawState.blendMode;
+		const dirty = drawStateDirty & mask;
+		if (!dirty) return;
+		if (dirty & DIRTY_FILL_STYLE) drawingContext.fillStyle = drawState.fillStyle;
+		if (dirty & DIRTY_STROKE_STYLE) drawingContext.strokeStyle = drawState.strokeStyle;
+		if (dirty & DIRTY_LINE_WIDTH) drawingContext.lineWidth = drawState.lineWidth;
+		if (dirty & DIRTY_LINE_JOIN) drawingContext.lineJoin = drawState.lineJoin;
+		if (dirty & DIRTY_LINE_CAP) drawingContext.lineCap = drawState.lineCap;
+		if (dirty & DIRTY_TEXT_ALIGN) drawingContext.textAlign = drawState.textAlign;
+		if (dirty & DIRTY_TEXT_BASELINE) drawingContext.textBaseline = drawState.textBaseline;
+		if (dirty & DIRTY_FONT) drawingContext.font = fontString(drawState);
+		if (dirty & DIRTY_BLEND_MODE) {
+			drawingContext.globalCompositeOperation = drawState.blendMode;
+		}
+		drawStateDirty &= ~dirty;
 	};
 
 	const resetDrawState = () => {
-		shapeVertices = [];
+		shapeVertices.length = 0;
 		stateStack.length = 0;
 		drawState = defaultDrawState();
+		drawStateDirty = DIRTY_ALL;
 		if (drawingContext) {
 			drawingContext.setTransform(1, 0, 0, 1, 0, 0);
 			syncDrawState();
@@ -191,16 +256,16 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	};
 
 	const push = () => {
+		syncDrawState();
 		drawingContext.save();
 		stateStack.push({ ...drawState });
-		syncDrawState();
 	};
 
 	const pop = () => {
 		if (!stateStack.length) return;
 		drawingContext.restore();
 		drawState = stateStack.pop() as DrawState;
-		syncDrawState();
+		drawStateDirty = DIRTY_ALL;
 	};
 
 	const translate = (x: number, y: number) => drawingContext.translate(x, y);
@@ -208,9 +273,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const scale = (x: number, y?: number) => drawingContext.scale(x, y ?? x);
 
 	const fill = (...input: any[]) => {
+		const nextFill = toCanvasColor(...input);
 		drawState.fillEnabled = true;
-		drawState.fillStyle = toCanvasColor(...input);
-		syncDrawState();
+		if (drawState.fillStyle !== nextFill) {
+			drawState.fillStyle = nextFill;
+			markDrawStateDirty(DIRTY_FILL_STYLE);
+		}
 	};
 
 	const noFill = () => {
@@ -218,9 +286,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	};
 
 	const stroke = (...input: any[]) => {
+		const nextStroke = toCanvasColor(...input);
 		drawState.strokeEnabled = true;
-		drawState.strokeStyle = toCanvasColor(...input);
-		syncDrawState();
+		if (drawState.strokeStyle !== nextStroke) {
+			drawState.strokeStyle = nextStroke;
+			markDrawStateDirty(DIRTY_STROKE_STYLE);
+		}
 	};
 
 	const noStroke = () => {
@@ -228,17 +299,20 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	};
 
 	const strokeWeight = (value: number) => {
+		if (drawState.lineWidth === value) return;
 		drawState.lineWidth = value;
-		syncDrawState();
+		markDrawStateDirty(DIRTY_LINE_WIDTH);
 	};
 
 	const strokeJoin = (value: string) => {
-		drawState.lineJoin = (value === ROUND
+		const nextJoin = (value === ROUND
 			? "round"
 			: value === BEVEL
 				? "bevel"
 				: "miter") as CanvasLineJoin;
-		syncDrawState();
+		if (drawState.lineJoin === nextJoin) return;
+		drawState.lineJoin = nextJoin;
+		markDrawStateDirty(DIRTY_LINE_JOIN);
 	};
 
 	const rectMode = (mode: string) => {
@@ -273,6 +347,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	};
 
 	const commitPath = () => {
+		syncDrawState(DIRTY_PATH_STATE);
 		if (drawState.fillEnabled) drawingContext.fill();
 		if (drawState.strokeEnabled) drawingContext.stroke();
 	};
@@ -303,67 +378,81 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	};
 
 	const beginShape = () => {
-		shapeVertices = [];
+		shapeVertices.length = 0;
 	};
 
 	const vertex = (x: number, y: number) => {
-		shapeVertices.push([x, y]);
+		shapeVertices.push(x, y);
 	};
 
 	const endShape = (mode?: string) => {
 		if (!shapeVertices.length) return;
 		drawingContext.beginPath();
-		drawingContext.moveTo(shapeVertices[0][0], shapeVertices[0][1]);
-		for (let i = 1; i < shapeVertices.length; i++) {
-			drawingContext.lineTo(shapeVertices[i][0], shapeVertices[i][1]);
+		drawingContext.moveTo(shapeVertices[0], shapeVertices[1]);
+		for (let i = 2; i < shapeVertices.length; i += 2) {
+			drawingContext.lineTo(shapeVertices[i], shapeVertices[i + 1]);
 		}
 		if (mode === CLOSE) drawingContext.closePath();
 		commitPath();
 	};
 
 	const blendMode = (mode: string) => {
-		drawState.blendMode = (mode === BLEND ? "source-over" : mode) as GlobalCompositeOperation;
-		syncDrawState();
+		const nextBlend = (mode === BLEND ? "source-over" : mode) as GlobalCompositeOperation;
+		if (drawState.blendMode === nextBlend) return;
+		drawState.blendMode = nextBlend;
+		markDrawStateDirty(DIRTY_BLEND_MODE);
 	};
 
 	const textAlign = (horizontal: string, vertical = BASELINE) => {
-		drawState.textAlign = (horizontal === CENTER
+		const nextAlign = (horizontal === CENTER
 			? "center"
 			: horizontal === RIGHT
 				? "right"
 				: "left") as CanvasTextAlign;
-		drawState.textBaseline = (vertical === CENTER
+		const nextBaseline = (vertical === CENTER
 			? "middle"
 			: vertical === "top"
 				? "top"
 				: vertical === "bottom"
 					? "bottom"
 					: "alphabetic") as CanvasTextBaseline;
-		syncDrawState();
+		if (drawState.textAlign !== nextAlign) {
+			drawState.textAlign = nextAlign;
+			markDrawStateDirty(DIRTY_TEXT_ALIGN);
+		}
+		if (drawState.textBaseline !== nextBaseline) {
+			drawState.textBaseline = nextBaseline;
+			markDrawStateDirty(DIRTY_TEXT_BASELINE);
+		}
 	};
 
 	const textSize = (size: number) => {
+		if (drawState.fontSize === size) return;
 		drawState.fontSize = size;
-		syncDrawState();
+		markDrawStateDirty(DIRTY_FONT);
 	};
 
 	const textStyle = (style: string) => {
-		drawState.fontWeight = style === BOLD ? "bold" : "normal";
-		syncDrawState();
+		const nextWeight = style === BOLD ? "bold" : "normal";
+		if (drawState.fontWeight === nextWeight) return;
+		drawState.fontWeight = nextWeight;
+		markDrawStateDirty(DIRTY_FONT);
 	};
 
 	const textFont = (font: string) => {
+		if (drawState.fontFamily === font) return;
 		drawState.fontFamily = font;
-		syncDrawState();
+		markDrawStateDirty(DIRTY_FONT);
 	};
 
 	const textWidth = (value: string) => {
-		syncDrawState();
+		syncDrawState(DIRTY_FONT);
 		return drawingContext.measureText(String(value)).width;
 	};
 
 	const text = (value: string, x: number, y: number) => {
 		const textValue = String(value);
+		syncDrawState(DIRTY_TEXT_STATE);
 		if (drawState.fillEnabled) drawingContext.fillText(textValue, x, y);
 		if (drawState.strokeEnabled) drawingContext.strokeText(textValue, x, y);
 	};
@@ -377,13 +466,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	};
 
 	const background = (...input: any[]) => {
+		syncDrawState();
 		drawingContext.save();
 		drawingContext.setTransform(1, 0, 0, 1, 0, 0);
 		drawingContext.globalCompositeOperation = "source-over";
 		drawingContext.fillStyle = toCanvasColor(...input);
 		drawingContext.fillRect(0, 0, width, height);
 		drawingContext.restore();
-		syncDrawState();
 	};
 
 	const constrain = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -399,8 +488,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return Math.random();
 	};
 	const dist = (x1: number, y1: number, x2: number, y2: number) => Math.hypot(x2 - x1, y2 - y1);
-	const keyDown = new Map<number, boolean>();
-	const edgeQueue = new Set<number>();
+	const KEY_STATE_SIZE = 256;
+	const keyDown = new Uint8Array(KEY_STATE_SIZE);
+	const keyPressedEdges = new Uint8Array(KEY_STATE_SIZE);
 	const KEY_CODES: Record<string, number> = {
 		ArrowLeft: LEFT_ARROW,
 		ArrowRight: RIGHT_ARROW,
@@ -440,10 +530,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		if (/^[a-z0-9]$/i.test(event.key)) return event.key.toUpperCase().charCodeAt(0);
 		return 0;
 	};
-	const KD = (code: number) => !!keyDown.get(code);
+	const KD = (code: number) => code > 0 && code < KEY_STATE_SIZE && keyDown[code] === 1;
 	const justPressed = (code: number) => {
-		if (!edgeQueue.has(code)) return false;
-		edgeQueue.delete(code);
+		if (code <= 0 || code >= KEY_STATE_SIZE || keyPressedEdges[code] === 0) return false;
+		keyPressedEdges[code] = 0;
 		return true;
 	};
 	const DIGITS_1_8 = [49, 50, 51, 52, 53, 54, 55, 56];
@@ -645,6 +735,17 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const BULLET_HP = [7, 12, 16, 21, 25, 32, 37, 43];
 	const BULLET_DMG = [7, 10, 13, 16, 19, 22, 25, 28];
 	const RELOAD_SEC = [0.6, 0.56, 0.52, 0.48, 0.44, 0.4, 0.36, 0.32];
+	const BULLET_SPEED_BASE = 380;
+	const BULLET_SPEED_STEP = 58;
+	const BULLET_LIFE_BASE = 2.05;
+	const BULLET_LIFE_PER_SPEED = 0.03;
+	const BULLET_PVP_DAMAGE_FROM_DMG = 0.018;
+	const BULLET_PVP_DAMAGE_FROM_PEN = 0.014;
+	const BULLET_PVP_HP_FROM_PEN = 0.02;
+	const BULLET_PVP_HP_FROM_DMG = 0.012;
+	const BULLET_TANK_DAMAGE_MUL = 1.15;
+	const BOT_DODGE_TRIGGER_CHANCE = 0.69;
+	const BOT_DODGE_WINDOW_FRAMES = 14;
 
 	const TEAMS: Array<{ name: TeamName; color: number[]; key: string }> = [
 		{ name: "blue", color: [61, 184, 220], key: "tl" },
@@ -1266,6 +1367,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const PROTECTOR_STICKY_SEC = 4.0;
 	const DRONE_BULLET_SPEED_BASE = 360;
 	const DRONE_BULLET_DAMAGE_TAKEN_MUL = 0.35;
+	const DRONE_BASE_SPEED_BUFF = 1.04;
 	const DRONE_AUTO_LEASH_RATIO = 0.82;
 	let nextTankId = 1;
 
@@ -1281,6 +1383,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		h: number;
 	};
 
+	type DeathPreviewKind = "none" | "tank" | "shape" | "protector" | "bullet";
+	type DeathPreviewShapeType = "tri" | "sqr" | "pent" | "dia" | "hex";
+
 	type DeathInfo = {
 		killer: string;
 		score: number;
@@ -1290,6 +1395,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		tankClass: TankClassId;
 		killerTankClass?: TankClassId | null;
 		killerTankTeamIdx?: number | null;
+		killerPreviewKind?: DeathPreviewKind | null;
+		killerPreviewShape?: DeathPreviewShapeType | null;
+		killerPreviewTeamIdx?: number | null;
 	};
 
 	type SpawnerPlayerRef = Point & {
@@ -1632,6 +1740,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			dy = ay - by;
 		return Math.hypot(dx, dy);
 	}
+	function distanceSq(ax: number, ay: number, bx: number, by: number) {
+		const dx = ax - bx;
+		const dy = ay - by;
+		return dx * dx + dy * dy;
+	}
 	function withinRect(p: Point, rect: Rect) {
 		return (
 			p.x >= rect.x &&
@@ -1639,6 +1752,48 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			p.y >= rect.y &&
 			p.y <= rect.y + rect.h
 		);
+	}
+
+	type IndexedQueue<T> = {
+		items: T[];
+		head: number;
+	};
+
+	function queueLength<T>(queue: IndexedQueue<T>) {
+		return queue.items.length - queue.head;
+	}
+
+	function queueClear<T>(queue: IndexedQueue<T>) {
+		queue.items.length = 0;
+		queue.head = 0;
+	}
+
+	function queuePush<T>(queue: IndexedQueue<T>, value: T) {
+		queue.items.push(value);
+	}
+
+	function queuePeek<T>(queue: IndexedQueue<T>) {
+		return queue.head < queue.items.length ? queue.items[queue.head] : undefined;
+	}
+
+	function queueCompact<T>(queue: IndexedQueue<T>) {
+		if (queue.head === 0) return;
+		if (queue.head >= queue.items.length) {
+			queue.items.length = 0;
+			queue.head = 0;
+			return;
+		}
+		if (queue.head > 32 && queue.head * 2 >= queue.items.length) {
+			queue.items.splice(0, queue.head);
+			queue.head = 0;
+		}
+	}
+
+	function queueShift<T>(queue: IndexedQueue<T>) {
+		if (queue.head >= queue.items.length) return undefined;
+		const value = queue.items[queue.head++] as T;
+		queueCompact(queue);
+		return value;
 	}
 
 	class Spawner {
@@ -1669,9 +1824,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			this.nestPolygonPool = new Pool();
 			this.crasherPool = new Pool();
 			this.enemyPool = new Pool();
-			this.respawnQueue = [];
-			this.polygonQueue = [];
-			this.nestQueue = [];
+			this.respawnQueue = { items: [], head: 0 };
+			this.polygonQueue = { items: [], head: 0 };
+			this.nestQueue = { items: [], head: 0 };
 			this.time = 0;
 			this.rate = {
 				polygons: cfg.budgets?.rates?.polygons || 6,
@@ -1729,9 +1884,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			this.crasherCount = 0;
 			this.hexagonCount = 0;
 			this.enemyCount = [0, 0, 0, 0];
-			this.respawnQueue.length = 0;
-			this.polygonQueue.length = 0;
-			this.nestQueue.length = 0;
+			queueClear(this.respawnQueue);
+			queueClear(this.polygonQueue);
+			queueClear(this.nestQueue);
 			this.time = 0;
 			this.budget.polygons = this.cap.polygons;
 			this.budget.nest = this.cap.nest;
@@ -1763,11 +1918,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				if (!this._spawnNestPolygon()) break;
 			}
 
-			this.polygonQueue.length = 0;
-			this.nestQueue.length = 0;
+			queueClear(this.polygonQueue);
+			queueClear(this.nestQueue);
 		}
 		enqueueRespawn(q: RespawnRequest) {
-			this.respawnQueue.push(q);
+			queuePush(this.respawnQueue, q);
 		}
 
 		update(dt: number) {
@@ -1861,16 +2016,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			}
 
 			const can = Math.min(
-				this.respawnQueue.length,
+				queueLength(this.respawnQueue),
 				Math.floor(this.budget.respawns),
 			);
 			for (let i = 0; i < can; i++) {
-				const q = this.respawnQueue.shift();
-				if (this._spawnEnemy(q)) this.budget.respawns -= 1;
-				else {
-					this.respawnQueue.unshift(q);
-					break;
-				}
+				const q = queuePeek(this.respawnQueue as IndexedQueue<RespawnRequest>);
+				if (!q) break;
+				if (!this._spawnEnemy(q)) break;
+				queueShift(this.respawnQueue);
+				this.budget.respawns -= 1;
 			}
 
 			this.prevInCrasher = !!inCZ;
@@ -1997,36 +2151,37 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 
 		_queueDeficits(
-			queue: SpawnTicket[],
+			queue: IndexedQueue<SpawnTicket>,
 			alive: number,
 			target: number,
 			minDelay: number,
 			maxDelay: number,
 		) {
-			while (alive + queue.length < target) {
-				const immediate = alive + queue.length < Math.min(target, 6);
-				queue.push({
+			while (alive + queueLength(queue) < target) {
+				const immediate = alive + queueLength(queue) < Math.min(target, 6);
+				queuePush(queue, {
 					readyAt: this.time + (immediate ? 0 : randf(minDelay, maxDelay, this.rng)),
 				});
 			}
 		}
 
 		_drainShapeQueue(
-			queue: SpawnTicket[],
+			queue: IndexedQueue<SpawnTicket>,
 			budgetKey: "polygons" | "nest",
 			spawnOne: () => boolean,
 			maxPerUpdate: number,
 		) {
 			let spawned = 0;
 			while (
-				queue.length &&
+				queueLength(queue) &&
 				spawned < maxPerUpdate &&
 				this.budget[budgetKey] >= 1
 			) {
-				const ticket = queue[0];
+				const ticket = queuePeek(queue);
+				if (!ticket) break;
 				if (ticket.readyAt > this.time) break;
 				if (spawnOne()) {
-					queue.shift();
+					queueShift(queue);
 					this.budget[budgetKey] -= 1;
 					spawned++;
 					continue;
@@ -2344,7 +2499,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		"Levi",
 		"Ezra",
 		"Leo",
-		"Ryan",
+		"Rayan",
 		"Nolan",
 		"Eli",
 		"Adam",
@@ -2441,6 +2596,36 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return topTank()?.uid || 0;
 	}
 
+	const scoreboardRowsCache: Array<{
+		t: TankEntity;
+		name: string;
+		score: number;
+		label: string;
+	}> = [];
+	let scoreboardMaxScore = 1;
+	let scoreboardCacheUntil = -1;
+
+	function scoreboardRows() {
+		if (now < scoreboardCacheUntil) return scoreboardRowsCache;
+		scoreboardRowsCache.length = 0;
+		for (let i = 0; i < tanks.length; i++) {
+			const t = tanks[i];
+			if (!t) continue;
+			const name = tankDisplayName(t);
+			const score = Math.floor(t.xp || 0);
+			scoreboardRowsCache.push({
+				t,
+				name,
+				score,
+				label: `${name} - ${formatShort(score)}`,
+			});
+		}
+		scoreboardRowsCache.sort((a, b) => b.score - a.score);
+		scoreboardMaxScore = Math.max(1, scoreboardRowsCache[0]?.score || 1);
+		scoreboardCacheUntil = now + SCOREBOARD_CACHE_SEC;
+		return scoreboardRowsCache;
+	}
+
 	function drawOutlinedText(
 		txt: string,
 		x: number,
@@ -2459,14 +2644,17 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		textAlign(alignH, alignV);
 		textSize(size);
 		textStyle(bold ? BOLD : NORMAL);
-		noStroke();
-		fill(0);
-		text(txt, x + 1, y);
-		text(txt, x - 1, y);
-		text(txt, x, y + 1);
-		text(txt, x, y - 1);
 		fill(255, 255, 255);
-		text(txt, x, y);
+		stroke(0);
+		strokeJoin(ROUND);
+		strokeWeight(3);
+		syncDrawState();
+		if (drawingContext) {
+			drawingContext.strokeText(txt, x, y);
+			drawingContext.fillText(txt, x, y);
+		} else {
+			text(txt, x, y);
+		}
 		pop();
 	}
 
@@ -2491,19 +2679,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		);
 		y += 12;
 
-		const rows = [];
-		for (let i = 0; i < tanks.length; i++) {
-			const t = tanks[i];
-			if (!t) continue;
-			const name = tankDisplayName(t);
-			const score = Math.floor(t.xp || 0);
-			rows.push({ t, name, score });
-		}
-		rows.sort((a, b) => b.score - a.score);
-		const maxScore = Math.max(1, rows[0]?.score || 1);
+		const rows = scoreboardRows();
+		const maxScore = scoreboardMaxScore;
 
 		for (let i = 0; i < rows.length; i++) {
-			const { t, name, score } = rows[i];
+			const { t, label, score } = rows[i];
 			const frac = Math.min(1, score / maxScore);
 			const col = TEAM_TANK_COLORS[TEAMS[t.teamIdx].name];
 			const rankX = x + 16;
@@ -2524,7 +2704,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 			drawOutlinedText(`#${i + 1}`, rankX, y + barH / 2 + 1, CENTER, CENTER, 10, true);
 			drawLeaderboardTankIcon(t, iconX, y + barH / 2 + 1);
-			drawTextWithOutline(`${name} - ${formatShort(score)}`, labelX, y + barH / 2 + 1, {
+			drawTextWithOutline(label, labelX, y + barH / 2 + 1, {
 				size: 12,
 				bold: true,
 				alignX: CENTER,
@@ -2535,7 +2715,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	let eventBanner: null | { text: string; ttl: number; key?: string } = null;
-	const eventBannerQueue: Array<{ text: string; ttl: number; key?: string }> = [];
+	const eventBannerQueue: IndexedQueue<{ text: string; ttl: number; key?: string }> = {
+		items: [],
+		head: 0,
+	};
 	function pushEventMessage(txt: string, ttl = 2.6, key?: string) {
 		if (key) {
 			if (eventBanner && eventBanner.key === key) {
@@ -2543,21 +2726,21 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				eventBanner.ttl = ttl;
 				return;
 			}
-			for (let i = eventBannerQueue.length - 1; i >= 0; i--) {
-				if (eventBannerQueue[i].key === key) {
-					eventBannerQueue[i].text = txt;
-					eventBannerQueue[i].ttl = ttl;
+			for (let i = eventBannerQueue.items.length - 1; i >= eventBannerQueue.head; i--) {
+				if (eventBannerQueue.items[i].key === key) {
+					eventBannerQueue.items[i].text = txt;
+					eventBannerQueue.items[i].ttl = ttl;
 					return;
 				}
 			}
 		}
-		eventBannerQueue.push({ text: txt, ttl, key });
-		if (eventBannerQueue.length > 8) eventBannerQueue.shift();
+		queuePush(eventBannerQueue, { text: txt, ttl, key });
+		if (queueLength(eventBannerQueue) > 8) queueShift(eventBannerQueue);
 	}
 
 	function drawEventBanner(dt: number) {
-		if (!eventBanner && eventBannerQueue.length) {
-			eventBanner = eventBannerQueue.shift() || null;
+		if (!eventBanner && queueLength(eventBannerQueue)) {
+			eventBanner = queueShift(eventBannerQueue) || null;
 		}
 		if (!eventBanner) return;
 		eventBanner.ttl -= dt;
@@ -2696,10 +2879,14 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	let B_hp = new Float32Array(B_CAP);
 	let B_life = new Float32Array(B_CAP);
 	let B_dmg = new Float32Array(B_CAP);
+	let B_pvpDmgMul = new Float32Array(B_CAP);
+	let B_pvpHpMul = new Float32Array(B_CAP);
 	let B_dead = new Uint8Array(B_CAP);
 	let B_dying = new Uint8Array(B_CAP);
 	let B_team = new Int16Array(B_CAP);
 	let B_dieT = new Float32Array(B_CAP);
+	let bulletNext = new Int32Array(B_CAP);
+	let bulletQueryStamp = new Int32Array(B_CAP);
 	const bulletFree: number[] = [];
 	let nextBulletIdx = 0;
 
@@ -2766,6 +2953,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			S_maxCY[i] = -1;
 		}
 		_nbrMark = new Int32Array(cap);
+		const nextShotSeenStamp = new Int32Array(cap);
+		nextShotSeenStamp.set(_shotSeenStamp);
+		_shotSeenStamp = nextShotSeenStamp;
 		S_CAP = cap;
 	}
 
@@ -2797,21 +2987,33 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const b8 = new Float32Array(cap);
 		b8.set(B_dmg);
 		B_dmg = b8;
-		const b9 = new Uint8Array(cap);
-		b9.set(B_dead);
-		B_dead = b9;
-		const b10 = new Uint8Array(cap);
-		b10.set(B_dying);
-		B_dying = b10;
-		const b11 = new Int16Array(cap);
-		b11.set(B_team);
-		B_team = b11;
-		const b12 = new Float32Array(cap);
-		b12.set(B_dieT);
-		B_dieT = b12;
-		const b13 = new Int32Array(cap);
-		b13.set(B_owner);
-		B_owner = b13;
+		const b9 = new Float32Array(cap);
+		b9.set(B_pvpDmgMul);
+		B_pvpDmgMul = b9;
+		const b10 = new Float32Array(cap);
+		b10.set(B_pvpHpMul);
+		B_pvpHpMul = b10;
+		const b11 = new Uint8Array(cap);
+		b11.set(B_dead);
+		B_dead = b11;
+		const b12 = new Uint8Array(cap);
+		b12.set(B_dying);
+		B_dying = b12;
+		const b13 = new Int16Array(cap);
+		b13.set(B_team);
+		B_team = b13;
+		const b14 = new Float32Array(cap);
+		b14.set(B_dieT);
+		B_dieT = b14;
+		const b15 = new Int32Array(cap);
+		b15.set(B_owner);
+		B_owner = b15;
+		const b16 = new Int32Array(cap);
+		b16.set(bulletNext);
+		bulletNext = b16;
+		const b17 = new Int32Array(cap);
+		b17.set(bulletQueryStamp);
+		bulletQueryStamp = b17;
 		B_CAP = cap;
 	}
 
@@ -2867,6 +3069,14 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	let dFrame: any = null;
 	const COLL_CELL = 64;
 	const ACTIVE_PAD = 220;
+	const BOT_TARGET_REFRESH_FRAMES = 3;
+	const BOT_AI_THINK_MID_FRAMES = 2;
+	const BOT_AI_THINK_FAR_FRAMES = 4;
+	const BOT_RENDER_MARGIN = 48;
+	const BOT_LABEL_MAX_DIST = 1500;
+	const BOT_LABEL_MAX_DIST_SQ = BOT_LABEL_MAX_DIST * BOT_LABEL_MAX_DIST;
+	const MAX_PHYSICS_STEPS_PER_FRAME = 4;
+	const SCOREBOARD_CACHE_SEC = 0.18;
 
 	const GRID_W = Math.ceil(WORLD.w / COLL_CELL);
 	const GRID_H = Math.ceil(WORLD.h / COLL_CELL);
@@ -2874,6 +3084,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	const cellHead = new Int32Array(CELL_COUNT);
 	cellHead.fill(-1);
+	const bulletCellHead = new Int32Array(CELL_COUNT);
+	bulletCellHead.fill(-1);
+	const tankCellHead = new Int32Array(CELL_COUNT);
+	tankCellHead.fill(-1);
 	let nodeNext = new Int32Array(1024);
 	let nodeShape = new Int32Array(1024);
 	let nodeCell = new Int32Array(1024);
@@ -2886,6 +3100,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	const _neighborBuf: number[] = [];
 	let _visibleBuf: number[] = [];
 	let _visStamp = 0;
+	let _shotSeenStamp = new Int32Array(S_CAP);
+	let _shotSeenSeq = 1;
+	let _bulletQuerySeq = 1;
+	let _tankQuerySeq = 1;
+	let tankNext = new Int32Array(64);
+	let tankQueryStamp = new Int32Array(64);
 
 	let _binSqr = new Int32Array(256);
 	let _binTri = new Int32Array(256);
@@ -2968,6 +3188,115 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const minCY = Math.max(0, ((y - r) / COLL_CELL) | 0);
 		const maxCY = Math.min(GRID_H - 1, ((y + r) / COLL_CELL) | 0);
 		return [minCX, minCY, maxCX, maxCY];
+	}
+
+	function ensureTankGridCapacity(n: number) {
+		if (n <= tankNext.length) return;
+		let cap = 1;
+		while (cap < n) cap <<= 1;
+		const next = new Int32Array(cap);
+		next.set(tankNext);
+		tankNext = next;
+		const stamps = new Int32Array(cap);
+		stamps.set(tankQueryStamp);
+		tankQueryStamp = stamps;
+	}
+
+	function nextBulletQuerySeq() {
+		_bulletQuerySeq = (_bulletQuerySeq + 1) | 0;
+		if (_bulletQuerySeq === 0) {
+			bulletQueryStamp.fill(0);
+			_bulletQuerySeq = 1;
+		}
+		return _bulletQuerySeq;
+	}
+
+	function nextTankQuerySeq() {
+		_tankQuerySeq = (_tankQuerySeq + 1) | 0;
+		if (_tankQuerySeq === 0) {
+			tankQueryStamp.fill(0);
+			_tankQuerySeq = 1;
+		}
+		return _tankQuerySeq;
+	}
+
+	function rebuildBulletGrid() {
+		bulletCellHead.fill(-1);
+		for (let j = 0; j < bullets.length; j++) {
+			const bi = bullets[j]._bi | 0;
+			bulletNext[bi] = -1;
+			if (B_dead[bi] || B_dying[bi]) continue;
+			const ci = cellIndexClamped((B_x[bi] / COLL_CELL) | 0, (B_y[bi] / COLL_CELL) | 0);
+			if (ci < 0) continue;
+			bulletNext[bi] = bulletCellHead[ci];
+			bulletCellHead[ci] = bi;
+		}
+	}
+
+	function rebuildTankGrid() {
+		ensureTankGridCapacity(tanks.length);
+		tankCellHead.fill(-1);
+		for (let ti = 0; ti < tanks.length; ti++) {
+			tankNext[ti] = -1;
+			const t = tanks[ti];
+			if (!t || t.isDead) continue;
+			const ci = cellIndexClamped((t.x / COLL_CELL) | 0, (t.y / COLL_CELL) | 0);
+			if (ci < 0) continue;
+			tankNext[ti] = tankCellHead[ci];
+			tankCellHead[ci] = ti;
+		}
+	}
+
+	function forEachBulletNearAABB(
+		minX: number,
+		minY: number,
+		maxX: number,
+		maxY: number,
+		cb: (bi: number) => void,
+	) {
+		const stamp = nextBulletQuerySeq();
+		const minCX = Math.max(0, ((minX / COLL_CELL) | 0) - 1);
+		const maxCX = Math.min(GRID_W - 1, ((maxX / COLL_CELL) | 0) + 1);
+		const minCY = Math.max(0, ((minY / COLL_CELL) | 0) - 1);
+		const maxCY = Math.min(GRID_H - 1, ((maxY / COLL_CELL) | 0) + 1);
+		for (let cx = minCX; cx <= maxCX; cx++) {
+			for (let cy = minCY; cy <= maxCY; cy++) {
+				let bi = bulletCellHead[cx * GRID_H + cy];
+				while (bi !== -1) {
+					if (bulletQueryStamp[bi] !== stamp) {
+						bulletQueryStamp[bi] = stamp;
+						cb(bi);
+					}
+					bi = bulletNext[bi];
+				}
+			}
+		}
+	}
+
+	function forEachTankNearAABB(
+		minX: number,
+		minY: number,
+		maxX: number,
+		maxY: number,
+		cb: (tank: TankEntity, tankIndex: number) => void,
+	) {
+		const stamp = nextTankQuerySeq();
+		const minCX = Math.max(0, ((minX / COLL_CELL) | 0) - 1);
+		const maxCX = Math.min(GRID_W - 1, ((maxX / COLL_CELL) | 0) + 1);
+		const minCY = Math.max(0, ((minY / COLL_CELL) | 0) - 1);
+		const maxCY = Math.min(GRID_H - 1, ((maxY / COLL_CELL) | 0) + 1);
+		for (let cx = minCX; cx <= maxCX; cx++) {
+			for (let cy = minCY; cy <= maxCY; cy++) {
+				let ti = tankCellHead[cx * GRID_H + cy];
+				while (ti !== -1) {
+					if (tankQueryStamp[ti] !== stamp) {
+						tankQueryStamp[ti] = stamp;
+						cb(tanks[ti], ti);
+					}
+					ti = tankNext[ti];
+				}
+			}
+		}
 	}
 
 	function ensureNodeCapacity(add: number) {
@@ -3074,7 +3403,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	const PLAYER_PAIR_BASE = 268435456;
-	const FIXED_H = 1 / 144;
+	const FIXED_H = 1 / 120;
 	let _accum = 0;
 	let physicsFrame = 0;
 	const COOLDOWN_FRAMES = 22;
@@ -3095,6 +3424,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		x ^= x >>> 16;
 		return x | 0;
 	}
+
+	function hashUnit(x: number) {
+		return (hash32(x) >>> 0) / 4294967295;
+	}
+
 	function hashPair(k: number) {
 		const hi = (k / 4294967296) | 0;
 		const lo = k | 0;
@@ -3216,9 +3550,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				e.stopPropagation();
 			}
 			const code = KEY(e);
-			if (code && !keyDown.get(code)) {
-				keyDown.set(code, true);
-				edgeQueue.add(code);
+			if (code > 0 && code < KEY_STATE_SIZE && keyDown[code] === 0) {
+				keyDown[code] = 1;
+				keyPressedEdges[code] = 1;
 			}
 			keyPressed();
 		};
@@ -3229,15 +3563,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				e.stopPropagation();
 			}
 			const code = KEY(e);
-			if (code) {
-				keyDown.set(code, false);
-				edgeQueue.delete(code);
+			if (code > 0 && code < KEY_STATE_SIZE) {
+				keyDown[code] = 0;
+				keyPressedEdges[code] = 0;
 			}
 		};
 
 		const clearKeys = () => {
-			keyDown.clear();
-			edgeQueue.clear();
+			keyDown.fill(0);
+			keyPressedEdges.fill(0);
 			mouseIsPressed = false;
 		};
 
@@ -3316,7 +3650,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 		textFont("monospace");
 		textSize(12);
-		frameRate(144);
+		frameRate(120);
 
 		player = makePlayer();
 		player.name = "You";
@@ -3413,10 +3747,17 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		_accum = Math.min(0.25, _accum + dtFrame);
 		handleInput();
 
-		while (_accum >= FIXED_H) {
+		let steps = 0;
+		while (_accum >= FIXED_H && steps < MAX_PHYSICS_STEPS_PER_FRAME) {
 			stepPhysics(FIXED_H);
 			physicsFrame++;
 			_accum -= FIXED_H;
+			steps++;
+		}
+		if (_accum >= FIXED_H) {
+			// Drop excess backlog after a long frame so a single stall does not cascade
+			// into several expensive catch-up renders on the next few frames.
+			_accum = Math.min(_accum, FIXED_H);
 		}
 
 		if (!dFrame) dFrame = derived(player);
@@ -3446,7 +3787,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		drawShapes(minX, minY, maxX, maxY);
 		drawBullets(minX, minY, maxX, maxY);
 		drawPlayer();
-		drawBots();
+		drawBots(minX, minY, maxX, maxY);
 
 		pop();
 
@@ -3747,14 +4088,20 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		S_team[idx] = (sh.teamIdx ?? -1) | 0;
 	}
 
+	function legacyBulletSpeedForTank(owner: TankEntity) {
+		const classStats = getTankClassDef(owner.tankClass || "basic").stats || {};
+		return (360 + (owner.stats.bulletSpd || 0) * 50) * (classStats.bulletSpeedMul || 1);
+	}
+
 	function droneSpeedScale(owner: TankEntity) {
-		const bulletSpeed = derived(owner).bulletSpeed;
+		const bulletSpeed = legacyBulletSpeedForTank(owner);
 		return Math.max(
-			1.35,
+			1.35 * DRONE_BASE_SPEED_BUFF,
 			Math.min(
-				2.85,
-				(bulletSpeed / DRONE_BULLET_SPEED_BASE) * 1.12 +
-				owner.stats.penetration * 0.05,
+				2.85 * DRONE_BASE_SPEED_BUFF,
+				((bulletSpeed / DRONE_BULLET_SPEED_BASE) * 1.12 +
+					owner.stats.penetration * 0.05) *
+				DRONE_BASE_SPEED_BUFF,
 			),
 		);
 	}
@@ -4321,6 +4668,76 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return "unknown";
 	}
 
+	function deathPreviewInfo(k: any, killerTank: TankEntity | null = null) {
+		const killer = killerLabel(k);
+		if (killerTank) {
+			return {
+				killer,
+				killerTankClass: killerTank.tankClass || "basic",
+				killerTankTeamIdx: killerTank.teamIdx ?? null,
+				killerPreviewKind: "tank" as DeathPreviewKind,
+				killerPreviewShape: null,
+				killerPreviewTeamIdx: killerTank.teamIdx ?? null,
+			};
+		}
+		if (typeof k === "string" && k.startsWith("tank:")) {
+			const idx = +k.split(":")[1] | 0;
+			return {
+				killer,
+				killerTankClass: "basic" as TankClassId,
+				killerTankTeamIdx: idx,
+				killerPreviewKind: "tank" as DeathPreviewKind,
+				killerPreviewShape: null,
+				killerPreviewTeamIdx: idx,
+			};
+		}
+		if (typeof k === "string" && k.startsWith("protector:")) {
+			const idx = +k.split(":")[1] | 0;
+			return {
+				killer,
+				killerTankClass: null,
+				killerTankTeamIdx: null,
+				killerPreviewKind: "protector" as DeathPreviewKind,
+				killerPreviewShape: "dia" as DeathPreviewShapeType,
+				killerPreviewTeamIdx: idx,
+			};
+		}
+		if (
+			k === "tri" ||
+			k === "sqr" ||
+			k === "pent" ||
+			k === "dia" ||
+			k === "hex"
+		) {
+			return {
+				killer,
+				killerTankClass: null,
+				killerTankTeamIdx: null,
+				killerPreviewKind: "shape" as DeathPreviewKind,
+				killerPreviewShape: k as DeathPreviewShapeType,
+				killerPreviewTeamIdx: null,
+			};
+		}
+		if (k === "bullet") {
+			return {
+				killer,
+				killerTankClass: null,
+				killerTankTeamIdx: null,
+				killerPreviewKind: "bullet" as DeathPreviewKind,
+				killerPreviewShape: null,
+				killerPreviewTeamIdx: null,
+			};
+		}
+		return {
+			killer,
+			killerTankClass: null,
+			killerTankTeamIdx: null,
+			killerPreviewKind: "none" as DeathPreviewKind,
+			killerPreviewShape: null,
+			killerPreviewTeamIdx: null,
+		};
+	}
+
 	function awardKillXPPayload(victim: any, killerUid: number) {
 		if (!killerUid) return;
 		const killer = getTankByUid?.(killerUid);
@@ -4345,24 +4762,28 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 		if (killerUid) awardKillXPPayload(player, killerUid);
 		const killerTank = killerUid ? getTankByUid(killerUid) : null;
+		const killerPreview = deathPreviewInfo(k, killerTank);
 
 		const start = player.lifeStartTime ?? now;
 		const alive = Math.max(0, now - start);
 
 		player.deathInfo = {
-			killer: killerLabel(k),
+			killer: killerPreview.killer,
 			score: Math.floor(player.xp),
 			level: player.level,
 			time: alive,
 			kills: player.lifeKills | 0,
 			tankClass: player.tankClass || "basic",
-			killerTankClass: killerTank?.tankClass || null,
-			killerTankTeamIdx: killerTank?.teamIdx ?? null,
+			killerTankClass: killerPreview.killerTankClass,
+			killerTankTeamIdx: killerPreview.killerTankTeamIdx,
+			killerPreviewKind: killerPreview.killerPreviewKind,
+			killerPreviewShape: killerPreview.killerPreviewShape,
+			killerPreviewTeamIdx: killerPreview.killerPreviewTeamIdx,
 		};
 		player.lastLifeTankClass = player.tankClass || "basic";
 
 		if (wasLeader) {
-			pushEventMessage(`${tankDisplayName(player)} was killed by ${killerLabel(k)}`, 3.4);
+			pushEventMessage(`${tankDisplayName(player)} was killed by ${killerPreview.killer}`, 3.4);
 		}
 
 		if (killerUid) {
@@ -4400,6 +4821,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			? tankDisplayName(getTankByUid(killerUid))
 			: killerLabel(bot.lastDamagedBy);
 		const killerTank = killerUid ? getTankByUid(killerUid) : null;
+		const killerPreview = deathPreviewInfo(bot.lastDamagedBy, killerTank);
 		bot.deathInfo = {
 			killer: killerName,
 			score: Math.floor(bot.xp || 0),
@@ -4407,8 +4829,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			time: alive,
 			kills: bot.lifeKills | 0,
 			tankClass: bot.tankClass || "basic",
-			killerTankClass: killerTank?.tankClass || null,
-			killerTankTeamIdx: killerTank?.teamIdx ?? null,
+			killerTankClass: killerPreview.killerTankClass,
+			killerTankTeamIdx: killerPreview.killerTankTeamIdx,
+			killerPreviewKind: killerPreview.killerPreviewKind,
+			killerPreviewShape: killerPreview.killerPreviewShape,
+			killerPreviewTeamIdx: killerPreview.killerPreviewTeamIdx,
 		};
 		bot.lastLifeTankClass = bot.tankClass || "basic";
 
@@ -4766,14 +5191,30 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
+	const FULL_STAT_PANEL_KEYS = STAT_KEYS as readonly TankStatKey[];
+	const MELEE_STAT_PANEL_KEYS = MELEE_STAT_KEYS as readonly TankStatKey[];
+	const FULL_STAT_PANEL_NAMES = FULL_STAT_PANEL_KEYS.map((key) =>
+		statPanelLabel(key),
+	);
+	const MELEE_STAT_PANEL_NAMES = MELEE_STAT_PANEL_KEYS.map((key) =>
+		statPanelLabel(key),
+	);
+	const STAT_PANEL_SHORTCUTS = ["1", "2", "3", "4", "5", "6", "7", "8"] as const;
+
 	function isMeleeTankClass(id: TankClassId) {
 		return !!getTankClassDef(id).meleeOnly;
 	}
 
 	function availableStatKeysForTank(t: TankEntity) {
-		return (isMeleeTankClass(t.tankClass || "basic")
-			? [...MELEE_STAT_KEYS]
-			: [...STAT_KEYS]) as TankStatKey[];
+		return isMeleeTankClass(t.tankClass || "basic")
+			? MELEE_STAT_PANEL_KEYS
+			: FULL_STAT_PANEL_KEYS;
+	}
+
+	function statPanelNamesForTank(t: TankEntity) {
+		return isMeleeTankClass(t.tankClass || "basic")
+			? MELEE_STAT_PANEL_NAMES
+			: FULL_STAT_PANEL_NAMES;
 	}
 
 	function maxStatLevelForTank(t: TankEntity, key: TankStatKey) {
@@ -4817,6 +5258,22 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return values[values.length - 1] + step * (idx - values.length + 1);
 	}
 
+	function bulletPvpDamageMul(stats: TankStats) {
+		return (
+			1 +
+			(stats.bulletDmg || 0) * BULLET_PVP_DAMAGE_FROM_DMG +
+			(stats.penetration || 0) * BULLET_PVP_DAMAGE_FROM_PEN
+		);
+	}
+
+	function bulletPvpHpMul(stats: TankStats) {
+		return (
+			1 +
+			(stats.penetration || 0) * BULLET_PVP_HP_FROM_PEN +
+			(stats.bulletDmg || 0) * BULLET_PVP_HP_FROM_DMG
+		);
+	}
+
 	function spendStatByIndex(d: number) {
 		const idx = d - 1;
 		if (!player || player.isDead) return;
@@ -4841,34 +5298,53 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	function derived(p: TankEntity) {
-		const classStats = getTankClassDef(p.tankClass || "basic").stats || {};
+		const stats = p.stats;
+		const tankClass = p.tankClass || "basic";
+		const cached = p._derivedCache;
+		if (
+			cached &&
+			p._derivedLevel === p.level &&
+			p._derivedClass === tankClass &&
+			p._derivedRegen === (stats.regen | 0) &&
+			p._derivedMaxHP === (stats.maxHP | 0) &&
+			p._derivedBodyDmg === (stats.bodyDmg | 0) &&
+			p._derivedBulletSpd === (stats.bulletSpd | 0) &&
+			p._derivedPenetration === (stats.penetration | 0) &&
+			p._derivedBulletDmg === (stats.bulletDmg | 0) &&
+			p._derivedReload === (stats.reload | 0) &&
+			p._derivedMoveSpd === (stats.moveSpd | 0)
+		) {
+			return cached;
+		}
+		const classStats = getTankClassDef(tankClass).stats || {};
 		const baseHP = 50 + 2 * (p.level - 1);
-		const maxHP = baseHP + statCurveValue(MAX_HP_BONUS, p.stats.maxHP);
-		const regenRate = statCurveValue(REGEN_RATE, p.stats.regen);
+		const maxHP = baseHP + statCurveValue(MAX_HP_BONUS, stats.maxHP);
+		const regenRate = statCurveValue(REGEN_RATE, stats.regen);
 
 		const levelSlow = moveLevelFactor(p.level);
 		const moveSpeedMul = classStats.moveSpeedMul || 1;
-		const maxSpeed = (420 + p.stats.moveSpd * 40) * levelSlow * moveSpeedMul;
-		const accel = (900 + p.stats.moveSpd * 100) * levelSlow * moveSpeedMul;
+		const maxSpeed = (420 + stats.moveSpd * 40) * levelSlow * moveSpeedMul;
+		const accel = (900 + stats.moveSpd * 100) * levelSlow * moveSpeedMul;
 
 		const reload =
-			statCurveValue(RELOAD_SEC, p.stats.reload) * (classStats.reloadMul || 1);
+			statCurveValue(RELOAD_SEC, stats.reload) * (classStats.reloadMul || 1);
 
 		const bulletSpeed =
-			(360 + p.stats.bulletSpd * 50) * (classStats.bulletSpeedMul || 1);
+			(BULLET_SPEED_BASE + stats.bulletSpd * BULLET_SPEED_STEP) *
+			(classStats.bulletSpeedMul || 1);
 
 		const bulletDamage =
-			statCurveValue(BULLET_DMG, p.stats.bulletDmg) *
+			statCurveValue(BULLET_DMG, stats.bulletDmg) *
 			(classStats.bulletDamageMul || 1);
 		const bulletHP =
-			statCurveValue(BULLET_HP, p.stats.penetration) *
+			statCurveValue(BULLET_HP, stats.penetration) *
 			(classStats.bulletHPMul || 1);
 
 		const bodyHitShape =
-			statCurveValue(BODY_HIT_SHAPE, p.stats.bodyDmg) +
+			statCurveValue(BODY_HIT_SHAPE, stats.bodyDmg) +
 			(classStats.bodyHitBonus || 0);
 
-		return {
+		const next = {
 			maxHP,
 			regenRate,
 			accel,
@@ -4880,6 +5356,18 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			bodyHitShape,
 			recoilMul: classStats.recoilMul || 1,
 		};
+		p._derivedCache = next;
+		p._derivedLevel = p.level;
+		p._derivedClass = tankClass;
+		p._derivedRegen = stats.regen | 0;
+		p._derivedMaxHP = stats.maxHP | 0;
+		p._derivedBodyDmg = stats.bodyDmg | 0;
+		p._derivedBulletSpd = stats.bulletSpd | 0;
+		p._derivedPenetration = stats.penetration | 0;
+		p._derivedBulletDmg = stats.bulletDmg | 0;
+		p._derivedReload = stats.reload | 0;
+		p._derivedMoveSpd = stats.moveSpd | 0;
+		return next;
 	}
 
 	function handleInput() {
@@ -5105,6 +5593,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			}
 		}
 
+		const life =
+			(BULLET_LIFE_BASE + (t.stats.bulletSpd || 0) * BULLET_LIFE_PER_SPEED) *
+			(spec.lifeMul || 1);
+		const pvpDmgMul = bulletPvpDamageMul(t.stats);
+		const pvpHpMul = bulletPvpHpMul(t.stats);
 		const b = bulletPool.acquire(() => ({ _bi: -1 }));
 		const bi = allocBulletIndex();
 		b._bi = bi;
@@ -5112,7 +5605,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		b.y = by;
 		b.vx = vx;
 		b.vy = vy;
-		b.life = 2.0 * (spec.lifeMul || 1);
+		b.life = life;
 		b.hp = d.bulletHP * (spec.hpMul || 1);
 		b.dmg = d.bulletDamage * (spec.damageMul || 1);
 		b.r = bR;
@@ -5126,9 +5619,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		B_y[bi] = by;
 		B_vx[bi] = vx;
 		B_vy[bi] = vy;
-		B_life[bi] = 2.0 * (spec.lifeMul || 1);
+		B_life[bi] = life;
 		B_hp[bi] = d.bulletHP * (spec.hpMul || 1);
 		B_dmg[bi] = d.bulletDamage * (spec.damageMul || 1);
+		B_pvpDmgMul[bi] = pvpDmgMul;
+		B_pvpHpMul[bi] = pvpHpMul;
 		B_r[bi] = bR;
 		B_team[bi] = t.teamIdx | 0;
 		B_dead[bi] = 0;
@@ -5320,7 +5815,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			onPlayerDeath(player.lastDamagedBy);
 	}
 
-	function rvoAdjust(sh: any, desx: number, desy: number) {
+	function rvoAdjust(
+		sh: any,
+		desx: number,
+		desy: number,
+		opts: {
+			enemyDroneWeight?: number;
+			enemyProtectorWeight?: number;
+		} = {},
+	) {
 		if (sh.ai === "protector") {
 			const eps = 120;
 			const len = Math.hypot(desx, desy) || 1;
@@ -5343,6 +5846,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				dy = o.y - sh.y;
 			const dist = Math.hypot(dx, dy);
 			const same = sh.teamIdx !== undefined && sh.teamIdx === o.teamIdx;
+			let weight = 1;
+			if (!same && o.ai === "drone") {
+				weight = opts.enemyDroneWeight ?? 1;
+			} else if (!same && o.ai === "protector") {
+				weight = opts.enemyProtectorWeight ?? 1;
+			}
+			if (weight <= 0.001) continue;
 			const rad = sh.r + o.r + (same ? 20 : 40);
 			if (dist > rad) continue;
 			const rvx = (o.vx || 0) - (sh.vx || 0);
@@ -5350,7 +5860,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			if (dx * rvx + dy * rvy >= 0) continue;
 			const side =
 				Math.sign(vx * dy - vy * dx) || (Math.random() < 0.5 ? 1 : -1);
-			const mag = (rad - dist) / rad;
+			const mag = ((rad - dist) / rad) * weight;
 			ax += -vy * 1200 * mag * side;
 			ay += vx * 1200 * mag * side;
 		}
@@ -5625,48 +6135,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	}
 
 	function updateBullets(dt: number) {
-		const bulletBins = new Map<number, number[]>();
-		for (let j = 0; j < bullets.length; j++) {
-			const bi = bullets[j]._bi | 0;
-			if (B_dead[bi] || B_dying[bi]) continue;
-			const cx = (B_x[bi] / COLL_CELL) | 0;
-			const cy = (B_y[bi] / COLL_CELL) | 0;
-			const key = (cx << 16) | (cy & 0xffff);
-			let arr = bulletBins.get(key);
-			if (!arr) {
-				arr = [];
-				bulletBins.set(key, arr);
-			}
-			arr.push(bi);
-		}
-
-		function forEachBulletInAABB(
-			minX: number,
-			minY: number,
-			maxX: number,
-			maxY: number,
-			cb: (bj: number) => void,
-		) {
-			const minCX = ((minX / COLL_CELL) | 0) - 1;
-			const maxCX = ((maxX / COLL_CELL) | 0) + 1;
-			const minCY = ((minY / COLL_CELL) | 0) - 1;
-			const maxCY = ((maxY / COLL_CELL) | 0) + 1;
-			const seen = new Set<number>();
-			for (let cx = minCX; cx <= maxCX; cx++) {
-				for (let cy = minCY; cy <= maxCY; cy++) {
-					const key = (cx << 16) | (cy & 0xffff);
-					const arr = bulletBins.get(key);
-					if (!arr) continue;
-					for (let k = 0; k < arr.length; k++) {
-						const bj = arr[k] | 0;
-						if (!seen.has(bj)) {
-							seen.add(bj);
-							cb(bj);
-						}
-					}
-				}
-			}
-		}
+		rebuildBulletGrid();
+		rebuildTankGrid();
 
 		for (let j = 0; j < bullets.length; j++) {
 			const bi = bullets[j]._bi | 0;
@@ -5727,13 +6197,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 				gridMarchSegment(ox, oy, ex, ey, COLL_CELL, _gm_visit);
 
-				let bestTankT = Infinity,
-					bestTank = null;
+				let bestTankT = Infinity;
+				let bestTankIndex = -1;
 				const bTeam = B_team[bi] | 0;
-				for (let ti = 0; ti < tanks.length; ti++) {
-					const tt = tanks[ti];
-					if (!tt || tt.isDead || tt.invincible) continue;
-					if ((tt.teamIdx | 0) === bTeam) continue;
+				forEachTankNearAABB(minSegX, minSegY, maxSegX, maxSegY, (tt, ti) => {
+					if (!tt || tt.isDead || tt.invincible) return;
+					if ((tt.teamIdx | 0) === bTeam) return;
 					const R = (tt.r || 0) + B_r[bi];
 					if (
 						tt.x + R < minSegX ||
@@ -5741,31 +6210,33 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						tt.y + R < minSegY ||
 						tt.y - R > maxSegY
 					)
-						continue;
+						return;
 					const tHit = segmentCircleTOI(ox, oy, ex, ey, tt.x, tt.y, R);
 					if (tHit !== null && tHit < bestTankT) {
 						bestTankT = tHit;
-						bestTank = tt;
+						bestTankIndex = ti;
 					}
-				}
+				});
 
 				const bestShapeT = _gm_bestT;
 				const bestShapeIdx = _gm_bestIdx;
 
 				let bestBulletT = Infinity,
 					bestBulletIdx = -1;
-				forEachBulletInAABB(minSegX, minSegY, maxSegX, maxSegY, (bj) => {
+				forEachBulletNearAABB(minSegX, minSegY, maxSegX, maxSegY, (bj) => {
 					if (bj === bi) return;
 					if (B_dead[bj] || B_dying[bj]) return;
 					if ((B_team[bj] | 0) === (B_team[bi] | 0)) return;
 					const R = B_r[bi] + B_r[bj];
+					const bx = B_x[bj];
+					const by = B_y[bj];
 					const tHit = segmentCircleTOI(
 						ox,
 						oy,
 						ex,
 						ey,
-						B_x[bj],
-						B_y[bj],
+						bx,
+						by,
 						R,
 					);
 					if (tHit !== null && tHit < bestBulletT) {
@@ -5782,7 +6253,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					bestBulletT <= bestTankT
 				)
 					hitKind = "bullet";
-				else if (bestTank && bestTankT <= 1 && bestTankT <= bestShapeT)
+				else if (bestTankIndex >= 0 && bestTankT <= 1 && bestTankT <= bestShapeT)
 					hitKind = "tank";
 				else if (bestShapeIdx >= 0 && bestShapeT <= 1) hitKind = "shape";
 
@@ -5797,11 +6268,15 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						ny = dy / dist;
 
 					const base = S_body[bestShapeIdx] | 0;
-					const effMul = Math.min(1, B_hp[bi] / base);
+					const isDrone = sh.ai === "drone";
+					const hpMul = isDrone ? B_pvpHpMul[bi] || 1 : 1;
+					const dmgMul = isDrone ? B_pvpDmgMul[bi] || 1 : 1;
+					const effMul = Math.min(1, (B_hp[bi] * hpMul) / base);
 					const dealt =
 						B_dmg[bi] *
+						dmgMul *
 						effMul *
-						(sh.ai === "drone" ? DRONE_BULLET_DAMAGE_TAKEN_MUL : 1);
+						(isDrone ? DRONE_BULLET_DAMAGE_TAKEN_MUL : 1);
 
 					if (sh.spawnGrace && sh.spawnGrace > 0) {
 						const segLen = Math.hypot(ex - ox, ey - oy) * bestShapeT;
@@ -5836,7 +6311,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						}
 					}
 
-					B_hp[bi] -= base;
+					B_hp[bi] -= base / hpMul;
 
 					const mass = sh.type === "hex" ? 0.2 : 1.0;
 					const impulse = 28 * mass;
@@ -5875,11 +6350,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					oy = B_y[bi] + ny * 0.8;
 
 					processed++;
-				} else if (hitKind === "tank") {
+				} else if (hitKind === "tank" && bestTankIndex >= 0) {
 					const hx = ox + (ex - ox) * bestTankT;
 					const hy = oy + (ey - oy) * bestTankT;
-					const tt = bestTank;
-					if (!tt) break;
+					const tt = tanks[bestTankIndex] as TankEntity;
 					const dx = hx - tt.x,
 						dy = hy - tt.y;
 					const dist = Math.hypot(dx, dy) || 1;
@@ -5890,7 +6364,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						const owner = getTankByUid(B_owner[bi] | 0);
 						if (tt.invincible) tt.invincible = false;
 
-						tt.hp -= B_dmg[bi];
+						tt.hp -=
+							B_dmg[bi] *
+							(B_pvpDmgMul[bi] || 1) *
+							BULLET_TANK_DAMAGE_MUL;
 						tt.lastDamagedBy = owner
 							? "tankuid:" + (owner.uid | 0)
 							: "bullet";
@@ -5921,6 +6398,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					if (canPairBullet(bi, bj)) {
 						const hpA = B_hp[bi],
 							hpB = B_hp[bj];
+						const hpMulA = B_pvpHpMul[bi] || 1;
+						const hpMulB = B_pvpHpMul[bj] || 1;
+						const effHpA = hpA * hpMulA;
+						const effHpB = hpB * hpMulB;
 
 						B_x[bi] = hx;
 						B_y[bi] = hy;
@@ -5929,8 +6410,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						B_vx[bi] *= f;
 						B_vy[bi] *= f;
 
-						B_hp[bi] = hpA - hpB;
-						B_hp[bj] = hpB - hpA;
+						B_hp[bi] = hpA - effHpB / hpMulA;
+						B_hp[bj] = hpB - effHpA / hpMulB;
 
 						if (B_hp[bi] <= 0) {
 							B_dying[bi] = 1;
@@ -6177,6 +6658,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		t.recoilY = 0;
 		t.barrelKick = 0;
 		t._fireCmd = false;
+		t._targetInfo = null;
 		refreshPendingUpgrade(t);
 	}
 
@@ -6224,12 +6706,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	function nearbyAllyClassCount(tank: TankEntity, classId: TankClassId, radius: number) {
 		let count = 0;
+		const radiusSq = radius * radius;
 		for (let i = 0; i < tanks.length; i++) {
 			const other = tanks[i];
 			if (!other || other.isDead || other === tank) continue;
 			if ((other.teamIdx | 0) !== (tank.teamIdx | 0)) continue;
 			if ((other.tankClass || "basic") !== classId) continue;
-			if (distance(other.x, other.y, tank.x, tank.y) <= radius) count++;
+			if (distanceSq(other.x, other.y, tank.x, tank.y) <= radiusSq) count++;
 		}
 		return count;
 	}
@@ -6599,6 +7082,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		excludeUid?: number,
 	) {
 		let total = 0;
+		const radiusSq = radius * radius;
 		for (let i = 0; i < tanks.length; i++) {
 			const t = tanks[i];
 			if (!t || t.isDead) continue;
@@ -6606,7 +7090,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			if (excludeUid && (t.uid | 0) === (excludeUid | 0)) continue;
 			const dx = t.x - x;
 			const dy = t.y - y;
-			const dist = Math.hypot(dx, dy);
+			const distSq = dx * dx + dy * dy;
+			if (distSq > radiusSq) continue;
+			const dist = Math.sqrt(distSq);
 			if (dist > radius) continue;
 			const falloff = 1 - dist / radius;
 			total += estimateTankPower(t) * (0.45 + 0.55 * falloff);
@@ -6671,12 +7157,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		excludeUid = 0,
 	) {
 		let count = 0;
+		const radiusSq = radius * radius;
 		for (let i = 0; i < tanks.length; i++) {
 			const t = tanks[i];
 			if (!t || t.isDead) continue;
 			if (excludeUid && (t.uid | 0) === (excludeUid | 0)) continue;
 			if ((t.teamIdx | 0) !== (teamIdx | 0)) continue;
-			if (distance(x, y, t.x, t.y) <= radius) count++;
+			if (distanceSq(x, y, t.x, t.y) <= radiusSq) count++;
 		}
 		return count;
 	}
@@ -6729,10 +7216,35 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return { ax, ay };
 	}
 
-	function bulletAvoidance(bot: TankEntity) {
+	function bulletAvoidance(
+		bot: TankEntity,
+		targetInfo?: BotTargetInfo,
+		profile?: ReturnType<typeof botProfile>,
+	) {
 		let ax = 0;
 		let ay = 0;
 		let risk = 0;
+		const targetTank =
+			targetInfo?.type === "tank" && targetInfo.target
+				? (targetInfo.target as TankEntity)
+				: null;
+		const committedPush =
+			!!targetTank &&
+			(targetInfo?.shouldRam ||
+				targetInfo!.killConfirm > 0.76 ||
+				targetInfo!.duelEdge > 0.2 ||
+				targetInfo!.dist < targetInfo!.desiredRange + 90);
+		const immediateCommit =
+			!!targetTank &&
+			(targetInfo?.shouldRam ||
+				targetInfo!.dist <
+				bot.r + (targetTank.r || 0) + (profile?.meleeOnly ? 96 : 56));
+		const safeRadius =
+			bot.r +
+			(immediateCommit ? 18 : committedPush ? 26 : 38) +
+			(profile?.meleeOnly ? 6 : 0);
+		const responseRange = immediateCommit ? 70 : committedPush ? 105 : 155;
+		const horizon = immediateCommit ? 0.34 : committedPush ? 0.48 : 0.78;
 		for (let i = 0; i < bullets.length; i++) {
 			const bi = bullets[i]?._bi | 0;
 			if (bi < 0 || B_dead[bi] || B_dying[bi]) continue;
@@ -6743,21 +7255,33 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			const vy = B_vy[bi];
 			const vv = vx * vx + vy * vy;
 			if (vv <= 1e-6) continue;
-			if (rx * vx + ry * vy > 0 && rx * rx + ry * ry > 240 * 240) continue;
-			const t = constrain(-(rx * vx + ry * vy) / vv, 0, 0.9);
+			const distNow = Math.hypot(rx, ry);
+			const along = rx * vx + ry * vy;
+			if (along > 0 && distNow > safeRadius + responseRange * 0.8) continue;
+			const t = constrain(-along / vv, 0, horizon);
 			const cx = rx + vx * t;
 			const cy = ry + vy * t;
 			const dist = Math.hypot(cx, cy);
-			const safe = bot.r + 42;
-			if (dist > safe + 150) continue;
-			const mag = clamp01(1 - (dist - safe) / 150);
-			ax -= (cx / (dist || 1)) * mag * 1.8;
-			ay -= (cy / (dist || 1)) * mag * 1.8;
+			const impactRadius = safeRadius + (B_r[bi] || 0) * 1.35;
+			if (dist > impactRadius + responseRange) continue;
+			const timeWeight = 1 - t / Math.max(0.001, horizon);
+			const mag =
+				clamp01(1 - (dist - impactRadius) / responseRange) *
+				(0.45 + timeWeight * 0.55);
+			if (mag <= 0.01) continue;
+			ax -= (cx / (dist || 1)) * mag * 1.08;
+			ay -= (cy / (dist || 1)) * mag * 1.08;
 			const vlen = Math.hypot(vx, vy) || 1;
-			const side = ((bot.uid | 0) + (bi | 0)) & 1 ? 1 : -1;
-			ax += (-vy / vlen) * mag * 0.65 * side;
-			ay += (vx / vlen) * mag * 0.65 * side;
-			risk = Math.max(risk, mag);
+			let side = ((bot.uid | 0) + (bi | 0)) & 1 ? 1 : -1;
+			if (targetTank) {
+				const tdx = targetTank.x - bot.x;
+				const tdy = targetTank.y - bot.y;
+				const guidedSide = Math.sign(vx * tdy - vy * tdx);
+				if (guidedSide) side = guidedSide;
+			}
+			ax += (-vy / vlen) * mag * 0.42 * side;
+			ay += (vx / vlen) * mag * 0.42 * side;
+			risk = Math.max(risk, mag * (along <= 0 ? 1 : 0.72));
 		}
 		return { ax, ay, risk };
 	}
@@ -6771,7 +7295,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const segLen = Math.hypot(aimX - bot.x, aimY - bot.y);
 		if (segLen < 8) return 0;
 		const steps = Math.max(1, Math.min(6, Math.ceil(segLen / 180)));
-		const seen = new Set<number>();
+		_shotSeenSeq++;
+		if (_shotSeenSeq === 0) {
+			_shotSeenStamp.fill(0);
+			_shotSeenSeq = 1;
+		}
+		const seenStamp = _shotSeenSeq;
 		let blocked = 0;
 		for (let s = 1; s <= steps; s++) {
 			const px = bot.x + ((aimX - bot.x) * s) / steps;
@@ -6779,8 +7308,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			const idx = neighborIndices(px, py);
 			for (let n = 0; n < idx.length; n++) {
 				const si = idx[n] | 0;
-				if (seen.has(si)) continue;
-				seen.add(si);
+				if (_shotSeenStamp[si] === seenStamp) continue;
+				_shotSeenStamp[si] = seenStamp;
 				const sh = shapes[si];
 				if (!sh || sh === target || sh.dead || sh.dying || sh.invincible)
 					continue;
@@ -6897,6 +7426,77 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		return profile;
 	}
 
+	function emptyBotTarget(
+		bot: TankEntity,
+		profile: ReturnType<typeof botProfile>,
+	): BotTargetInfo {
+		return {
+			type: "none",
+			target: null,
+			score: -1e9,
+			dist: Infinity,
+			desiredRange: profile.preferredRange,
+			shouldRam: false,
+			aimX: bot.x,
+			aimY: bot.y,
+			blocked: 0,
+			threat: 0,
+			killConfirm: 0,
+			duelEdge: 0,
+			baseDanger: 0,
+		};
+	}
+
+	function shouldRefreshBotTarget(
+		bot: TankEntity,
+		targetInfo: BotTargetInfo | null | undefined,
+	) {
+		if (!targetInfo) return true;
+		if (((physicsFrame + (bot.uid | 0)) % BOT_TARGET_REFRESH_FRAMES) === 0) {
+			return true;
+		}
+		if (targetInfo.type === "tank") {
+			const target = targetInfo.target as TankEntity | null;
+			if (!target || target.isDead || target.invincible) return true;
+			if ((target.teamIdx | 0) === (bot.teamIdx | 0)) return true;
+			const maxDist = fovForTank(bot) + 220;
+			return distanceSq(bot.x, bot.y, target.x, target.y) > maxDist * maxDist;
+		}
+		if (targetInfo.type === "shape") {
+			const target = targetInfo.target as ShapeEntity | null;
+			if (!target || target.dead || target.dying || target.invincible) return true;
+			if (target.type === "hex" || !!target.ai) return true;
+			const maxDist = Math.min(fovForTank(bot) + 180, 2200);
+			return distanceSq(bot.x, bot.y, target.x, target.y) > maxDist * maxDist;
+		}
+		return false;
+	}
+
+	function meleeShapeEngageRisk(
+		bot: TankEntity,
+		profile: ReturnType<typeof botProfile>,
+		shape: ShapeEntity,
+	) {
+		if (!profile.meleeOnly) return 0;
+		const recentHit = now - (bot.lastHit || -1e9) < 1.35 ? 1 : 0;
+		const bodyPressure = (shape.body || 0) / Math.max(1, profile.d.bodyHitShape);
+		const attrition = (shape.hp || 1) / Math.max(1, profile.d.bodyHitShape * 2.15);
+		let risk =
+			Math.max(0, 0.7 - profile.hpRatio) * 2.1 +
+			Math.max(0, bodyPressure - 0.82) * 0.24 +
+			Math.max(0, attrition - 1.7) * 0.12 +
+			recentHit * 0.16;
+		if (shape.type === "pent") {
+			risk += 0.28;
+			if (profile.hpRatio < 0.8) risk += 0.34;
+		} else if (shape.type === "tri") {
+			risk += 0.1;
+		} else if (shape.type === "dia") {
+			risk += 0.07;
+		}
+		return constrain(risk, 0, 1.35);
+	}
+
 	function chooseFarmTarget(
 		bot: TankEntity,
 		profile: ReturnType<typeof botProfile>,
@@ -6911,7 +7511,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		let best: ShapeEntity | null = null;
 		let bestScore = -1e9;
 		let bestDist = Infinity;
+		let bestThreat = 0;
 		let desiredRange = profile.shouldRam ? 12 : 110;
+		const maxTargetDist = Math.min(fovForTank(bot) + 120, 2200);
+		const maxTargetDistSq = maxTargetDist * maxTargetDist;
 		for (let i = 0; i < shapes.length; i++) {
 			const s = shapes[i];
 			if (!s || s.dead || s.dying || s.invincible || s.type === "hex" || s.ai)
@@ -6920,8 +7523,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			if (claimed && claimed !== (bot.uid | 0)) continue;
 			const dx = s.x - bot.x;
 			const dy = s.y - bot.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist > Math.min(fovForTank(bot) + 120, 2200)) continue;
+			const distSq = dx * dx + dy * dy;
+			if (distSq > maxTargetDistSq) continue;
+			const dist = Math.sqrt(distSq);
 
 			const focusBonus =
 				ai.focusShapeId === (s.id | 0) && now < ai.focusUntil ? 70 : 0;
@@ -6944,15 +7548,18 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						: 0;
 			const shapeWeight =
 				s.type === "pent" ? 240 : s.type === "tri" ? 95 : s.type === "dia" ? 40 : 28;
+			const meleeShapeThreat = meleeShapeEngageRisk(bot, profile, s);
 			const damageRate = profile.shouldRam
 				? profile.d.bodyHitShape * 1.2
 				: profile.d.bulletDamage / Math.max(0.25, profile.d.reload);
 			const ttk = (s.hp || 1) / Math.max(1, damageRate);
+			if (profile.meleeOnly && meleeShapeThreat > 0.98 && s.type === "pent") continue;
 			const score =
 				shapeWeight +
 				(s.xp || 1) * 1.8 -
 				dist * 0.075 -
 				ttk * 16 +
+				(profile.meleeOnly ? meleeShapeThreat * -520 : 0) +
 				squareFeedBonus -
 				enemyPressure * (1.2 - profile.aggression * 0.45) +
 				safeBonus +
@@ -6961,28 +7568,16 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				bestScore = score;
 				best = s;
 				bestDist = dist;
+				bestThreat = meleeShapeThreat;
 				desiredRange =
-					profile.shouldRam || (needsSquareFeed && s.type === "sqr")
+					(profile.shouldRam || (needsSquareFeed && s.type === "sqr")) &&
+						meleeShapeThreat < 0.56
 						? Math.max(0, s.r - 6)
-						: s.r + bot.r + 60;
+						: s.r + bot.r + 60 + meleeShapeThreat * 80;
 			}
 		}
 		if (!best) {
-			return {
-				type: "none",
-				target: null,
-				score: -1e9,
-				dist: Infinity,
-				desiredRange: profile.preferredRange,
-				shouldRam: false,
-				aimX: bot.x,
-				aimY: bot.y,
-				blocked: 0,
-				threat: 0,
-				killConfirm: 0,
-				duelEdge: 0,
-				baseDanger: 0,
-			};
+			return emptyBotTarget(bot, profile);
 		}
 		return {
 			type: "shape",
@@ -6993,12 +7588,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			shouldRam:
 				(needsSquareFeed && best.type === "sqr") ||
 				(profile.shouldRam &&
+					bestThreat < 0.56 &&
 					(best.body || 0) * 2.4 <
 					Math.max(30, profile.d.maxHP * profile.hpRatio)),
 			aimX: best.x,
 			aimY: best.y,
 			blocked: 0,
-			threat: 0.1,
+			threat: profile.meleeOnly ? bestThreat : 0.1,
 			killConfirm: 0,
 			duelEdge: 0,
 			baseDanger: 0,
@@ -7023,6 +7619,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		let bestBaseDanger = 0;
 		const selfPower = estimateTankPower(bot);
 		const ownBase = getTeamBaseCenter(bot.teamIdx);
+		const maxTargetDist = fovForTank(bot) + 120;
+		const maxTargetDistSq = maxTargetDist * maxTargetDist;
+		const localEnemyPressureByTeam = new Array(TEAMS.length).fill(-1);
+		const localEnemyPressureRadius = 280;
+		const localEnemyPressureRadiusSq =
+			localEnemyPressureRadius * localEnemyPressureRadius;
 		const selfDps =
 			(profile.meleeOnly
 				? 0
@@ -7034,8 +7636,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			if ((t.teamIdx | 0) === (bot.teamIdx | 0)) continue;
 			const dx = t.x - bot.x;
 			const dy = t.y - bot.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist > fovForTank(bot) + 120) continue;
+			const distSq = dx * dx + dy * dy;
+			if (distSq > maxTargetDistSq) continue;
+			const dist = Math.sqrt(distSq);
 
 			const enemyPower = estimateTankPower(t);
 			const duelRatio = selfPower / Math.max(1, enemyPower);
@@ -7063,7 +7666,20 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				160,
 			);
 			const enemyPack = nearbyTeamTankCount(t.x, t.y, t.teamIdx, 340, t.uid);
-			const localEnemyPressure = nearbyTeamTankCount(bot.x, bot.y, t.teamIdx, 280, t.uid);
+			const enemyTeamIdx = t.teamIdx | 0;
+			if (localEnemyPressureByTeam[enemyTeamIdx] < 0) {
+				localEnemyPressureByTeam[enemyTeamIdx] = nearbyTeamTankCount(
+					bot.x,
+					bot.y,
+					enemyTeamIdx,
+					localEnemyPressureRadius,
+				);
+			}
+			const localEnemyPressure = Math.max(
+				0,
+				localEnemyPressureByTeam[enemyTeamIdx] -
+				(distSq <= localEnemyPressureRadiusSq ? 1 : 0),
+			);
 			const focusBonus =
 				ai.focusTankUid === (t.uid | 0) && now < ai.focusUntil ? 130 : 0;
 			const revengeBonus = ai.lastThreatUid === (t.uid | 0) ? 160 : 0;
@@ -7153,23 +7769,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				bestBaseDanger = baseDanger;
 			}
 		}
-		if (!best) {
-			return {
-				type: "none",
-				target: null,
-				score: -1e9,
-				dist: Infinity,
-				desiredRange: profile.preferredRange,
-				shouldRam: false,
-				aimX: bot.x,
-				aimY: bot.y,
-				blocked: 0,
-				threat: 0,
-				killConfirm: 0,
-				duelEdge: 0,
-				baseDanger: 0,
-			};
-		}
+		if (!best) return emptyBotTarget(bot, profile);
 		return {
 			type: "tank",
 			target: best,
@@ -7222,13 +7822,30 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const ai = profile.ai;
 		const enemy = chooseEnemyTarget(bot, profile);
 		const farm = chooseFarmTarget(bot, profile);
-		const bulletRisk = bulletAvoidance(bot).risk;
+		const bulletRisk = bulletAvoidance(
+			bot,
+			enemy.type === "tank" ? enemy : undefined,
+			profile,
+		).risk;
 		const droneDef = tankDroneConfig(bot);
 		const needsSeedSquare =
 			!!droneDef?.infectSquares &&
 			ownedDroneCount(bot) <= 0 &&
 			farm.type === "shape" &&
 			farm.target?.type === "sqr";
+		const recentNonTankHit =
+			now - (bot.lastHit || -1e9) < 1.35 &&
+			!(
+				typeof bot.lastDamagedBy === "string" &&
+				bot.lastDamagedBy.startsWith("tankuid:")
+			);
+		const shouldRecoverForContactFarm =
+			profile.meleeOnly &&
+			((farm.type === "shape" &&
+				farm.threat > 0.56 &&
+				(profile.hpRatio < 0.74 ||
+					(recentNonTankHit && profile.hpRatio < 0.9))) ||
+				(profile.hpRatio < 0.56 && recentNonTankHit));
 		const canPressEnemy =
 			enemy.type === "tank" &&
 			(enemy.killConfirm > 0.9 ||
@@ -7241,6 +7858,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 		if (
 			(profile.hpRatio < profile.retreatHP && !canPressEnemy) ||
+			shouldRecoverForContactFarm ||
 			ai.pressure + bulletRisk > 0.98 ||
 			(enemy.type === "tank" &&
 				enemy.threat > 0.72 &&
@@ -7248,6 +7866,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				!canPressEnemy)
 		) {
 			ai.retreatUntil = Math.max(ai.retreatUntil, now + 1.1);
+			if (shouldRecoverForContactFarm) {
+				ai.recoverUntil = Math.max(
+					ai.recoverUntil,
+					now + (recentNonTankHit ? 2.4 : 1.65),
+				);
+			}
 			if (profile.hpRatio < profile.retreatHP * 0.72)
 				ai.recoverUntil = Math.max(ai.recoverUntil, now + 1.8);
 		}
@@ -7256,7 +7880,12 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		let active = enemy.type !== "none" ? enemy : farm;
 		if (now < ai.recoverUntil) {
 			mode = "recover";
-			active = enemy.type !== "none" ? enemy : farm;
+			active =
+				enemy.type !== "none"
+					? enemy
+					: profile.meleeOnly
+						? emptyBotTarget(bot, profile)
+						: farm;
 		} else if (now < ai.retreatUntil) {
 			mode = "retreat";
 			active = enemy.type !== "none" ? enemy : farm;
@@ -7350,7 +7979,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		let moveY = 0;
 		let speedMul = 1;
 		const ownBase = getTeamBaseCenter(bot.teamIdx);
-		const dodge = bulletAvoidance(bot);
+		const dodge = bulletAvoidance(bot, targetInfo, profile);
 		const edge = worldAvoidance(bot);
 		const baseAvoid = enemyBaseAvoidance(bot);
 		const supportAvoid = friendlySupportAvoidance(bot);
@@ -7358,6 +7987,36 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const holdGround =
 			targetInfo.type === "tank" &&
 			(targetInfo.killConfirm > 0.72 || targetInfo.duelEdge > 0.24);
+		const droneWallPressure =
+			targetInfo.type === "tank"
+				? targetInfo.shouldRam || holdGround
+					? 0.14
+					: ai.mode === "chase"
+						? 0.32
+						: 0.52
+				: 1;
+		const protectorWallPressure =
+			targetInfo.type === "tank"
+				? targetInfo.shouldRam || holdGround
+					? 0.2
+					: ai.mode === "chase"
+						? 0.38
+						: 0.62
+				: 1;
+		const dodgeWeight =
+			ai.mode === "recover" || ai.mode === "retreat"
+				? 1.4
+				: targetInfo.type === "tank" && (targetInfo.shouldRam || holdGround)
+					? 0.62
+					: ai.mode === "chase"
+						? 0.88
+						: ai.mode === "engage"
+							? 1.05
+							: 1.22;
+		const dodgeWindow = ((physicsFrame / BOT_DODGE_WINDOW_FRAMES) | 0) + (bot.uid | 0) * 131;
+		const shouldCommitDodge =
+			dodge.risk < 0.12 || hashUnit(dodgeWindow) < BOT_DODGE_TRIGGER_CHANCE;
+		const effectiveDodgeWeight = shouldCommitDodge ? dodgeWeight : dodgeWeight * 0.22;
 
 		if (targetInfo.target) {
 			const dx = targetInfo.target.x - bot.x;
@@ -7448,13 +8107,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 
 		moveX +=
-			dodge.ax * 1.6 +
+			dodge.ax * effectiveDodgeWeight +
 			edge.ax * 1.8 +
 			baseAvoid.ax * 2.2 +
 			supportAvoid.ax * 1.35 +
 			trafficAvoid.ax * 1.55;
 		moveY +=
-			dodge.ay * 1.6 +
+			dodge.ay * effectiveDodgeWeight +
 			edge.ay * 1.8 +
 			baseAvoid.ay * 2.2 +
 			supportAvoid.ay * 1.35 +
@@ -7477,6 +8136,10 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			},
 			moveX * desiredSpeed,
 			moveY * desiredSpeed,
+			{
+				enemyDroneWeight: droneWallPressure,
+				enemyProtectorWeight: protectorWallPressure,
+			},
 		);
 		const L = Math.hypot(adjX, adjY) || 1;
 		bot.accelMul = ai.mode === "recover" ? 0.96 : 1;
@@ -7634,6 +8297,53 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		if (t.hitTimer > 0) t.hitTimer -= dt;
 	}
 
+	function isTankVisibleInView(
+		t: TankEntity,
+		minX: number,
+		minY: number,
+		maxX: number,
+		maxY: number,
+		margin = 0,
+	) {
+		const r = (t.r || 0) + margin;
+		return !(
+			t.x + r < minX ||
+			t.x - r > maxX ||
+			t.y + r < minY ||
+			t.y - r > maxY
+		);
+	}
+
+	function botActivityTier(bot: TankEntity) {
+		const z = cam.zoom || 1;
+		const halfW = width / (2 * z);
+		const halfH = height / (2 * z);
+		const dx = Math.abs(bot.x - cam.x);
+		const dy = Math.abs(bot.y - cam.y);
+		const r = bot.r || 0;
+		if (dx <= halfW + r + BOT_RENDER_MARGIN && dy <= halfH + r + BOT_RENDER_MARGIN) {
+			return 0;
+		}
+		if (dx <= halfW + ACTIVE_PAD && dy <= halfH + ACTIVE_PAD) return 1;
+		if (dx <= halfW + ACTIVE_PAD * 2 && dy <= halfH + ACTIVE_PAD * 2) return 2;
+		return 3;
+	}
+
+	function botThinkStride(ai: BotAIState, tier: number) {
+		if (tier <= 1) return 1;
+		if (tier === 2) return BOT_AI_THINK_MID_FRAMES;
+		if (
+			ai.mode === "engage" ||
+			ai.mode === "chase" ||
+			ai.mode === "retreat" ||
+			ai.mode === "recover" ||
+			now - ai.lastDamageAt < 1.2
+		) {
+			return BOT_AI_THINK_MID_FRAMES;
+		}
+		return BOT_AI_THINK_FAR_FRAMES;
+	}
+
 	function drawTank(t: TankEntity) {
 		const d = derived(t);
 		const teamName = TEAMS[t.teamIdx].name;
@@ -7685,9 +8395,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	const bots: TankEntity[] = [];
 	function updateBots(dt: number) {
-		for (let i = 0; i < tanks.length; i++) {
-			const t = tanks[i];
-			if (!t || !t.isBot) continue;
+		for (let i = 0; i < bots.length; i++) {
+			const t = bots[i];
+			if (!t) continue;
 			if (t.isDead) continue;
 
 			if (!t._hpInit) {
@@ -7701,8 +8411,19 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			if ((t.statPoints | 0) > 0) spendBotStat(t);
 			activateBotPendingUpgrades(t);
 
+			const ai = ensureBotAI(t);
+			const tier = botActivityTier(t);
+			const thinkStride = botThinkStride(ai, tier);
+			const allowThink =
+				thinkStride <= 1 ||
+				((physicsFrame + (t.uid | 0)) % thinkStride) === 0;
 			const profile = updateBotTacticalFeedback(t, dt);
-			const tgtInfo = botChooseTargets(t, profile);
+			let tgtInfo = t._targetInfo as BotTargetInfo | null | undefined;
+			if (!tgtInfo || (allowThink && shouldRefreshBotTarget(t, tgtInfo))) {
+				tgtInfo = botChooseTargets(t, profile);
+				t._targetInfo = tgtInfo;
+			}
+			if (!tgtInfo) tgtInfo = emptyBotTarget(t, profile);
 
 			botAim(t, tgtInfo, dt);
 			botMove(t, tgtInfo, profile, dt);
@@ -7715,33 +8436,37 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		}
 	}
 
-	function drawBots() {
-		for (let i = 0; i < tanks.length; i++) {
-			const t = tanks[i];
-			if (!t || !t.isBot) continue;
+	function drawBots(minX: number, minY: number, maxX: number, maxY: number) {
+		const scale = screenScale();
+		const labelS = Math.round(14 * scale);
+		const scoreS = Math.round(12 * scale);
+		const labelYOffset = 17 * scale;
+		const scoreYOffset = 12 * scale;
+		for (let i = 0; i < bots.length; i++) {
+			const t = bots[i];
+			if (!t) continue;
+			if (!isTankVisibleInView(t, minX, minY, maxX, maxY, BOT_RENDER_MARGIN)) continue;
 
 			drawTank(t);
 
-			const name = t.name || "Bot";
-			const score = Math.floor(t.xp || 0);
+			if (distanceSq(t.x, t.y, cam.x, cam.y) > BOT_LABEL_MAX_DIST_SQ) continue;
+
 			const yName = t.y - t.r - 32;
 			const yScore = yName + 12;
 
-			const labelS = Math.round(14 * screenScale());
-			const scoreS = Math.round(12 * screenScale());
 			drawOutlinedText(
-				name,
+				t.name || "Bot",
 				t.x,
-				yName + t.r - 17 * screenScale(),
+				yName + t.r - labelYOffset,
 				CENTER,
 				BASELINE,
 				labelS,
 				true,
 			);
 			drawOutlinedText(
-				formatShort(score),
+				formatShort(Math.floor(t.xp || 0)),
 				t.x,
-				yScore + t.r - 12 * screenScale(),
+				yScore + t.r - scoreYOffset,
 				CENTER,
 				BASELINE,
 				scoreS,
@@ -7752,7 +8477,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	function spawnBotsToFillTeams() {
 		const playerTeam = player.teamIdx | 0;
-		const wantPerTeam = 3;
+		const wantPerTeam = 4;
 
 		const counts = new Array(TEAMS.length).fill(0);
 		for (const t of tanks) if (t && !t.isDead) counts[t.teamIdx]++;
@@ -8745,22 +9470,120 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		textAlign(alignX, alignY);
 		textSize(size);
 		textStyle(bold ? BOLD : NORMAL);
-		noStroke();
-
-		fill(0, 0, 0, 220);
-		const off = 1.2;
-		text(label, x - off, y);
-		text(label, x + off, y);
-		text(label, x, y - off);
-		text(label, x, y + off);
-		text(label, x - off, y - off);
-		text(label, x + off, y - off);
-		text(label, x - off, y + off);
-		text(label, x + off, y + off);
-
+		stroke(0, 0, 0, 220);
+		strokeJoin(ROUND);
+		strokeWeight(3);
 		fill(...COLORS.barText);
-		text(label, x, y);
+		syncDrawState();
+		if (drawingContext) {
+			drawingContext.strokeText(label, x, y);
+			drawingContext.fillText(label, x, y);
+		} else {
+			text(label, x, y);
+		}
 		pop();
+	}
+
+	function titleCaseLabel(label: string) {
+		return label ? label.charAt(0).toUpperCase() + label.slice(1) : label;
+	}
+
+	function drawDeathKillerPreview(
+		info: DeathInfo | null | undefined,
+		x: number,
+		y: number,
+	) {
+		if (!info) return "";
+		if (
+			info.killerTankClass &&
+			info.killerTankTeamIdx !== null &&
+			info.killerTankTeamIdx !== undefined
+		) {
+			const killerPreviewBaseAngle =
+				getTankClassDef(info.killerTankClass).previewAngle ??
+				(tankClassUsesDrones(info.killerTankClass) ? -PI / 2 + 0.12 : 0);
+			const killerPreviewTank = {
+				...player,
+				x,
+				y,
+				r: 30,
+				barrelKick: 0,
+				barrelAng: killerPreviewBaseAngle + now * 1.35,
+				tankClass: info.killerTankClass,
+				teamIdx: info.killerTankTeamIdx,
+			} as TankEntity;
+			drawTankEntity(
+				killerPreviewTank,
+				TEAM_TANK_COLORS[TEAMS[info.killerTankTeamIdx].name],
+				TEAM_TANK_COLORS_STROKE[TEAMS[info.killerTankTeamIdx].name],
+				COLORS.playerBarrel,
+			);
+			return tankClassName(info.killerTankClass);
+		}
+
+		if (info.killerPreviewKind === "bullet") {
+			const body = [150, 150, 150];
+			const border = [108, 108, 108];
+			fill(...body);
+			stroke(...border);
+			strokeWeight(4);
+			circle(x, y, 34);
+			return "Bullet";
+		}
+
+		if (
+			(info.killerPreviewKind === "shape" ||
+				info.killerPreviewKind === "protector") &&
+			info.killerPreviewShape
+		) {
+			const kind = info.killerPreviewShape;
+			const previewTeamIdx =
+				info.killerPreviewTeamIdx !== undefined
+					? info.killerPreviewTeamIdx
+					: null;
+			const hasTeamColor =
+				info.killerPreviewKind === "protector" &&
+				previewTeamIdx !== null &&
+				previewTeamIdx >= 0 &&
+				previewTeamIdx < TEAMS.length;
+			const baseCol = hasTeamColor
+				? TEAM_TANK_COLORS[TEAMS[previewTeamIdx].name]
+				: SHAPES_DEF[kind].color;
+			const borderCol = hasTeamColor
+				? TEAM_TANK_COLORS_STROKE[TEAMS[previewTeamIdx].name]
+				: [
+					Math.max(0, Math.floor(baseCol[0] * 0.72)),
+					Math.max(0, Math.floor(baseCol[1] * 0.72)),
+					Math.max(0, Math.floor(baseCol[2] * 0.72)),
+				];
+			const innerCol = lighten(baseCol, 0.12);
+			const sides =
+				kind === "tri"
+					? 3
+					: kind === "sqr"
+						? 4
+						: kind === "pent"
+							? 5
+							: kind === "hex"
+								? 6
+								: 4;
+			push();
+			translate(x, y);
+			rotate(now * (kind === "dia" ? 1.3 : 0.6));
+			drawShapeFilledWithCenter(0, 0, sides, 30, baseCol, kind, innerCol);
+			noFill();
+			stroke(...borderCol);
+			strokeWeight(4);
+			strokeJoin(ROUND);
+			if (kind === "dia") drawRhombus(0, 0, 28.5, 0.62);
+			else drawShapePath(0, 0, sides, 28.5, true);
+			pop();
+			return info.killerPreviewKind === "protector"
+				? "Protector"
+				: titleCaseLabel(killerLabel(kind));
+		}
+
+		return "";
 	}
 
 	function upgradeMenuCardRects(count: number) {
@@ -9248,8 +10071,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	function drawStatsPanel() {
 		const keys = availableStatKeysForTank(player);
-		const names = keys.map((key) => statPanelLabel(key));
-		const shortcuts = ["1", "2", "3", "4", "5", "6", "7", "8"];
+		const names = statPanelNamesForTank(player);
 
 		const leftX = 140;
 		const blockH = names.length * UI.statRowH + 12;
@@ -9259,30 +10081,36 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const labelColW = 120;
 		const barX = leftX - labelColW;
 		const barRight = barX + UI.statBarW;
-		const panelRect = { x: barX - 8, y: baseY0 - 4, w: UI.statBarW + 16, h: blockH + 8 };
-		const tabRect = { x: 8, y: baseY0 + 8, w: 24, h: blockH - 16 };
+		const panelX = barX - 8;
+		const panelY = baseY0 - 4;
+		const panelW = UI.statBarW + 16;
+		const panelH = blockH + 8;
+		const tabX = 8;
+		const tabY = baseY0 + 8;
+		const tabW = 24;
+		const tabH = blockH - 16;
 		const hoveringPanel =
-			mouseX >= panelRect.x &&
-			mouseX <= panelRect.x + panelRect.w &&
-			mouseY >= panelRect.y &&
-			mouseY <= panelRect.y + panelRect.h;
+			mouseX >= panelX &&
+			mouseX <= panelX + panelW &&
+			mouseY >= panelY &&
+			mouseY <= panelY + panelH;
 		const hoveringTab =
-			mouseX >= tabRect.x &&
-			mouseX <= tabRect.x + tabRect.w &&
-			mouseY >= tabRect.y &&
-			mouseY <= tabRect.y + tabRect.h;
+			mouseX >= tabX &&
+			mouseX <= tabX + tabW &&
+			mouseY >= tabY &&
+			mouseY <= tabY + tabH;
 		const showPanel = player.statPoints > 0 || hoveringPanel || hoveringTab;
 
 		if (!showPanel) {
 			push();
 			noStroke();
 			fill(58, 58, 58, 190);
-			rect(tabRect.x, tabRect.y, tabRect.w, tabRect.h, 8);
+			rect(tabX, tabY, tabW, tabH, 8);
 			fill(230, 230, 230, 220);
 			textAlign(CENTER, CENTER);
 			textStyle(BOLD);
 			textSize(12);
-			translate(tabRect.x + tabRect.w / 2, tabRect.y + tabRect.h / 2);
+			translate(tabX + tabW / 2, tabY + tabH / 2);
 			rotate(-HALF_PI);
 			text("STATS", 0, 0);
 			pop();
@@ -9326,7 +10154,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 			const scX = barX + stepW * (maxVal - 0.5);
 			drawTextWithOutline(
-				`[${shortcuts[i]}]`,
+				`[${STAT_PANEL_SHORTCUTS[i]}]`,
 				scX,
 				y + 3 + UI.statBarH / 2 + 1,
 				{ size: 12, bold: true, alignX: CENTER, alignY: CENTER },
@@ -9433,34 +10261,22 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			alignY: CENTER,
 		});
 
-		const killerTankClass = player.deathInfo?.killerTankClass || null;
-		const killerTankTeamIdx = player.deathInfo?.killerTankTeamIdx ?? null;
 		const playerDeathClass =
 			player.deathInfo?.tankClass ||
 			(player.lastLifeTankClass as TankClassId) ||
 			(player.tankClass || "basic");
+		const playerPreviewBaseAngle =
+			getTankClassDef(playerDeathClass).previewAngle ??
+			(tankClassUsesDrones(playerDeathClass) ? -PI / 2 + 0.12 : 0);
 		const killerPreviewY = topY + 98;
-		if (killerTankClass && killerTankTeamIdx !== null) {
-			const killerPreviewTank = {
-				...player,
-				x: width / 2,
-				y: killerPreviewY,
-				r: 30,
-				barrelKick: 0,
-				barrelAng:
-					getTankClassDef(killerTankClass).previewAngle ??
-					(tankClassUsesDrones(killerTankClass) ? -PI / 2 + 0.12 : 0),
-				tankClass: killerTankClass,
-				teamIdx: killerTankTeamIdx,
-			} as TankEntity;
-			drawTankEntity(
-				killerPreviewTank,
-				TEAM_TANK_COLORS[TEAMS[killerTankTeamIdx].name],
-				TEAM_TANK_COLORS_STROKE[TEAMS[killerTankTeamIdx].name],
-				COLORS.playerBarrel,
-			);
+		const killerPreviewLabel = drawDeathKillerPreview(
+			player.deathInfo,
+			width / 2,
+			killerPreviewY,
+		);
+		if (killerPreviewLabel) {
 			drawTextWithOutline(
-				tankClassName(killerTankClass),
+				killerPreviewLabel,
 				width / 2,
 				killerPreviewY + 44,
 				{
@@ -9472,23 +10288,61 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			);
 		}
 
-		const yourInfoY = killerTankClass ? killerPreviewY + 82 : topY + 92;
+		const yourInfoY = killerPreviewLabel ? killerPreviewY + 82 : topY + 92;
 		drawTextWithOutline("Your info", width / 2, yourInfoY, {
 			size: 18,
 			bold: true,
 			alignX: CENTER,
 			alignY: CENTER,
 		});
-		const playerPreviewY = yourInfoY + 44;
+		const infoStartY = yourInfoY + 36;
+		const sc = player.deathInfo
+			? player.deathInfo.score
+			: Math.floor(player.xp);
+		const lvl = player.deathInfo ? player.deathInfo.level : player.level;
+		const tsec = player.deathInfo ? Math.floor(player.deathInfo.time) : 0;
+		const kills = player.deathInfo ? player.deathInfo.kills : player.lifeKills | 0;
+		const mm = Math.floor(tsec / 60);
+		const ss = tsec % 60;
+
+		drawTextWithOutline(`Score: ${sc}`, width / 2, infoStartY, {
+			size: 22,
+			bold: true,
+			alignX: CENTER,
+			alignY: CENTER,
+		});
+		drawTextWithOutline(`Level: ${lvl}`, width / 2, infoStartY + 24, {
+			size: 22,
+			bold: true,
+			alignX: CENTER,
+			alignY: CENTER,
+		});
+		drawTextWithOutline(`Kills: ${kills}`, width / 2, infoStartY + 48, {
+			size: 22,
+			bold: true,
+			alignX: CENTER,
+			alignY: CENTER,
+		});
+		drawTextWithOutline(
+			`Time alive: ${mm}m ${ss}s`,
+			width / 2,
+			infoStartY + 72,
+			{ size: 22, bold: true, alignX: CENTER, alignY: CENTER },
+		);
+		const playerPreviewY = infoStartY + 142;
+		const cursorDx = mouseX - width / 2;
+		const cursorDy = mouseY - playerPreviewY;
+		const playerPreviewAngle =
+			cursorDx * cursorDx + cursorDy * cursorDy > 4
+				? Math.atan2(cursorDy, cursorDx)
+				: playerPreviewBaseAngle;
 		const playerPreviewTank = {
 			...player,
 			x: width / 2,
 			y: playerPreviewY,
 			r: 30,
 			barrelKick: 0,
-			barrelAng:
-				getTankClassDef(playerDeathClass).previewAngle ??
-				(tankClassUsesDrones(playerDeathClass) ? -PI / 2 + 0.12 : 0),
+			barrelAng: playerPreviewAngle,
 			tankClass: playerDeathClass,
 		} as TankEntity;
 		drawTankEntity(
@@ -9509,45 +10363,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			},
 		);
 
-		const midY = playerPreviewY + 110;
-		const sc = player.deathInfo
-			? player.deathInfo.score
-			: Math.floor(player.xp);
-		const lvl = player.deathInfo ? player.deathInfo.level : player.level;
-		const tsec = player.deathInfo ? Math.floor(player.deathInfo.time) : 0;
-		const kills = player.deathInfo ? player.deathInfo.kills : player.lifeKills | 0;
-		const mm = Math.floor(tsec / 60);
-		const ss = tsec % 60;
-
-		drawTextWithOutline(`Score: ${sc}`, width / 2, midY - 22, {
-			size: 22,
-			bold: true,
-			alignX: CENTER,
-			alignY: CENTER,
-		});
-		drawTextWithOutline(`Level: ${lvl}`, width / 2, midY + 2, {
-			size: 22,
-			bold: true,
-			alignX: CENTER,
-			alignY: CENTER,
-		});
-		drawTextWithOutline(`Kills: ${kills}`, width / 2, midY + 26, {
-			size: 22,
-			bold: true,
-			alignX: CENTER,
-			alignY: CENTER,
-		});
-		drawTextWithOutline(
-			`Time alive: ${mm}m ${ss}s`,
-			width / 2,
-			midY + 50,
-			{ size: 22, bold: true, alignX: CENTER, alignY: CENTER },
-		);
-
 		const bw = 260,
 			bh = 60;
 		const bx = (width - bw) / 2,
-			by = height * 0.84 - bh / 2;
+			by = Math.min(
+				height - bh - 18,
+				Math.max(height * 0.84 - bh / 2, playerPreviewY + 84),
+			);
 		const fillBase = COLORS.shapePent;
 		const fillInner = [
 			Math.floor(COLORS.shapePent[0] * 0.9),
