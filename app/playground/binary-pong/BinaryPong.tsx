@@ -1217,7 +1217,7 @@ export default function BinaryPong() {
 						Remix Colors
 					</button>
 
-					<div className="ml-auto flex items-center gap-3 rounded-full border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] text-slate-200">
+					<div className="ml-auto flex items-center gap-3 border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] text-slate-200">
 						<label htmlFor="binary-pong-speed" className="uppercase tracking-[0.2em] text-slate-400">
 							Speed
 						</label>
@@ -1239,16 +1239,9 @@ export default function BinaryPong() {
 			<div className="px-4 py-3 sm:px-5">
 				<div className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
 					<div
-						className="rounded-[18px] border px-4 py-2.5"
+						className="px-1 py-1"
 						style={{
-							borderColor: cssWithAlpha(uiState.palette.teams[0].fill, 0.48),
-							background: `linear-gradient(225deg, ${cssWithAlpha(
-								uiState.palette.teams[0].glow,
-								0.2,
-							)} 0%, ${cssWithAlpha(
-								uiState.palette.teams[0].fill,
-								0.08,
-							)} 45%, rgba(7, 17, 29, 0.72) 100%)`,
+							borderTop: `1px solid ${cssWithAlpha(uiState.palette.teams[0].fill, 0.48)}`,
 						}}
 					>
 						<div className="font-mono text-[11px] uppercase tracking-[0.28em] text-slate-300">
@@ -1263,21 +1256,14 @@ export default function BinaryPong() {
 						<div className="font-mono text-xs text-slate-400">cells held</div>
 					</div>
 
-					<div className="rounded-full border border-[#1b2535] bg-[#09111c] px-4 py-1.5 text-center font-mono text-[11px] uppercase tracking-[0.28em] text-slate-300">
+					<div className="border-y border-[#1b2535] px-4 py-1.5 text-center font-mono text-[11px] uppercase tracking-[0.28em] text-slate-300">
 						{leaderTeam === null ? "Dead even" : `${uiState.palette.teams[leaderTeam].name} leaning`}
 					</div>
 
 					<div
-						className="rounded-[18px] border px-4 py-2.5 md:text-right"
+						className="px-1 py-1 md:text-right"
 						style={{
-							borderColor: cssWithAlpha(uiState.palette.teams[1].fill, 0.48),
-							background: `linear-gradient(135deg, ${cssWithAlpha(
-								uiState.palette.teams[1].glow,
-								0.18,
-							)} 0%, ${cssWithAlpha(
-								uiState.palette.teams[1].fill,
-								0.08,
-							)} 45%, rgba(7, 17, 29, 0.72) 100%)`,
+							borderTop: `1px solid ${cssWithAlpha(uiState.palette.teams[1].fill, 0.48)}`,
 						}}
 					>
 						<div className="font-mono text-[11px] uppercase tracking-[0.28em] text-slate-300">
@@ -1293,7 +1279,7 @@ export default function BinaryPong() {
 					</div>
 				</div>
 
-				<div className="mt-3 overflow-hidden rounded-full border border-[#162131] bg-[#09111c]">
+				<div className="mt-3 overflow-hidden border border-[#162131] bg-[#09111c]">
 					<div className="flex h-4 w-full">
 						<div
 							style={{
@@ -1311,11 +1297,10 @@ export default function BinaryPong() {
 				</div>
 			</div>
 
-			<div className="flex-1 px-3 pb-3 sm:px-4 sm:pb-4">
+			<div className="flex-1">
 				<div
-					className="relative h-full min-h-[440px] overflow-hidden rounded-[24px] border bg-[#050910]"
+					className="relative h-full min-h-[440px] overflow-hidden bg-[#050910]"
 					style={{
-						borderColor: cssWithAlpha(uiState.palette.frame, 0.72),
 						boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
 					}}
 				>
@@ -1340,7 +1325,7 @@ export default function BinaryPong() {
 
 					{status !== "ready" && (
 						<div className="absolute inset-0 flex items-center justify-center bg-[#050910]/85">
-							<div className="rounded-full border border-[#203048] bg-[#09111c]/90 px-5 py-3 font-mono text-xs uppercase tracking-[0.28em] text-slate-300">
+							<div className="border border-[#203048] bg-[#09111c]/90 px-5 py-3 font-mono text-xs uppercase tracking-[0.28em] text-slate-300">
 								{status === "loading" ? "Loading Phaser Scene" : "Unable To Load Binary Pong"}
 							</div>
 						</div>
@@ -1348,7 +1333,7 @@ export default function BinaryPong() {
 
 					{winnerLabel && status === "ready" && (
 						<div className="pointer-events-none absolute inset-x-0 top-5 flex justify-center px-4">
-							<div className="rounded-full border border-white/10 bg-[#09111c]/88 px-5 py-2 font-mono text-xs uppercase tracking-[0.28em] text-slate-100 backdrop-blur">
+							<div className="border border-white/10 bg-[#09111c]/88 px-5 py-2 font-mono text-xs uppercase tracking-[0.28em] text-slate-100 backdrop-blur">
 								{winnerLabel} claimed the board
 							</div>
 						</div>

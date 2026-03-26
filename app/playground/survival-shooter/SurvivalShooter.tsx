@@ -767,6 +767,8 @@ function mountSurvivalShooter(
 	let bannerText: PhaserText | null = null;
 	let centerText: PhaserText | null = null;
 	let observer: ResizeObserver | null = null;
+	let resizeRafOne = 0;
+	let resizeRafTwo = 0;
 	let sceneRef: PhaserScene | null = null;
 	let cursors: CursorKeys | null = null;
 	let keys: KeyMap | null = null;
@@ -2117,7 +2119,7 @@ function mountSurvivalShooter(
 		graphics.fillRect(0, 0, width, height);
 
 		graphics.fillStyle(0x03101c, 1);
-		graphics.fillRoundedRect(layout.fieldX, layout.fieldY, layout.fieldWidth, layout.fieldHeight, 28);
+		graphics.fillRect(layout.fieldX, layout.fieldY, layout.fieldWidth, layout.fieldHeight);
 
 		for (const blob of state.scenery) {
 			const screenX = worldToScreenX(blob.x, layout);
@@ -2134,8 +2136,8 @@ function mountSurvivalShooter(
 			graphics.fillCircle(screenX, screenY, blob.radius);
 		}
 
-		graphics.lineStyle(2, overdriveActive ? 0xfb923c : 0x28506d, 0.92);
-		graphics.strokeRoundedRect(layout.fieldX + 1, layout.fieldY + 1, layout.fieldWidth - 2, layout.fieldHeight - 2, 28);
+		graphics.lineStyle(2, overdriveActive ? 0xfb923c : 0x28506d, 0.42);
+		graphics.strokeRect(layout.fieldX + 1, layout.fieldY + 1, layout.fieldWidth - 2, layout.fieldHeight - 2);
 
 		const gridSize = clamp(Math.round(Math.min(layout.fieldWidth, layout.fieldHeight) / 10), 28, 72);
 		const worldGridStart = Math.floor(state.cameraX / gridSize) * gridSize;
@@ -2478,34 +2480,27 @@ function mountSurvivalShooter(
 
 		if (state.phase !== "playing" && state.phase !== "paused") {
 			graphics.fillStyle(0x020617, 0.82);
-			graphics.fillRoundedRect(layout.fieldX, layout.fieldY, layout.fieldWidth, layout.fieldHeight, 28);
+			graphics.fillRect(layout.fieldX, layout.fieldY, layout.fieldWidth, layout.fieldHeight);
 		}
 
 		if (state.phase === "paused") {
 			graphics.fillStyle(0x020617, 0.62);
-			graphics.fillRoundedRect(layout.fieldX, layout.fieldY, layout.fieldWidth, layout.fieldHeight, 28);
+			graphics.fillRect(layout.fieldX, layout.fieldY, layout.fieldWidth, layout.fieldHeight);
 		}
 
 		if (state.phase !== "playing") {
-			const overlayWidth = layout.fieldWidth * 0.72;
-			const overlayHeight = layout.fieldHeight * 0.42;
-			const overlayX = layout.fieldX + (layout.fieldWidth - overlayWidth) / 2;
-			const overlayY = layout.fieldY + (layout.fieldHeight - overlayHeight) / 2;
-			graphics.fillStyle(0x081320, 0.86);
-			graphics.fillRoundedRect(
-				overlayX,
-				overlayY,
-				overlayWidth,
-				overlayHeight,
-				24,
+			graphics.lineStyle(1, 0x3b82f6, 0.18);
+			graphics.lineBetween(
+				layout.fieldX + layout.fieldWidth * 0.18,
+				layout.fieldY + layout.fieldHeight * 0.3,
+				layout.fieldX + layout.fieldWidth * 0.82,
+				layout.fieldY + layout.fieldHeight * 0.3,
 			);
-			graphics.lineStyle(1, 0x3b82f6, 0.22);
-			graphics.strokeRoundedRect(
-				overlayX,
-				overlayY,
-				overlayWidth,
-				overlayHeight,
-				24,
+			graphics.lineBetween(
+				layout.fieldX + layout.fieldWidth * 0.18,
+				layout.fieldY + layout.fieldHeight * 0.7,
+				layout.fieldX + layout.fieldWidth * 0.82,
+				layout.fieldY + layout.fieldHeight * 0.7,
 			);
 		}
 	};
@@ -3472,10 +3467,19 @@ function mountSurvivalShooter(
 		resizeGame();
 	});
 	observer.observe(host);
+	resizeGame();
+	resizeRafOne = window.requestAnimationFrame(() => {
+		resizeGame();
+		resizeRafTwo = window.requestAnimationFrame(() => {
+			resizeGame();
+		});
+	});
 
 	return () => {
 		observer?.disconnect();
 		observer = null;
+		window.cancelAnimationFrame(resizeRafOne);
+		window.cancelAnimationFrame(resizeRafTwo);
 		clearDamageTexts();
 		if (game) {
 			game.destroy(true);
@@ -3509,12 +3513,19 @@ export default function SurvivalShooter({
 
 		let cancelled = false;
 		let cleanup: (() => void) | undefined;
+		const waitForLayout = () =>
+			new Promise<void>((resolve) => {
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => resolve());
+				});
+			});
 
 		setStatus("loading");
 
 		void (async () => {
 			try {
 				const PhaserLib = await import("phaser");
+				await waitForLayout();
 				if (cancelled || !hostRef.current) return;
 
 				cleanup = mountSurvivalShooter(hostRef.current, PhaserLib, () => {

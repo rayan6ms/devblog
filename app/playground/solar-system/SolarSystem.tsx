@@ -2,7 +2,7 @@
 
 import { OrbitControls, Stars, useTexture } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { type CSSProperties, Suspense, useRef, useState } from "react";
+import { type CSSProperties, Suspense, useEffect, useRef, useState } from "react";
 import { BackSide, type Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { moon, planets } from "./data";
@@ -40,6 +40,31 @@ const SCENE_STAR_OVERLAY_STYLE: CSSProperties = {
 	backgroundPosition: "0 0, 22px 40px, 80px 24px",
 };
 
+function suppressThreeClockWarning() {
+	if (typeof window === "undefined") return () => {};
+
+	const key = "__solar_system_clock_warn_filter__";
+	const existing = (window as Window & { [key: string]: boolean })[key];
+	if (existing) return () => {};
+
+	(window as Window & { [key: string]: boolean })[key] = true;
+	const originalWarn = console.warn;
+	console.warn = (...args: unknown[]) => {
+		if (
+			typeof args[0] === "string" &&
+			args[0].includes("THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.")
+		) {
+			return;
+		}
+		originalWarn(...args);
+	};
+
+	return () => {
+		console.warn = originalWarn;
+		delete (window as Window & { [key: string]: boolean })[key];
+	};
+}
+
 function formatOrbit(days: number) {
 	if (days <= 0) return "Anchored";
 	if (days >= 365) return `${(days / 365.25).toFixed(1)}y orbit`;
@@ -63,6 +88,8 @@ export default function SolarSystem() {
 
 	const featuredPlanet =
 		planets.find((planet) => planet.name === (followed ?? "Sun")) ?? planets[0];
+
+	useEffect(() => suppressThreeClockWarning(), []);
 
 	const unfollow = () => {
 		setFollowed(null);
@@ -90,13 +117,13 @@ export default function SolarSystem() {
 						A watch-mode miniature observatory with a stronger star field and a quieter HUD.
 					</div>
 
-					<div className="grid gap-3 rounded-[24px] border border-[#1a2740] bg-[#07111d]/80 p-4 backdrop-blur-xl sm:grid-cols-[auto_minmax(170px,220px)] sm:items-end">
+					<div className="grid gap-3 border-b border-[#1a2740] pb-4 sm:grid-cols-[auto_minmax(170px,220px)] sm:items-end">
 						<label className="flex items-center justify-between gap-3 font-mono text-xs uppercase tracking-[0.2em] text-slate-300 sm:min-w-[120px]">
 							<span>Orbit paths</span>
 							<button
 								type="button"
 								onClick={() => setShowOrbits((value) => !value)}
-								className={`inline-flex h-8 items-center justify-center rounded-full border px-3 text-[11px] leading-none align-middle transition ${
+								className={`inline-flex h-8 items-center justify-center border px-3 text-[11px] leading-none align-middle transition ${
 									showOrbits
 										? "border-sky-300/40 bg-sky-300/15 text-sky-100"
 										: "border-[#223048] bg-[#0b1320] text-slate-300"

@@ -2283,14 +2283,14 @@ export default function SnakePhaser({
 				<div className="flex flex-wrap gap-2 px-4 pb-4 sm:px-5">
 					<button
 						type="button"
-						className="select-none rounded-full bg-slate-100 px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-white"
+						className="select-none rounded-xl border border-slate-100 bg-slate-100 px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-white"
 						onClick={restartGame}
 					>
 						Restart
 					</button>
 					<button
 						type="button"
-						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						className="select-none rounded-xl border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 						onClick={() => {
 							const nextPaused = !pausedRef.current;
 							pausedRef.current = nextPaused;
@@ -2301,7 +2301,7 @@ export default function SnakePhaser({
 					</button>
 					<button
 						type="button"
-						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						className="select-none rounded-xl border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 						onClick={() => {
 							const nextAutoPlay = !autoRef.current;
 							autoRef.current = nextAutoPlay;
@@ -2312,7 +2312,7 @@ export default function SnakePhaser({
 					</button>
 					<button
 						type="button"
-						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						className="select-none rounded-xl border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 						onClick={() => {
 							const nextShowArrows = !arrowsRef.current;
 							arrowsRef.current = nextShowArrows;
@@ -2323,7 +2323,7 @@ export default function SnakePhaser({
 					</button>
 					<button
 						type="button"
-						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						className="select-none rounded-xl border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 						onClick={() =>
 							setBoardTheme((current) => cycleOption(BOARD_THEMES, current))
 						}
@@ -2332,7 +2332,7 @@ export default function SnakePhaser({
 					</button>
 					<button
 						type="button"
-						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+						className="select-none rounded-xl border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 						onClick={() =>
 							setTheme((current) => cycleOption(SNAKE_THEMES, current))
 						}
@@ -2344,7 +2344,7 @@ export default function SnakePhaser({
 
 			<div className="grid min-h-0 flex-1 gap-3 px-4 pb-2 pt-2 sm:px-5 sm:pb-3 sm:pt-3 xl:grid-cols-[320px_minmax(0,1fr)]">
 				<div className="flex min-h-0 flex-col gap-4">
-					<div className="rounded-[26px] border border-[#223048] bg-[#09121e]/88 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)]">
+					<div className="border-b border-[#223048] pb-4">
 						<div className="flex items-start justify-between gap-3">
 							<div>
 								<p className="font-mono text-[11px] uppercase tracking-[0.22em] text-slate-400">
@@ -2354,7 +2354,7 @@ export default function SnakePhaser({
 									{speed.toFixed(1)}
 								</p>
 							</div>
-							<div className="rounded-full border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300">
+							<div className="font-mono text-[11px] uppercase tracking-[0.18em] text-slate-500">
 								Moves / sec
 							</div>
 						</div>
@@ -2362,7 +2362,7 @@ export default function SnakePhaser({
 						<div className="mt-4 flex items-center gap-3">
 							<button
 								type="button"
-								className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#223048] bg-[#0b1320] text-xl text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+								className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#223048] bg-[#0b1320] text-xl text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 								onPointerDown={(event) => {
 									event.preventDefault();
 									event.currentTarget.setPointerCapture(event.pointerId);
@@ -2389,7 +2389,7 @@ export default function SnakePhaser({
 							/>
 							<button
 								type="button"
-								className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#223048] bg-[#0b1320] text-xl text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+								className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#223048] bg-[#0b1320] text-xl text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 								onPointerDown={(event) => {
 									event.preventDefault();
 									event.currentTarget.setPointerCapture(event.pointerId);
@@ -2415,7 +2415,7 @@ export default function SnakePhaser({
 						</p>
 					</div>
 
-					<div className="rounded-[26px] border border-[#223048] bg-[#09121e]/88 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)]">
+					<div className="border-b border-[#223048] pb-4">
 						<div className="flex items-center gap-3">
 							<span
 								className="h-3 w-3 rounded-full"
@@ -2434,19 +2434,19 @@ export default function SnakePhaser({
 							{theme.description}
 						</p>
 						<div className="mt-4 grid grid-cols-2 gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300">
-							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+							<div className="border-b border-[#223048] px-0 py-2 text-slate-400">
 								Theme {boardTheme.label}
 							</div>
-							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+							<div className="border-b border-[#223048] px-0 py-2 text-slate-400">
 								Controls WASD / Arrows
 							</div>
-							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+							<div className="border-b border-[#223048] px-0 py-2 text-slate-400">
 								Space Pause
 							</div>
-							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+							<div className="border-b border-[#223048] px-0 py-2 text-slate-400">
 								Enter Restart
 							</div>
-							<div className="rounded-2xl border border-[#223048] bg-[#0b1320] px-3 py-2">
+							<div className="border-b border-[#223048] px-0 py-2 text-slate-400">
 								Board {boardDimension}x{boardDimension}
 							</div>
 						</div>
@@ -2463,7 +2463,7 @@ export default function SnakePhaser({
 								</div>
 								<button
 									type="button"
-									className="rounded-full border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300"
+									className="rounded-lg border border-[#223048] bg-[#0b1320] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-300"
 									onClick={() => setShowBodyGap((current) => !current)}
 								>
 									Body Gap {showBodyGap ? "On" : "Off"}
@@ -2492,7 +2492,7 @@ export default function SnakePhaser({
 
 				<div
 					ref={stageViewportRef}
-					className="relative min-h-[380px] overflow-hidden rounded-[28px] border border-[#223048] bg-[#07111d]/80"
+					className="relative min-h-[380px] overflow-hidden bg-[#07111d]/70"
 				>
 					<div
 						className="pointer-events-none absolute inset-0"
@@ -2504,13 +2504,12 @@ export default function SnakePhaser({
 						{boardPixelSize > 0 && (
 							<div
 								ref={hostRef}
-								className="overflow-hidden bg-[#050810] ring-1 ring-inset ring-[#26344d] shadow-[0_24px_70px_rgba(0,0,0,0.38)]"
+								className="overflow-hidden bg-[#050810]"
 								style={{
 									width: boardPixelSize,
 									height: boardPixelSize,
 									maxWidth: "100%",
 									maxHeight: "100%",
-									borderRadius: Math.max(6, boardInsetPx * 1.15),
 									imageRendering: "pixelated",
 								}}
 							/>

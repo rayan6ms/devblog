@@ -1038,38 +1038,19 @@ function mountTetris(
 			graphics.fillGradientStyle(0x07111f, 0x0b1626, 0x040712, 0x09111e, 1);
 			graphics.fillRect(0, 0, this.scale.width, this.scale.height);
 
-			graphics.fillStyle(0x0b1220, 0.95);
-			graphics.fillRoundedRect(
-				layout.frameX,
-				layout.frameY,
-				layout.frameWidth,
-				layout.frameHeight,
-				Math.max(20, layout.cell * 0.58),
-			);
-			graphics.lineStyle(2, 0x243349, 1);
-			graphics.strokeRoundedRect(
-				layout.frameX,
-				layout.frameY,
-				layout.frameWidth,
-				layout.frameHeight,
-				Math.max(20, layout.cell * 0.58),
-			);
-
 			graphics.fillStyle(0x101827, 1);
-			graphics.fillRoundedRect(
+			graphics.fillRect(
 				layout.boardX,
 				layout.boardY,
 				layout.boardWidth,
 				layout.boardHeight,
-				Math.max(12, layout.cell * 0.4),
 			);
 			graphics.lineStyle(Math.max(2, layout.cell * 0.05), 0x24344a, 1);
-			graphics.strokeRoundedRect(
+			graphics.strokeRect(
 				layout.boardX,
 				layout.boardY,
 				layout.boardWidth,
 				layout.boardHeight,
-				Math.max(12, layout.cell * 0.4),
 			);
 
 			graphics.lineStyle(1, 0x263447, 0.7);
@@ -1259,12 +1240,11 @@ function mountTetris(
 
 			if (this.gameOver || this.paused) {
 				graphics.fillStyle(0x020617, 0.74);
-				graphics.fillRoundedRect(
+				graphics.fillRect(
 					layout.boardX,
 					layout.boardY,
 					layout.boardWidth,
 					layout.boardHeight,
-					Math.max(12, layout.cell * 0.4),
 				);
 
 				this.overlayText
@@ -1301,9 +1281,9 @@ function mountTetris(
 			height: number,
 		) {
 			graphics.fillStyle(0x121d2c, 0.98);
-			graphics.fillRoundedRect(x, y, width, height, 14);
+			graphics.fillRect(x, y, width, height);
 			graphics.lineStyle(2, 0x24374f, 1);
-			graphics.strokeRoundedRect(x, y, width, height, 14);
+			graphics.strokeRect(x, y, width, height);
 		}
 
 		private drawQueuePreview(
@@ -1368,7 +1348,7 @@ function mountTetris(
 			alpha: number,
 		) {
 			const inset = Math.max(1, Math.floor(size * 0.08));
-			const radius = Math.max(4, Math.floor(size * 0.18));
+			const radius = Math.max(1, Math.floor(size * 0.06));
 
 			graphics.fillStyle(color, alpha);
 			graphics.fillRoundedRect(
@@ -1522,7 +1502,7 @@ export default function Tetris() {
 						<button
 							type="button"
 							onClick={() => controlsRef.current?.toggleAutoplay()}
-							className={`rounded-md border px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition ${
+							className={`border px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition ${
 								autoplay
 									? "border-lime-200 bg-lime-300 text-slate-950"
 									: "border-[#324765] bg-[#162336] text-slate-100 hover:bg-[#1d3047]"
@@ -1533,28 +1513,28 @@ export default function Tetris() {
 						<button
 							type="button"
 							onClick={() => controlsRef.current?.togglePause()}
-							className="rounded-md border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
+							className="border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
 						>
 							{uiState.paused ? "Resume" : "Pause"}
 						</button>
 						<button
 							type="button"
 							onClick={() => controlsRef.current?.reset()}
-							className="rounded-md border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
+							className="border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
 						>
 							Reset
 						</button>
 						<button
 							type="button"
 							onClick={() => controlsRef.current?.hardDrop()}
-							className="rounded-md border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
+							className="border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
 						>
 							Hard Drop
 						</button>
 						<button
 							type="button"
 							onClick={() => controlsRef.current?.holdPiece()}
-							className="rounded-md border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
+							className="border border-[#324765] bg-[#162336] px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[#1d3047]"
 						>
 							Hold
 						</button>
@@ -1565,14 +1545,11 @@ export default function Tetris() {
 				</div>
 			</div>
 
-			<div className="relative h-[82vh] min-h-[600px] flex-1 bg-transparent p-2 sm:p-3">
-				<div
-					ref={hostRef}
-					className="absolute inset-2 overflow-hidden rounded-[24px] sm:inset-3"
-				/>
+			<div className="relative h-[82vh] min-h-[600px] flex-1 bg-transparent">
+				<div ref={hostRef} className="absolute inset-0 overflow-hidden" />
 
 				{status === "loading" ? (
-					<div className="pointer-events-none absolute inset-x-0 bottom-6 mx-auto w-fit rounded-full border border-[#2b3b56] bg-[#08111d]/90 px-4 py-2 font-mono text-xs uppercase tracking-[0.24em] text-slate-300 backdrop-blur">
+					<div className="pointer-events-none absolute inset-x-0 bottom-6 mx-auto w-fit border border-[#2b3b56] bg-[#08111d]/90 px-4 py-2 font-mono text-xs uppercase tracking-[0.24em] text-slate-300 backdrop-blur">
 						Loading Tetris
 					</div>
 				) : null}

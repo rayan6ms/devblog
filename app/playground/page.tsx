@@ -271,7 +271,7 @@ const GameCard = memo(function GameCard({
 					alt={gameText.name}
 					fill
 					loading="lazy"
-					sizes="(max-width: 640px) 80vw, 240px"
+					unoptimized
 					className="absolute inset-0 h-full w-full object-cover"
 					style={{
 						transform: tiltEnabled

@@ -1431,7 +1431,7 @@ export default function NewtonCannon() {
 						</div>
 					</div>
 
-					<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+							<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 						<div className="pointer-events-auto w-full max-w-[23rem] rounded-[24px] border border-[#2b455c] bg-[#07111b]/76 p-4 backdrop-blur-md">
 							<div
 								className="text-[11px] uppercase tracking-[0.22em] text-slate-400"
@@ -1530,9 +1530,9 @@ export default function NewtonCannon() {
 									<div className={`mt-1 text-base ${item.color}`}>{item.value}</div>
 								</div>
 							))}
+							</div>
 						</div>
 					</div>
-				</div>
 			</div>
 
 			{status === "loading" ? (

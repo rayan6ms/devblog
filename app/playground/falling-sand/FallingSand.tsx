@@ -1073,145 +1073,30 @@ export default function FallingSand() {
 	}, []);
 
 	return (
-		<div className="flex h-full w-full flex-col gap-2">
-			<div className="flex flex-wrap items-center gap-3">
-				<div className="flex items-center gap-2">
-					<span className="text-sm text-zinc-300">Brush</span>
-					<div className="inline-flex overflow-hidden rounded-lg border border-zinc-700/60">
-						{(["circle", "square", "spray"] as Brush[]).map((value) => (
-							<button
-								key={value}
-								onClick={() => setBrush(value)}
-								className={`px-2 py-1.5 text-sm ${brush === value ? "bg-zinc-200 text-zinc-900" : "bg-zinc-800/60 text-zinc-200 hover:bg-zinc-700/60"}`}
-							>
-								{value[0].toUpperCase() + value.slice(1)}
-							</button>
-						))}
-					</div>
-				</div>
-
-				<div className="flex items-center gap-2">
-					<span className="text-sm text-zinc-300">Color</span>
-					<div className="inline-flex overflow-hidden rounded-lg border border-zinc-700/60">
-						{(
-							[
-								["cycle", "Cycle"],
-								["random", "Random"],
-								["randomLerp", "Random Lerp"],
-								["single", "Single"],
-							] as [HueMode, string][]
-						).map(([key, label]) => (
-							<button
-								key={key}
-								onClick={() => setHueMode(key)}
-								className={`px-2 py-1.5 text-sm ${hueMode === key ? "bg-zinc-200 text-zinc-900" : "bg-zinc-800/60 text-zinc-200 hover:bg-zinc-700/60"}`}
-							>
-								{label}
-							</button>
-						))}
-					</div>
-					{hueMode === "single" && (
-						<div className="flex items-center gap-2">
-							<input
-								type="color"
-								value={singleHex}
-								onChange={(event) => setSingleHex(event.target.value)}
-								className="h-8 w-10 rounded border border-zinc-700/60 bg-zinc-900"
-								style={{ colorScheme: "dark" }}
-								title="Pick color"
-							/>
-							<div
-								className="rounded-xl border px-3 py-1.5 text-sm"
-								style={{
-									background: singleHex,
-									color: contrastHex,
-									borderColor: "rgba(255,255,255,0.15)",
-									textAlign: "center",
-								}}
-							>
-								{colorName}
-							</div>
+		<div className="flex h-full w-full flex-col bg-zinc-950 text-zinc-100">
+			<div className="border-b border-zinc-800/70 bg-zinc-950/78 px-3 py-2.5">
+				<div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+					<div className="flex items-center gap-2">
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Brush</span>
+						<div className="inline-flex overflow-hidden border border-zinc-700/60">
+							{(["circle", "square", "spray"] as Brush[]).map((value) => (
+								<button
+									key={value}
+									onClick={() => setBrush(value)}
+									className={`px-2.5 py-1.5 text-xs ${
+										brush === value
+											? "bg-zinc-200 text-zinc-900"
+											: "bg-transparent text-zinc-200 hover:bg-zinc-800/60"
+									}`}
+								>
+									{value[0].toUpperCase() + value.slice(1)}
+								</button>
+							))}
 						</div>
-					)}
-				</div>
-
-				<div className="flex items-center gap-2">
-					<span className="text-sm text-zinc-300">Palette</span>
-					<select
-						value={palette}
-						onChange={(event) => setPalette(event.target.value as Palette)}
-						className="rounded-md border border-zinc-700 bg-zinc-800/70 py-1.5 text-center text-sm text-zinc-100"
-					>
-						<option value="off">Off</option>
-						<option value="analogous">Analogous</option>
-						<option value="complementary">Complementary</option>
-						<option value="triad">Triad</option>
-						<option value="mono">Monochrome</option>
-					</select>
-				</div>
-
-				<div className="flex items-center gap-2">
-					<span className="text-sm text-zinc-300">Cohesion</span>
-					<select
-						value={cohesion}
-						onChange={(event) => setCohesion(event.target.value as Cohesion)}
-						className="rounded-md border border-zinc-700 bg-zinc-800/70 py-1.5 text-center text-sm text-zinc-100"
-					>
-						<option value="none">None</option>
-						<option value="checker">Checker</option>
-						<option value="rings">Rings</option>
-						<option value="cross">Cross</option>
-					</select>
-				</div>
-
-				<div className="flex items-center gap-2">
-					<span className="text-sm text-zinc-300">Noise</span>
-					<select
-						value={noiseMode}
-						onChange={(event) => setNoiseMode(event.target.value as NoiseMode)}
-						className="rounded-md border border-zinc-700 bg-zinc-800/70 py-1.5 text-center text-sm text-zinc-100"
-					>
-						<option value="off">Off</option>
-						<option value="hue">Hue</option>
-						<option value="liquid">Liquid</option>
-						<option value="granular">Granular</option>
-					</select>
-					<span className="text-sm text-zinc-300">Scale</span>
-					<input
-						type="range"
-						min={0.01}
-						max={0.12}
-						step={0.005}
-						value={noiseScale}
-						onChange={(event) => setNoiseScale(parseFloat(event.target.value))}
-						className="w-24 accent-zinc-200"
-					/>
-				</div>
-
-				<div className="flex items-center gap-2">
-					<button
-						onClick={() => setSolid((value) => !value)}
-						className={`rounded-lg border px-3 py-1.5 text-sm ${solid ? "border-emerald-500 bg-emerald-400 text-emerald-900" : "border-zinc-700/60 bg-zinc-800/60 text-zinc-200 hover:bg-zinc-700/60"}`}
-					>
-						{solid ? "Solid: On" : "Solid: Off"}
-					</button>
-
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-zinc-300">Pixel</span>
-						<select
-							value={cell}
-							onChange={(event) => setCell(parseInt(event.target.value, 10))}
-							className="rounded-md border border-zinc-700 bg-zinc-800/70 py-1.5 text-center text-sm text-zinc-100"
-						>
-							<option value={3}>Small (3)</option>
-							<option value={4}>Medium (4)</option>
-							<option value={6}>Large (6)</option>
-							<option value={8}>Huge (8)</option>
-						</select>
 					</div>
 
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-zinc-300">Brush</span>
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Size</span>
 						<input
 							type="range"
 							min={3}
@@ -1219,68 +1104,197 @@ export default function FallingSand() {
 							step={2}
 							value={brushDiam}
 							onChange={(event) => setBrushDiam(parseInt(event.target.value, 10))}
+							className="w-24 accent-zinc-200"
+						/>
+						<span className="w-7 text-right text-xs text-zinc-300">{brushDiam}</span>
+					</div>
+
+					<div className="flex items-center gap-2">
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Pixel</span>
+						<select
+							value={cell}
+							onChange={(event) => setCell(parseInt(event.target.value, 10))}
+							className="border border-zinc-700 bg-zinc-900/80 px-2 py-1.5 text-xs text-zinc-100"
+						>
+							<option value={3}>3</option>
+							<option value={4}>4</option>
+							<option value={6}>6</option>
+							<option value={8}>8</option>
+						</select>
+					</div>
+
+					<div className="h-4 w-px bg-zinc-800/80" />
+
+					<div className="flex items-center gap-2">
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Color</span>
+						<div className="inline-flex overflow-hidden border border-zinc-700/60">
+							{(
+								[
+									["cycle", "Cycle"],
+									["random", "Random"],
+									["randomLerp", "Lerp"],
+									["single", "Single"],
+								] as [HueMode, string][]
+							).map(([key, label]) => (
+								<button
+									key={key}
+									onClick={() => setHueMode(key)}
+									className={`px-2.5 py-1.5 text-xs ${
+										hueMode === key
+											? "bg-zinc-200 text-zinc-900"
+											: "bg-transparent text-zinc-200 hover:bg-zinc-800/60"
+									}`}
+								>
+									{label}
+								</button>
+							))}
+						</div>
+						{hueMode === "single" ? (
+							<>
+								<input
+									type="color"
+									value={singleHex}
+									onChange={(event) => setSingleHex(event.target.value)}
+									className="h-8 w-10 border border-zinc-700/60 bg-zinc-900"
+									style={{ colorScheme: "dark" }}
+									title="Pick color"
+								/>
+								<span
+									className="border px-2.5 py-1 text-xs"
+									style={{
+										background: singleHex,
+										color: contrastHex,
+										borderColor: "rgba(255,255,255,0.15)",
+									}}
+								>
+									{colorName}
+								</span>
+							</>
+						) : null}
+					</div>
+
+					<div className="h-4 w-px bg-zinc-800/80" />
+
+					<div className="flex items-center gap-2">
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Palette</span>
+						<select
+							value={palette}
+							onChange={(event) => setPalette(event.target.value as Palette)}
+							className="border border-zinc-700 bg-zinc-900/80 px-2 py-1.5 text-xs text-zinc-100"
+						>
+							<option value="off">Off</option>
+							<option value="analogous">Analogous</option>
+							<option value="complementary">Complementary</option>
+							<option value="triad">Triad</option>
+							<option value="mono">Mono</option>
+						</select>
+					</div>
+
+					<div className="flex items-center gap-2">
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Cohesion</span>
+						<select
+							value={cohesion}
+							onChange={(event) => setCohesion(event.target.value as Cohesion)}
+							className="border border-zinc-700 bg-zinc-900/80 px-2 py-1.5 text-xs text-zinc-100"
+						>
+							<option value="none">None</option>
+							<option value="checker">Checker</option>
+							<option value="rings">Rings</option>
+							<option value="cross">Cross</option>
+						</select>
+					</div>
+
+					<div className="flex items-center gap-2">
+						<span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Noise</span>
+						<select
+							value={noiseMode}
+							onChange={(event) => setNoiseMode(event.target.value as NoiseMode)}
+							className="border border-zinc-700 bg-zinc-900/80 px-2 py-1.5 text-xs text-zinc-100"
+						>
+							<option value="off">Off</option>
+							<option value="hue">Hue</option>
+							<option value="liquid">Liquid</option>
+							<option value="granular">Granular</option>
+						</select>
+						<input
+							type="range"
+							min={0.01}
+							max={0.12}
+							step={0.005}
+							value={noiseScale}
+							onChange={(event) => setNoiseScale(parseFloat(event.target.value))}
 							className="w-20 accent-zinc-200"
 						/>
-						<span className="w-fit text-right text-xs text-zinc-400">
-							{brushDiam}
+						<span className="w-10 text-right text-xs text-zinc-300">
+							{noiseScale.toFixed(3)}
 						</span>
 					</div>
 
 					<div className="flex items-center gap-2">
 						<button
 							onClick={() => setShadow((value) => !value)}
-							className={`rounded-lg border px-3 py-1.5 text-sm ${shadow ? "border-sky-500 bg-sky-400 text-sky-900" : "border-zinc-700/60 bg-zinc-800/60 text-zinc-200 hover:bg-zinc-700/60"}`}
+							className={`border px-2.5 py-1.5 text-xs ${
+								shadow
+									? "border-sky-500 bg-sky-400 text-sky-900"
+									: "border-zinc-700/60 bg-transparent text-zinc-200 hover:bg-zinc-800/60"
+							}`}
 						>
-							{shadow ? "Shadow: On" : "Shadow: Off"}
+							Shadow {shadow ? "On" : "Off"}
 						</button>
-						<span className="text-sm text-zinc-300">Layers</span>
 						<input
 							type="range"
 							min={1}
 							max={6}
 							step={1}
 							value={shadowLayers}
-							onChange={(event) =>
-								setShadowLayers(parseInt(event.target.value, 10))
-							}
-							className="w-16 accent-zinc-200"
+							onChange={(event) => setShadowLayers(parseInt(event.target.value, 10))}
+							className="w-14 accent-zinc-200"
 						/>
-						<span className="text-sm text-zinc-300">Offset</span>
+						<span className="w-5 text-right text-xs text-zinc-300">{shadowLayers}</span>
 						<input
 							type="range"
 							min={0}
 							max={6}
 							step={1}
 							value={shadowDist}
-							onChange={(event) =>
-								setShadowDist(parseInt(event.target.value, 10))
-							}
-							className="w-16 accent-zinc-200"
+							onChange={(event) => setShadowDist(parseInt(event.target.value, 10))}
+							className="w-14 accent-zinc-200"
 						/>
+						<span className="w-5 text-right text-xs text-zinc-300">{shadowDist}</span>
 					</div>
 
-					<div className="flex items-center gap-2">
+					<div className="ml-auto flex flex-wrap items-center gap-2">
+						<button
+							onClick={() => setSolid((value) => !value)}
+							className={`border px-2.5 py-1.5 text-xs ${
+								solid
+									? "border-emerald-500 bg-emerald-400 text-emerald-900"
+									: "border-zinc-700/60 bg-transparent text-zinc-200 hover:bg-zinc-800/60"
+							}`}
+						>
+							Solid {solid ? "On" : "Off"}
+						</button>
 						<button
 							onClick={() => setEraser((value) => !value)}
-							className={`rounded-lg border px-3 py-1.5 text-sm ${eraser ? "border-rose-500 bg-rose-400 text-rose-950" : "border-zinc-700/60 bg-zinc-800/60 text-zinc-200 hover:bg-zinc-700/60"}`}
+							className={`border px-2.5 py-1.5 text-xs ${
+								eraser
+									? "border-rose-500 bg-rose-400 text-rose-950"
+									: "border-zinc-700/60 bg-transparent text-zinc-200 hover:bg-zinc-800/60"
+							}`}
 						>
-							{eraser ? "Eraser: On" : "Eraser: Off"}
+							Eraser {eraser ? "On" : "Off"}
+						</button>
+						<button
+							onClick={() => resetWorldRef.current?.()}
+							className="border border-red-400 bg-red-500 px-2.5 py-1.5 text-xs text-white hover:bg-red-400"
+						>
+							Reset
 						</button>
 					</div>
-
-					<button
-						onClick={() => resetWorldRef.current?.()}
-						className="rounded-lg border border-red-400 bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-400"
-					>
-						Reset
-					</button>
 				</div>
 			</div>
 
-			<div
-				ref={hostRef}
-				className="min-h-0 flex-1 overflow-hidden bg-neutral-900"
-			/>
+			<div ref={hostRef} className="min-h-0 flex-1 overflow-hidden bg-neutral-900" />
 		</div>
 	);
 }

@@ -725,23 +725,6 @@ function drawMaze(
 	state: RuntimeState,
 	pulse: number,
 ): void {
-	graphics.fillStyle(0x020617, 1);
-	graphics.fillRoundedRect(
-		layout.boardX - 12,
-		layout.boardY - 12,
-		layout.boardWidth + 24,
-		layout.boardHeight + 24,
-		18,
-	);
-	graphics.lineStyle(2, 0x0f172a, 1);
-	graphics.strokeRoundedRect(
-		layout.boardX - 12,
-		layout.boardY - 12,
-		layout.boardWidth + 24,
-		layout.boardHeight + 24,
-		18,
-	);
-
 	for (let row = 0; row < ROWS; row += 1) {
 		for (let col = 0; col < COLS; col += 1) {
 			if (isWall(col, row)) {
@@ -901,6 +884,7 @@ function mountPacman(
 	let bannerText: PhaserText | null = null;
 	let subBannerText: PhaserText | null = null;
 	let observer: ResizeObserver | null = null;
+	let resizeRaf = 0;
 	let state = createRuntimeState();
 	let playerStepAccumulator = 0;
 	let ghostStepAccumulator = 0;
@@ -961,14 +945,6 @@ function mountPacman(
 		graphics.clear();
 		graphics.fillGradientStyle(0x020617, 0x020617, 0x04111f, 0x04111f, 1);
 		graphics.fillRect(0, 0, scene.scale.width, scene.scale.height);
-		graphics.fillStyle(0x08111e, 0.9);
-		graphics.fillRoundedRect(
-			layout.boardX - 24,
-			layout.boardY - 24,
-			layout.boardWidth + 48,
-			layout.boardHeight + 48,
-			24,
-		);
 		drawMaze(graphics, layout, state, pulse);
 		drawPlayer(graphics, layout, state.player, playerProgress);
 		for (const ghost of state.ghosts) {
@@ -1129,6 +1105,18 @@ function mountPacman(
 	host.innerHTML = "";
 	window.addEventListener("keydown", handleKeyDown, { passive: false });
 	const initialSize = resolveHostSize(host);
+	const resizeGame = () => {
+		if (!game) return;
+		const nextSize = resolveHostSize(host);
+		game.scale.resize(nextSize.width, nextSize.height);
+	};
+	const stabilizeResize = (remaining = 6) => {
+		resizeGame();
+		if (remaining <= 1) return;
+		resizeRaf = window.requestAnimationFrame(() => {
+			stabilizeResize(remaining - 1);
+		});
+	};
 
 	game = new PhaserLib.Game({
 		type: PhaserLib.CANVAS,
@@ -1141,19 +1129,19 @@ function mountPacman(
 		audio: { noAudio: true },
 		backgroundColor: "#020617",
 		transparent: false,
-		antialias: true,
-		pixelArt: false,
+		pixelArt: true,
+		antialias: false,
 	});
 
 	observer = new ResizeObserver(() => {
-		if (!game) return;
-		const nextSize = resolveHostSize(host);
-		game.scale.resize(nextSize.width, nextSize.height);
+		resizeGame();
 	});
 	observer.observe(host);
+	stabilizeResize();
 
 	return () => {
 		observer?.disconnect();
+		window.cancelAnimationFrame(resizeRaf);
 		window.removeEventListener("keydown", handleKeyDown);
 		graphics = null;
 		titleText = null;
@@ -1179,6 +1167,19 @@ export default function Pacman(): React.JSX.Element {
 
 		let cancelled = false;
 		let cleanup: (() => void) | undefined;
+		const waitForLayout = () =>
+			new Promise<void>((resolve) => {
+				let frames = 0;
+				const tick = () => {
+					frames += 1;
+					if (frames >= 4) {
+						resolve();
+						return;
+					}
+					requestAnimationFrame(tick);
+				};
+				requestAnimationFrame(tick);
+			});
 
 		setStatus("loading");
 
@@ -1188,6 +1189,7 @@ export default function Pacman(): React.JSX.Element {
 				const PhaserLib = ("default" in phaserModule
 					? phaserModule.default
 					: phaserModule) as PhaserModule;
+				await waitForLayout();
 
 				if (cancelled || !hostRef.current) return;
 
@@ -1208,7 +1210,7 @@ export default function Pacman(): React.JSX.Element {
 
 	return (
 		<div className="relative h-full w-full overflow-hidden bg-slate-950">
-			<div ref={hostRef} className="h-full w-full" />
+			<div ref={hostRef} className="absolute inset-0" />
 
 			{status === "loading" ? (
 				<div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm font-semibold tracking-[0.3em] text-slate-300">

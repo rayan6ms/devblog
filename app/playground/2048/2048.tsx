@@ -873,6 +873,7 @@ function easeOutBack(value: number): number {
 function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge) {
 	let game: PhaserGame | null = null;
 	let observer: ResizeObserver | null = null;
+	let resizeRaf = 0;
 	let graphics: PhaserGraphics | null = null;
 	let statusText: PhaserText | null = null;
 	let hintText: PhaserText | null = null;
@@ -1090,29 +1091,26 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 
 		if (view.cacheKey !== cacheKey) {
 			const radius = Math.max(14, Math.floor(payload.size * 0.18));
-			const inset = Math.max(3, Math.floor(payload.size * 0.06));
+			const splitY = payload.size * 0.5;
+			const capHeight = splitY + radius * 0.7;
 			view.background.clear();
 			view.background.fillStyle(colors.fill, 1);
 			view.background.fillRoundedRect(0, 0, payload.size, payload.size, radius);
 			view.background.fillStyle(colors.sheen, 0.18);
-			view.background.fillRoundedRect(
-				inset,
-				inset,
-				payload.size - inset * 2,
-				Math.max(12, payload.size * 0.24),
-				Math.max(8, radius * 0.6),
-			);
+			view.background.fillRoundedRect(0, 0, payload.size, capHeight, radius);
+			view.background.fillStyle(colors.fill, 1);
+			view.background.fillRect(0, splitY, payload.size, payload.size - splitY);
 			view.background.lineStyle(
 				Math.max(2, payload.size * 0.04),
 				colors.stroke,
 				0.95,
 			);
 			view.background.strokeRoundedRect(
-				Math.max(1, inset * 0.4),
-				Math.max(1, inset * 0.4),
-				payload.size - Math.max(2, inset * 0.8),
-				payload.size - Math.max(2, inset * 0.8),
-				Math.max(10, radius * 0.9),
+				0,
+				0,
+				payload.size,
+				payload.size,
+				radius,
 			);
 			view.label.setPosition(payload.size / 2, payload.size / 2);
 			view.cacheKey = cacheKey;
@@ -1138,6 +1136,7 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 		const boardY = Math.floor((height - boardSize) / 2);
 		const gap = Math.max(8, Math.floor(boardSize * 0.022));
 		const tileSize = Math.floor((boardSize - gap * (BOARD_SIZE + 1)) / BOARD_SIZE);
+		const tileRadius = Math.max(14, Math.floor(tileSize * 0.18));
 
 		graphics.clear();
 		graphics.fillStyle(0x08101b, 1);
@@ -1148,7 +1147,7 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 			boardY - gap * 1.25,
 			boardSize + gap * 2.5,
 			boardSize + gap * 2.5,
-			28,
+			tileRadius,
 		);
 		graphics.lineStyle(2, 0x26364f, 0.95);
 		graphics.strokeRoundedRect(
@@ -1156,7 +1155,7 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 			boardY - gap * 1.25,
 			boardSize + gap * 2.5,
 			boardSize + gap * 2.5,
-			28,
+			tileRadius,
 		);
 
 		for (let row = 0; row < BOARD_SIZE; row += 1) {
@@ -1164,9 +1163,9 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 				const cellX = boardX + gap + col * (tileSize + gap);
 				const cellY = boardY + gap + row * (tileSize + gap);
 				graphics.fillStyle(0x111b2d, 1);
-				graphics.fillRoundedRect(cellX, cellY, tileSize, tileSize, 18);
+				graphics.fillRoundedRect(cellX, cellY, tileSize, tileSize, tileRadius);
 				graphics.lineStyle(2, 0x1e2a40, 1);
-				graphics.strokeRoundedRect(cellX, cellY, tileSize, tileSize, 18);
+				graphics.strokeRoundedRect(cellX, cellY, tileSize, tileSize, tileRadius);
 			}
 		}
 
@@ -1440,6 +1439,18 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 
 	host.innerHTML = "";
 	const initialSize = resolveHostSize(host);
+	const resizeGame = () => {
+		if (!game) return;
+		const size = resolveHostSize(host);
+		game.scale.resize(size.width, size.height);
+	};
+	const stabilizeResize = (remaining = 6) => {
+		resizeGame();
+		if (remaining <= 1) return;
+		resizeRaf = window.requestAnimationFrame(() => {
+			stabilizeResize(remaining - 1);
+		});
+	};
 
 	game = new PhaserLib.Game({
 		type: PhaserLib.CANVAS,
@@ -1457,16 +1468,16 @@ function mount2048(host: HTMLDivElement, PhaserLib: PhaserModule, bridge: Bridge
 	});
 
 	observer = new ResizeObserver(() => {
-		if (!game) return;
-		const size = resolveHostSize(host);
-		game.scale.resize(size.width, size.height);
+		resizeGame();
 	});
 	observer.observe(host);
+	stabilizeResize();
 
 	return () => {
 		bridge.controlsRef.current = null;
 		observer?.disconnect();
 		observer = null;
+		window.cancelAnimationFrame(resizeRaf);
 		if (game) {
 			game.destroy(true);
 			game = null;
@@ -1495,6 +1506,19 @@ export default function Game2048({ className = "" }: { className?: string }) {
 
 		let cancelled = false;
 		let cleanup: (() => void) | undefined;
+		const waitForLayout = () =>
+			new Promise<void>((resolve) => {
+				let frames = 0;
+				const tick = () => {
+					frames += 1;
+					if (frames >= 4) {
+						resolve();
+						return;
+					}
+					requestAnimationFrame(tick);
+				};
+				requestAnimationFrame(tick);
+			});
 
 		setStatus("loading");
 
@@ -1504,6 +1528,7 @@ export default function Game2048({ className = "" }: { className?: string }) {
 				const PhaserLib = ("default" in phaserModule
 					? phaserModule.default
 					: phaserModule) as PhaserModule;
+				await waitForLayout();
 
 				if (cancelled || !hostRef.current) return;
 

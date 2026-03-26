@@ -186,8 +186,8 @@ const WALL_THICKNESS = 1;
 const CELL_OPEN_SIZE = 2;
 const MAX_RAY_DISTANCE = 128;
 const LOOK_PITCH_LIMIT = 0.42;
-const MOUSE_YAW_SENSITIVITY = 0.00145;
-const MOUSE_PITCH_SENSITIVITY = 0.00095;
+const MOUSE_YAW_SENSITIVITY = 0.0041;
+const MOUSE_PITCH_SENSITIVITY = 0.0027;
 const RADAR_ECHO_OFFSETS = [0, 1.2, 2.4] as const;
 const TAU = Math.PI * 2;
 
@@ -2783,10 +2783,10 @@ function RunOverlay({
 }) {
 	return (
 		<div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
-			<div className="pointer-events-auto w-full max-w-[30rem] rounded-[28px] border border-[#33576e] bg-[#05111a]/92 p-5 text-center shadow-[0_24px_60px_rgba(0,0,0,0.38)] backdrop-blur-md sm:p-6">
+			<div className="pointer-events-auto w-full max-w-[30rem] border border-[#33576e] bg-[#05111a]/92 p-5 text-center shadow-[0_24px_60px_rgba(0,0,0,0.38)] backdrop-blur-md sm:p-6">
 				<div className="text-3xl text-slate-50">{title}</div>
 				<div className="mt-3 text-sm leading-6 text-slate-300">{description}</div>
-				<div className="mt-4 grid grid-cols-2 gap-2 text-left sm:grid-cols-4">
+				<div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-[#204051] pt-4 text-left sm:grid-cols-4">
 					{[
 						{ label: "Round", value: uiState.round },
 						{ label: "Theme", value: uiState.themeLabel },
@@ -2794,10 +2794,7 @@ function RunOverlay({
 						{ label: "Best", value: uiState.bestScore },
 						{ label: "Time", value: formatTime(uiState.timeLimit || uiState.timeLeft) },
 					].map((item) => (
-						<div
-							key={item.label}
-							className="rounded-2xl border border-[#204051] bg-[#08131b]/84 px-3 py-2"
-						>
+						<div key={item.label} className="min-w-0">
 							<div
 								className="text-[10px] uppercase tracking-[0.22em] text-slate-500"
 								style={{ fontFamily: FONT_STACK }}
@@ -2808,7 +2805,7 @@ function RunOverlay({
 						</div>
 					))}
 				</div>
-				<div className="mt-4 rounded-[22px] border border-[#1f3b4d] bg-[#07131d]/84 px-4 py-3 text-left text-sm text-slate-200">
+				<div className="mt-4 border-t border-[#1f3b4d] px-0 pt-4 text-left text-sm text-slate-200">
 					<div
 						className="text-[10px] uppercase tracking-[0.24em] text-slate-500"
 						style={{ fontFamily: FONT_STACK }}
@@ -2827,7 +2824,7 @@ function RunOverlay({
 				<button
 					type="button"
 					onClick={onAction}
-					className="mt-5 rounded-full border border-[#42728d] bg-[#0d2231] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-100 transition hover:border-[#5b95b6] hover:bg-[#123047]"
+					className="mt-5 border border-[#42728d] bg-[#0d2231] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-100 transition hover:border-[#5b95b6] hover:bg-[#123047]"
 					style={{ fontFamily: FONT_STACK }}
 				>
 					{buttonLabel}
@@ -2841,7 +2838,7 @@ function WeaponHud({ uiState }: { uiState: RuntimeUiState }) {
 	const reloadPercent = Math.round(uiState.reloadProgress * 100);
 
 	return (
-		<div className="pointer-events-none absolute bottom-3 right-3 rounded-[24px] border border-[#2a4658] bg-[#05111a]/88 px-3 py-2.5 text-right backdrop-blur-md sm:bottom-4 sm:right-4">
+		<div className="pointer-events-none absolute bottom-3 right-3 border-l border-[#2a4658] bg-[#05111a]/55 px-3 py-2 text-right backdrop-blur-md sm:bottom-4 sm:right-4">
 			<div
 				className="text-[10px] uppercase tracking-[0.24em] text-slate-500"
 				style={{ fontFamily: FONT_STACK }}
@@ -2892,24 +2889,22 @@ function DamageOverlay({ uiState }: { uiState: RuntimeUiState }) {
 function PlayerHealthHud({ uiState }: { uiState: RuntimeUiState }) {
 	return (
 		<div className="pointer-events-none absolute bottom-20 left-1/2 -translate-x-1/2 sm:bottom-5">
-			<div className="rounded-full border border-[#3a4953] bg-[#06111a]/84 px-4 py-2 backdrop-blur-md">
-				<div
-					className="text-center text-[10px] uppercase tracking-[0.24em] text-slate-500"
-					style={{ fontFamily: FONT_STACK }}
-				>
-					Health
-				</div>
-				<div className="mt-2 flex items-center justify-center gap-1.5">
-					{Array.from({ length: uiState.playerMaxHp }, (_, index) => (
-						<div
-							key={index}
-							className={`h-2.5 w-6 rounded-full border ${index < uiState.playerHp
-								? "border-[#e57474] bg-[linear-gradient(180deg,#ff8d8d_0%,#b13636_100%)]"
-								: "border-[#4b2a2a] bg-[#170909]"
-								}`}
-						/>
-					))}
-				</div>
+			<div
+				className="mb-1 text-center text-[10px] uppercase tracking-[0.24em] text-slate-500"
+				style={{ fontFamily: FONT_STACK }}
+			>
+				Health
+			</div>
+			<div className="flex items-center justify-center gap-1.5 border-t border-[#3a4953] bg-[#06111a]/42 px-4 py-2 backdrop-blur-md">
+				{Array.from({ length: uiState.playerMaxHp }, (_, index) => (
+					<div
+						key={index}
+						className={`h-2.5 w-6 border ${index < uiState.playerHp
+							? "border-[#e57474] bg-[linear-gradient(180deg,#ff8d8d_0%,#b13636_100%)]"
+							: "border-[#4b2a2a] bg-[#170909]"
+							}`}
+					/>
+				))}
 			</div>
 		</div>
 	);
@@ -2919,7 +2914,7 @@ function ControlHints({ uiState }: { uiState: RuntimeUiState }) {
 	return (
 		<div className="pointer-events-none absolute bottom-4 left-4 hidden sm:flex">
 			<div
-				className="rounded-[20px] border border-[#2b4555] bg-[#04101a]/84 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-slate-300 backdrop-blur-md"
+				className="border-l border-[#2b4555] bg-[#04101a]/60 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-slate-300 backdrop-blur-md"
 				style={{ fontFamily: FONT_STACK }}
 			>
 				<div className="flex items-center gap-2">
@@ -3042,7 +3037,7 @@ export default function LabyrinthExplorer() {
 							<button
 								type="button"
 								onClick={() => pushRestart(controlsRef)}
-								className="rounded-full border border-[#365970] bg-[#081723]/82 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-100 transition hover:border-[#4b7b97] hover:bg-[#102436]"
+								className="border border-[#365970] bg-[#081723]/82 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-100 transition hover:border-[#4b7b97] hover:bg-[#102436]"
 								style={{ fontFamily: FONT_STACK }}
 							>
 								New Run

@@ -1567,34 +1567,6 @@ function drawBoard(
 		1.5,
 	);
 
-	const boardGradient = context.createLinearGradient(
-		layout.boardX,
-		layout.boardY,
-		layout.boardX + layout.boardWidth,
-		layout.boardY + layout.boardHeight,
-	);
-	boardGradient.addColorStop(0, theme.board);
-	boardGradient.addColorStop(1, "rgba(0,0,0,0.12)");
-	fillRoundedRect(
-		context,
-		layout.boardX - layout.cellSize * 0.22,
-		layout.boardY - layout.cellSize * 0.22,
-		layout.boardWidth + layout.cellSize * 0.44,
-		layout.boardHeight + layout.cellSize * 0.44,
-		layout.boardRadius,
-		boardGradient,
-	);
-	strokeRoundedRect(
-		context,
-		layout.boardX - layout.cellSize * 0.22,
-		layout.boardY - layout.cellSize * 0.22,
-		layout.boardWidth + layout.cellSize * 0.44,
-		layout.boardHeight + layout.cellSize * 0.44,
-		layout.boardRadius,
-		theme.boardEdge,
-		1.5,
-	);
-
 	for (let index = 0; index < runtime.cells.length; index += 1) {
 		const row = Math.floor(index / runtime.level.cols);
 		const col = index % runtime.level.cols;
