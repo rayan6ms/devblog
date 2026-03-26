@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import prisma from "@/database/prisma";
 import { auth } from "@/lib/auth";
@@ -148,6 +149,9 @@ export async function PATCH(
 				postedAt: shouldRefreshPostedAt ? new Date() : existing.postedAt,
 			},
 		});
+		if (existing.status === "published" || post.status === "published") {
+			revalidatePath("/feed.xml");
+		}
 
 		return NextResponse.json({
 			id: post.id,

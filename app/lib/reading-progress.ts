@@ -1,5 +1,5 @@
 export const MIN_READING_PROGRESS_TO_SAVE = 10;
-export const MAX_READING_PROGRESS_TO_SAVE = 80;
+export const MAX_READING_PROGRESS_TO_SAVE = 100;
 
 export function clampReadingProgress(value: number) {
 	if (!Number.isFinite(value)) {

@@ -18,6 +18,13 @@ type MarkdownComponentOptions = {
 	resolveImageSrc?: (src: string) => string;
 };
 
+type MarkdownNode = {
+	type?: string;
+	tagName?: string;
+	value?: string;
+	children?: MarkdownNode[];
+};
+
 function getCodeLanguage(children: ReactNode) {
 	for (const child of Children.toArray(children)) {
 		if (!isValidElement<{ className?: string }>(child)) {
@@ -38,23 +45,76 @@ function getCodeLanguage(children: ReactNode) {
 	return null;
 }
 
+function isWhitespaceTextNode(node: MarkdownNode) {
+	return node.type === "text" && !(node.value || "").trim();
+}
+
+function isImageContentNode(node: MarkdownNode): boolean {
+	if (node.type !== "element") {
+		return false;
+	}
+
+	if (node.tagName === "img") {
+		return true;
+	}
+
+	if (node.tagName === "a" || node.tagName === "picture") {
+		const children = node.children || [];
+		return children.length > 0 && children.every(isImageContentNode);
+	}
+
+	return false;
+}
+
+function isImageOnlyParagraphNode(node?: MarkdownNode) {
+	if (node?.type !== "element" || node.tagName !== "p") {
+		return false;
+	}
+
+	const meaningfulChildren = (node.children || []).filter(
+		(child) => !isWhitespaceTextNode(child),
+	);
+
+	if (meaningfulChildren.length === 0) {
+		return false;
+	}
+
+	return meaningfulChildren.every(isImageContentNode);
+}
+
 export function createMarkdownComponents({
 	resolveImageSrc,
 }: MarkdownComponentOptions = {}): Components {
 	return {
-		a({ ...props }) {
+		a({ node: _node, ...props }) {
 			return <a {...props} target="_blank" rel="noreferrer" />;
 		},
-		pre({ children, ...props }) {
+		p({ node, children, ...props }) {
+			if (isImageOnlyParagraphNode(node as MarkdownNode | undefined)) {
+				return <>{children}</>;
+			}
+
+			return <p {...props}>{children}</p>;
+		},
+		pre({ node: _node, children, ...props }) {
 			const language = getCodeLanguage(children);
 			return (
-				<pre
-					{...props}
-					data-language={language || undefined}
-					spellCheck="false"
-				>
-					{children}
-				</pre>
+				<div className="code-block" data-language={language || undefined}>
+					<div className="code-block__header">
+						<span className="code-block__language">
+							{language || "code"}
+						</span>
+						<img
+							src="/favicon.ico"
+							alt=""
+							aria-hidden="true"
+							className="code-block__favicon"
+						/>
+					</div>
+					<pre {...props} spellCheck="false">
+						{children}
+					</pre>
+				</div>
 			);
 		},
 		img({ alt, src }) {

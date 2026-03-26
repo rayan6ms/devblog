@@ -12,15 +12,19 @@ const AUTOSAVE_DELAY_MS = 4000;
 const ARTICLE_SELECTOR = '[data-reading-progress-root="true"]';
 const VIEWED_POSTS_STORAGE_PREFIX = "devblog:tracked-post-views:";
 
-function getReadingProgress() {
-	const article = document.querySelector<HTMLElement>(ARTICLE_SELECTOR);
-	if (!article) {
-		return 0;
-	}
+function getArticleElement() {
+	return document.querySelector<HTMLElement>(ARTICLE_SELECTOR);
+}
 
+function getReadingProgress(article: HTMLElement) {
 	const rect = article.getBoundingClientRect();
 	const articleTop = window.scrollY + rect.top;
-	const articleHeight = article.offsetHeight;
+	const articleHeight = Math.max(
+		article.scrollHeight,
+		article.offsetHeight,
+		rect.height,
+		1,
+	);
 	const viewportHeight =
 		window.innerHeight || document.documentElement.clientHeight;
 
@@ -100,6 +104,14 @@ export default function ReadingProgressTracker({
 			return;
 		}
 
+		const article = getArticleElement();
+		if (!article) {
+			return;
+		}
+
+		const progressUrl = `/api/progress?postId=${encodeURIComponent(postId)}`;
+		const abortController = new AbortController();
+
 		const clearPendingTimer = () => {
 			if (pendingTimerRef.current) {
 				clearTimeout(pendingTimerRef.current);
@@ -123,11 +135,13 @@ export default function ReadingProgressTracker({
 			});
 
 			if (preferBeacon && typeof navigator.sendBeacon === "function") {
-				navigator.sendBeacon(
+				const beaconAccepted = navigator.sendBeacon(
 					"/api/progress",
 					new Blob([body], { type: "application/json" }),
 				);
-				lastSyncedRef.current = nextProgress;
+				if (beaconAccepted) {
+					lastSyncedRef.current = nextProgress;
+				}
 				return;
 			}
 
@@ -159,7 +173,7 @@ export default function ReadingProgressTracker({
 		};
 
 		const updateProgress = () => {
-			const nextProgress = getReadingProgress();
+			const nextProgress = getReadingProgress(article);
 			if (nextProgress <= maxProgressRef.current) {
 				return;
 			}
@@ -200,6 +214,46 @@ export default function ReadingProgressTracker({
 			}
 		};
 
+		void fetch(progressUrl, {
+			cache: "no-store",
+			credentials: "same-origin",
+			signal: abortController.signal,
+		})
+			.then(async (response) => {
+				if (!response.ok) {
+					return null;
+				}
+
+				return response.json() as Promise<{ percentageRead?: number }>;
+			})
+			.then((result) => {
+				const savedProgress = clampReadingProgress(result?.percentageRead ?? 0);
+				if (savedProgress > 0) {
+					maxProgressRef.current = savedProgress;
+					lastSyncedRef.current = savedProgress;
+				}
+			})
+			.catch((error) => {
+				if (error instanceof DOMException && error.name === "AbortError") {
+					return;
+				}
+			})
+			.finally(() => {
+				scheduleProgressUpdate();
+			});
+
+		const resizeObserver =
+			typeof ResizeObserver === "function"
+				? new ResizeObserver(() => {
+						scheduleProgressUpdate();
+					})
+				: null;
+
+		resizeObserver?.observe(article);
+		article.addEventListener("load", scheduleProgressUpdate, true);
+		window.addEventListener("resize", scheduleProgressUpdate, {
+			passive: true,
+		});
 		updateProgress();
 		window.addEventListener("scroll", scheduleProgressUpdate, {
 			passive: true,
@@ -208,9 +262,13 @@ export default function ReadingProgressTracker({
 		document.addEventListener("visibilitychange", handleVisibilityChange);
 
 		return () => {
+			abortController.abort();
 			window.removeEventListener("scroll", scheduleProgressUpdate);
+			window.removeEventListener("resize", scheduleProgressUpdate);
 			window.removeEventListener("pagehide", flushProgress);
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			article.removeEventListener("load", scheduleProgressUpdate, true);
+			resizeObserver?.disconnect();
 			flushProgress();
 		};
 	}, [postId, session?.user?.id, status]);

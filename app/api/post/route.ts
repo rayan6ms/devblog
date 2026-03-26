@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import prisma from "@/database/prisma";
 import { auth } from "@/lib/auth";
@@ -117,6 +118,9 @@ export async function POST(req: Request) {
 				postedAt: parsed.data.status === "published" ? new Date() : undefined,
 			},
 		});
+		if (post.status === "published") {
+			revalidatePath("/feed.xml");
+		}
 
 		return NextResponse.json({
 			id: post.id,

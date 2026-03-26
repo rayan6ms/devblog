@@ -10,6 +10,7 @@ import { markdownRemarkPlugins } from "@/lib/markdown";
 import {
 	buildLocalizedUrl,
 	getSiteUrl,
+	resolveAbsoluteSeoImage,
 	SITE_DESCRIPTION,
 	SITE_NAME,
 } from "@/lib/seo";
@@ -27,6 +28,16 @@ function escapeXml(value: string) {
 
 function escapeCdata(value: string) {
 	return value.replaceAll("]]>", "]]]]><![CDATA[>");
+}
+
+function getFeedImageUrl(image?: string | null) {
+	const value = image?.trim();
+
+	if (!value || value.startsWith("data:")) {
+		return null;
+	}
+
+	return resolveAbsoluteSeoImage(value);
 }
 
 function absolutizeMarkdownUrl(url: string, postUrl: string) {
@@ -74,7 +85,11 @@ function createRehypeAbsolutizeUrls(postUrl: string): Plugin<[], Root> {
 	};
 }
 
-async function renderFeedHtml(markdown: string, postUrl: string) {
+async function renderFeedHtml(
+	markdown: string,
+	postUrl: string,
+	options?: { featuredImageUrl?: string | null; featuredImageAlt?: string | null },
+) {
 	const result = await unified()
 		.use(remarkParse)
 		.use(markdownRemarkPlugins)
@@ -84,7 +99,13 @@ async function renderFeedHtml(markdown: string, postUrl: string) {
 		.use(rehypeStringify)
 		.process(markdown);
 
-	return String(result);
+	const featuredImage = options?.featuredImageUrl
+		? `<p><img src="${escapeXml(options.featuredImageUrl)}" alt="${escapeXml(
+				options.featuredImageAlt || "",
+			)}" /></p>`
+		: "";
+
+	return `${featuredImage}${String(result)}`;
 }
 
 export async function GET() {
@@ -99,11 +120,21 @@ export async function GET() {
 	const items = await Promise.all(
 		posts.map(async (post) => {
 			const postUrl = buildLocalizedUrl(`/post/${post.slug}`, post.originalLocale);
-			const fullContent = await renderFeedHtml(post.content, postUrl);
+			const feedImageUrl = getFeedImageUrl(post.thumbnail);
+			const fullContent = await renderFeedHtml(post.content, postUrl, {
+				featuredImageUrl: feedImageUrl,
+				featuredImageAlt: post.thumbnailAlt,
+			});
 			const categories = [post.mainTag, ...post.tags]
 				.filter(Boolean)
 				.map((tag) => `<category>${escapeXml(tag)}</category>`)
 				.join("");
+			const media =
+				feedImageUrl
+					? `
+<media:content url="${escapeXml(feedImageUrl)}" medium="image" />
+<media:thumbnail url="${escapeXml(feedImageUrl)}" />`
+					: "";
 
 			return `<item>
 <title>${escapeXml(post.title)}</title>
@@ -113,12 +144,13 @@ export async function GET() {
 <description>${escapeXml(post.description)}</description>
 <content:encoded><![CDATA[${escapeCdata(fullContent)}]]></content:encoded>
 ${categories}
+${media}
 </item>`;
 		}),
 	);
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">
 <channel>
 <title>${escapeXml(SITE_NAME)}</title>
 <link>${escapeXml(siteUrl)}</link>

@@ -117,7 +117,7 @@ export default async function Page({ params }: PostPageProps) {
 						__html: serializeJsonLd(articleJsonLd),
 					}}
 				/>
-				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8">
+				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-5 sm:px-6 sm:pt-6 lg:px-8">
 					<div className="grid gap-6">
 						<PostHeader
 							post={post}
@@ -127,7 +127,7 @@ export default async function Page({ params }: PostPageProps) {
 						/>
 
 						<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-							<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
+							<div className="min-w-0 rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-5 py-6 shadow-xl shadow-zinc-950/20 sm:px-7 sm:py-7">
 								{post.status === "published" ? (
 									<ReadingProgressTracker postId={post.id} postSlug={post.slug} />
 								) : null}

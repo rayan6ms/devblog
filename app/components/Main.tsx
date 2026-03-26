@@ -37,16 +37,16 @@ export default function Main({ posts }: MainProps) {
 			<main className="mx-auto grid w-full max-w-[1280px] items-start gap-8 xl:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] xxl:grid-cols-[minmax(280px,320px)_minmax(520px,600px)_minmax(320px,360px)]">
 				{recentHighlights.length > 0 ? (
 					<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-1">
-						{recentHighlights.map((post: IPost) => (
+						{recentHighlights.map((post: IPost, index: number) => (
 							<div key={post.id} className="mx-auto w-full max-w-[420px]">
-								<RecentItem post={post} fluid compact />
+								<RecentItem post={post} fluid compact preload={index === 0} />
 							</div>
 						))}
 					</div>
 				) : null}
 				{featuredRecent ? (
 					<div className="mx-auto w-full max-w-[600px] xl:col-start-2">
-						<RecentItem post={featuredRecent} isBig={true} fluid />
+						<RecentItem post={featuredRecent} isBig={true} fluid preload />
 					</div>
 				) : null}
 				<div className="xl:col-start-2 xxl:col-start-3">

@@ -16,6 +16,7 @@ interface RecentItemProps {
 	isBig?: boolean;
 	fluid?: boolean;
 	compact?: boolean;
+	preload?: boolean;
 }
 
 export default function RecentItem({
@@ -23,6 +24,7 @@ export default function RecentItem({
 	isBig,
 	fluid = false,
 	compact = false,
+	preload = false,
 }: RecentItemProps) {
 	const { locale } = useI18n();
 	const { push } = useLocaleNavigation();
@@ -110,6 +112,7 @@ export default function RecentItem({
 						src={image}
 						alt={imageAlt}
 						fill
+						preload={preload}
 						className={`rounded-lg shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
             w-full h-full`}
 						sizes={

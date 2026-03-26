@@ -530,143 +530,143 @@ const Playground: React.FC = () => {
 
 	return (
 		<>
-			<div className="min-h-screen bg-darkBg text-gray">
-				<main
-					ref={contentRef}
-					tabIndex={-1}
-					className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8"
-				>
-					<section className="overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
-						<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
-							<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-								<div className="max-w-2xl">
-									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										{messages.common.playground}
-									</p>
-									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-										{messages.playgroundPage.title}
-									</h1>
-									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-										{messages.playgroundPage.description}
-									</p>
-								</div>
-								<div className="flex flex-wrap gap-3 lg:justify-end">
-									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
-										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											{messages.playgroundPage.totalProjects}
+			{!isOpen && (
+				<div className="min-h-screen bg-darkBg text-gray">
+					<main
+						ref={contentRef}
+						tabIndex={-1}
+						className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8"
+					>
+						<section className="overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
+							<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
+								<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+									<div className="max-w-2xl">
+										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+											{messages.common.playground}
 										</p>
-										<p className="mt-2 text-2xl font-semibold text-wheat">
-											{games.length}
+										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+											{messages.playgroundPage.title}
+										</h1>
+										<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+											{messages.playgroundPage.description}
 										</p>
 									</div>
-									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
-										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											{messages.playgroundPage.badges.playable}
-										</p>
-										<p className="mt-2 text-2xl font-semibold text-wheat">
-											{playable.length}
-										</p>
-									</div>
-									<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
-										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											{messages.playgroundPage.badges.watchOnly}
-										</p>
-										<p className="mt-2 text-2xl font-semibold text-wheat">
-											{watchOnly.length}
-										</p>
+									<div className="flex flex-wrap gap-3 lg:justify-end">
+										<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
+											<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+												{messages.playgroundPage.totalProjects}
+											</p>
+											<p className="mt-2 text-2xl font-semibold text-wheat">
+												{games.length}
+											</p>
+										</div>
+										<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
+											<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+												{messages.playgroundPage.badges.playable}
+											</p>
+											<p className="mt-2 text-2xl font-semibold text-wheat">
+												{playable.length}
+											</p>
+										</div>
+										<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
+											<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+												{messages.playgroundPage.badges.watchOnly}
+											</p>
+											<p className="mt-2 text-2xl font-semibold text-wheat">
+												{watchOnly.length}
+											</p>
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
 
-						<div className="grid gap-4 px-6 py-8 sm:px-8">
-							<GameShelf
-								title={messages.playgroundPage.playableTitle}
-								description={messages.playgroundPage.playableDescription}
-								games={playable}
-								onOpen={openGame}
-							/>
-							{watchOnly.length > 0 && (
+							<div className="grid gap-4 px-6 py-8 sm:px-8">
 								<GameShelf
-									title={messages.playgroundPage.watchOnlyTitle}
-									description={messages.playgroundPage.watchOnlyDescription}
-									games={watchOnly}
+									title={messages.playgroundPage.playableTitle}
+									description={messages.playgroundPage.playableDescription}
+									games={playable}
 									onOpen={openGame}
 								/>
-							)}
-						</div>
-					</section>
-				</main>
-			</div>
-			{isOpen && (
-				<>
-					<div
-						className="fixed inset-0 z-40 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.12),transparent_32%),linear-gradient(to_bottom,rgba(9,9,11,0.72),rgba(0,0,0,0.88))] backdrop-blur-md"
-						onMouseDown={(e) => {
-							if (e.currentTarget === e.target)
-								backdropMouseDownRef.current = true;
-						}}
-						onMouseUp={(e) => {
-							if (backdropMouseDownRef.current && e.currentTarget === e.target)
-								closeGame();
-							backdropMouseDownRef.current = false;
-						}}
-					/>
+								{watchOnly.length > 0 && (
+									<GameShelf
+										title={messages.playgroundPage.watchOnlyTitle}
+										description={messages.playgroundPage.watchOnlyDescription}
+										games={watchOnly}
+										onOpen={openGame}
+									/>
+								)}
+							</div>
+						</section>
+					</main>
+				</div>
+			)}
+				{isOpen && (
+					<>
+						<div
+							className="fixed inset-0 z-40 bg-darkBg"
+							onMouseDown={(e) => {
+								if (e.currentTarget === e.target)
+									backdropMouseDownRef.current = true;
+							}}
+							onMouseUp={(e) => {
+								if (backdropMouseDownRef.current && e.currentTarget === e.target)
+									closeGame();
+								backdropMouseDownRef.current = false;
+							}}
+						/>
 
-					<div
-						className="fixed inset-0 z-50 overflow-y-auto p-2 md:flex md:items-center md:justify-center md:p-3"
-						role="dialog"
-						aria-modal="true"
-						aria-labelledby="game-title"
-						onMouseDown={() => {
-							backdropMouseDownRef.current = false;
-						}}
-					>
-						<div className="flex min-h-full items-start justify-center md:min-h-0">
-							<div
-								className={`relative flex flex-col overflow-hidden border border-zinc-700/50 bg-lessDarkBg/95 shadow-[0_32px_90px_rgba(0,0,0,0.55)] ${
-									isMobileViewport
-										? "h-[min(96dvh,1000px)] w-full max-w-[1600px] rounded-[26px]"
-										: "h-[min(94vh,1000px)] w-[min(98vw,1600px)] rounded-[30px]"
-								}`}
-								onClick={(e) => e.stopPropagation()}
-							>
-								<div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.14),transparent_60%)]" />
-
-								<div className="relative z-20 border-b border-zinc-700/50 bg-lessDarkBg/92 px-4 py-3 backdrop-blur-sm md:px-5 md:py-4">
-									<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
-										<div className="min-w-0">
-											<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-												{messages.common.playground}
-											</p>
-											<h3
-												id="game-title"
-												className="mt-1 truncate font-somerton text-lg uppercase tracking-[0.08em] text-wheat md:text-xl"
-												title={selectedGameText?.name}
-											>
-												{selectedGameText?.name}
-											</h3>
-										</div>
-										<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-3 py-2">
-											<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-												{messages.playgroundPage.mode}
-											</p>
-											<p className="mt-1 text-sm font-semibold text-wheat">
-												{selectedGame?.mode === "play"
-													? messages.playgroundPage.badges.playable
-													: messages.playgroundPage.badges.watchOnly}
-											</p>
+						<div
+							className="fixed inset-0 z-50 overflow-y-auto p-2 md:flex md:items-center md:justify-center md:p-3"
+							role="dialog"
+							aria-modal="true"
+							aria-labelledby="game-title"
+							onMouseDown={() => {
+								backdropMouseDownRef.current = false;
+							}}
+						>
+							<div className="flex min-h-full items-start justify-center md:min-h-0">
+								<div
+									className={`relative flex flex-col overflow-hidden border border-zinc-800 bg-lessDarkBg ${
+										isMobileViewport
+											? "h-[min(96dvh,1000px)] w-full max-w-[1600px] rounded-[26px]"
+											: "h-[min(94vh,1000px)] w-[min(98vw,1600px)] rounded-[30px]"
+									}`}
+									onClick={(e) => e.stopPropagation()}
+								>
+									<div className="relative z-20 border-b border-zinc-800 bg-lessDarkBg px-4 py-3 md:px-5 md:py-4">
+										<div className="flex items-center justify-between gap-3 pr-12 md:pr-16">
+											<div className="min-w-0">
+												<p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+													{messages.common.playground}
+												</p>
+												<h3
+													id="game-title"
+													className="mt-1 truncate font-somerton text-lg uppercase tracking-[0.08em] text-wheat md:text-xl"
+													title={selectedGameText?.name}
+												>
+													{selectedGameText?.name}
+												</h3>
+											</div>
+											<div className="rounded-2xl border border-zinc-800 bg-darkBg px-3 py-2">
+												<p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+													{messages.playgroundPage.mode}
+												</p>
+												<p className="mt-1 text-sm font-semibold text-wheat">
+													{selectedGame?.mode === "play"
+														? messages.playgroundPage.badges.playable
+														: messages.playgroundPage.badges.watchOnly}
+												</p>
+											</div>
 										</div>
 									</div>
-								</div>
 
-								<button
-									className="absolute right-3 top-3 z-30 md:right-4 md:top-4"
-									onClick={closeGame}
-									aria-label={messages.playgroundPage.closeGame}
-								>
-									<FaXmark className="h-9 w-9 rounded-xl border border-zinc-700/60 bg-greyBg/80 p-1.5 text-wheat transition-colors hover:border-zinc-500/70 hover:bg-zinc-800/90 hover:text-purpleContrast" />
-								</button>
+									<button
+										className="absolute right-3 top-3 z-30 md:right-4 md:top-4"
+										onClick={closeGame}
+										aria-label={messages.playgroundPage.closeGame}
+									>
+										<FaXmark className="h-9 w-9 rounded-xl border border-zinc-800 bg-darkBg p-1.5 text-wheat transition-colors hover:border-zinc-700 hover:bg-lessDarkBg hover:text-wheat" />
+									</button>
 
 								{isMobileViewport ? (
 									<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -680,7 +680,14 @@ const Playground: React.FC = () => {
 												</p>
 											</div>
 
-											<div ref={gameViewportRef} className="min-h-0 flex-1">
+											<div
+												ref={gameViewportRef}
+												className="min-h-0 flex-1 overflow-hidden"
+												style={{
+													contain: "strict",
+													isolation: "isolate",
+												}}
+											>
 												{SelectedComponent && isGameMountReady ? (
 													<SelectedComponent key={gameComponentKey} />
 												) : (
@@ -692,7 +699,14 @@ const Playground: React.FC = () => {
 										</div>
 									</div>
 									) : (
-										<div ref={gameViewportRef} className="min-h-0 flex-1">
+										<div
+											ref={gameViewportRef}
+											className="min-h-0 flex-1 overflow-hidden"
+											style={{
+												contain: "strict",
+												isolation: "isolate",
+											}}
+										>
 											{SelectedComponent && isGameMountReady ? (
 												<SelectedComponent key={gameComponentKey} />
 											) : (
@@ -707,7 +721,7 @@ const Playground: React.FC = () => {
 					</div>
 				</>
 			)}
-			<Footer />
+			{!isOpen && <Footer />}
 		</>
 	);
 };
