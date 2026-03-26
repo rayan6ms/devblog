@@ -44,10 +44,11 @@ function suppressThreeClockWarning() {
 	if (typeof window === "undefined") return () => {};
 
 	const key = "__solar_system_clock_warn_filter__";
-	const existing = (window as Window & { [key: string]: boolean })[key];
+	const windowWithFlags = window as unknown as Record<string, boolean | undefined>;
+	const existing = windowWithFlags[key];
 	if (existing) return () => {};
 
-	(window as Window & { [key: string]: boolean })[key] = true;
+	windowWithFlags[key] = true;
 	const originalWarn = console.warn;
 	console.warn = (...args: unknown[]) => {
 		if (
@@ -61,7 +62,7 @@ function suppressThreeClockWarning() {
 
 	return () => {
 		console.warn = originalWarn;
-		delete (window as Window & { [key: string]: boolean })[key];
+		delete windowWithFlags[key];
 	};
 }
 
