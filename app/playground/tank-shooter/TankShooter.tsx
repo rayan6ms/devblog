@@ -2782,6 +2782,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	function radiusForLevel(L: number) {
 		return 26 + 0.15 * Math.max(0, (L | 0) - 1);
 	}
+	const MAX_TANK_RADIUS = radiusForLevel(LEVEL_CAP);
 	function updateTankRadius(t: any) {
 		t.r = radiusForLevel(t.level | 0);
 	}
@@ -2886,6 +2887,11 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	let B_team = new Int16Array(B_CAP);
 	let B_dieT = new Float32Array(B_CAP);
 	let bulletNext = new Int32Array(B_CAP);
+	bulletNext.fill(-1);
+	let bulletPrev = new Int32Array(B_CAP);
+	bulletPrev.fill(-1);
+	let bulletCell = new Int32Array(B_CAP);
+	bulletCell.fill(-1);
 	let bulletQueryStamp = new Int32Array(B_CAP);
 	const bulletFree: number[] = [];
 	let nextBulletIdx = 0;
@@ -2956,6 +2962,9 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		const nextShotSeenStamp = new Int32Array(cap);
 		nextShotSeenStamp.set(_shotSeenStamp);
 		_shotSeenStamp = nextShotSeenStamp;
+		const nextSupportShapeStamp = new Int32Array(cap);
+		nextSupportShapeStamp.set(_supportShapeStamp);
+		_supportShapeStamp = nextSupportShapeStamp;
 		S_CAP = cap;
 	}
 
@@ -3009,8 +3018,17 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		b15.set(B_owner);
 		B_owner = b15;
 		const b16 = new Int32Array(cap);
+		b16.fill(-1);
 		b16.set(bulletNext);
 		bulletNext = b16;
+		const b16b = new Int32Array(cap);
+		b16b.fill(-1);
+		b16b.set(bulletPrev);
+		bulletPrev = b16b;
+		const b16c = new Int32Array(cap);
+		b16c.fill(-1);
+		b16c.set(bulletCell);
+		bulletCell = b16c;
 		const b17 = new Int32Array(cap);
 		b17.set(bulletQueryStamp);
 		bulletQueryStamp = b17;
@@ -3098,14 +3116,23 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	let _curStamp = 1;
 
 	const _neighborBuf: number[] = [];
+	const _supportShapeBuf: number[] = [];
 	let _visibleBuf: number[] = [];
 	let _visStamp = 0;
 	let _shotSeenStamp = new Int32Array(S_CAP);
 	let _shotSeenSeq = 1;
+	let _supportShapeStamp = new Int32Array(S_CAP);
+	let _supportShapeSeq = 1;
 	let _bulletQuerySeq = 1;
 	let _tankQuerySeq = 1;
 	let tankNext = new Int32Array(64);
+	tankNext.fill(-1);
+	let tankPrev = new Int32Array(64);
+	tankPrev.fill(-1);
+	let tankCell = new Int32Array(64);
+	tankCell.fill(-1);
 	let tankQueryStamp = new Int32Array(64);
+	const _tankBroadphaseBuf: number[] = [];
 
 	let _binSqr = new Int32Array(256);
 	let _binTri = new Int32Array(256);
@@ -3195,8 +3222,17 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		let cap = 1;
 		while (cap < n) cap <<= 1;
 		const next = new Int32Array(cap);
+		next.fill(-1);
 		next.set(tankNext);
 		tankNext = next;
+		const prev = new Int32Array(cap);
+		prev.fill(-1);
+		prev.set(tankPrev);
+		tankPrev = prev;
+		const cells = new Int32Array(cap);
+		cells.fill(-1);
+		cells.set(tankCell);
+		tankCell = cells;
 		const stamps = new Int32Array(cap);
 		stamps.set(tankQueryStamp);
 		tankQueryStamp = stamps;
@@ -3225,12 +3261,48 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		for (let j = 0; j < bullets.length; j++) {
 			const bi = bullets[j]._bi | 0;
 			bulletNext[bi] = -1;
+			bulletPrev[bi] = -1;
+			bulletCell[bi] = -1;
 			if (B_dead[bi] || B_dying[bi]) continue;
 			const ci = cellIndexClamped((B_x[bi] / COLL_CELL) | 0, (B_y[bi] / COLL_CELL) | 0);
 			if (ci < 0) continue;
 			bulletNext[bi] = bulletCellHead[ci];
+			if (bulletNext[bi] !== -1) bulletPrev[bulletNext[bi]] = bi;
 			bulletCellHead[ci] = bi;
+			bulletCell[bi] = ci;
 		}
+	}
+
+	function bulletGridDetach(bi: number) {
+		const ci = bulletCell[bi];
+		if (ci < 0) return;
+		const prev = bulletPrev[bi];
+		const next = bulletNext[bi];
+		if (prev !== -1) bulletNext[prev] = next;
+		else bulletCellHead[ci] = next;
+		if (next !== -1) bulletPrev[next] = prev;
+		bulletNext[bi] = -1;
+		bulletPrev[bi] = -1;
+		bulletCell[bi] = -1;
+	}
+
+	function bulletGridAttach(bi: number, ci: number) {
+		bulletPrev[bi] = -1;
+		bulletNext[bi] = bulletCellHead[ci];
+		if (bulletNext[bi] !== -1) bulletPrev[bulletNext[bi]] = bi;
+		bulletCellHead[ci] = bi;
+		bulletCell[bi] = ci;
+	}
+
+	function maybeUpdateBulletGridEntry(bi: number) {
+		if (B_dead[bi] || B_dying[bi]) {
+			bulletGridDetach(bi);
+			return;
+		}
+		const ci = cellIndexClamped((B_x[bi] / COLL_CELL) | 0, (B_y[bi] / COLL_CELL) | 0);
+		if (ci === bulletCell[bi]) return;
+		bulletGridDetach(bi);
+		if (ci >= 0) bulletGridAttach(bi, ci);
 	}
 
 	function rebuildTankGrid() {
@@ -3238,13 +3310,50 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		tankCellHead.fill(-1);
 		for (let ti = 0; ti < tanks.length; ti++) {
 			tankNext[ti] = -1;
+			tankPrev[ti] = -1;
+			tankCell[ti] = -1;
 			const t = tanks[ti];
 			if (!t || t.isDead) continue;
 			const ci = cellIndexClamped((t.x / COLL_CELL) | 0, (t.y / COLL_CELL) | 0);
 			if (ci < 0) continue;
 			tankNext[ti] = tankCellHead[ci];
+			if (tankNext[ti] !== -1) tankPrev[tankNext[ti]] = ti;
 			tankCellHead[ci] = ti;
+			tankCell[ti] = ci;
 		}
+	}
+
+	function tankGridDetach(ti: number) {
+		const ci = tankCell[ti];
+		if (ci < 0) return;
+		const prev = tankPrev[ti];
+		const next = tankNext[ti];
+		if (prev !== -1) tankNext[prev] = next;
+		else tankCellHead[ci] = next;
+		if (next !== -1) tankPrev[next] = prev;
+		tankNext[ti] = -1;
+		tankPrev[ti] = -1;
+		tankCell[ti] = -1;
+	}
+
+	function tankGridAttach(ti: number, ci: number) {
+		tankPrev[ti] = -1;
+		tankNext[ti] = tankCellHead[ci];
+		if (tankNext[ti] !== -1) tankPrev[tankNext[ti]] = ti;
+		tankCellHead[ci] = ti;
+		tankCell[ti] = ci;
+	}
+
+	function maybeUpdateTankGridEntry(ti: number) {
+		const t = tanks[ti];
+		if (!t || t.isDead) {
+			tankGridDetach(ti);
+			return;
+		}
+		const ci = cellIndexClamped((t.x / COLL_CELL) | 0, (t.y / COLL_CELL) | 0);
+		if (ci === tankCell[ti]) return;
+		tankGridDetach(ti);
+		if (ci >= 0) tankGridAttach(ti, ci);
 	}
 
 	function forEachBulletNearAABB(
@@ -3839,6 +3948,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		updatePlayer(h);
 		updateBots(h);
 		updateAllTankDrones(h);
+		rebuildTankGrid();
 		handleTankTankCollisions();
 		dFrame = derived(player);
 		handleShooting(h);
@@ -4532,17 +4642,37 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 	function handleDroneShapeContacts(sh: ShapeEntity, prevX: number, prevY: number) {
 		const owner =
 			sh.ownerUid && !sh.dead ? getTankByUid(sh.ownerUid | 0) : null;
-		const samples: Array<[number, number]> = [
-			[prevX, prevY],
-			[sh.x, sh.y],
-			[(prevX + sh.x) * 0.5, (prevY + sh.y) * 0.5],
-		];
-		const candidateIdx = new Set<number>();
-		for (let s = 0; s < samples.length; s++) {
-			const idx = neighborIndices(samples[s][0], samples[s][1]);
-			for (let n = 0; n < idx.length; n++) candidateIdx.add(idx[n] | 0);
+		_supportShapeSeq = (_supportShapeSeq + 1) | 0;
+		if (_supportShapeSeq === 0) {
+			_supportShapeStamp.fill(0);
+			_supportShapeSeq = 1;
 		}
-		for (const ci of candidateIdx) {
+		_supportShapeBuf.length = 0;
+		const sample0 = neighborIndices(prevX, prevY);
+		for (let n = 0; n < sample0.length; n++) {
+			const ci = sample0[n] | 0;
+			if (_supportShapeStamp[ci] === _supportShapeSeq) continue;
+			_supportShapeStamp[ci] = _supportShapeSeq;
+			_supportShapeBuf.push(ci);
+		}
+		const sample1 = neighborIndices(sh.x, sh.y);
+		for (let n = 0; n < sample1.length; n++) {
+			const ci = sample1[n] | 0;
+			if (_supportShapeStamp[ci] === _supportShapeSeq) continue;
+			_supportShapeStamp[ci] = _supportShapeSeq;
+			_supportShapeBuf.push(ci);
+		}
+		const midX = (prevX + sh.x) * 0.5;
+		const midY = (prevY + sh.y) * 0.5;
+		const sample2 = neighborIndices(midX, midY);
+		for (let n = 0; n < sample2.length; n++) {
+			const ci = sample2[n] | 0;
+			if (_supportShapeStamp[ci] === _supportShapeSeq) continue;
+			_supportShapeStamp[ci] = _supportShapeSeq;
+			_supportShapeBuf.push(ci);
+		}
+		for (let i = 0; i < _supportShapeBuf.length; i++) {
+			const ci = _supportShapeBuf[i] | 0;
 			const other = shapes[ci];
 			if (!other || other === sh || other.dead || other.dying || other.invincible) continue;
 			if (isFriendlySupportShape(other, sh.teamIdx | 0)) continue;
@@ -5880,7 +6010,19 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 		for (let i = 0; i < tanks.length; i++) {
 			const a = tanks[i];
 			if (!a || a.isDead) continue;
-			for (let j = i + 1; j < tanks.length; j++) {
+			const reach = (a.r || 0) + MAX_TANK_RADIUS;
+			_tankBroadphaseBuf.length = 0;
+			forEachTankNearAABB(
+				a.x - reach,
+				a.y - reach,
+				a.x + reach,
+				a.y + reach,
+				(_candidate, j) => {
+					if (j > i) _tankBroadphaseBuf.push(j);
+				},
+			);
+			for (let n = 0; n < _tankBroadphaseBuf.length; n++) {
+				const j = _tankBroadphaseBuf[n] | 0;
 				const b = tanks[j];
 				if (!b || b.isDead) continue;
 				const dx = b.x - a.x,
@@ -5897,6 +6039,8 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				a.y -= ny * push * 0.5;
 				b.x += nx * push * 0.5;
 				b.y += ny * push * 0.5;
+				maybeUpdateTankGridEntry(i);
+				maybeUpdateTankGridEntry(j);
 				const imp = (overlap + 1.5) * 36;
 				a.vx -= nx * imp;
 				a.vy -= ny * imp;
@@ -6136,7 +6280,6 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 
 	function updateBullets(dt: number) {
 		rebuildBulletGrid();
-		rebuildTankGrid();
 
 		for (let j = 0; j < bullets.length; j++) {
 			const bi = bullets[j]._bi | 0;
@@ -6152,6 +6295,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					B_dead[bi] = 1;
 					bulletFree.push(bi);
 				}
+				maybeUpdateBulletGridEntry(bi);
 				continue;
 			}
 
@@ -6159,6 +6303,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 			if (B_life[bi] <= 0) {
 				B_dying[bi] = 1;
 				B_dieT[bi] = 0.18;
+				maybeUpdateBulletGridEntry(bi);
 				continue;
 			}
 
@@ -6230,6 +6375,13 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 					const R = B_r[bi] + B_r[bj];
 					const bx = B_x[bj];
 					const by = B_y[bj];
+					if (
+						bx + R < minSegX ||
+						bx - R > maxSegX ||
+						by + R < minSegY ||
+						by - R > maxSegY
+					)
+						return;
 					const tHit = segmentCircleTOI(
 						ox,
 						oy,
@@ -6420,6 +6572,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 						if (B_hp[bj] <= 0) {
 							B_dying[bj] = 1;
 							B_dieT[bj] = 0.18;
+							maybeUpdateBulletGridEntry(bj);
 						}
 
 						markPairBullet(bi, bj);
@@ -6450,6 +6603,7 @@ const mountGame = (host: HTMLDivElement, PhaserLib: any) => {
 				B_dying[bi] = 1;
 				B_dieT[bi] = 0.18;
 			}
+			maybeUpdateBulletGridEntry(bi);
 		}
 
 		let n = 0;
