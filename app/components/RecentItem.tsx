@@ -113,6 +113,7 @@ export default function RecentItem({
 						alt={imageAlt}
 						fill
 						preload={preload}
+						loading={preload ? "eager" : undefined}
 						className={`rounded-lg shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
             w-full h-full`}
 						sizes={

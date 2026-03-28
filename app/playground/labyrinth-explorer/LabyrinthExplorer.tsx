@@ -137,8 +137,13 @@ type ControlState = {
 	restart: boolean;
 };
 
+type GameplaySettings = {
+	mouseSensitivity: number;
+};
+
 type MountOptions = {
 	controlsRef: MutableRefObject<ControlState>;
+	settingsRef: MutableRefObject<GameplaySettings>;
 	initialBestScore: number;
 	onReady: () => void;
 	onBestScore: (score: number) => void;
@@ -175,7 +180,8 @@ type KeyboardState = {
 
 const FONT_STACK =
 	'"Azeret Mono", "JetBrains Mono", "SFMono-Regular", Consolas, monospace';
-const STORAGE_KEY = "playground.labyrinth-explorer.best-score";
+const BEST_SCORE_STORAGE_KEY = "playground.labyrinth-explorer.best-score";
+const SENSITIVITY_STORAGE_KEY = "playground.labyrinth-explorer.mouse-sensitivity";
 const FIELD_OF_VIEW = Math.PI / 3;
 const PLAYER_RADIUS = 0.14;
 const ENEMY_RADIUS = 0.13;
@@ -188,6 +194,15 @@ const MAX_RAY_DISTANCE = 128;
 const LOOK_PITCH_LIMIT = 0.42;
 const MOUSE_YAW_SENSITIVITY = 0.0041;
 const MOUSE_PITCH_SENSITIVITY = 0.0027;
+const DEFAULT_MOUSE_SENSITIVITY = 0.72;
+const MIN_MOUSE_SENSITIVITY = 0.35;
+const MAX_MOUSE_SENSITIVITY = 1.5;
+const MAX_LOOK_DELTA = 180;
+const ASSUMED_ROUTE_SPEED_MULTIPLIER = 1.08;
+const ROUTE_PICKUP_SETTLE_TIME = 0.35;
+const ROUTE_GOAL_SETTLE_TIME = 0.4;
+const ROUTE_BUFFER_TIME = 5.4;
+const ENEMY_TIME_PRESSURE = 1.2;
 const RADAR_ECHO_OFFSETS = [0, 1.2, 2.4] as const;
 const TAU = Math.PI * 2;
 
@@ -1147,9 +1162,93 @@ function castRay(map: MazeDefinition, origin: Vector, angle: number): RayHit {
 	};
 }
 
-function roundTimeLimit(maze: MazeDefinition, round: number) {
-	const base = 20 + maze.pathLength * 1.28;
-	return clamp(base - round * 0.35, 22, 80);
+function segmentTravelTime(distanceInCells: number, shardsCollected: number) {
+	if (distanceInCells <= 0) return 0;
+
+	const worldDistance = distanceInCells * (CELL_OPEN_SIZE + WALL_THICKNESS);
+	const effectiveSpeed =
+		moveSpeedForShards(shardsCollected) * ASSUMED_ROUTE_SPEED_MULTIPLIER;
+	return worldDistance / effectiveSpeed;
+}
+
+function estimateFullClearTime(
+	maze: MazeDefinition,
+	pickups: readonly PickupState[],
+) {
+	const pickupCells = pickups.map((pickup) => worldToCellIndex(maze, pickup));
+	const waypointCells = [0, ...pickupCells, maze.goalCellIndex];
+	const pairwiseDistances = waypointCells.map((startCell) =>
+		computeCellDistances(maze.cells, maze.cols, maze.rows, startCell),
+	);
+	const allPickupsMask = (1 << pickupCells.length) - 1;
+	let bestTime = Number.POSITIVE_INFINITY;
+
+	const visit = (
+		fromWaypointIndex: number,
+		collectedMask: number,
+		shardsCollected: number,
+		elapsed: number,
+	) => {
+		if (elapsed >= bestTime) return;
+
+		if (collectedMask === allPickupsMask) {
+			const goalDistance =
+				pairwiseDistances[fromWaypointIndex]?.[maze.goalCellIndex] ?? -1;
+			if (goalDistance < 0) return;
+
+			bestTime = Math.min(
+				bestTime,
+				elapsed +
+					segmentTravelTime(goalDistance, shardsCollected) +
+					ROUTE_GOAL_SETTLE_TIME,
+			);
+			return;
+		}
+
+		for (let pickupIndex = 0; pickupIndex < pickupCells.length; pickupIndex += 1) {
+			const pickupBit = 1 << pickupIndex;
+			if ((collectedMask & pickupBit) !== 0) continue;
+
+			const waypointIndex = pickupIndex + 1;
+			const pickupCell = pickupCells[pickupIndex]!;
+			const segmentDistance =
+				pairwiseDistances[fromWaypointIndex]?.[pickupCell] ?? -1;
+			if (segmentDistance < 0) continue;
+
+			visit(
+				waypointIndex,
+				collectedMask | pickupBit,
+				shardsCollected + 1,
+				elapsed +
+					segmentTravelTime(segmentDistance, shardsCollected) +
+					ROUTE_PICKUP_SETTLE_TIME,
+			);
+		}
+	};
+
+	if (pickupCells.length === 0) {
+		const directDistance = pairwiseDistances[0]?.[maze.goalCellIndex] ?? 0;
+		return segmentTravelTime(directDistance, 0) + ROUTE_GOAL_SETTLE_TIME;
+	}
+
+	visit(0, 0, 0, 0);
+	return Number.isFinite(bestTime) ? bestTime : 0;
+}
+
+function roundTimeLimit(
+	maze: MazeDefinition,
+	pickups: readonly PickupState[],
+	round: number,
+	variant: RoundVariant,
+) {
+	const clearTime = estimateFullClearTime(maze, pickups);
+	const pressureBuffer =
+		ROUTE_BUFFER_TIME +
+		pickups.length * 0.8 +
+		enemyCountForRound(round) * ENEMY_TIME_PRESSURE +
+		Math.min(8, round * 0.18);
+
+	return clamp((clearTime + pressureBuffer) * variant.timeScale, 26, 118);
 }
 
 function roundScoreGain(
@@ -1411,8 +1510,16 @@ function mountLabyrinthExplorer(
 			this.input.mouse?.disableContextMenu();
 			this.input.on("pointermove", (pointer: { event?: MouseEvent }) => {
 				if (!this.input.mouse?.locked) return;
-				this.lookDeltaX += pointer.event?.movementX ?? 0;
-				this.lookDeltaY += pointer.event?.movementY ?? 0;
+				this.lookDeltaX = clamp(
+					this.lookDeltaX + (pointer.event?.movementX ?? 0),
+					-MAX_LOOK_DELTA,
+					MAX_LOOK_DELTA,
+				);
+				this.lookDeltaY = clamp(
+					this.lookDeltaY + (pointer.event?.movementY ?? 0),
+					-MAX_LOOK_DELTA,
+					MAX_LOOK_DELTA,
+				);
 			});
 			this.input.on("pointerdown", () => {
 				if (this.phase !== "playing") return;
@@ -1524,9 +1631,9 @@ function mountLabyrinthExplorer(
 				pitch: 0,
 			};
 			this.timeLimit = clamp(
-				roundTimeLimit(this.maze, this.round) * this.variant.timeScale,
-				20,
-				95,
+				roundTimeLimit(this.maze, this.pickups, this.round, this.variant),
+				26,
+				118,
 			);
 			this.timeLeft = this.timeLimit;
 			this.phase = "intro";
@@ -1585,11 +1692,18 @@ function mountLabyrinthExplorer(
 				moveSpeedForShards(this.collectedShardCount()) * (sprint ? SPRINT_MULTIPLIER : 1);
 
 			if (this.lookDeltaX !== 0 || this.lookDeltaY !== 0) {
+				const mouseSensitivity = clamp(
+					options.settingsRef.current.mouseSensitivity,
+					MIN_MOUSE_SENSITIVITY,
+					MAX_MOUSE_SENSITIVITY,
+				);
 				this.player.angle = wrapAngle(
-					this.player.angle + this.lookDeltaX * MOUSE_YAW_SENSITIVITY,
+					this.player.angle +
+						this.lookDeltaX * MOUSE_YAW_SENSITIVITY * mouseSensitivity,
 				);
 				this.player.pitch = clamp(
-					this.player.pitch - this.lookDeltaY * MOUSE_PITCH_SENSITIVITY,
+					this.player.pitch -
+						this.lookDeltaY * MOUSE_PITCH_SENSITIVITY * mouseSensitivity,
 					-LOOK_PITCH_LIMIT,
 					LOOK_PITCH_LIMIT,
 				);
@@ -2662,7 +2776,10 @@ function mountLabyrinthExplorer(
 
 				pickup.collected = true;
 				this.score += this.variant.pickupScoreBonus;
-				this.timeLeft = Math.min(120, this.timeLeft + this.variant.pickupTimeBonus);
+				this.timeLeft = Math.min(
+					Math.max(120, this.timeLimit + this.variant.pickupTimeBonus * this.pickups.length),
+					this.timeLeft + this.variant.pickupTimeBonus,
+				);
 				this.playerMaxHp = maxHpForShards(this.collectedShardCount());
 				this.playerHp = Math.min(this.playerMaxHp, this.playerHp + 1);
 				this.lastGain = this.variant.pickupScoreBonus;
@@ -2757,7 +2874,7 @@ function mountLabyrinthExplorer(
 
 function loadStoredBestScore() {
 	if (typeof window === "undefined") return 0;
-	const raw = window.localStorage.getItem(STORAGE_KEY);
+	const raw = window.localStorage.getItem(BEST_SCORE_STORAGE_KEY);
 	if (!raw) return 0;
 	const parsed = Number.parseInt(raw, 10);
 	return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
@@ -2765,7 +2882,27 @@ function loadStoredBestScore() {
 
 function saveBestScore(score: number) {
 	if (typeof window === "undefined") return;
-	window.localStorage.setItem(STORAGE_KEY, String(Math.max(0, Math.floor(score))));
+	window.localStorage.setItem(
+		BEST_SCORE_STORAGE_KEY,
+		String(Math.max(0, Math.floor(score))),
+	);
+}
+
+function loadStoredSensitivity() {
+	if (typeof window === "undefined") return DEFAULT_MOUSE_SENSITIVITY;
+	const raw = window.localStorage.getItem(SENSITIVITY_STORAGE_KEY);
+	if (!raw) return DEFAULT_MOUSE_SENSITIVITY;
+	const parsed = Number.parseFloat(raw);
+	if (!Number.isFinite(parsed)) return DEFAULT_MOUSE_SENSITIVITY;
+	return clamp(parsed, MIN_MOUSE_SENSITIVITY, MAX_MOUSE_SENSITIVITY);
+}
+
+function saveStoredSensitivity(value: number) {
+	if (typeof window === "undefined") return;
+	window.localStorage.setItem(
+		SENSITIVITY_STORAGE_KEY,
+		String(clamp(value, MIN_MOUSE_SENSITIVITY, MAX_MOUSE_SENSITIVITY)),
+	);
 }
 
 function RunOverlay({
@@ -2773,12 +2910,16 @@ function RunOverlay({
 	description,
 	buttonLabel,
 	uiState,
+	mouseSensitivity,
+	onMouseSensitivityChange,
 	onAction,
 }: {
 	title: string;
 	description: string;
 	buttonLabel: string;
 	uiState: RuntimeUiState;
+	mouseSensitivity: number;
+	onMouseSensitivityChange: (value: number) => void;
 	onAction: () => void;
 }) {
 	return (
@@ -2819,6 +2960,37 @@ function RunOverlay({
 						reload, <span className="text-[#ff9c9c]">Q</span> for radar, hold Shift
 						to sprint, collect shards for upgrades, and use the minimap to track the
 						exit crystal.
+					</div>
+				</div>
+				<div className="mt-4 border-t border-[#1f3b4d] px-0 pt-4 text-left text-sm text-slate-200">
+					<div className="flex items-center justify-between gap-3">
+						<div
+							className="text-[10px] uppercase tracking-[0.24em] text-slate-500"
+							style={{ fontFamily: FONT_STACK }}
+						>
+							Mouse Sensitivity
+						</div>
+						<div
+							className="text-[11px] uppercase tracking-[0.18em] text-[#8fe9ff]"
+							style={{ fontFamily: FONT_STACK }}
+						>
+							{Math.round(mouseSensitivity * 100)}%
+						</div>
+					</div>
+					<input
+						type="range"
+						min={MIN_MOUSE_SENSITIVITY}
+						max={MAX_MOUSE_SENSITIVITY}
+						step={0.05}
+						value={mouseSensitivity}
+						onChange={(event) =>
+							onMouseSensitivityChange(Number.parseFloat(event.target.value))
+						}
+						className="mt-3 h-2 w-full cursor-pointer accent-[#8fe9ff]"
+					/>
+					<div className="mt-2 text-[11px] leading-5 text-slate-400">
+						Lower values feel closer to Chrome-safe aim. Increase it if the camera
+						feels too slow on your setup.
 					</div>
 				</div>
 				<button
@@ -2935,8 +3107,14 @@ function ControlHints({ uiState }: { uiState: RuntimeUiState }) {
 export default function LabyrinthExplorer() {
 	const hostRef = useRef<HTMLDivElement>(null);
 	const controlsRef = useRef<ControlState>({ ...DEFAULT_CONTROLS });
+	const settingsRef = useRef<GameplaySettings>({
+		mouseSensitivity: DEFAULT_MOUSE_SENSITIVITY,
+	});
 	const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 	const [uiState, setUiState] = useState<RuntimeUiState>(DEFAULT_UI_STATE);
+	const [mouseSensitivity, setMouseSensitivity] = useState(
+		DEFAULT_MOUSE_SENSITIVITY,
+	);
 
 	const showOverlay = status === "ready" && uiState.phase !== "playing";
 
@@ -2944,11 +3122,14 @@ export default function LabyrinthExplorer() {
 		let cleanup: (() => void) | undefined;
 		let cancelled = false;
 		const initialBestScore = loadStoredBestScore();
+		const initialMouseSensitivity = loadStoredSensitivity();
+		settingsRef.current.mouseSensitivity = initialMouseSensitivity;
 
 		setUiState((current) => ({
 			...current,
 			bestScore: initialBestScore,
 		}));
+		setMouseSensitivity(initialMouseSensitivity);
 		setStatus("loading");
 
 		void (async () => {
@@ -2962,6 +3143,7 @@ export default function LabyrinthExplorer() {
 
 				cleanup = mountLabyrinthExplorer(hostRef.current, PhaserLib, {
 					controlsRef,
+					settingsRef,
 					initialBestScore,
 					onReady: () => {
 						if (!cancelled) setStatus("ready");
@@ -2991,6 +3173,17 @@ export default function LabyrinthExplorer() {
 			cleanup?.();
 		};
 	}, []);
+
+	const handleMouseSensitivityChange = (value: number) => {
+		const nextValue = clamp(
+			value,
+			MIN_MOUSE_SENSITIVITY,
+			MAX_MOUSE_SENSITIVITY,
+		);
+		settingsRef.current.mouseSensitivity = nextValue;
+		setMouseSensitivity(nextValue);
+		saveStoredSensitivity(nextValue);
+	};
 
 	return (
 		<div className="relative h-full min-h-0 w-full overflow-hidden bg-[radial-gradient(circle_at_top,#173e55_0%,#07111d_44%,#02050c_100%)] text-slate-100">
@@ -3087,6 +3280,8 @@ export default function LabyrinthExplorer() {
 					}
 					buttonLabel={uiState.phase === "intro" ? "Enter Labyrinth" : "Start New Run"}
 					uiState={uiState}
+					mouseSensitivity={mouseSensitivity}
+					onMouseSensitivityChange={handleMouseSensitivityChange}
 					onAction={() => pushRestart(controlsRef)}
 				/>
 			) : null}

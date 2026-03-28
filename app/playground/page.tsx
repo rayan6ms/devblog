@@ -251,13 +251,15 @@ const GameCard = memo(function GameCard({
 					cls: "bg-sky-600/80",
 				};
 
-		return (
+	return (
 			<div
 				ref={containerRef}
-				className="group relative h-64 w-full max-w-[240px] select-none cursor-pointer [perspective:1200px]"
+				className="group relative h-64 w-full max-w-[240px] cursor-pointer select-none"
+				style={{ perspective: "1200px" }}
 				onPointerEnter={tiltEnabled ? handlePointerEnter : undefined}
 				onPointerMove={tiltEnabled ? handlePointerMove : undefined}
 				onPointerLeave={tiltEnabled ? handlePointerLeave : undefined}
+				onPointerCancel={tiltEnabled ? handlePointerLeave : undefined}
 				onClick={() => onClick(game)}
 			>
 			<div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500/20 via-purpleContrast/25 to-amber-300/15 blur-md will-change-transform" />
@@ -403,9 +405,7 @@ const Playground: React.FC = () => {
 			return;
 		}
 
-		const motionQuery = window.matchMedia(
-			"(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
-		);
+		const motionQuery = window.matchMedia("(prefers-reduced-motion: no-preference)");
 		const syncTilt = () => setIsCardTiltEnabled(motionQuery.matches);
 
 		syncTilt();

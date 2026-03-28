@@ -10,22 +10,26 @@ type PhaserText = import("phaser").GameObjects.Text;
 type CursorKeys = import("phaser").Types.Input.Keyboard.CursorKeys;
 type PhaserKey = import("phaser").Input.Keyboard.Key;
 
-const ABILITY_LABELS = {
-	pierce: "Pierce",
-	multiShot: "Multi Shot",
-	quickShot: "Quick Shot",
+const STAT_LABELS = {
+	attackSpeed: "Attack Speed",
 	critChance: "Crit Chance",
 	critDamage: "Crit Damage",
 	dodge: "Dodge",
 	growth: "Growth",
 	force: "Force",
 	reach: "Reach",
+	magnet: "Magnet",
+} as const;
+
+const PERK_LABELS = {
+	pierce: "Pierce",
+	multiShot: "Multi Shot",
+	quickShot: "Quick Shot",
 	ricochet: "Ricochet",
 	poisonTrail: "Poison Trail",
 	holyWater: "Holy Water",
 	orbitals: "Orbitals",
 	aura: "Shock Aura",
-	magnet: "Magnet",
 	shrapnel: "Shrapnel",
 	novaBurst: "Nova Burst",
 	chainLightning: "Chain Lightning",
@@ -34,7 +38,9 @@ const ABILITY_LABELS = {
 	thorns: "Thorns",
 } as const;
 
-type AbilityKey = keyof typeof ABILITY_LABELS;
+type StatKey = keyof typeof STAT_LABELS;
+type PerkKey = keyof typeof PERK_LABELS;
+type AbilityKey = StatKey | PerkKey;
 type XpShape =
 	| "triangle"
 	| "square"
@@ -323,21 +329,26 @@ const SMALL_FACE_SHAPES = new Set<XpShape>([
 	"octagram",
 ]);
 
-const BASIC_ABILITIES: AbilityKey[] = [
-	"quickShot",
-	"multiShot",
-	"pierce",
+const STAT_KEYS: StatKey[] = [
+	"attackSpeed",
+	"critChance",
+	"critDamage",
+	"dodge",
 	"growth",
 	"force",
 	"reach",
-	"critChance",
-	"critDamage",
 	"magnet",
 ];
 
-const MIDGAME_ABILITIES: AbilityKey[] = [
-	...BASIC_ABILITIES,
+const EARLY_PERKS: PerkKey[] = [
+	"quickShot",
+	"multiShot",
+	"pierce",
 	"ricochet",
+];
+
+const MIDGAME_PERKS: PerkKey[] = [
+	...EARLY_PERKS,
 	"poisonTrail",
 	"holyWater",
 	"orbitals",
@@ -348,8 +359,8 @@ const MIDGAME_ABILITIES: AbilityKey[] = [
 	"spiralShots",
 ];
 
-const LATEGAME_ABILITIES: AbilityKey[] = [...MIDGAME_ABILITIES, "dodge", "bubbleShield", "thorns"];
-const STARTING_PERK_ABILITIES: AbilityKey[] = [
+const LATEGAME_PERKS: PerkKey[] = [...MIDGAME_PERKS, "bubbleShield", "thorns"];
+const STARTING_PERK_ABILITIES: PerkKey[] = [
 	"pierce",
 	"multiShot",
 	"quickShot",
@@ -489,20 +500,12 @@ function getAbilityLevelTotal(state: GameState) {
 	return (Object.values(state.abilities) as number[]).reduce((sum, value) => sum + value, 0);
 }
 
-function getTraitLevelTotal(state: GameState) {
-	return (
-		state.abilities.critChance +
-		state.abilities.critDamage +
-		state.abilities.dodge +
-		state.abilities.growth +
-		state.abilities.force +
-		state.abilities.reach +
-		state.abilities.magnet
-	);
+function getStatLevelTotal(state: GameState) {
+	return STAT_KEYS.reduce((sum, key) => sum + state.abilities[key], 0);
 }
 
 function getPerkLevelTotal(state: GameState) {
-	return getAbilityLevelTotal(state) - getTraitLevelTotal(state);
+	return getAbilityLevelTotal(state) - getStatLevelTotal(state);
 }
 
 function getUnlockedEnemyShapes(state: GameState) {
@@ -516,22 +519,23 @@ function getUnlockedEnemyShapes(state: GameState) {
 
 function getEnemyPressure(state: GameState) {
 	return (
-		0.55 +
-		state.level * 0.72 +
-		state.timeSurvived / 42 +
-		getAbilityLevelTotal(state) * 0.54 +
-		(state.player.damage - 1) * 0.9
+		0.32 +
+		state.level * 0.4 +
+		state.timeSurvived / 78 +
+		getStatLevelTotal(state) * 0.16 +
+		getPerkLevelTotal(state) * 0.28 +
+		(state.player.damage - 1) * 0.42
 	);
 }
 
 function getPlayerPowerScore(state: GameState) {
 	return (
 		1 +
-		state.level * 0.92 +
-		(state.player.damage - 1) * 1.45 +
-		getAbilityLevelTotal(state) * 0.68 +
-		getPerkLevelTotal(state) * 0.28 +
-		state.timeSurvived / 55
+		state.level * 0.7 +
+		(state.player.damage - 1) * 1.25 +
+		getStatLevelTotal(state) * 0.46 +
+		getPerkLevelTotal(state) * 0.72 +
+		state.timeSurvived / 82
 	);
 }
 
@@ -540,12 +544,20 @@ function getXpGainMultiplier(state: GameState) {
 }
 
 function getShotCooldownSeconds(state: GameState) {
-	const cooldown = 0.82 - (state.level - 1) * 0.012 - state.abilities.quickShot * 0.05;
-	return clamp(cooldown, 0.18, 0.82);
+	const cooldown = 0.86 - state.abilities.attackSpeed * 0.055;
+	return clamp(cooldown, 0.22, 0.86);
 }
 
-function getVolleyCount(state: GameState) {
-	return clamp(1 + Math.floor(state.abilities.quickShot / 2), 1, 4);
+function getBurstCount(state: GameState) {
+	return clamp(1 + state.abilities.quickShot, 1, 6);
+}
+
+function getBurstSpacingSeconds(state: GameState) {
+	return clamp(0.12 - state.abilities.attackSpeed * 0.004, 0.06, 0.12);
+}
+
+function getAttackSpeedMultiplier(state: GameState) {
+	return 0.86 / getShotCooldownSeconds(state);
 }
 
 function getProjectileCount(state: GameState) {
@@ -812,7 +824,8 @@ function mountSurvivalShooter(
 			waterPools: [],
 			particles: [],
 			damageTexts: [],
-			abilities: {
+				abilities: {
+				attackSpeed: 0,
 				pierce: 0,
 				multiShot: 0,
 				quickShot: 0,
@@ -1067,27 +1080,35 @@ function mountSurvivalShooter(
 		return closestEnemy;
 	};
 
-	const chooseAbilityToUpgrade = () => {
-		const pool =
-			state.level < 4
-				? BASIC_ABILITIES
-				: state.level < 8
-					? MIDGAME_ABILITIES
-					: LATEGAME_ABILITIES;
-		const locked = pool.filter(
-			(key) => state.abilities[key] === 0,
-		);
-		const choices = locked.length > 0 ? locked : pool;
-		const lowestLevel = Math.min(...choices.map((key) => state.abilities[key]));
-		const candidates = choices.filter((key) => state.abilities[key] === lowestLevel);
-		return PhaserLib.Utils.Array.GetRandom(candidates) ?? choices[0];
+	const getPerkPool = (): PerkKey[] =>
+		state.level < 4 ? EARLY_PERKS : state.level < 9 ? MIDGAME_PERKS : LATEGAME_PERKS;
+
+	const chooseStatToUpgrade = () => {
+		const lowestLevel = Math.min(...STAT_KEYS.map((key) => state.abilities[key]));
+		const choices = STAT_KEYS.filter((key) => state.abilities[key] === lowestLevel);
+		return PhaserLib.Utils.Array.GetRandom(choices) ?? STAT_KEYS[0];
 	};
 
-	const upgradeAbility = () => {
-		const ability = chooseAbilityToUpgrade();
-		state.abilities[ability] += 1;
-		const label = `${ABILITY_LABELS[ability]} Lv.${state.abilities[ability]}`;
-		pushBanner(label, 2.6);
+	const choosePerkToUpgrade = () => {
+		const pool = getPerkPool();
+		const choices = pool.length > 0 ? pool : STARTING_PERK_ABILITIES;
+		const existingChoices = choices.filter((key) => state.abilities[key] > 0);
+		if (existingChoices.length > 0 && Math.random() < 0.45) {
+			return PhaserLib.Utils.Array.GetRandom(existingChoices) ?? existingChoices[0];
+		}
+		return PhaserLib.Utils.Array.GetRandom(choices) ?? choices[0];
+	};
+
+	const upgradeStat = () => {
+		const stat = chooseStatToUpgrade();
+		state.abilities[stat] += 1;
+		return `${STAT_LABELS[stat]} Lv.${state.abilities[stat]}`;
+	};
+
+	const upgradePerk = () => {
+		const perk = choosePerkToUpgrade();
+		state.abilities[perk] += 1;
+		const label = `${PERK_LABELS[perk]} Lv.${state.abilities[perk]}`;
 		return label;
 	};
 
@@ -1096,7 +1117,7 @@ function mountSurvivalShooter(
 			PhaserLib.Utils.Array.GetRandom(STARTING_PERK_ABILITIES) ??
 			STARTING_PERK_ABILITIES[0];
 		state.abilities[perk] += 1;
-		pushBanner(`${ABILITY_LABELS[perk]} Lv.${state.abilities[perk]}`, 2.8);
+		pushBanner(`${PERK_LABELS[perk]} Lv.${state.abilities[perk]}`, 2.8);
 	};
 
 	const clearDamageTexts = () => {
@@ -1347,26 +1368,14 @@ function mountSurvivalShooter(
 				alpha: 0.8,
 			});
 
-			const grantUpgrade =
+			const statLabel = upgradeStat();
+			const grantPerk =
 				state.level <= 8 ? state.level % 2 === 0 : state.level % 3 === 0;
-			if (grantUpgrade) {
-				upgradeAbility();
-			}
-
-			if (state.level % 4 === 0) {
-				state.player.damage += 1;
-				pushBanner(`Weapon power ${state.player.damage}`, 2.2);
-			}
-
-			if (state.level % 6 === 0) {
-				state.player.speed = Math.min(320, state.player.speed + 7);
-				pushBanner(`Mobility ${Math.round(state.player.speed)}`, 2.2);
-			}
-
-			if (state.level % 9 === 0) {
-				state.player.maxLives = Math.min(8, state.player.maxLives + 1);
-				state.player.lives = Math.min(state.player.maxLives, state.player.lives + 1);
-				pushBanner(`Armor surge ${state.player.maxLives}`, 2.8);
+			if (grantPerk) {
+				const perkLabel = upgradePerk();
+				pushBanner(`${statLabel}  |  ${perkLabel}`, 3);
+			} else {
+				pushBanner(statLabel, 2.4);
 			}
 		}
 	};
@@ -1467,13 +1476,44 @@ function mountSurvivalShooter(
 		const side = PhaserLib.Math.Between(0, 3);
 		const pressure = getEnemyPressure(state);
 		const playerPower = getPlayerPowerScore(state);
+		const swiftUnlocked = state.level >= 4 || state.timeSurvived >= 42;
+		const tankUnlocked = state.level >= 3 || state.timeSurvived >= 28;
+		const rareUnlocked = state.level >= 6 || state.timeSurvived >= 78;
+		const swiftChance = swiftUnlocked
+			? clamp(
+					0.02 +
+						Math.max(0, state.level - 3) * 0.012 +
+						Math.max(0, state.timeSurvived - 35) * 0.0007,
+					0.02,
+					0.14,
+				)
+			: 0;
+		const tankChance = tankUnlocked
+			? clamp(
+					0.04 +
+						Math.max(0, state.level - 2) * 0.01 +
+						Math.max(0, state.timeSurvived - 20) * 0.00055,
+					0.04,
+					0.18,
+				)
+			: 0;
+		const rareChance = rareUnlocked
+			? clamp(
+					0.01 +
+						Math.max(0, state.level - 5) * 0.007 +
+						Math.max(0, state.timeSurvived - 60) * 0.00035,
+					0.01,
+					0.08,
+				)
+			: 0;
+		const roll = Math.random();
 		const kind: EnemyKind =
 			forcedKind ??
-			(Math.random() < clamp(0.025 + pressure * 0.0025, 0.025, 0.13)
+			(roll < rareChance
 				? "rare"
-				: Math.random() < clamp(0.14 + pressure * 0.004, 0.14, 0.24)
+				: roll < rareChance + swiftChance
 					? "swift"
-					: Math.random() < clamp(0.14 + pressure * 0.0036, 0.14, 0.22)
+					: roll < rareChance + swiftChance + tankChance
 						? "tank"
 						: "normal");
 		const elite =
@@ -1512,7 +1552,7 @@ function mountSurvivalShooter(
 		}
 
 		const sizeWeight = clamp(radius / 15, 0.78, 3.1);
-		const hpScale = 0.96 + playerPower * 0.038;
+		const hpScale = 0.92 + playerPower * 0.024;
 		const kindHpMultiplier =
 			kind === "boss"
 				? 7.4
@@ -1525,13 +1565,13 @@ function mountSurvivalShooter(
 							: 1;
 		const kindSpeedMultiplier =
 			kind === "boss"
-				? 0.92
+				? 0.86
 				: kind === "tank"
-					? 0.82
+					? 0.76
 					: kind === "rare"
-						? 1.26
+						? 1.12
 						: kind === "swift"
-							? 1.58
+							? 1.28 + Math.min(0.18, state.timeSurvived / 420 + state.level * 0.015)
 							: 1;
 		const damage =
 			kind === "boss"
@@ -1547,9 +1587,9 @@ function mountSurvivalShooter(
 			state.overdriveUntil > state.timeSurvived
 				? 1
 				: Math.round(
-						((elite ? 1.4 : 0.8) +
-							sizeWeight * (elite ? 2.25 : 1.7) +
-							pressure * (elite ? 0.62 : 0.34) +
+						((elite ? 1.2 : 0.7) +
+							sizeWeight * (elite ? 2 : 1.4) +
+							pressure * (elite ? 0.42 : 0.2) +
 							PhaserLib.Math.FloatBetween(0.2, elite ? 1.2 : 0.9)) *
 							kindHpMultiplier *
 							hpScale,
@@ -1578,10 +1618,12 @@ function mountSurvivalShooter(
 			y,
 			radius,
 			speed:
-				((elite ? 76 : 84) +
-					pressure * (elite ? 1.95 : 1.45) +
-					state.player.speed * 0.045 +
-					PhaserLib.Math.FloatBetween(-4, 8)) *
+				((elite ? 66 : 60) +
+					pressure * (elite ? 1.25 : 0.95) +
+					state.level * 0.55 +
+					state.timeSurvived * 0.04 +
+					state.player.speed * 0.016 +
+					PhaserLib.Math.FloatBetween(-4, 6)) *
 				kindSpeedMultiplier,
 			hp: maxHp,
 			maxHp,
@@ -1696,18 +1738,9 @@ function mountSurvivalShooter(
 	const updateHud = (scene: PhaserScene) => {
 		const xpRatio = clamp(state.xp / Math.max(state.nextLevelXp, 1), 0, 1);
 		const showHud = state.phase === "playing" || state.phase === "paused";
-		const hiddenPerkKeys: AbilityKey[] = [
-			"critChance",
-			"critDamage",
-			"dodge",
-			"growth",
-			"force",
-			"reach",
-			"magnet",
-		];
-		const activePerks = (Object.keys(ABILITY_LABELS) as AbilityKey[])
-			.filter((key) => state.abilities[key] > 0 && !hiddenPerkKeys.includes(key))
-			.map((key) => `${ABILITY_LABELS[key]} Lv.${state.abilities[key]}`);
+		const activePerks = (Object.keys(PERK_LABELS) as PerkKey[])
+			.filter((key) => state.abilities[key] > 0)
+			.map((key) => `${PERK_LABELS[key]} Lv.${state.abilities[key]}`);
 
 		xpTitleText?.setText(`LEVEL ${state.level}   XP ${state.xp}/${state.nextLevelXp}`);
 		xpMetaText?.setText(`${Math.round(xpRatio * 100)}% NEXT`);
@@ -1722,12 +1755,13 @@ function mountSurvivalShooter(
 
 		abilityText?.setText(
 			[
-				"TRAITS",
+				"STATS",
 				`Damage      ${state.player.damage}`,
 				`Speed       ${Math.round(state.player.speed)}`,
+				`Atk Speed   ${formatPercent(getAttackSpeedMultiplier(state) - 1)}`,
 				`Crit Chance ${formatPercent(getCritChance(state))}`,
 				`Crit Damage x${getCritDamageMultiplier(state).toFixed(1)}`,
-				`Volley      ${getVolleyCount(state)}x${getProjectileCount(state)}`,
+				`Burst       ${getBurstCount(state)}x${getProjectileCount(state)}`,
 				`Dodge       ${formatPercent(getDodgeChance(state))}`,
 				`Growth      ${formatPercent(getXpGainMultiplier(state) - 1)}`,
 				`Force       ${formatPercent(getForceMultiplier(state) - 1)}`,
@@ -2660,10 +2694,10 @@ function mountSurvivalShooter(
 		if (state.spawnTimer <= 0) {
 			const intensity =
 				1 +
-				Math.floor(getEnemyPressure(state) / 7) +
-				Math.floor(state.timeSurvived / 90);
+				Math.floor(getEnemyPressure(state) / 9) +
+				Math.floor(state.timeSurvived / 120);
 			const enemiesPerWave = clamp(
-				1 + Math.floor(Math.max(0, intensity - state.enemies.length / 9)),
+				1 + Math.floor(Math.max(0, intensity - state.enemies.length / 10)),
 				1,
 				4,
 			);
@@ -2671,9 +2705,9 @@ function mountSurvivalShooter(
 				createEnemy(scene);
 			}
 			state.spawnTimer = clamp(
-				1.42 - getEnemyPressure(state) * 0.016 - Math.min(state.timeSurvived, 240) * 0.0011,
-				0.3,
-				1.42,
+				1.54 - getEnemyPressure(state) * 0.011 - Math.min(state.timeSurvived, 240) * 0.0009,
+				0.48,
+				1.54,
 			);
 		}
 
@@ -2745,9 +2779,10 @@ function mountSurvivalShooter(
 
 		state.player.shotTimer -= frameDt;
 		if (state.player.shotTimer <= 0 && activeEnemyIndices.length > 0) {
-			const volleyCount = getVolleyCount(state);
-			for (let index = 0; index < volleyCount; index += 1) {
-				state.pendingBursts.push({ delay: index * 0.085 });
+			const burstCount = getBurstCount(state);
+			const burstSpacing = getBurstSpacingSeconds(state);
+			for (let index = 0; index < burstCount; index += 1) {
+				state.pendingBursts.push({ delay: index * burstSpacing });
 			}
 			state.player.shotTimer = getShotCooldownSeconds(state);
 		}
@@ -3356,7 +3391,7 @@ function mountSurvivalShooter(
 			if (distance <= state.player.radius + orb.radius + 4) {
 				state.xp += Math.max(1, Math.round(orb.value * getXpGainMultiplier(state)));
 				if (orb.grantsPerk) {
-					const perkLabel = upgradeAbility();
+					const perkLabel = upgradePerk();
 					pushBanner(`Boss drop: ${perkLabel}`, 2.8);
 				}
 				state.xpOrbs.splice(index, 1);
