@@ -30,8 +30,9 @@ type RgbColor = {
 	b: number;
 };
 
-type MotionMode = "still" | "calm" | "drift";
+type MotionMode = "still" | "drift" | "surge";
 type StyleMode = "flat" | "gradient" | "bloom" | "poster";
+type TechniqueMode = "grid" | "bands" | "radial" | "pixel";
 type LoadStatus = "loading" | "ready" | "error";
 
 type Palette = {
@@ -59,12 +60,14 @@ type RenderSeed = {
 	y: number;
 	colorIndex: number;
 	tint: number;
+	edge: boolean;
 };
 
 type Cell = {
 	polygon: Point[];
 	colorIndex: number;
 	tint: number;
+	edge: boolean;
 };
 
 type Board = {
@@ -72,8 +75,11 @@ type Board = {
 	time: number;
 	palette: Palette;
 	seeds: RuntimeSeed[];
+	edgeSeeds: RenderSeed[];
+	renderSeeds: RenderSeed[];
 	guardSeeds: Point[];
 	cells: Cell[];
+	techniqueMode: TechniqueMode;
 };
 
 type Surface = {
@@ -92,6 +98,7 @@ type SettingsSnapshot = {
 	paletteSize: number;
 	motionMode: MotionMode;
 	styleMode: StyleMode;
+	techniqueMode: TechniqueMode;
 };
 
 type UiState = {
@@ -117,14 +124,16 @@ const MIN_CELLS = 16;
 const MAX_CELLS = 44;
 const CELL_OPTIONS = [20, 28, 36, 44];
 const PALETTE_OPTIONS = [4, 5, 6, 7];
-const MOTION_OPTIONS: MotionMode[] = ["still", "calm", "drift"];
+const MOTION_OPTIONS: MotionMode[] = ["still", "drift", "surge"];
 const STYLE_OPTIONS: StyleMode[] = ["flat", "gradient", "bloom", "poster"];
+const TECHNIQUE_OPTIONS: TechniqueMode[] = ["grid", "bands", "radial", "pixel"];
 const DEFAULT_SETTINGS: SettingsSnapshot = {
 	autoCycle: false,
 	cellCount: 28,
 	paletteSize: 5,
-	motionMode: "calm",
+	motionMode: "drift",
 	styleMode: "gradient",
+	techniqueMode: "grid",
 };
 const EMPTY_UI_STATE: UiState = {
 	cells: 0,
@@ -136,8 +145,8 @@ const MOTION_PROFILES: Record<
 	{ amplitude: number; speed: number }
 > = {
 	still: { amplitude: 0, speed: 0 },
-	calm: { amplitude: 0.65, speed: 0.7 },
-	drift: { amplitude: 1.15, speed: 1.05 },
+	drift: { amplitude: 0.52, speed: 0.72 },
+	surge: { amplitude: 1.55, speed: 1.5 },
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -209,6 +218,15 @@ function cycleOption<T>(values: readonly T[], current: T) {
 	return values[(index + 1) % values.length] ?? values[0];
 }
 
+function mixRgb(colorA: RgbColor, colorB: RgbColor, amount: number): RgbColor {
+	const t = clamp(amount, 0, 1);
+	return {
+		r: clampByte(colorA.r + (colorB.r - colorA.r) * t),
+		g: clampByte(colorA.g + (colorB.g - colorA.g) * t),
+		b: clampByte(colorA.b + (colorB.b - colorA.b) * t),
+	};
+}
+
 function createPalette(count: number): Palette {
 	const baseHue = Math.random();
 	const cells = Array.from({ length: count }, (_, index) => {
@@ -248,34 +266,88 @@ function createBaseSeeds(
 	size: Size,
 	cellCount: number,
 	paletteSize: number,
+	techniqueMode: TechniqueMode,
 ): RenderSeed[] {
 	const count = clamp(cellCount, MIN_CELLS, MAX_CELLS);
+	const seeds: RenderSeed[] = [];
+	const makeSeed = (x: number, y: number, index: number, tintRange = 0.08) => ({
+		x,
+		y,
+		colorIndex: index % Math.max(paletteSize, 1),
+		tint: randomRange(-tintRange, tintRange),
+		edge: false,
+	});
+
+	if (techniqueMode === "bands") {
+		const verticalBands = Math.random() < 0.5;
+		const bands = clamp(Math.round(Math.sqrt(count) * 0.9), 2, 6);
+		const lanes = Math.max(1, Math.ceil(count / bands));
+		for (let index = 0; index < count; index += 1) {
+			const band = index % bands;
+			const lane = Math.floor(index / bands);
+			const majorJitter = randomRange(-0.44, 0.44);
+			const minorJitter = randomRange(-0.14, 0.14);
+			const x = verticalBands
+				? ((band + 0.5 + minorJitter) / bands) * size.width
+				: ((lane + 0.5 + majorJitter) / lanes) * size.width;
+			const y = verticalBands
+				? ((lane + 0.5 + majorJitter) / lanes) * size.height
+				: ((band + 0.5 + minorJitter) / bands) * size.height;
+			seeds.push(makeSeed(x, y, index, 0.1));
+		}
+		return seeds;
+	}
+
+	if (techniqueMode === "radial") {
+		const centerX = size.width * 0.5;
+		const centerY = size.height * 0.5;
+		const maxRadius = Math.min(size.width, size.height) * 0.44;
+		const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+		for (let index = 0; index < count; index += 1) {
+			const radius = Math.sqrt((index + 0.5) / count) * maxRadius;
+			const angle = index * goldenAngle + randomRange(-0.16, 0.16);
+			const x = centerX + Math.cos(angle) * radius * randomRange(0.88, 1.08);
+			const y = centerY + Math.sin(angle) * radius * randomRange(0.88, 1.08);
+			seeds.push(makeSeed(x, y, index, 0.12));
+		}
+		return seeds;
+	}
+
 	const columns = Math.max(1, Math.ceil(Math.sqrt((count * size.width) / size.height)));
 	const rows = Math.max(1, Math.ceil(count / columns));
-	const seeds: RenderSeed[] = [];
+	const pixelStep = clamp(Math.round(Math.min(size.width, size.height) / 30), 8, 18);
+	const jitterRange = techniqueMode === "pixel" ? 0.06 : 0.26;
 
 	for (let index = 0; index < count; index += 1) {
 		const column = index % columns;
 		const row = Math.floor(index / columns);
-		const jitterX = randomRange(-0.26, 0.26);
-		const jitterY = randomRange(-0.26, 0.26);
-
-		seeds.push({
-			x: ((column + 0.5 + jitterX) / columns) * size.width,
-			y: ((row + 0.5 + jitterY) / rows) * size.height,
-			colorIndex: index % Math.max(paletteSize, 1),
-			tint: randomRange(-0.08, 0.08),
-		});
+		const jitterX = randomRange(-jitterRange, jitterRange);
+		const jitterY = randomRange(-jitterRange, jitterRange);
+		const rawX = ((column + 0.5 + jitterX) / columns) * size.width;
+		const rawY = ((row + 0.5 + jitterY) / rows) * size.height;
+		const x =
+			techniqueMode === "pixel"
+				? clamp(Math.round(rawX / pixelStep) * pixelStep, pixelStep, size.width - pixelStep)
+				: rawX;
+		const y =
+			techniqueMode === "pixel"
+				? clamp(
+						Math.round(rawY / pixelStep) * pixelStep,
+						pixelStep,
+						size.height - pixelStep,
+					)
+				: rawY;
+		seeds.push(makeSeed(x, y, index, techniqueMode === "pixel" ? 0.05 : 0.08));
 	}
 
 	return seeds;
 }
 
 function createGuardSeeds(size: Size): Point[] {
-	const padding = Math.max(84, Math.min(size.width, size.height) * 0.18);
+	const padding = Math.max(140, Math.min(size.width, size.height) * 0.28);
 	const points: Point[] = [];
-	const horizontal = 6;
-	const vertical = 5;
+	const horizontal = 9;
+	const vertical = 7;
 
 	for (let index = 0; index < horizontal; index += 1) {
 		const x = (index / (horizontal - 1)) * size.width;
@@ -295,6 +367,56 @@ function createGuardSeeds(size: Size): Point[] {
 	points.push({ x: -padding, y: size.height + padding });
 
 	return points;
+}
+
+function createEdgeSeeds(size: Size, paletteSize: number): RenderSeed[] {
+	const offset = Math.max(44, Math.min(size.width, size.height) * 0.1);
+	const horizontal = 8;
+	const vertical = 6;
+	const seeds: RenderSeed[] = [];
+	let index = 0;
+
+	for (let column = 0; column < horizontal; column += 1) {
+		const x = (column / (horizontal - 1)) * size.width;
+		seeds.push({
+			x,
+			y: -offset,
+			colorIndex: index % Math.max(paletteSize, 1),
+			tint: randomRange(-0.05, 0.05),
+			edge: true,
+		});
+		index += 1;
+		seeds.push({
+			x,
+			y: size.height + offset,
+			colorIndex: index % Math.max(paletteSize, 1),
+			tint: randomRange(-0.05, 0.05),
+			edge: true,
+		});
+		index += 1;
+	}
+
+	for (let row = 1; row < vertical - 1; row += 1) {
+		const y = (row / (vertical - 1)) * size.height;
+		seeds.push({
+			x: -offset,
+			y,
+			colorIndex: index % Math.max(paletteSize, 1),
+			tint: randomRange(-0.05, 0.05),
+			edge: true,
+		});
+		index += 1;
+		seeds.push({
+			x: size.width + offset,
+			y,
+			colorIndex: index % Math.max(paletteSize, 1),
+			tint: randomRange(-0.05, 0.05),
+			edge: true,
+		});
+		index += 1;
+	}
+
+	return seeds;
 }
 
 function clipPolygon(polygon: Point[], a: number, b: number, c: number): Point[] {
@@ -329,11 +451,11 @@ function clipPolygon(polygon: Point[], a: number, b: number, c: number): Point[]
 	return clipped;
 }
 
-function createVoronoiCells(
+function buildVoronoiCells(
 	size: Size,
 	seeds: RenderSeed[],
-	guardSeeds: Point[],
-): Cell[] {
+	guardSeeds: Array<Point | RenderSeed>,
+): Array<Cell | null> {
 	const bleed = 4;
 	const bounds: Point[] = [
 		{ x: -bleed, y: -bleed },
@@ -342,7 +464,7 @@ function createVoronoiCells(
 		{ x: -bleed, y: size.height + bleed },
 	];
 	const allSeeds: Array<RenderSeed | Point> = [...seeds, ...guardSeeds];
-	const cells: Cell[] = [];
+	const cells: Array<Cell | null> = new Array(seeds.length).fill(null);
 
 	for (let index = 0; index < seeds.length; index += 1) {
 		const seed = seeds[index];
@@ -364,15 +486,24 @@ function createVoronoiCells(
 		}
 
 		if (polygon.length >= 3) {
-			cells.push({
+			cells[index] = {
 				polygon,
 				colorIndex: seed.colorIndex,
 				tint: seed.tint,
-			});
+				edge: seed.edge,
+			};
 		}
 	}
 
 	return cells;
+}
+
+function createVoronoiCells(
+	size: Size,
+	seeds: RenderSeed[],
+	guardSeeds: Array<Point | RenderSeed>,
+): Cell[] {
+	return buildVoronoiCells(size, seeds, guardSeeds).filter((cell): cell is Cell => cell !== null);
 }
 
 function polygonCentroid(polygon: Point[]): Point {
@@ -399,12 +530,16 @@ function polygonCentroid(polygon: Point[]): Point {
 	};
 }
 
-function relaxSeeds(size: Size, seeds: RenderSeed[], guardSeeds: Point[]) {
+function relaxSeeds(
+	size: Size,
+	seeds: RenderSeed[],
+	guardSeeds: Array<Point | RenderSeed>,
+) {
 	let current = seeds.slice();
 	const inset = Math.max(20, Math.min(size.width, size.height) * 0.06);
 
 	for (let pass = 0; pass < RELAXATION_PASSES; pass += 1) {
-		const cells = createVoronoiCells(size, current, guardSeeds);
+		const cells = buildVoronoiCells(size, current, guardSeeds);
 		current = current.map((seed, index) => {
 			const cell = cells[index];
 			if (!cell || cell.polygon.length < 3) return seed;
@@ -424,28 +559,36 @@ function createRuntimeSeeds(
 	size: Size,
 	cellCount: number,
 	paletteSize: number,
+	techniqueMode: TechniqueMode,
 ): {
 	seeds: RuntimeSeed[];
+	edgeSeeds: RenderSeed[];
 	guardSeeds: Point[];
 } {
 	const guardSeeds = createGuardSeeds(size);
+	const edgeSeeds = createEdgeSeeds(size, paletteSize);
 	const relaxedSeeds = relaxSeeds(
 		size,
-		createBaseSeeds(size, cellCount, paletteSize),
-		guardSeeds,
+		createBaseSeeds(size, cellCount, paletteSize, techniqueMode),
+		[...edgeSeeds, ...guardSeeds],
 	);
 	const region = Math.sqrt((size.width * size.height) / Math.max(relaxedSeeds.length, 1));
-	const maxAmplitude = clamp(region * 0.08, 6, 14);
+	const maxAmplitude = clamp(
+		region * (techniqueMode === "pixel" ? 0.08 : 0.14),
+		techniqueMode === "pixel" ? 8 : 12,
+		techniqueMode === "pixel" ? 16 : 26,
+	);
 
 	return {
+		edgeSeeds,
 		guardSeeds,
 		seeds: relaxedSeeds.map((seed) => ({
 			baseX: seed.x,
 			baseY: seed.y,
-			ampX: randomRange(maxAmplitude * 0.35, maxAmplitude),
-			ampY: randomRange(maxAmplitude * 0.35, maxAmplitude),
-			freqX: randomRange(0.15, 0.32),
-			freqY: randomRange(0.12, 0.28),
+			ampX: randomRange(maxAmplitude * 0.42, maxAmplitude),
+			ampY: randomRange(maxAmplitude * 0.42, maxAmplitude),
+			freqX: randomRange(0.18, 0.42),
+			freqY: randomRange(0.16, 0.38),
 			phaseX: randomRange(0, Math.PI * 2),
 			phaseY: randomRange(0, Math.PI * 2),
 			colorIndex: seed.colorIndex,
@@ -457,58 +600,71 @@ function createRuntimeSeeds(
 function sampleSeeds(board: Board, motionMode: MotionMode): RenderSeed[] {
 	const profile = MOTION_PROFILES[motionMode];
 	if (profile.amplitude <= 0 || profile.speed <= 0) {
-		return board.seeds.map((seed) => ({
-			x: seed.baseX,
-			y: seed.baseY,
-			colorIndex: seed.colorIndex,
-			tint: seed.tint,
-		}));
+		return [
+			...board.seeds.map((seed) => ({
+				x: seed.baseX,
+				y: seed.baseY,
+				colorIndex: seed.colorIndex,
+				tint: seed.tint,
+				edge: false,
+			})),
+			...board.edgeSeeds,
+		];
 	}
 
 	const inset = Math.max(20, Math.min(board.size.width, board.size.height) * 0.06);
-	return board.seeds.map((seed) => ({
-		x: clamp(
-			seed.baseX +
-				Math.cos(board.time * seed.freqX * profile.speed + seed.phaseX) *
-					seed.ampX *
-					profile.amplitude,
-			inset,
-			board.size.width - inset,
-		),
-		y: clamp(
-			seed.baseY +
-				Math.sin(board.time * seed.freqY * profile.speed + seed.phaseY) *
-					seed.ampY *
-					profile.amplitude,
-			inset,
-			board.size.height - inset,
-		),
-		colorIndex: seed.colorIndex,
-		tint:
-			seed.tint +
-			Math.sin(
-				board.time * 0.24 * profile.speed + seed.phaseX * 0.6 + seed.phaseY * 0.4,
-			) *
-				0.03,
-	}));
+	return [
+		...board.seeds.map((seed) => ({
+			x: clamp(
+				seed.baseX +
+					Math.cos(board.time * seed.freqX * profile.speed + seed.phaseX) *
+						seed.ampX *
+						profile.amplitude,
+				inset,
+				board.size.width - inset,
+			),
+			y: clamp(
+				seed.baseY +
+					Math.sin(board.time * seed.freqY * profile.speed + seed.phaseY) *
+						seed.ampY *
+						profile.amplitude,
+				inset,
+				board.size.height - inset,
+			),
+			colorIndex: seed.colorIndex,
+			tint:
+				seed.tint +
+				Math.sin(
+					board.time * 0.24 * profile.speed + seed.phaseX * 0.6 + seed.phaseY * 0.4,
+				) *
+					0.03,
+			edge: false,
+		})),
+		...board.edgeSeeds,
+	];
 }
 
 function createBoard(size: Size, settings: SettingsSnapshot): Board {
 	const palette = createPalette(settings.paletteSize);
-	const { seeds, guardSeeds } = createRuntimeSeeds(
+	const { seeds, edgeSeeds, guardSeeds } = createRuntimeSeeds(
 		size,
 		settings.cellCount,
 		palette.cells.length,
+		settings.techniqueMode,
 	);
 	const board: Board = {
 		size,
 		time: 0,
 		palette,
 		seeds,
+		edgeSeeds,
+		renderSeeds: [],
 		guardSeeds,
 		cells: [],
+		techniqueMode: settings.techniqueMode,
 	};
-	board.cells = createVoronoiCells(size, sampleSeeds(board, settings.motionMode), guardSeeds);
+	board.renderSeeds = sampleSeeds(board, settings.motionMode);
+	board.cells = createVoronoiCells(size, board.renderSeeds, guardSeeds);
 	return board;
 }
 
@@ -516,11 +672,8 @@ function stepBoard(board: Board, deltaSeconds: number, settings: SettingsSnapsho
 	const profile = MOTION_PROFILES[settings.motionMode];
 	if (profile.speed <= 0 || profile.amplitude <= 0) return false;
 	board.time += deltaSeconds;
-	board.cells = createVoronoiCells(
-		board.size,
-		sampleSeeds(board, settings.motionMode),
-		board.guardSeeds,
-	);
+	board.renderSeeds = sampleSeeds(board, settings.motionMode);
+	board.cells = createVoronoiCells(board.size, board.renderSeeds, board.guardSeeds);
 	return true;
 }
 
@@ -528,6 +681,7 @@ function createSurface(
 	size: Size,
 	scene: PhaserScene,
 	PhaserLib: PhaserModule,
+	techniqueMode: TechniqueMode,
 ): Surface {
 	const pixelRatio = clamp(window.devicePixelRatio || 1, 1, 2);
 	const canvas = document.createElement("canvas");
@@ -547,7 +701,11 @@ function createSurface(
 	if (!texture) {
 		throw new Error("Unable to create Voronoi canvas texture.");
 	}
-	texture.setFilter(PhaserLib.Textures.FilterMode.LINEAR);
+	texture.setFilter(
+		techniqueMode === "pixel"
+			? PhaserLib.Textures.FilterMode.NEAREST
+			: PhaserLib.Textures.FilterMode.LINEAR,
+	);
 
 	const image = scene.add.image(0, 0, textureKey).setOrigin(0);
 	image.setDisplaySize(size.width, size.height);
@@ -594,27 +752,15 @@ function polygonBounds(polygon: Point[]) {
 	return { minX, maxX, minY, maxY };
 }
 
-function makeCellFill(
-	context: CanvasRenderingContext2D,
-	cell: Cell,
-	palette: Palette,
-	styleMode: StyleMode,
-) {
-	const base = palette.cells[cell.colorIndex % palette.cells.length];
+function getCellTones(palette: Palette, colorIndex: number, tint: number) {
+	const base = palette.cells[colorIndex % palette.cells.length];
 	const primary = hslToRgb(
 		base.h,
-		clamp(base.s + cell.tint * 0.5, 0.46, 0.98),
-		clamp(base.l + cell.tint, 0.28, 0.8),
+		clamp(base.s + tint * 0.5, 0.46, 0.98),
+		clamp(base.l + tint, 0.28, 0.8),
 	);
-
-	if (styleMode === "flat") {
-		return rgbToCss(primary.r, primary.g, primary.b);
-	}
-
-	const bounds = polygonBounds(cell.polygon);
-	const centroid = polygonCentroid(cell.polygon);
 	const secondary = hslToRgb(
-		wrap01(base.h + 0.03 + cell.tint * 0.08),
+		wrap01(base.h + 0.03 + tint * 0.08),
 		clamp(base.s * 0.86, 0.4, 0.96),
 		clamp(base.l + 0.1, 0.34, 0.86),
 	);
@@ -623,6 +769,27 @@ function makeCellFill(
 		clamp(base.s * 0.92, 0.44, 0.96),
 		clamp(base.l - 0.12, 0.18, 0.68),
 	);
+	return { primary, secondary, dark };
+}
+
+function makeCellFill(
+	context: CanvasRenderingContext2D,
+	cell: Cell,
+	palette: Palette,
+	styleMode: StyleMode,
+) {
+	const { primary, secondary, dark } = getCellTones(
+		palette,
+		cell.colorIndex,
+		cell.tint,
+	);
+
+	if (styleMode === "flat") {
+		return rgbToCss(primary.r, primary.g, primary.b);
+	}
+
+	const bounds = polygonBounds(cell.polygon);
+	const centroid = polygonCentroid(cell.polygon);
 
 	if (styleMode === "gradient" || styleMode === "poster") {
 		const gradient = context.createLinearGradient(
@@ -659,6 +826,73 @@ function makeCellFill(
 	return gradient;
 }
 
+function renderPixelBoard(surface: Surface, board: Board, styleMode: StyleMode) {
+	const { context, width, height } = surface;
+	const pixelSize = clamp(Math.round(Math.min(width, height) / 46), 6, 14);
+
+	for (let y = 0; y < height; y += pixelSize) {
+		for (let x = 0; x < width; x += pixelSize) {
+			const sampleX = x + pixelSize * 0.5;
+			const sampleY = y + pixelSize * 0.5;
+			let chosenSeed = board.renderSeeds[0];
+			let bestDistance = Number.POSITIVE_INFINITY;
+			for (const seed of board.renderSeeds) {
+				const dx = seed.x - sampleX;
+				const dy = seed.y - sampleY;
+				const distance = dx * dx + dy * dy;
+				if (distance < bestDistance) {
+					bestDistance = distance;
+					chosenSeed = seed;
+				}
+			}
+			if (!chosenSeed) continue;
+
+			const { primary, secondary, dark } = getCellTones(
+				board.palette,
+				chosenSeed.colorIndex,
+				chosenSeed.tint,
+			);
+			const glow = hslToRgb(
+				board.palette.glow.h,
+				board.palette.glow.s,
+				board.palette.glow.l,
+			);
+			const distanceRatio = clamp(
+				Math.sqrt(bestDistance) / Math.max(pixelSize * 6.5, 1),
+				0,
+				1,
+			);
+
+			let fill = primary;
+			if (styleMode === "gradient") {
+				fill = mixRgb(secondary, dark, distanceRatio * 0.9);
+			} else if (styleMode === "poster") {
+				const posterBand =
+					(Math.floor(x / pixelSize) + Math.floor(y / pixelSize) + chosenSeed.colorIndex) % 3;
+				fill = posterBand === 0 ? secondary : posterBand === 1 ? primary : dark;
+			} else if (styleMode === "bloom") {
+				fill = mixRgb(glow, dark, clamp(distanceRatio * 0.85, 0, 1));
+			}
+
+			context.fillStyle = rgbToCss(fill.r, fill.g, fill.b);
+			context.fillRect(x, y, pixelSize, pixelSize);
+		}
+	}
+
+	const stroke = hslToRgb(
+		board.palette.stroke.h,
+		board.palette.stroke.s,
+		board.palette.stroke.l,
+	);
+	context.fillStyle = rgbToCss(stroke.r, stroke.g, stroke.b);
+	for (let x = 0; x < width; x += pixelSize) {
+		context.fillRect(x, 0, 1, height);
+	}
+	for (let y = 0; y < height; y += pixelSize) {
+		context.fillRect(0, y, width, 1);
+	}
+}
+
 function renderBoard(surface: Surface, board: Board, styleMode: StyleMode) {
 	const { context, width, height } = surface;
 	const background = hslToRgb(
@@ -675,6 +909,13 @@ function renderBoard(surface: Surface, board: Board, styleMode: StyleMode) {
 	context.clearRect(0, 0, width, height);
 	context.fillStyle = rgbToCss(background.r, background.g, background.b);
 	context.fillRect(0, 0, width, height);
+
+	if (board.techniqueMode === "pixel") {
+		renderPixelBoard(surface, board, styleMode);
+		surface.texture.refresh();
+		return;
+	}
+
 	context.lineJoin = "round";
 	context.lineCap = "round";
 	context.lineWidth = styleMode === "poster" ? 1.7 : 1.1;
@@ -701,6 +942,10 @@ function renderBoard(surface: Surface, board: Board, styleMode: StyleMode) {
 	surface.texture.refresh();
 }
 
+function getVisibleCellCount(board: Board) {
+	return board.cells.filter((cell) => !cell.edge).length;
+}
+
 function mountVoronoiWall(
 	host: HTMLDivElement,
 	PhaserLib: PhaserModule,
@@ -719,6 +964,8 @@ function mountVoronoiWall(
 		private accumulatorMs = 0;
 
 		private lastStyleMode: StyleMode = bridge.settingsRef.current.styleMode;
+
+		private lastTechniqueMode: TechniqueMode = bridge.settingsRef.current.techniqueMode;
 
 		private autoCycleElapsedMs = 0;
 
@@ -741,7 +988,7 @@ function mountVoronoiWall(
 				this.board.palette = createPalette(bridge.settingsRef.current.paletteSize);
 				renderBoard(this.surface, this.board, bridge.settingsRef.current.styleMode);
 				bridge.onUiState({
-					cells: this.board.cells.length,
+					cells: getVisibleCellCount(this.board),
 					paletteSize: this.board.palette.cells.length,
 				});
 			};
@@ -783,6 +1030,11 @@ function mountVoronoiWall(
 				needsRender = true;
 			}
 
+			if (this.lastTechniqueMode !== settings.techniqueMode) {
+				this.rebuild(lastSize);
+				return;
+			}
+
 			if (needsRender) {
 				renderBoard(this.surface, this.board, settings.styleMode);
 			}
@@ -791,14 +1043,19 @@ function mountVoronoiWall(
 		private rebuild(size: Size) {
 			const settings = bridge.settingsRef.current;
 			destroySurface(this, this.surface);
-			this.surface = createSurface(size, this, PhaserLib);
+			this.surface = createSurface(size, this, PhaserLib, settings.techniqueMode);
 			this.board = createBoard(size, settings);
 			this.accumulatorMs = 0;
 			this.autoCycleElapsedMs = 0;
 			this.lastStyleMode = settings.styleMode;
+			this.lastTechniqueMode = settings.techniqueMode;
 			renderBoard(this.surface, this.board, settings.styleMode);
+			if (this.game.canvas) {
+				this.game.canvas.style.imageRendering =
+					settings.techniqueMode === "pixel" ? "pixelated" : "auto";
+			}
 			bridge.onUiState({
-				cells: this.board.cells.length,
+				cells: getVisibleCellCount(this.board),
 				paletteSize: this.board.palette.cells.length,
 			});
 		}
@@ -882,6 +1139,9 @@ export default function VoronoiWall() {
 		DEFAULT_SETTINGS.motionMode,
 	);
 	const [styleMode, setStyleMode] = useState<StyleMode>(DEFAULT_SETTINGS.styleMode);
+	const [techniqueMode, setTechniqueMode] = useState<TechniqueMode>(
+		DEFAULT_SETTINGS.techniqueMode,
+	);
 
 	useEffect(() => {
 		settingsRef.current.autoCycle = autoCycle;
@@ -894,6 +1154,11 @@ export default function VoronoiWall() {
 	useEffect(() => {
 		settingsRef.current.styleMode = styleMode;
 	}, [styleMode]);
+
+	useEffect(() => {
+		settingsRef.current.techniqueMode = techniqueMode;
+		newBoardRef.current?.();
+	}, [techniqueMode]);
 
 	useEffect(() => {
 		settingsRef.current.cellCount = cellCount;
@@ -943,12 +1208,13 @@ export default function VoronoiWall() {
 			<div className="border-b border-[#233247] bg-[#07111d]/92 backdrop-blur">
 				<div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
 					<div className="mr-auto font-mono text-xs text-slate-400">
-						Bounded animated Voronoi cells with manual controls for motion, style, palette, and density.
+						Animated Voronoi boards with stronger motion, alternate generation techniques, and a pixel mode for harsher layouts.
 					</div>
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">
 						<span>Cells <span className="text-slate-100">{uiState.cells}</span></span>
 						<span>Palette <span className="text-slate-100">{uiState.paletteSize}</span></span>
 						<span>Motion <span className="text-slate-100">{motionMode}</span></span>
+						<span>Technique <span className="text-slate-100">{techniqueMode}</span></span>
 						<span>Style <span className="text-slate-100">{styleMode}</span></span>
 						<span>Cycle <span className="text-slate-100">{autoCycle ? "6s" : "Off"}</span></span>
 						<span className="text-slate-200">
@@ -982,6 +1248,15 @@ export default function VoronoiWall() {
 						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
 					>
 						Motion {motionMode}
+					</button>
+					<button
+						type="button"
+						onClick={() =>
+							setTechniqueMode((value) => cycleOption(TECHNIQUE_OPTIONS, value))
+						}
+						className="select-none rounded-full border border-[#223048] bg-[#0b1320] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-[#2d4262] hover:bg-[#10192a]"
+					>
+						Technique {techniqueMode}
 					</button>
 					<button
 						type="button"

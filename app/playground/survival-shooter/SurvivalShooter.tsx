@@ -44,7 +44,6 @@ type AbilityKey = StatKey | PerkKey;
 type XpShape =
 	| "triangle"
 	| "square"
-	| "kite"
 	| "roundedTriangle"
 	| "pentagon"
 	| "hexagon"
@@ -248,7 +247,6 @@ const REGULAR_XP_SHAPE_SIDES: Partial<Record<XpShape, number>> = {
 const XP_SHAPE_COLORS: Record<XpShape, number> = {
 	triangle: 0xfb7185,
 	square: 0xfde68a,
-	kite: 0xf59e0b,
 	roundedTriangle: 0xfb7185,
 	pentagon: 0x7dd3a7,
 	hexagon: 0xc084fc,
@@ -265,7 +263,6 @@ const XP_SHAPE_COLORS: Record<XpShape, number> = {
 const XP_SHAPE_ORDER: XpShape[] = [
 	"triangle",
 	"square",
-	"kite",
 	"roundedTriangle",
 	"pentagon",
 	"hexagon",
@@ -281,7 +278,6 @@ const XP_SHAPE_ORDER: XpShape[] = [
 
 const SWIFT_ENEMY_SHAPES: XpShape[] = [
 	"triangle",
-	"kite",
 	"roundedTriangle",
 ];
 
@@ -296,7 +292,6 @@ const TANK_ENEMY_SHAPES: XpShape[] = [
 ];
 
 const RARE_ENEMY_SHAPES: XpShape[] = [
-	"kite",
 	"roundedTriangle",
 	"quatrefoil",
 	"star5",
@@ -320,7 +315,6 @@ const BOSS_ENEMY_SHAPES: XpShape[] = [
 
 const SMALL_FACE_SHAPES = new Set<XpShape>([
 	"triangle",
-	"kite",
 	"roundedTriangle",
 	"star4",
 	"star5",
@@ -449,17 +443,16 @@ function getArenaLayout(width: number, height: number): ArenaLayout {
 function getXpShape(level: number): XpShape {
 	if (level < 3) return "triangle";
 	if (level < 5) return "square";
-	if (level < 7) return "kite";
-	if (level < 9) return "roundedTriangle";
-	if (level < 11) return "pentagon";
-	if (level < 13) return "hexagon";
-	if (level < 15) return "quatrefoil";
-	if (level < 17) return "star4";
-	if (level < 19) return "star5";
-	if (level < 21) return "hexagram";
-	if (level < 23) return "star6";
-	if (level < 25) return "octagram";
-	if (level < 28) return "octagon";
+	if (level < 7) return "roundedTriangle";
+	if (level < 9) return "pentagon";
+	if (level < 11) return "hexagon";
+	if (level < 13) return "quatrefoil";
+	if (level < 15) return "star4";
+	if (level < 17) return "star5";
+	if (level < 19) return "hexagram";
+	if (level < 21) return "star6";
+	if (level < 23) return "octagram";
+	if (level < 26) return "octagon";
 	return "decagon";
 }
 
@@ -470,11 +463,9 @@ function getXpValue(level: number, elite: boolean) {
 			? 7
 			: shape === "square"
 				? 9
-				: shape === "kite"
+				: shape === "roundedTriangle"
 					? 11
-					: shape === "roundedTriangle"
-						? 12
-						: shape === "pentagon"
+					: shape === "pentagon"
 					? 14
 					: shape === "hexagon"
 						? 17
@@ -1930,19 +1921,6 @@ function mountSurvivalShooter(
 		if (shape in REGULAR_XP_SHAPE_SIDES) {
 			const sides = REGULAR_XP_SHAPE_SIDES[shape];
 			if (sides) tracePolygonPath(target, x, y, radius, sides, rotation);
-		} else if (shape === "kite") {
-			tracePointPath(
-				target,
-				x,
-				y,
-				[
-					{ x: 0, y: -radius },
-					{ x: radius * 0.62, y: radius * 0.08 },
-					{ x: 0, y: radius * 0.9 },
-					{ x: -radius * 0.34, y: radius * 0.08 },
-				],
-				rotation,
-			);
 		} else if (shape === "roundedTriangle") {
 			traceParametricPath(
 				target,
@@ -1979,19 +1957,6 @@ function mountSurvivalShooter(
 		if (shape in REGULAR_XP_SHAPE_SIDES) {
 			const sides = REGULAR_XP_SHAPE_SIDES[shape];
 			if (sides) tracePolygonPath(target, x, y, radius, sides, rotation);
-		} else if (shape === "kite") {
-			tracePointPath(
-				target,
-				x,
-				y,
-				[
-					{ x: 0, y: -radius },
-					{ x: radius * 0.62, y: radius * 0.08 },
-					{ x: 0, y: radius * 0.9 },
-					{ x: -radius * 0.34, y: radius * 0.08 },
-				],
-				rotation,
-			);
 		} else if (shape === "roundedTriangle") {
 			traceParametricPath(
 				target,
@@ -2956,6 +2921,31 @@ function mountSurvivalShooter(
 		}> = [];
 		const shrapnelStats = getShrapnelStats(state);
 		const thornsStats = getThornsStats(state);
+		const flushShrapnelBursts = () => {
+			while (shrapnelBursts.length > 0) {
+				const burst = shrapnelBursts.shift();
+				if (!burst) break;
+				emitParticles(burst.x, burst.y, burst.color, 8, {
+					speedMin: 26,
+					speedMax: 86,
+					radiusMin: 1.2,
+					radiusMax: 3.2,
+					ttlMin: 0.12,
+					ttlMax: 0.28,
+					alpha: 0.8,
+				});
+				for (const enemy of state.enemies) {
+					if (enemy.hp <= 0 || defeatedEnemyIds.has(enemy.id)) continue;
+					if (!circleHit(burst.x, burst.y, burst.radius, enemy.x, enemy.y, enemy.radius)) continue;
+					applyEnemyDamage(enemy, burst.damage);
+				}
+			}
+		};
+		const pruneDefeatedEnemies = () => {
+			if (defeatedEnemyIds.size > 0) {
+				state.enemies = state.enemies.filter((enemy) => !defeatedEnemyIds.has(enemy.id));
+			}
+		};
 		const getDamageTint = (
 			enemy: Enemy,
 			damageAmount: number,
@@ -3186,25 +3176,6 @@ function mountSurvivalShooter(
 			}
 		}
 
-		while (shrapnelBursts.length > 0) {
-			const burst = shrapnelBursts.shift();
-			if (!burst) break;
-			emitParticles(burst.x, burst.y, burst.color, 8, {
-				speedMin: 26,
-				speedMax: 86,
-				radiusMin: 1.2,
-				radiusMax: 3.2,
-				ttlMin: 0.12,
-				ttlMax: 0.28,
-				alpha: 0.8,
-			});
-			for (const enemy of state.enemies) {
-				if (enemy.hp <= 0 || defeatedEnemyIds.has(enemy.id)) continue;
-				if (!circleHit(burst.x, burst.y, burst.radius, enemy.x, enemy.y, enemy.radius)) continue;
-				applyEnemyDamage(enemy, burst.damage);
-			}
-		}
-
 		for (let bulletIndex = state.bullets.length - 1; bulletIndex >= 0; bulletIndex -= 1) {
 			const bullet = state.bullets[bulletIndex];
 			let removeBullet = false;
@@ -3258,9 +3229,8 @@ function mountSurvivalShooter(
 			}
 		}
 
-		if (defeatedEnemyIds.size > 0) {
-			state.enemies = state.enemies.filter((enemy) => !defeatedEnemyIds.has(enemy.id));
-		}
+		flushShrapnelBursts();
+		pruneDefeatedEnemies();
 
 		const collisionEnemyIndices = getActiveEnemyIndices(scene);
 		for (let activeIndex = collisionEnemyIndices.length - 1; activeIndex >= 0; activeIndex -= 1) {
@@ -3373,6 +3343,9 @@ function mountSurvivalShooter(
 				}
 			}
 		}
+
+		flushShrapnelBursts();
+		pruneDefeatedEnemies();
 
 		rebuildXpOrbCulling(scene);
 		for (let pointer = xpOrbIndicesForUpdate.length - 1; pointer >= 0; pointer -= 1) {
