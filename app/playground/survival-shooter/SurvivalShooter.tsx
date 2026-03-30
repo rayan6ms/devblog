@@ -30,7 +30,7 @@ const PERK_LABELS = {
 	holyWater: "Holy Water",
 	orbitals: "Orbitals",
 	aura: "Shock Aura",
-	shrapnel: "Shrapnel",
+	shrapnel: "Bomb Shot",
 	novaBurst: "Nova Burst",
 	chainLightning: "Chain Lightning",
 	spiralShots: "Spiral Shots",
@@ -102,6 +102,19 @@ type Bullet = {
 	extraHitsRemaining: number;
 	ricochetsRemaining: number;
 	hitEnemyIds: number[];
+	stuckEnemyId: number | null;
+	stuckTimer: number;
+	stuckOffsetX: number;
+	stuckOffsetY: number;
+};
+
+type Explosion = {
+	x: number;
+	y: number;
+	maxRadius: number;
+	ttl: number;
+	maxTtl: number;
+	color: number;
 };
 
 type XpOrb = {
@@ -185,6 +198,7 @@ type GameState = {
 	trailClouds: TrailCloud[];
 	waterPools: WaterPool[];
 	particles: Particle[];
+	explosions: Explosion[];
 	damageTexts: DamageText[];
 	abilities: Record<AbilityKey, number>;
 	level: number;
@@ -234,6 +248,7 @@ const XP_GRID_CELL_SIZE = 120;
 const MAX_PARTICLES = 320;
 const MAX_DAMAGE_TEXTS = 80;
 const XP_MERGE_THRESHOLD = 220;
+const BOMB_FUSE_SECONDS = 3;
 
 const REGULAR_XP_SHAPE_SIDES: Partial<Record<XpShape, number>> = {
 	triangle: 3,
@@ -642,14 +657,15 @@ function getOrbitalStats(state: GameState) {
 	};
 }
 
-function getShrapnelStats(state: GameState) {
+function getBombShotStats(state: GameState) {
 	const level = state.abilities.shrapnel;
 	if (level <= 0) return null;
 	const forceMultiplier = getForceMultiplier(state);
 	const reachMultiplier = getReachMultiplier(state);
 	return {
-		radius: (38 + level * 16) * reachMultiplier,
-		damage: (1 + level * 1.3) * forceMultiplier,
+		radius: (42 + level * 18) * reachMultiplier,
+		damage: (2 + level * 1.65) * forceMultiplier,
+		fuse: BOMB_FUSE_SECONDS,
 	};
 }
 
@@ -814,6 +830,7 @@ function mountSurvivalShooter(
 			trailClouds: [],
 			waterPools: [],
 			particles: [],
+			explosions: [],
 			damageTexts: [],
 				abilities: {
 				attackSpeed: 0,
@@ -1178,6 +1195,10 @@ function mountSurvivalShooter(
 
 		for (const particle of state.particles) {
 			particle.y = clamp(particle.y * ratio, -120, state.worldHeight + 120);
+		}
+
+		for (const explosion of state.explosions) {
+			explosion.y = clamp(explosion.y * ratio, -120, state.worldHeight + 120);
 		}
 
 		for (const bullet of state.bullets) {
@@ -1661,6 +1682,9 @@ function mountSurvivalShooter(
 		}
 	};
 
+	const findEnemyById = (enemyId: number) =>
+		state.enemies.find((enemy) => enemy.id === enemyId) ?? null;
+
 	const fireBurst = (enemyIndices?: number[]) => {
 		if (state.enemies.length === 0) return;
 
@@ -1689,6 +1713,10 @@ function mountSurvivalShooter(
 				extraHitsRemaining: state.abilities.pierce,
 				ricochetsRemaining: getRicochetCount(state),
 				hitEnemyIds: [],
+				stuckEnemyId: null,
+				stuckTimer: 0,
+				stuckOffsetX: 0,
+				stuckOffsetY: 0,
 			});
 			emitParticles(muzzleX, muzzleY, 0x7dd3fc, 2, {
 				speedMin: 10,
@@ -2239,6 +2267,28 @@ function mountSurvivalShooter(
 			);
 		}
 
+		for (const explosion of state.explosions) {
+			const screenX = worldToScreenX(explosion.x, layout);
+			const screenY = worldToScreenY(explosion.y, layout);
+			if (
+				screenX < layout.fieldX - explosion.maxRadius - 24 ||
+				screenX > layout.fieldX + layout.fieldWidth + explosion.maxRadius + 24 ||
+				screenY < layout.fieldY - explosion.maxRadius - 24 ||
+				screenY > layout.fieldY + layout.fieldHeight + explosion.maxRadius + 24
+			) {
+				continue;
+			}
+			const alpha = clamp(explosion.ttl / Math.max(explosion.maxTtl, 0.01), 0, 1);
+			const progress = 1 - alpha;
+			const radius = explosion.maxRadius * (0.35 + progress * 0.65);
+			graphics.fillStyle(explosion.color, 0.14 * alpha);
+			graphics.fillCircle(screenX, screenY, radius);
+			graphics.lineStyle(2, blendColors(explosion.color, 0xffffff, 0.32), 0.44 * alpha);
+			graphics.strokeCircle(screenX, screenY, radius);
+			graphics.lineStyle(1, dimColor(PhaserLib, explosion.color, 0.24), 0.34 * alpha);
+			graphics.strokeCircle(screenX, screenY, radius * 0.72);
+		}
+
 		for (const orbIndex of xpOrbIndicesForRender) {
 			const orb = state.xpOrbs[orbIndex];
 			if (!orb) continue;
@@ -2267,7 +2317,6 @@ function mountSurvivalShooter(
 			graphics.strokeCircle(screenX, screenY, orb.radius + 3);
 		}
 
-		const bulletColor = 0x7dd3fc;
 		for (const bullet of state.bullets) {
 			const screenX = worldToScreenX(bullet.x, layout);
 			const screenY = worldToScreenY(bullet.y, layout);
@@ -2279,7 +2328,25 @@ function mountSurvivalShooter(
 			) {
 				continue;
 			}
-			drawOutlinedCircle(graphics, screenX, screenY, bullet.radius, bulletColor, 0.96, 1.5);
+			const bombPulse =
+				bullet.stuckEnemyId === null ? 0 : 0.96 + Math.sin((BOMB_FUSE_SECONDS - bullet.stuckTimer) * 8) * 0.18;
+			const bulletColor =
+				bullet.stuckEnemyId === null
+					? 0x7dd3fc
+					: blendColors(0xfef08a, 0xf97316, clamp(1 - bullet.stuckTimer / BOMB_FUSE_SECONDS, 0, 1));
+			drawOutlinedCircle(
+				graphics,
+				screenX,
+				screenY,
+				bullet.radius * bombPulse,
+				bulletColor,
+				0.96,
+				1.5,
+			);
+			if (bullet.stuckEnemyId !== null) {
+				graphics.lineStyle(1, dimColor(PhaserLib, bulletColor, 0.28), 0.4);
+				graphics.strokeCircle(screenX, screenY, bullet.radius * bombPulse + 3);
+			}
 		}
 
 		for (const enemyIndex of visibleEnemyIndices) {
@@ -2351,6 +2418,7 @@ function mountSurvivalShooter(
 			: -Math.PI / 2;
 		const playerScreenX = worldToScreenX(state.player.x, layout);
 		const playerScreenY = worldToScreenY(state.player.y, layout);
+		const bulletColor = 0x7dd3fc;
 
 		if (auraStats) {
 			const auraColor = 0xfef3a1;
@@ -2639,6 +2707,14 @@ function mountSurvivalShooter(
 			}
 		}
 
+		for (let index = state.explosions.length - 1; index >= 0; index -= 1) {
+			const explosion = state.explosions[index];
+			explosion.ttl -= frameDt;
+			if (explosion.ttl <= 0) {
+				state.explosions.splice(index, 1);
+			}
+		}
+
 		if (
 			state.overdriveUntil <= state.timeSurvived &&
 			state.timeSurvived >= state.overdriveCooldownUntil &&
@@ -2777,6 +2853,10 @@ function mountSurvivalShooter(
 						extraHitsRemaining: 0,
 						ricochetsRemaining: 0,
 						hitEnemyIds: [],
+						stuckEnemyId: null,
+						stuckTimer: 0,
+						stuckOffsetX: 0,
+						stuckOffsetY: 0,
 					});
 				}
 				emitParticles(state.player.x, state.player.y, 0xc084fc, 10, {
@@ -2813,6 +2893,10 @@ function mountSurvivalShooter(
 							extraHitsRemaining: 0,
 							ricochetsRemaining: 0,
 							hitEnemyIds: [],
+							stuckEnemyId: null,
+							stuckTimer: 0,
+							stuckOffsetX: 0,
+							stuckOffsetY: 0,
 						});
 					}
 				}
@@ -2833,6 +2917,11 @@ function mountSurvivalShooter(
 
 		for (let bulletIndex = state.bullets.length - 1; bulletIndex >= 0; bulletIndex -= 1) {
 			const bullet = state.bullets[bulletIndex];
+			if (bullet.stuckEnemyId !== null) {
+				bullet.stuckTimer -= frameDt;
+				continue;
+			}
+
 			bullet.x += bullet.vx * frameDt;
 			bullet.y += bullet.vy * frameDt;
 			bullet.life -= frameDt;
@@ -2910,37 +2999,21 @@ function mountSurvivalShooter(
 			enemy.y = clamp(enemy.y, -80, state.worldHeight + 80);
 		}
 
+		for (const bullet of state.bullets) {
+			if (bullet.stuckEnemyId === null) continue;
+			const enemy = findEnemyById(bullet.stuckEnemyId);
+			if (!enemy || enemy.hp <= 0) {
+				bullet.stuckTimer = 0;
+				continue;
+			}
+			bullet.x = enemy.x + bullet.stuckOffsetX;
+			bullet.y = enemy.y + bullet.stuckOffsetY;
+		}
+
 		enemyGrid = buildEnemyGrid(activeEnemyIndices);
 		const defeatedEnemyIds = new Set<number>();
-		const shrapnelBursts: Array<{
-			x: number;
-			y: number;
-			damage: number;
-			radius: number;
-			color: number;
-		}> = [];
-		const shrapnelStats = getShrapnelStats(state);
+		const bombShotStats = getBombShotStats(state);
 		const thornsStats = getThornsStats(state);
-		const flushShrapnelBursts = () => {
-			while (shrapnelBursts.length > 0) {
-				const burst = shrapnelBursts.shift();
-				if (!burst) break;
-				emitParticles(burst.x, burst.y, burst.color, 8, {
-					speedMin: 26,
-					speedMax: 86,
-					radiusMin: 1.2,
-					radiusMax: 3.2,
-					ttlMin: 0.12,
-					ttlMax: 0.28,
-					alpha: 0.8,
-				});
-				for (const enemy of state.enemies) {
-					if (enemy.hp <= 0 || defeatedEnemyIds.has(enemy.id)) continue;
-					if (!circleHit(burst.x, burst.y, burst.radius, enemy.x, enemy.y, enemy.radius)) continue;
-					applyEnemyDamage(enemy, burst.damage);
-				}
-			}
-		};
 		const pruneDefeatedEnemies = () => {
 			if (defeatedEnemyIds.size > 0) {
 				state.enemies = state.enemies.filter((enemy) => !defeatedEnemyIds.has(enemy.id));
@@ -2985,15 +3058,6 @@ function mountSurvivalShooter(
 			});
 			xpOrbCullingFrame = -1;
 			state.kills += 1;
-			if (shrapnelStats) {
-				shrapnelBursts.push({
-					x: enemy.x,
-					y: enemy.y,
-					damage: shrapnelStats.damage,
-					radius: shrapnelStats.radius,
-					color: enemy.color,
-				});
-			}
 		};
 		const applyEnemyDamage = (
 			enemy: Enemy,
@@ -3043,6 +3107,63 @@ function mountSurvivalShooter(
 			);
 			if (enemy.hp <= 0) {
 				defeatEnemy(enemy);
+			}
+		};
+		const armBombShot = (bullet: Bullet, enemy: Enemy) => {
+			if (!bombShotStats) return false;
+			const angle = Math.atan2(bullet.vy, bullet.vx);
+			const embedDistance = Math.max(2, enemy.radius * 0.38);
+			bullet.stuckEnemyId = enemy.id;
+			bullet.stuckTimer = bombShotStats.fuse;
+			bullet.stuckOffsetX = Math.cos(angle) * embedDistance;
+			bullet.stuckOffsetY = Math.sin(angle) * embedDistance;
+			bullet.vx = 0;
+			bullet.vy = 0;
+			bullet.x = enemy.x + bullet.stuckOffsetX;
+			bullet.y = enemy.y + bullet.stuckOffsetY;
+			emitParticles(bullet.x, bullet.y, 0xf59e0b, 4, {
+				speedMin: 12,
+				speedMax: 36,
+				radiusMin: 0.8,
+				radiusMax: 2.2,
+				ttlMin: 0.08,
+				ttlMax: 0.2,
+				alpha: 0.72,
+			});
+			return true;
+		};
+		const detonateBombShot = (bullet: Bullet) => {
+			if (!bombShotStats) return;
+			state.explosions.push({
+				x: bullet.x,
+				y: bullet.y,
+				maxRadius: bombShotStats.radius,
+				ttl: 0.24,
+				maxTtl: 0.24,
+				color: 0xf97316,
+			});
+			emitParticles(bullet.x, bullet.y, 0xf97316, 12, {
+				speedMin: 28,
+				speedMax: 96,
+				radiusMin: 1.2,
+				radiusMax: 3.4,
+				ttlMin: 0.12,
+				ttlMax: 0.28,
+				alpha: 0.85,
+			});
+			for (const enemy of state.enemies) {
+				if (enemy.hp <= 0 || defeatedEnemyIds.has(enemy.id)) continue;
+				if (!circleHit(bullet.x, bullet.y, bombShotStats.radius, enemy.x, enemy.y, enemy.radius)) continue;
+				const roundedDamage = Math.max(1, Math.round(bombShotStats.damage));
+				applyEnemyDamage(enemy, bombShotStats.damage, {
+					text: `${roundedDamage}`,
+					tint: 0xf97316,
+					size: 13,
+					ttl: 0.34,
+					velocityY: 28,
+					particleColor: 0xf59e0b,
+					particleCount: 5,
+				});
 			}
 		};
 		const findRicochetTarget = (sourceEnemy: Enemy, hitEnemyIds: number[]) => {
@@ -3178,6 +3299,14 @@ function mountSurvivalShooter(
 
 		for (let bulletIndex = state.bullets.length - 1; bulletIndex >= 0; bulletIndex -= 1) {
 			const bullet = state.bullets[bulletIndex];
+			if (bullet.stuckEnemyId !== null) {
+				if (bullet.stuckTimer <= 0) {
+					detonateBombShot(bullet);
+					state.bullets.splice(bulletIndex, 1);
+				}
+				continue;
+			}
+
 			let removeBullet = false;
 			const nearbyEnemyIndices: number[] = [];
 			collectNearbyEnemyIndices(enemyGrid, bullet.x, bullet.y, nearbyEnemyIndices);
@@ -3217,9 +3346,15 @@ function mountSurvivalShooter(
 						bullet.vy = Math.sin(angle) * 560;
 						bullet.life = Math.max(bullet.life, 0.35);
 					} else {
+						if (armBombShot(bullet, enemy)) {
+							break;
+						}
 						removeBullet = true;
 					}
 				} else {
+					if (armBombShot(bullet, enemy)) {
+						break;
+					}
 					removeBullet = true;
 				}
 			}
@@ -3229,7 +3364,6 @@ function mountSurvivalShooter(
 			}
 		}
 
-		flushShrapnelBursts();
 		pruneDefeatedEnemies();
 
 		const collisionEnemyIndices = getActiveEnemyIndices(scene);
@@ -3344,7 +3478,6 @@ function mountSurvivalShooter(
 			}
 		}
 
-		flushShrapnelBursts();
 		pruneDefeatedEnemies();
 
 		rebuildXpOrbCulling(scene);
