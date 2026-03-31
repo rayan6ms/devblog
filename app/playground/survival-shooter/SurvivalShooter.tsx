@@ -338,43 +338,35 @@ const SMALL_FACE_SHAPES = new Set<XpShape>([
 	"octagram",
 ]);
 
-const STAT_KEYS: StatKey[] = [
-	"attackSpeed",
-	"critChance",
-	"critDamage",
-	"dodge",
-	"growth",
-	"force",
-	"reach",
-	"magnet",
-];
+const STAT_KEYS = Object.keys(STAT_LABELS) as StatKey[];
+const PERK_UNLOCK_LEVELS: Record<PerkKey, number> = {
+	pierce: 1,
+	multiShot: 1,
+	quickShot: 1,
+	ricochet: 1,
+	poisonTrail: 4,
+	holyWater: 4,
+	orbitals: 4,
+	aura: 4,
+	shrapnel: 4,
+	novaBurst: 4,
+	chainLightning: 4,
+	spiralShots: 4,
+	bubbleShield: 9,
+	thorns: 9,
+};
 
-const EARLY_PERKS: PerkKey[] = [
-	"quickShot",
-	"multiShot",
-	"pierce",
-	"ricochet",
-];
+// None of the current perks are mechanically exclusive. Keep the compatibility
+// filter in place so new perks can declare conflicts without getting lost in the pool.
+const PERK_INCOMPATIBILITIES: Partial<Record<PerkKey, PerkKey[]>> = {};
 
-const MIDGAME_PERKS: PerkKey[] = [
-	...EARLY_PERKS,
-	"poisonTrail",
-	"holyWater",
-	"orbitals",
-	"aura",
-	"shrapnel",
-	"novaBurst",
-	"chainLightning",
-	"spiralShots",
-];
-
-const LATEGAME_PERKS: PerkKey[] = [...MIDGAME_PERKS, "bubbleShield", "thorns"];
 const STARTING_PERK_ABILITIES: PerkKey[] = [
 	"pierce",
 	"multiShot",
 	"quickShot",
 	"ricochet",
 	"poisonTrail",
+	"holyWater",
 	"orbitals",
 	"aura",
 	"shrapnel",
@@ -1088,8 +1080,16 @@ function mountSurvivalShooter(
 		return closestEnemy;
 	};
 
+	const isPerkCompatible = (perk: PerkKey) => {
+		const blockedBy = PERK_INCOMPATIBILITIES[perk] ?? [];
+		return blockedBy.every((otherPerk) => state.abilities[otherPerk] <= 0);
+	};
+
 	const getPerkPool = (): PerkKey[] =>
-		state.level < 4 ? EARLY_PERKS : state.level < 9 ? MIDGAME_PERKS : LATEGAME_PERKS;
+		(Object.keys(PERK_LABELS) as PerkKey[]).filter((perk) => {
+			if (PERK_UNLOCK_LEVELS[perk] > state.level) return false;
+			return state.abilities[perk] > 0 || isPerkCompatible(perk);
+		});
 
 	const chooseStatToUpgrade = () => {
 		const lowestLevel = Math.min(...STAT_KEYS.map((key) => state.abilities[key]));
@@ -1099,7 +1099,10 @@ function mountSurvivalShooter(
 
 	const choosePerkToUpgrade = () => {
 		const pool = getPerkPool();
-		const choices = pool.length > 0 ? pool : STARTING_PERK_ABILITIES;
+		const choices =
+			pool.length > 0
+				? pool
+				: STARTING_PERK_ABILITIES.filter((perk) => state.abilities[perk] > 0 || isPerkCompatible(perk));
 		const existingChoices = choices.filter((key) => state.abilities[key] > 0);
 		if (existingChoices.length > 0 && Math.random() < 0.45) {
 			return PhaserLib.Utils.Array.GetRandom(existingChoices) ?? existingChoices[0];
@@ -1121,8 +1124,12 @@ function mountSurvivalShooter(
 	};
 
 	const grantStartingPerk = () => {
+		const compatibleStartingPerks = STARTING_PERK_ABILITIES.filter(
+			(perk) => state.abilities[perk] > 0 || isPerkCompatible(perk),
+		);
 		const perk =
-			PhaserLib.Utils.Array.GetRandom(STARTING_PERK_ABILITIES) ??
+			PhaserLib.Utils.Array.GetRandom(compatibleStartingPerks) ??
+			compatibleStartingPerks[0] ??
 			STARTING_PERK_ABILITIES[0];
 		state.abilities[perk] += 1;
 		pushBanner(`${PERK_LABELS[perk]} Lv.${state.abilities[perk]}`, 2.8);
@@ -3323,11 +3330,26 @@ function mountSurvivalShooter(
 				const damage = bullet.damage * (crit ? getCritDamageMultiplier(state) : 1);
 				const roundedDamage = Math.max(1, Math.round(damage));
 				const damageTint = getDamageTint(enemy, roundedDamage, enemy.hp, crit);
+				if (crit) {
+					addCombatText(
+						scene,
+						enemy.x,
+						enemy.y - enemy.radius * 0.92,
+						"CRIT",
+						0xf97316,
+						11,
+						0.34,
+						20,
+					);
+				}
 				applyEnemyDamage(enemy, damage, {
 					text: `${roundedDamage}`,
 					tint: damageTint,
+					size: crit ? 18 : 15,
+					ttl: crit ? 0.52 : 0.45,
+					velocityY: crit ? 42 : 34,
 					particleColor: crit ? 0xf97316 : 0x7dd3fc,
-					particleCount: 4,
+					particleCount: crit ? 7 : 4,
 				});
 				if (chainLightningStats) {
 					arcChainLightning(enemy, roundedDamage, bullet.hitEnemyIds);
