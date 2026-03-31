@@ -3026,22 +3026,8 @@ function mountSurvivalShooter(
 				state.enemies = state.enemies.filter((enemy) => !defeatedEnemyIds.has(enemy.id));
 			}
 		};
-		const getDamageTint = (
-			enemy: Enemy,
-			damageAmount: number,
-			enemyHpBeforeHit: number,
-			crit: boolean,
-		) => {
-			if (crit) return blendColors(0xf97316, 0xfacc15, 0.34);
-			const impact = clamp(
-				damageAmount / Math.max(enemyHpBeforeHit, Math.max(1, enemy.maxHp * 0.55)),
-				0,
-				1,
-			);
-			return impact < 0.45
-				? blendColors(0xffffff, 0xfacc15, impact / 0.45)
-				: blendColors(0xfacc15, 0xef4444, (impact - 0.45) / 0.55);
-		};
+		const getDamageTint = (crit: boolean) =>
+			crit ? blendColors(0xf97316, 0xfacc15, 0.34) : 0xe2e8f0;
 		const defeatEnemy = (enemy: Enemy) => {
 			if (defeatedEnemyIds.has(enemy.id)) return;
 			defeatedEnemyIds.add(enemy.id);
@@ -3329,7 +3315,7 @@ function mountSurvivalShooter(
 				const crit = Math.random() < getCritChance(state);
 				const damage = bullet.damage * (crit ? getCritDamageMultiplier(state) : 1);
 				const roundedDamage = Math.max(1, Math.round(damage));
-				const damageTint = getDamageTint(enemy, roundedDamage, enemy.hp, crit);
+				const damageTint = getDamageTint(crit);
 				applyEnemyDamage(enemy, damage, {
 					text: `${roundedDamage}`,
 					tint: damageTint,
