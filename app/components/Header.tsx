@@ -37,6 +37,11 @@ export default function Header() {
 
 	if (hideHeader) return null;
 
+	const actionButtonClassName =
+		"inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat";
+	const accentActionButtonClassName =
+		"inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat";
+
 	return (
 		<>
 			<header className="bg-darkBg px-4 pt-8 sm:px-6 lg:px-8">
@@ -55,73 +60,7 @@ export default function Header() {
 							</div>
 
 							<div className="flex flex-wrap items-center gap-3 lg:justify-end">
-								<Icons className="hidden md:flex" />
-
-								{isAuthed && activeUser ? (
-									<LocalizedLink
-										href={`/profile/${activeUser}`}
-										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-										aria-label={messages.common.profile}
-									>
-										<FaUser className="text-xs" />
-										{messages.common.profile}
-									</LocalizedLink>
-								) : null}
-
-								{isAuthed && canManageRoles ? (
-									<LocalizedLink
-										href="/admin"
-										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
-									>
-										<FaShieldHalved className="text-xs" />
-										{adminCopy.navLabel}
-									</LocalizedLink>
-								) : null}
-
-								{isAuthed ? (
-									canWrite ? (
-										<LocalizedLink
-											href="/new_post"
-											className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-purpleContrast/60 hover:text-wheat"
-											aria-label={messages.common.create}
-										>
-											<FaPlus className="text-xs" />
-											{messages.common.create}
-										</LocalizedLink>
-									) : (
-										<button
-											type="button"
-											onClick={() => setIsSuggestOpen(true)}
-											className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-											aria-label={messages.common.suggest}
-											title={messages.header.suggestTitle}
-										>
-											<FaLightbulb className="text-xs" />
-											{messages.common.suggest}
-										</button>
-									)
-								) : (
-									<LocalizedLink
-										href="/login"
-										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-										aria-label={messages.common.login}
-									>
-										<FaRightToBracket className="text-xs" />
-										{messages.common.login}
-									</LocalizedLink>
-								)}
-
-								{isAuthed ? (
-									<button
-										type="button"
-										onClick={() => signOut({ callbackUrl: localizeHref("/") })}
-										className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500/70 hover:text-wheat"
-										aria-label={messages.common.logout}
-									>
-										<FaArrowRightFromBracket className="text-xs" />
-										{messages.common.logout}
-									</button>
-								) : null}
+								<Icons />
 
 								<a
 									href="https://t.me/+d-L4_z7gQjg5ZWQx"
@@ -132,17 +71,82 @@ export default function Header() {
 									<FaPaperPlane className="text-xs" />
 									{messages.common.telegram}
 								</a>
-
-								<div className="min-[340px]:hidden">
-									<LanguageSwitcher />
-								</div>
 							</div>
 
-							<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6 lg:col-span-2">
+							<div className="flex flex-col gap-3 sm:gap-4 lg:col-span-2 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-6">
 								<p className="max-w-2xl text-sm leading-7 text-zinc-400 sm:self-end sm:text-base">
 									{messages.header.description}
 								</p>
-								<LanguageSwitcher className="hidden shrink-0 min-[340px]:block" />
+
+								<div className="flex flex-wrap items-center gap-3 lg:justify-end">
+									{isAuthed && activeUser ? (
+										<LocalizedLink
+											href={`/profile/${activeUser}`}
+											className={actionButtonClassName}
+											aria-label={messages.common.profile}
+										>
+											<FaUser className="text-xs" />
+											{messages.common.profile}
+										</LocalizedLink>
+									) : null}
+
+									{isAuthed && canManageRoles ? (
+										<LocalizedLink
+											href="/admin"
+											className={accentActionButtonClassName}
+										>
+											<FaShieldHalved className="text-xs" />
+											{adminCopy.navLabel}
+										</LocalizedLink>
+									) : null}
+
+									{isAuthed ? (
+										canWrite ? (
+											<LocalizedLink
+												href="/new_post"
+												className={accentActionButtonClassName}
+												aria-label={messages.common.create}
+											>
+												<FaPlus className="text-xs" />
+												{messages.common.create}
+											</LocalizedLink>
+										) : (
+											<button
+												type="button"
+												onClick={() => setIsSuggestOpen(true)}
+												className={actionButtonClassName}
+												aria-label={messages.common.suggest}
+												title={messages.header.suggestTitle}
+											>
+												<FaLightbulb className="text-xs" />
+												{messages.common.suggest}
+											</button>
+										)
+									) : (
+										<LocalizedLink
+											href="/login"
+											className={actionButtonClassName}
+											aria-label={messages.common.login}
+										>
+											<FaRightToBracket className="text-xs" />
+											{messages.common.login}
+										</LocalizedLink>
+									)}
+
+									{isAuthed ? (
+										<button
+											type="button"
+											onClick={() => signOut({ callbackUrl: localizeHref("/") })}
+											className={actionButtonClassName}
+											aria-label={messages.common.logout}
+										>
+											<FaArrowRightFromBracket className="text-xs" />
+											{messages.common.logout}
+										</button>
+									) : null}
+
+									<LanguageSwitcher className="ml-auto shrink-0" />
+								</div>
 							</div>
 						</div>
 					</div>

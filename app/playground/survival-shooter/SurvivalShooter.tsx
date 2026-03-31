@@ -1279,7 +1279,7 @@ function mountSurvivalShooter(
 		const label = scene.add.text(0, 0, text, createTextStyle(size, "center"));
 		label.setOrigin(0.5);
 		label.setDepth(10);
-		label.setTint(tint);
+		label.setColor(`#${tint.toString(16).padStart(6, "0")}`);
 		state.damageTexts.push({
 			label,
 			x,
@@ -3330,18 +3330,6 @@ function mountSurvivalShooter(
 				const damage = bullet.damage * (crit ? getCritDamageMultiplier(state) : 1);
 				const roundedDamage = Math.max(1, Math.round(damage));
 				const damageTint = getDamageTint(enemy, roundedDamage, enemy.hp, crit);
-				if (crit) {
-					addCombatText(
-						scene,
-						enemy.x,
-						enemy.y - enemy.radius * 0.92,
-						"CRIT",
-						0xf97316,
-						11,
-						0.34,
-						20,
-					);
-				}
 				applyEnemyDamage(enemy, damage, {
 					text: `${roundedDamage}`,
 					tint: damageTint,
