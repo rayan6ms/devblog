@@ -2329,7 +2329,7 @@ function mountSurvivalShooter(
 				continue;
 			}
 			const bombPulse =
-				bullet.stuckEnemyId === null ? 0 : 0.96 + Math.sin((BOMB_FUSE_SECONDS - bullet.stuckTimer) * 8) * 0.18;
+				bullet.stuckEnemyId === null ? 1 : 0.96 + Math.sin((BOMB_FUSE_SECONDS - bullet.stuckTimer) * 8) * 0.18;
 			const bulletColor =
 				bullet.stuckEnemyId === null
 					? 0x7dd3fc
@@ -3025,7 +3025,7 @@ function mountSurvivalShooter(
 			enemyHpBeforeHit: number,
 			crit: boolean,
 		) => {
-			if (crit) return blendColors(0x93c5fd, 0xe0f2fe, 0.45);
+			if (crit) return blendColors(0xf97316, 0xfacc15, 0.34);
 			const impact = clamp(
 				damageAmount / Math.max(enemyHpBeforeHit, Math.max(1, enemy.maxHp * 0.55)),
 				0,
@@ -3324,9 +3324,9 @@ function mountSurvivalShooter(
 				const roundedDamage = Math.max(1, Math.round(damage));
 				const damageTint = getDamageTint(enemy, roundedDamage, enemy.hp, crit);
 				applyEnemyDamage(enemy, damage, {
-					text: crit ? `${roundedDamage}!` : `${roundedDamage}`,
+					text: `${roundedDamage}`,
 					tint: damageTint,
-					particleColor: 0x7dd3fc,
+					particleColor: crit ? 0xf97316 : 0x7dd3fc,
 					particleCount: 4,
 				});
 				if (chainLightningStats) {
