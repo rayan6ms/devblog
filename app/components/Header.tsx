@@ -74,7 +74,7 @@ export default function Header() {
 							</div>
 
 							<div className="flex flex-col gap-3 sm:gap-4 lg:col-span-2 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-6">
-								<p className="max-w-2xl text-sm leading-7 text-zinc-400 sm:self-end sm:text-base">
+								<p className="max-w-2xl text-sm leading-7 text-zinc-400 self-start sm:text-base">
 									{messages.header.description}
 								</p>
 
