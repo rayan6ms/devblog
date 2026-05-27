@@ -40,7 +40,7 @@ export default function RecommendedItem({
         md:w-[360px]
         lg:w-[420px]
         xxl:w-[320px]
-        box-content ${addSeparation && "mt-5"}`}
+        box-content rounded-t-[18px] transition-colors duration-300 hover:bg-[#1d2026] ${addSeparation && "mt-5"}`}
 		>
 			<div className="flex h-full min-w-0 flex-1 flex-col justify-center pr-4">
 				<div className="flex justify-between items-center">
@@ -60,7 +60,7 @@ export default function RecommendedItem({
 					{title}
 				</h3>
 			</div>
-			<div className="relative flex h-[92px] min-w-[92px] max-w-[92px] overflow-hidden rounded-lg">
+			<div className="relative flex h-[92px] min-w-[92px] max-w-[92px] overflow-hidden rounded-lg border border-zinc-700/50">
 				<Image
 					src={image}
 					alt={imageAlt}

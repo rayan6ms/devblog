@@ -17,6 +17,7 @@ interface RecentItemProps {
 	fluid?: boolean;
 	compact?: boolean;
 	preload?: boolean;
+	cardRadius?: "sm" | "lg";
 }
 
 export default function RecentItem({
@@ -25,6 +26,7 @@ export default function RecentItem({
 	fluid = false,
 	compact = false,
 	preload = false,
+	cardRadius,
 }: RecentItemProps) {
 	const { locale } = useI18n();
 	const { push } = useLocaleNavigation();
@@ -65,6 +67,11 @@ export default function RecentItem({
 	const formattedViews = (num: number) =>
 		num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
 
+	const radius = cardRadius ?? (compact || isBig ? "lg" : "sm");
+	const cardRadiusClass = radius === "lg" ? "rounded-[24px]" : "rounded-lg";
+	const imageRadiusClass =
+		radius === "lg" ? "rounded-t-[24px]" : "rounded-t-lg";
+
 	function handleRouteButtonClick(
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 		path: string,
@@ -77,7 +84,7 @@ export default function RecentItem({
 	return (
 		<LocalizedLink
 			href={getPostHref(post)}
-			className={`group flex h-fit flex-col ${compact ? "rounded-[24px]" : "rounded-lg"} ${
+			className={`group flex h-fit flex-col overflow-hidden border border-zinc-700/50 bg-greyBg/70 shadow-lg shadow-zinc-950/10 transition-colors duration-300 hover:bg-[#1d2026] ${cardRadiusClass} ${
 				fluid
 					? "w-full max-w-none"
 					: "w-[360px] sm:w-[460px] md:w-[360px] lg:w-[420px]"
@@ -93,7 +100,7 @@ export default function RecentItem({
 				}`}
 		>
 			<div
-				className={`relative w-full ${compact ? "rounded-[24px]" : "rounded-lg"} ${
+				className={`relative w-full border-b border-zinc-700/50 ${imageRadiusClass} ${
 					isBig
 						? fluid
 							? "h-[320px] lg:h-[420px] xxl:h-[520px]"
@@ -106,7 +113,7 @@ export default function RecentItem({
 				}`}
 			>
 				<div
-					className={`relative h-full w-full overflow-hidden ${compact ? "rounded-[24px]" : "rounded-lg"}`}
+					className={`relative h-full w-full overflow-hidden ${imageRadiusClass}`}
 				>
 					<Image
 						src={image}
@@ -114,7 +121,7 @@ export default function RecentItem({
 						fill
 						preload={preload}
 						loading={preload ? "eager" : undefined}
-						className={`rounded-lg shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
+						className={`shadow-inner object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000
             w-full h-full`}
 						sizes={
 							isBig
@@ -148,7 +155,7 @@ export default function RecentItem({
 				)}
 			</div>
 			{!isBig && (
-				<div className="flex items-center justify-between mt-2">
+				<div className="flex items-center justify-between px-4 pt-3">
 					<button
 						type="button"
 						onClick={(e) =>
@@ -164,7 +171,9 @@ export default function RecentItem({
 					<Popover post={post} iconSize="lg" />
 				</div>
 			)}
-			<div className={`flex ${isBig ? "mt-8 items-start" : "items-start"}`}>
+			<div
+				className={`flex px-4 ${isBig ? "mt-8 items-start" : "items-start"}`}
+			>
 				<p
 					className={`max-h-28 ${isBig ? "w-full text-2xl text-center xxl:text-3xl" : "w-fit text-xl"} line-clamp-3 ${isBig ? "mx-auto pl-10 pr-2" : "mt-2"}`}
 					title={title}
@@ -174,7 +183,7 @@ export default function RecentItem({
 				{isBig && <Popover post={post} iconSize="xl" />}
 			</div>
 			<div
-				className={`flex gap-4 pt-2 text-sm text-zinc-400 font-europa ${isBig ? "mx-auto mb-4" : ""}`}
+				className={`flex gap-4 px-4 pb-4 pt-2 text-sm text-zinc-400 font-europa ${isBig ? "mx-auto mb-4" : ""}`}
 			>
 				<button
 					type="button"

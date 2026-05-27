@@ -35,19 +35,19 @@ export default function TrendingItem({
 	return (
 		<LocalizedLink
 			href={getPostHref(post)}
-			className={`group flex gap-6
+			className={`group flex gap-6 transition-colors duration-300
         ${
 					section
-						? "w-full max-w-none items-start"
-						: "w-full h-[130px] sm:h-[180px] md:w-[320px] md:h-[120px] lg:w-[380px] lg:h-[150px] xxl:w-[300px] xxl:h-[100px]"
+						? "w-full max-w-none items-start border-r border-zinc-700/70 pr-4 hover:bg-[#1d2026]/70"
+						: "w-full h-[130px] rounded-[18px] border border-zinc-700/50 bg-greyBg/70 pr-2 shadow-lg shadow-zinc-950/10 hover:bg-[#1d2026] sm:h-[180px] md:w-[320px] md:h-[120px] lg:w-[380px] lg:h-[150px] xxl:w-[300px] xxl:h-[100px]"
 				}
         box-content ${addSeparation && "mt-5"}`}
 		>
 			<div
-				className={`relative flex overflow-hidden rounded-lg ${
+				className={`relative flex overflow-hidden ${
 					section
-						? "h-[96px] min-w-[96px] max-w-[96px] sm:h-[108px] sm:min-w-[108px] sm:max-w-[108px]"
-						: "h-[130px] min-w-[130px] max-w-[130px] sm:h-[180px] sm:min-w-[180px] sm:max-w-[180px] md:h-[150px] md:min-w-[150px] md:max-w-[150px] xxl:h-[105px] xxl:min-w-[105px] xxl:max-w-[105px]"
+						? "h-[96px] min-w-[96px] max-w-[96px] rounded-lg border border-zinc-700/50 sm:h-[108px] sm:min-w-[108px] sm:max-w-[108px]"
+						: "h-full min-w-[130px] max-w-[130px] rounded-[18px] border border-zinc-700/50 sm:min-w-[180px] sm:max-w-[180px] md:min-w-[150px] md:max-w-[150px] xxl:min-w-[105px] xxl:max-w-[105px]"
 				}`}
 			>
 				<Image
@@ -55,7 +55,9 @@ export default function TrendingItem({
 					alt={imageAlt}
 					fill
 					quality={90}
-					className="w-full h-full rounded-lg object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out"
+					className={`w-full h-full object-cover transform group-hover:scale-110 transition-transform group-hover:duration-1000 duration-1000 ease-out ${
+						section ? "rounded-lg" : "rounded-[18px]"
+					}`}
 					sizes={
 						section
 							? "(max-width: 640px) 120px, 108px"

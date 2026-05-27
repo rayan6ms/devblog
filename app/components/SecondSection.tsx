@@ -71,7 +71,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 							</p>
 						</div>
 						{featuredPost ? (
-							<RecentItem post={featuredPost} fluid compact />
+							<RecentItem post={featuredPost} fluid compact cardRadius="sm" />
 						) : (
 							<div className="rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/35 px-4 py-6 text-sm leading-7 text-zinc-400">
 								{messages.home.noSectionPost}
