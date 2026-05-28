@@ -18,23 +18,58 @@ export default function TagsInput({
 	const { messages } = useI18n();
 	const [input, setInput] = useState("");
 
-	const addTag = (rawTag: string) => {
-		const tag = rawTag.trim();
-		if (!tag) {
+	const addTags = (rawTags: string[]) => {
+		if (rawTags.length === 0) {
 			setInput("");
 			return;
 		}
 
-		const exists = value.some(
-			(existingTag) => existingTag.toLowerCase() === tag.toLowerCase(),
-		);
-		if (exists || value.length >= maxTags) {
-			setInput("");
-			return;
+		const nextTags = [...value];
+		for (const rawTag of rawTags) {
+			const tag = rawTag.trim();
+			if (!tag || nextTags.length >= maxTags) {
+				continue;
+			}
+
+			const exists = nextTags.some(
+				(existingTag) => existingTag.toLowerCase() === tag.toLowerCase(),
+			);
+			if (!exists) {
+				nextTags.push(tag);
+			}
 		}
 
-		onChange([...value, tag]);
+		if (nextTags.length !== value.length) {
+			onChange(nextTags);
+		}
+
 		setInput("");
+	};
+
+	const addTag = (rawTag: string) => {
+		addTags([rawTag]);
+	};
+
+	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const nextInput = event.target.value;
+		if (!nextInput.includes(",")) {
+			setInput(nextInput);
+			return;
+		}
+
+		const parts = nextInput.split(",");
+		const pendingInput = parts.pop() ?? "";
+		addTags(parts);
+		setInput(pendingInput.trimStart());
+	};
+
+	const commitPendingInput = () => {
+		if (!input.trim()) {
+			setInput("");
+			return;
+		}
+
+		addTag(input);
 	};
 
 	const removeTag = (tagToRemove: string) => {
@@ -44,7 +79,7 @@ export default function TagsInput({
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === "Enter" || event.key === "Tab" || event.key === ",") {
 			event.preventDefault();
-			addTag(input);
+			commitPendingInput();
 		}
 
 		if (event.key === "Backspace" && !input && value.length > 0) {
@@ -70,8 +105,9 @@ export default function TagsInput({
 				<input
 					type="text"
 					value={input}
-					onChange={(event) => setInput(event.target.value)}
+					onChange={handleInputChange}
 					onKeyDown={handleKeyDown}
+					onBlur={commitPendingInput}
 					className="min-w-[14rem] flex-1 bg-transparent px-2 py-1.5 text-zinc-100 outline-none placeholder:text-zinc-500"
 					placeholder={
 						value.length < maxTags

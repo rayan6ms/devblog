@@ -104,6 +104,8 @@ export default function Form({
 		Record<string, PendingContentImage>
 	>({});
 	const previousPendingThumbnailRef = useRef<PendingThumbnailImage | null>(null);
+	const [markdownToolbarPortal, setMarkdownToolbarPortal] =
+		useState<HTMLDivElement | null>(null);
 
 	const {
 		control,
@@ -132,7 +134,7 @@ export default function Form({
 		},
 	});
 
-	const title = watch("title");
+	const title = watch("title") || "";
 	const postLocale = watch("locale");
 	const slug = watch("slug");
 	const description = watch("description") || "";
@@ -815,6 +817,7 @@ export default function Form({
 									disabled={isSubmitting || isResolvingUploads}
 									onInsertImages={queueInlineImages}
 									resolveImageSrc={resolveEditorImageSrc}
+									toolbarPortal={markdownToolbarPortal}
 								/>
 							)}
 						/>
@@ -942,6 +945,23 @@ export default function Form({
 								)}
 							</p>
 						</div>
+					</section>
+
+					<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/80 p-6 shadow-lg shadow-zinc-950/10">
+						<div className="mb-5 flex items-center gap-3">
+							<div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-700/60 bg-darkBg/45 text-wheat">
+								<FaPenNib />
+							</div>
+							<div>
+								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+									{messages.newPost.editorControlsEyebrow}
+								</p>
+								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
+									{messages.newPost.editorControlsTitle}
+								</h3>
+							</div>
+						</div>
+						<div ref={setMarkdownToolbarPortal} />
 					</section>
 
 					<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/80 p-6 shadow-lg shadow-zinc-950/10">

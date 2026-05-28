@@ -69,13 +69,19 @@ export const createCommentSchema = z.object({
 export function buildPostSchema(
 	messages: PostValidationMessages = defaultPostValidationMessages,
 ) {
-	const imageSourceSchema = nonEmptyString(messages.imageRequired).refine(
-		(value) =>
-			value.startsWith("/") ||
-			value.startsWith("http://") ||
-			value.startsWith("https://"),
-		messages.imageInvalid,
-	);
+	const isValidImageSource = (value: string) =>
+		value.startsWith("/") ||
+		value.startsWith("http://") ||
+		value.startsWith("https://");
+
+	const imageSourceSchema = z
+		.string()
+		.trim()
+		.refine((value) => !value || isValidImageSource(value), {
+			message: messages.imageInvalid,
+		})
+		.optional()
+		.default("");
 
 	const tagSchema = z
 		.string()
@@ -83,55 +89,104 @@ export function buildPostSchema(
 		.min(1, messages.tagEmpty)
 		.max(MAX_POST_TAG_LENGTH, messages.tagMaxLength(MAX_POST_TAG_LENGTH));
 
-	return z.object({
-		locale: z.enum(LOCALES, {
-			error: () => messages.localeRequired,
-		}),
-		title: z
-			.string()
-			.trim()
-			.min(3, messages.titleMin)
-			.max(MAX_POST_TITLE, messages.titleMax(MAX_POST_TITLE)),
-		slug: z
-			.string()
-			.trim()
-			.max(MAX_POST_SLUG, messages.slugMax(MAX_POST_SLUG))
-			.regex(/^(|[a-z0-9]+(?:-[a-z0-9]+)*)$/, messages.slugInvalid)
-			.optional()
-			.default(""),
-		content: z
-			.string()
-			.trim()
-			.min(30, messages.contentMin)
-			.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT)),
-		thumbnail: imageSourceSchema,
-		thumbnailAlt: z
-			.string()
-			.trim()
-			.max(
-				MAX_POST_THUMBNAIL_ALT,
-				messages.thumbnailAltMax(MAX_POST_THUMBNAIL_ALT),
-			)
-			.optional()
-			.default(""),
-		mainTag: nonEmptyString(messages.mainTagRequired),
-		tags: z
-			.array(tagSchema)
-			.min(1, messages.tagsRequired)
-			.max(MAX_POST_TAGS, messages.tagsMaxItems(MAX_POST_TAGS))
-			.refine(
-				(tags) =>
-					new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
-				messages.tagsUnique,
-			),
-		description: z
-			.string()
-			.trim()
-			.max(MAX_POST_DESCRIPTION, messages.descriptionMax(MAX_POST_DESCRIPTION))
-			.optional()
-			.default(""),
-		status: z.enum(["draft", "pending_review", "published"]).default("draft"),
-	});
+	return z
+		.object({
+			locale: z.enum(LOCALES, {
+				error: () => messages.localeRequired,
+			}),
+			title: z
+				.string()
+				.trim()
+				.max(MAX_POST_TITLE, messages.titleMax(MAX_POST_TITLE))
+				.optional()
+				.default(""),
+			slug: z
+				.string()
+				.trim()
+				.max(MAX_POST_SLUG, messages.slugMax(MAX_POST_SLUG))
+				.regex(/^(|[a-z0-9]+(?:-[a-z0-9]+)*)$/, messages.slugInvalid)
+				.optional()
+				.default(""),
+			content: z
+				.string()
+				.trim()
+				.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT))
+				.optional()
+				.default(""),
+			thumbnail: imageSourceSchema,
+			thumbnailAlt: z
+				.string()
+				.trim()
+				.max(
+					MAX_POST_THUMBNAIL_ALT,
+					messages.thumbnailAltMax(MAX_POST_THUMBNAIL_ALT),
+				)
+				.optional()
+				.default(""),
+			mainTag: z.string().trim().optional().default(""),
+			tags: z
+				.array(tagSchema)
+				.max(MAX_POST_TAGS, messages.tagsMaxItems(MAX_POST_TAGS))
+				.refine(
+					(tags) =>
+						new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
+					messages.tagsUnique,
+				)
+				.optional()
+				.default([]),
+			description: z
+				.string()
+				.trim()
+				.max(MAX_POST_DESCRIPTION, messages.descriptionMax(MAX_POST_DESCRIPTION))
+				.optional()
+				.default(""),
+			status: z.enum(["draft", "pending_review", "published"]).default("draft"),
+		})
+		.superRefine((post, context) => {
+			if (post.status === "draft") {
+				return;
+			}
+
+			if (post.title.length < 3) {
+				context.addIssue({
+					code: "custom",
+					path: ["title"],
+					message: messages.titleMin,
+				});
+			}
+
+			if (post.content.length < 30) {
+				context.addIssue({
+					code: "custom",
+					path: ["content"],
+					message: messages.contentMin,
+				});
+			}
+
+			if (!post.thumbnail) {
+				context.addIssue({
+					code: "custom",
+					path: ["thumbnail"],
+					message: messages.imageRequired,
+				});
+			}
+
+			if (!post.mainTag) {
+				context.addIssue({
+					code: "custom",
+					path: ["mainTag"],
+					message: messages.mainTagRequired,
+				});
+			}
+
+			if (post.tags.length === 0) {
+				context.addIssue({
+					code: "custom",
+					path: ["tags"],
+					message: messages.tagsRequired,
+				});
+			}
+		});
 }
 
 export const createPostSchema = buildPostSchema();

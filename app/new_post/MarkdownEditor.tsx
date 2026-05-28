@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { IconType } from "react-icons";
 import {
 	FaBold,
@@ -46,6 +47,7 @@ type MarkdownEditorProps = {
 	disabled?: boolean;
 	onInsertImages: (files: File[]) => Promise<UploadedImage[]> | UploadedImage[];
 	resolveImageSrc?: (src: string) => string;
+	toolbarPortal?: HTMLElement | null;
 };
 
 type EditorMode = "write" | "preview" | "split";
@@ -56,11 +58,26 @@ type ToolbarAction = {
 	action: () => void;
 };
 
+const MIN_EDITOR_HEIGHT = 512;
+const MAX_EDITOR_HEIGHT = 720;
+
 function fileNameToAlt(name: string) {
 	return name
 		.replace(/\.[^.]+$/, "")
 		.replace(/[-_]+/g, " ")
 		.trim();
+}
+
+function clampEditorHeight(height: number) {
+	return Math.min(Math.max(height, MIN_EDITOR_HEIGHT), MAX_EDITOR_HEIGHT);
+}
+
+function syncScrollPosition(source: HTMLElement, target: HTMLElement) {
+	const sourceScrollable = source.scrollHeight - source.clientHeight;
+	const targetScrollable = target.scrollHeight - target.clientHeight;
+	const progress = sourceScrollable > 0 ? source.scrollTop / sourceScrollable : 0;
+
+	target.scrollTop = targetScrollable * progress;
 }
 
 export default function MarkdownEditor({
@@ -70,13 +87,17 @@ export default function MarkdownEditor({
 	disabled = false,
 	onInsertImages,
 	resolveImageSrc,
+	toolbarPortal,
 }: MarkdownEditorProps) {
 	const { messages } = useI18n();
 	const [mode, setMode] = useState<EditorMode>("split");
 	const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
+	const [editorHeight, setEditorHeight] = useState(MIN_EDITOR_HEIGHT);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const previewRef = useRef<HTMLDivElement>(null);
+	const syncingScrollRef = useRef(false);
 
 	useLayoutEffect(() => {
 		const textarea = textareaRef.current;
@@ -84,9 +105,41 @@ export default function MarkdownEditor({
 			return;
 		}
 
-		textarea.style.height = "auto";
-		textarea.style.height = `${Math.max(textarea.scrollHeight, 512)}px`;
-	}, [value, mode]);
+		setEditorHeight(clampEditorHeight(textarea.scrollHeight));
+	}, [mode, value]);
+
+	useLayoutEffect(() => {
+		const textarea = textareaRef.current;
+		const preview = previewRef.current;
+		if (!textarea || !preview || mode !== "split") {
+			return;
+		}
+
+		syncScrollPosition(textarea, preview);
+	}, [editorHeight, mode, value]);
+
+	function syncEditorScroll(source: "markdown" | "preview") {
+		if (mode !== "split" || syncingScrollRef.current) {
+			return;
+		}
+
+		const textarea = textareaRef.current;
+		const preview = previewRef.current;
+		if (!textarea || !preview) {
+			return;
+		}
+
+		syncingScrollRef.current = true;
+		if (source === "markdown") {
+			syncScrollPosition(textarea, preview);
+		} else {
+			syncScrollPosition(preview, textarea);
+		}
+
+		requestAnimationFrame(() => {
+			syncingScrollRef.current = false;
+		});
+	}
 
 	function updateSelection(nextValue: string, cursorPosition: number) {
 		onChange(nextValue);
@@ -143,15 +196,21 @@ export default function MarkdownEditor({
 
 		try {
 			const uploads = await onInsertImages(files);
+			const insertionStart =
+				textareaRef.current?.selectionStart ?? value.length;
+			const needsLineBreakBeforeImage =
+				insertionStart > 0 && value[insertionStart - 1] !== "\n";
 
 			const markdownBlock = uploads
 				.map(
 					(upload) =>
-						`\n\n![${fileNameToAlt(upload.name) || messages.newPost.imageDefaultAlt}](${upload.url})\n`,
+						`![${fileNameToAlt(upload.name) || messages.newPost.imageDefaultAlt}](${upload.url})\n`,
 				)
 				.join("");
 
-			insertAtSelection(markdownBlock);
+			insertAtSelection(
+				`${needsLineBreakBeforeImage ? "\n" : ""}${markdownBlock}`,
+			);
 			setFeedback({
 				tone: "success",
 				message: messages.newPost.imagesInserted(uploads.length),
@@ -279,6 +338,48 @@ export default function MarkdownEditor({
 		return defaultUrlTransform(url);
 	}
 
+	const toolbarControls = (
+		<div className="grid gap-4">
+			<button
+				type="button"
+				onClick={() => fileInputRef.current?.click()}
+				disabled={disabled || isUploading}
+				className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-purpleContrast/35 bg-purpleContrast/18 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/26 disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				<FaImage className="text-sm" />
+				<span>
+					{isUploading
+						? messages.newPost.uploading
+						: messages.newPost.insertImage}
+				</span>
+			</button>
+			{toolbarSections.map((section) => (
+				<div key={section.title}>
+					<p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+						{section.title}
+					</p>
+					<div className="flex flex-wrap gap-2">
+						{section.actions.map((item) => {
+							const Icon = item.icon;
+							return (
+								<button
+									key={item.label}
+									type="button"
+									onClick={item.action}
+									disabled={disabled || isUploading}
+									className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-2 text-sm text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									<Icon className="text-xs" />
+									<span>{item.label}</span>
+								</button>
+							);
+						})}
+					</div>
+				</div>
+			))}
+		</div>
+	);
+
 	return (
 		<div className="grid gap-4">
 			<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/65 p-4 sm:p-5">
@@ -329,59 +430,6 @@ export default function MarkdownEditor({
 						})}
 					</div>
 				</div>
-
-				<div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
-					<div className="grid gap-3">
-						{toolbarSections.map((section) => (
-							<div key={section.title}>
-								<p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-									{section.title}
-								</p>
-								<div className="flex flex-wrap gap-2">
-									{section.actions.map((item) => {
-										const Icon = item.icon;
-										return (
-											<button
-												key={item.label}
-												type="button"
-												onClick={item.action}
-												disabled={disabled || isUploading}
-												className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/65 px-3 py-2 text-sm text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat disabled:cursor-not-allowed disabled:opacity-50"
-											>
-												<Icon className="text-xs" />
-												<span>{item.label}</span>
-											</button>
-										);
-									})}
-								</div>
-							</div>
-						))}
-					</div>
-
-					<div className="flex flex-col gap-2 xl:items-end">
-						<button
-							type="button"
-							onClick={() => fileInputRef.current?.click()}
-							disabled={disabled || isUploading}
-							className="inline-flex items-center justify-center gap-2 rounded-full border border-purpleContrast/35 bg-purpleContrast/18 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/26 disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							<FaImage className="text-sm" />
-							<span>
-								{isUploading
-									? messages.newPost.uploading
-									: messages.newPost.insertImage}
-							</span>
-						</button>
-						<div className="rounded-full border border-zinc-700/60 bg-darkBg/55 px-3 py-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
-							{mode === "split"
-								? messages.newPost.dualPanel
-								: messages.newPost.modeBadge(
-										modeOptions.find((option) => option.value === mode)
-											?.label || mode,
-									)}
-						</div>
-					</div>
-				</div>
 			</div>
 
 			<div className={editorGridClass}>
@@ -405,9 +453,11 @@ export default function MarkdownEditor({
 							ref={textareaRef}
 							value={value}
 							onChange={(event) => onChange(event.target.value)}
+							onScroll={() => syncEditorScroll("markdown")}
 							disabled={disabled}
 							rows={1}
-							className="min-h-[32rem] w-full resize-none overflow-hidden bg-transparent px-4 py-4 text-zinc-100 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
+							style={{ height: editorHeight }}
+							className="w-full resize-none overflow-y-auto bg-transparent px-4 py-4 text-zinc-100 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
 							placeholder={messages.newPost.markdownPlaceholder}
 						/>
 					</div>
@@ -429,7 +479,12 @@ export default function MarkdownEditor({
 								{messages.newPost.finalRendering}
 							</div>
 						</div>
-						<div className="min-h-[32rem] px-5 py-4">
+						<div
+							ref={previewRef}
+							onScroll={() => syncEditorScroll("preview")}
+							style={{ height: editorHeight }}
+							className="overflow-y-auto px-5 py-4"
+						>
 							{value.trim() ? (
 								<div className={MARKDOWN_ARTICLE_CLASS}>
 									<ReactMarkdown
@@ -442,7 +497,7 @@ export default function MarkdownEditor({
 									</ReactMarkdown>
 								</div>
 							) : (
-								<div className="flex min-h-[28rem] items-center justify-center rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/30 px-6 text-center text-zinc-500">
+								<div className="flex h-full min-h-[28rem] items-center justify-center rounded-[22px] border border-dashed border-zinc-700/60 bg-darkBg/30 px-6 text-center text-zinc-500">
 									{messages.newPost.emptyPreview}
 								</div>
 							)}
@@ -488,6 +543,7 @@ export default function MarkdownEditor({
 				className="hidden"
 				onChange={handleFilesSelected}
 			/>
+			{toolbarPortal ? createPortal(toolbarControls, toolbarPortal) : null}
 		</div>
 	);
 }
