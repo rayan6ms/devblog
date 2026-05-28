@@ -75,10 +75,21 @@ function clampEditorHeight(height: number) {
 function syncScrollPosition(source: HTMLElement, target: HTMLElement) {
 	const sourceScrollable = source.scrollHeight - source.clientHeight;
 	const targetScrollable = target.scrollHeight - target.clientHeight;
-	const progress = sourceScrollable > 0 ? source.scrollTop / sourceScrollable : 0;
+	const progress =
+		sourceScrollable > 0 ? source.scrollTop / sourceScrollable : 0;
 
 	target.scrollTop = targetScrollable * progress;
 }
+
+type ScrollSnapshot = {
+	textareaScrollTop: number | null;
+	previewScrollTop: number | null;
+};
+
+type TextSelection = {
+	start: number;
+	end: number;
+};
 
 export default function MarkdownEditor({
 	value,
@@ -98,7 +109,9 @@ export default function MarkdownEditor({
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const previewRef = useRef<HTMLDivElement>(null);
 	const syncingScrollRef = useRef(false);
+	const lastSelectionRef = useRef<TextSelection | null>(null);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: height must be remeasured when editor content or mode changes.
 	useLayoutEffect(() => {
 		const textarea = textareaRef.current;
 		if (!textarea) {
@@ -108,6 +121,7 @@ export default function MarkdownEditor({
 		setEditorHeight(clampEditorHeight(textarea.scrollHeight));
 	}, [mode, value]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: split preview scroll must resync after editor height or content changes.
 	useLayoutEffect(() => {
 		const textarea = textareaRef.current;
 		const preview = previewRef.current;
@@ -142,6 +156,11 @@ export default function MarkdownEditor({
 	}
 
 	function updateSelection(nextValue: string, cursorPosition: number) {
+		const scrollSnapshot: ScrollSnapshot = {
+			textareaScrollTop: textareaRef.current?.scrollTop ?? null,
+			previewScrollTop: previewRef.current?.scrollTop ?? null,
+		};
+
 		onChange(nextValue);
 		requestAnimationFrame(() => {
 			const textarea = textareaRef.current;
@@ -151,6 +170,27 @@ export default function MarkdownEditor({
 
 			textarea.focus();
 			textarea.setSelectionRange(cursorPosition, cursorPosition);
+			restoreScroll(scrollSnapshot);
+
+			requestAnimationFrame(() => restoreScroll(scrollSnapshot));
+		});
+	}
+
+	function restoreScroll(snapshot: ScrollSnapshot) {
+		const textarea = textareaRef.current;
+		const preview = previewRef.current;
+
+		syncingScrollRef.current = true;
+		if (textarea && snapshot.textareaScrollTop !== null) {
+			textarea.scrollTop = snapshot.textareaScrollTop;
+		}
+
+		if (preview && snapshot.previewScrollTop !== null) {
+			preview.scrollTop = snapshot.previewScrollTop;
+		}
+
+		requestAnimationFrame(() => {
+			syncingScrollRef.current = false;
 		});
 	}
 
@@ -183,6 +223,62 @@ export default function MarkdownEditor({
 		);
 	}
 
+	function getCurrentSelection(): TextSelection {
+		const textarea = textareaRef.current;
+		if (!textarea) {
+			return {
+				start: value.length,
+				end: value.length,
+			};
+		}
+
+		return {
+			start: textarea.selectionStart ?? value.length,
+			end: textarea.selectionEnd ?? value.length,
+		};
+	}
+
+	function recordCurrentSelection() {
+		lastSelectionRef.current = getCurrentSelection();
+	}
+
+	function insertImageMarkdown(
+		imageMarkdown: string,
+		selection = getCurrentSelection(),
+	) {
+		const textarea = textareaRef.current;
+		if (!textarea) {
+			const separator = value && !value.endsWith("\n") ? "\n" : "";
+			onChange(`${value}${separator}${imageMarkdown}`);
+			return;
+		}
+
+		const { start, end } = selection;
+
+		if (start !== end) {
+			const nextValue = `${value.slice(0, start)}${imageMarkdown}${value.slice(end)}`;
+			updateSelection(nextValue, start + imageMarkdown.length);
+			return;
+		}
+
+		const lineStart = value.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+		const nextLineBreak = value.indexOf("\n", start);
+		const lineEnd = nextLineBreak === -1 ? value.length : nextLineBreak;
+		const lineText = value.slice(lineStart, lineEnd);
+
+		if (!lineText.trim()) {
+			const nextValue = `${value.slice(0, lineStart)}${imageMarkdown}${value.slice(lineEnd)}`;
+			updateSelection(nextValue, lineStart + imageMarkdown.length);
+			return;
+		}
+
+		const needsLineBreakBefore = start > 0 && value[start - 1] !== "\n";
+		const needsLineBreakAfter = start < value.length && value[start] !== "\n";
+		const snippet = `${needsLineBreakBefore ? "\n" : ""}${imageMarkdown}${needsLineBreakAfter ? "\n" : ""}`;
+		const nextValue = `${value.slice(0, start)}${snippet}${value.slice(end)}`;
+		updateSelection(nextValue, start + snippet.length);
+	}
+
 	async function handleFilesSelected(
 		event: React.ChangeEvent<HTMLInputElement>,
 	) {
@@ -195,22 +291,16 @@ export default function MarkdownEditor({
 		setFeedback(null);
 
 		try {
+			const selection = lastSelectionRef.current ?? getCurrentSelection();
 			const uploads = await onInsertImages(files);
-			const insertionStart =
-				textareaRef.current?.selectionStart ?? value.length;
-			const needsLineBreakBeforeImage =
-				insertionStart > 0 && value[insertionStart - 1] !== "\n";
-
 			const markdownBlock = uploads
 				.map(
 					(upload) =>
-						`![${fileNameToAlt(upload.name) || messages.newPost.imageDefaultAlt}](${upload.url})\n`,
+						`![${fileNameToAlt(upload.name) || messages.newPost.imageDefaultAlt}](${upload.url})`,
 				)
-				.join("");
+				.join("\n");
 
-			insertAtSelection(
-				`${needsLineBreakBeforeImage ? "\n" : ""}${markdownBlock}`,
-			);
+			insertImageMarkdown(markdownBlock, selection);
 			setFeedback({
 				tone: "success",
 				message: messages.newPost.imagesInserted(uploads.length),
@@ -343,6 +433,8 @@ export default function MarkdownEditor({
 			<button
 				type="button"
 				onClick={() => fileInputRef.current?.click()}
+				onFocus={recordCurrentSelection}
+				onMouseDown={recordCurrentSelection}
 				disabled={disabled || isUploading}
 				className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-purpleContrast/35 bg-purpleContrast/18 px-4 py-2 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/26 disabled:cursor-not-allowed disabled:opacity-50"
 			>
@@ -452,7 +544,16 @@ export default function MarkdownEditor({
 						<textarea
 							ref={textareaRef}
 							value={value}
-							onChange={(event) => onChange(event.target.value)}
+							onChange={(event) => {
+								lastSelectionRef.current = {
+									start: event.currentTarget.selectionStart ?? value.length,
+									end: event.currentTarget.selectionEnd ?? value.length,
+								};
+								onChange(event.target.value);
+							}}
+							onClick={recordCurrentSelection}
+							onKeyUp={recordCurrentSelection}
+							onSelect={recordCurrentSelection}
 							onScroll={() => syncEditorScroll("markdown")}
 							disabled={disabled}
 							rows={1}
