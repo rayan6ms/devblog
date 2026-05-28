@@ -101,7 +101,7 @@ const dictionaries = {
 			exploreFurther: "Explore more",
 			exploreTitle: "More ways to browse",
 			exploreDescription:
-				"Browse recent posts, trending posts, or posts by tag.",
+				"Browse recent posts, trending posts, or all-time popular posts.",
 			editorPicks: "Editor picks",
 			noRecommended:
 				"No recommended posts yet. This section will update once more posts are published.",
@@ -114,8 +114,8 @@ const dictionaries = {
 			trendingPostsDescription: "See what people are reading most right now.",
 			recentPosts: "Recent posts",
 			recentPostsDescription: "Start with the newest posts.",
-			browseByTag: "Browse by tag",
-			browseByTagDescription: "Filter posts by topic and tag.",
+			browseByTag: "Popular posts",
+			browseByTagDescription: "Read the posts with the most all-time views.",
 			noSectionPost: "No posts available in this section yet.",
 			noRecommendedCallouts:
 				"Recommended posts will appear here once more content is published.",
@@ -812,7 +812,8 @@ const dictionaries = {
 				"Uma visão rápida dos posts que as pessoas mais estão lendo agora.",
 			exploreFurther: "Explore mais",
 			exploreTitle: "Mais formas de navegar",
-			exploreDescription: "Veja posts recentes, em alta ou por tag.",
+			exploreDescription:
+				"Veja posts recentes, em alta ou populares de todos os tempos.",
 			editorPicks: "Escolhas do editor",
 			noRecommended:
 				"Ainda não há posts recomendados. Esta seção será atualizada quando mais posts forem publicados.",
@@ -825,8 +826,9 @@ const dictionaries = {
 			trendingPostsDescription: "Veja o que as pessoas mais estão lendo agora.",
 			recentPosts: "Posts recentes",
 			recentPostsDescription: "Comece pelos posts mais novos.",
-			browseByTag: "Explorar por tag",
-			browseByTagDescription: "Filtre os posts por assunto e tag.",
+			browseByTag: "Posts populares",
+			browseByTagDescription:
+				"Leia os posts com mais visualizações de todos os tempos.",
 			noSectionPost: "Ainda não há posts nesta seção.",
 			noRecommendedCallouts:
 				"Os posts recomendados aparecerão aqui quando mais conteúdo for publicado.",
@@ -1537,7 +1539,7 @@ const dictionaries = {
 			exploreFurther: "Explorar más",
 			exploreTitle: "Más formas de navegar",
 			exploreDescription:
-				"Explora publicaciones recientes, en tendencia o por tag.",
+				"Explora publicaciones recientes, en tendencia o populares de todos los tiempos.",
 			editorPicks: "Selecciones del editor",
 			noRecommended:
 				"Todavía no hay publicaciones recomendadas. Esta sección se actualizará cuando se publique más contenido.",
@@ -1550,8 +1552,9 @@ const dictionaries = {
 			trendingPostsDescription: "Mira qué están leyendo más ahora.",
 			recentPosts: "Publicaciones recientes",
 			recentPostsDescription: "Empieza por las publicaciones más nuevas.",
-			browseByTag: "Explorar por tag",
-			browseByTagDescription: "Filtra las publicaciones por tema y tag.",
+			browseByTag: "Publicaciones populares",
+			browseByTagDescription:
+				"Lee las publicaciones con más vistas de todos los tiempos.",
 			noSectionPost: "Todavía no hay publicaciones en esta sección.",
 			noRecommendedCallouts:
 				"Las publicaciones recomendadas aparecerán aquí cuando se publique más contenido.",
@@ -2278,7 +2281,7 @@ const germanMessages = {
 		exploreFurther: "Mehr entdecken",
 		exploreTitle: "Mehr Wege zum Stöbern",
 		exploreDescription:
-			"Durchsuche neueste Beiträge, Trend-Beiträge oder Beiträge nach Tag.",
+			"Durchsuche neueste Beiträge, Trend-Beiträge oder beliebte Beiträge aller Zeiten.",
 		editorPicks: "Auswahl der Redaktion",
 		noRecommended:
 			"Noch keine empfohlenen Beiträge. Dieser Bereich wird aktualisiert, sobald mehr Beiträge veröffentlicht sind.",
@@ -2291,8 +2294,9 @@ const germanMessages = {
 		trendingPostsDescription: "Sieh, was gerade am meisten gelesen wird.",
 		recentPosts: "Neueste Beiträge",
 		recentPostsDescription: "Beginne mit den neuesten Beiträgen.",
-		browseByTag: "Nach Tag durchsuchen",
-		browseByTagDescription: "Filtere Beiträge nach Thema und Tag.",
+		browseByTag: "Beliebte Beiträge",
+		browseByTagDescription:
+			"Lies die Beiträge mit den meisten Aufrufen aller Zeiten.",
 		noSectionPost: "In diesem Bereich gibt es noch keine Beiträge.",
 		noRecommendedCallouts:
 			"Empfohlene Beiträge erscheinen hier, sobald mehr Inhalte veröffentlicht sind.",
@@ -3030,7 +3034,8 @@ const russianMessages = {
 			"Короткий взгляд на посты, которые сейчас читают чаще всего.",
 		exploreFurther: "Смотреть дальше",
 		exploreTitle: "Больше способов посмотреть сайт",
-		exploreDescription: "Смотрите новые посты, тренды или подборки по тегам.",
+		exploreDescription:
+			"Смотрите новые посты, тренды или самые популярные посты за все время.",
 		editorPicks: "Выбор редактора",
 		noRecommended:
 			"Рекомендованных постов пока нет. Раздел обновится, когда появится больше опубликованных материалов.",
@@ -3043,8 +3048,9 @@ const russianMessages = {
 		trendingPostsDescription: "Посмотрите, что сейчас читают чаще всего.",
 		recentPosts: "Недавние посты",
 		recentPostsDescription: "Начните с самых новых постов.",
-		browseByTag: "По тегам",
-		browseByTagDescription: "Фильтруйте посты по теме и тегам.",
+		browseByTag: "Популярные посты",
+		browseByTagDescription:
+			"Читайте посты с самым большим числом просмотров за все время.",
 		noSectionPost: "Для этого раздела пока нет доступных постов.",
 		noRecommendedCallouts:
 			"Рекомендованные посты появятся здесь, когда будет опубликовано больше материалов.",
@@ -3779,7 +3785,7 @@ const frenchMessages = {
 		exploreFurther: "Explorer plus",
 		exploreTitle: "Plus de façons de parcourir",
 		exploreDescription:
-			"Parcourez les posts récents, les tendances ou les posts par tag.",
+			"Parcourez les posts récents, les tendances ou les posts populaires de tous les temps.",
 		editorPicks: "Choix de l'éditeur",
 		noRecommended:
 			"Aucun article recommandé pour le moment. Cette section se mettra à jour quand davantage de posts seront publiés.",
@@ -3793,8 +3799,9 @@ const frenchMessages = {
 			"Découvrez ce que les gens lisent le plus en ce moment.",
 		recentPosts: "Articles récents",
 		recentPostsDescription: "Commencez par les posts les plus récents.",
-		browseByTag: "Parcourir par tag",
-		browseByTagDescription: "Filtrez les posts par sujet et par tag.",
+		browseByTag: "Posts populaires",
+		browseByTagDescription:
+			"Lisez les posts avec le plus de vues de tous les temps.",
 		noSectionPost: "Aucun article n'est encore disponible pour cette section.",
 		noRecommendedCallouts:
 			"Les posts recommandés apparaîtront ici quand davantage de contenu sera publié.",
@@ -4527,7 +4534,7 @@ const japaneseMessages = {
 		trendingDescription: "いま最も読まれている投稿を手早く確認できます。",
 		exploreFurther: "もっと見る",
 		exploreTitle: "ほかの見方",
-		exploreDescription: "新着、トレンド、タグ別の投稿から探せます。",
+		exploreDescription: "新着、トレンド、累計人気の投稿から探せます。",
 		editorPicks: "編集部のおすすめ",
 		noRecommended:
 			"おすすめ記事はまだありません。公開済みコンテンツが増えると、この欄に表示されます。",
@@ -4540,8 +4547,8 @@ const japaneseMessages = {
 		trendingPostsDescription: "いま最も読まれている投稿を見られます。",
 		recentPosts: "新着記事",
 		recentPostsDescription: "いちばん新しい投稿から見ていけます。",
-		browseByTag: "タグで探す",
-		browseByTagDescription: "トピックやタグで投稿を絞り込みます。",
+		browseByTag: "人気記事",
+		browseByTagDescription: "累計閲覧数が最も多い投稿を読めます。",
 		noSectionPost: "このセクションに表示できる投稿はまだありません。",
 		noRecommendedCallouts:
 			"おすすめ投稿は、さらにコンテンツが増えるとここに表示されます。",

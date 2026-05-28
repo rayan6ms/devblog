@@ -45,7 +45,7 @@ function normalizePost(post: IPost): IPost {
 }
 
 async function fetchCatalog(params?: {
-	sort?: "recent" | "trending" | "recommended";
+	sort?: "recent" | "trending" | "recommended" | "popular";
 	page?: number;
 	limit?: number;
 	query?: string;
@@ -127,6 +127,11 @@ export async function getRecentPosts(
 
 export async function getTrendingPosts(limit?: number) {
 	const result = await fetchCatalog({ sort: "trending", limit });
+	return result.posts;
+}
+
+export async function getPopularPosts(limit?: number) {
+	const result = await fetchCatalog({ sort: "popular", limit });
 	return result.posts;
 }
 

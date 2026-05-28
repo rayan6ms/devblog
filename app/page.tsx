@@ -21,14 +21,27 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
 	const [locale, session] = await Promise.all([getRequestLocale(), auth()]);
 	const userId = session?.user?.id ?? null;
-	const [recent, trending, recommended] = await Promise.all([
-		getPostCatalog({ page: 1, limit: 3, sort: "recent", userId, locale }),
-		getPostCatalog({ limit: 4, sort: "trending", locale }),
-		getRecommendedPostCatalog({ limit: 5, userId, locale }),
+	const recent = await getPostCatalog({
+		page: 1,
+		limit: 3,
+		sort: "recent",
+		userId,
+		locale,
+	});
+	const [trending, popular, recommended] = await Promise.all([
+		getPostCatalog({ limit: 6, sort: "trending", locale }),
+		getPostCatalog({ limit: 3, sort: "popular", locale }),
+		getRecommendedPostCatalog({
+			limit: 5,
+			userId,
+			locale,
+			excludeIds: recent.posts.map((post) => post.id),
+		}),
 	]);
 
 	return (
 		<HomePageClient
+			popularPosts={popular.posts}
 			recentPosts={recent.posts}
 			recommendedPosts={recommended.posts}
 			trendingPosts={trending.posts}

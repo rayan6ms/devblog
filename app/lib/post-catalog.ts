@@ -30,6 +30,7 @@ export type PostListItem = {
 	author: string;
 	authorSlug: string;
 	date: string;
+	updatedAt: string;
 	views: number;
 	bookmarks: number;
 	isBookmarked: boolean;

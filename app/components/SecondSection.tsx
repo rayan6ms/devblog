@@ -9,8 +9,9 @@ import TrendingItem from "./TrendingItem";
 
 interface SecondSectionProps {
 	posts: {
+		popular: IPost[];
 		recent: IPost[];
-		recommended: IPost[];
+		trending: IPost[];
 	};
 }
 
@@ -29,34 +30,46 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 
 	const sections = [
 		{
+			posts: posts.trending,
 			title: messages.home.trendingPosts,
 			path: "/trending",
 			description: messages.home.trendingPostsDescription,
 		},
 		{
+			posts: posts.recent,
 			title: messages.home.recentPosts,
 			path: "/recent",
 			description: messages.home.recentPostsDescription,
 		},
 		{
+			posts: posts.popular,
 			title: messages.home.browseByTag,
-			path: "/tag",
+			path: "/popular",
 			description: messages.home.browseByTagDescription,
 		},
 	];
 
+	const sectionFeaturedPostIds = new Set(
+		[posts.recent[0]?.id, posts.popular[0]?.id].filter(
+			(id): id is string => Boolean(id),
+		),
+	);
+	const trendingSectionPosts = posts.trending.filter(
+		(post) => !sectionFeaturedPostIds.has(post.id),
+	);
+
 	return (
 		<section className="grid w-full gap-8 xl:grid-cols-3">
 			{sections.map((section, index) => {
-				const featuredPost =
-					posts.recent[index] ||
-					posts.recent[0] ||
-					posts.recommended[index] ||
-					posts.recommended[0];
+				const sectionPosts =
+					index === 0 && trendingSectionPosts.length > 0
+						? trendingSectionPosts
+						: section.posts;
+				const [featuredPost, ...calloutPosts] = sectionPosts;
 
 				return (
 					<div
-						key={section.path}
+						key={section.title}
 						className="mx-auto flex h-full w-full max-w-[380px] flex-col items-stretch gap-5 rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-lg shadow-zinc-950/10 lg:p-8 xl:max-w-none"
 					>
 						<div className="w-full">
@@ -77,9 +90,9 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 								{messages.home.noSectionPost}
 							</div>
 						)}
-						{posts.recommended.length > 0 ? (
+						{calloutPosts.length > 0 ? (
 							<div className="flex flex-col gap-5">
-								{posts.recommended
+								{calloutPosts
 									.slice(0, 2)
 									.map((post: IPost, postIndex: number) => (
 										<TrendingItem

@@ -8,10 +8,12 @@ import SecondSection from "@/components/SecondSection";
 import type { IPost } from "@/lib/posts-client";
 
 export default function HomePageClient({
+	popularPosts,
 	recentPosts,
 	recommendedPosts,
 	trendingPosts,
 }: {
+	popularPosts: IPost[];
 	recentPosts: IPost[];
 	recommendedPosts: IPost[];
 	trendingPosts: IPost[];
@@ -102,7 +104,11 @@ export default function HomePageClient({
 							</p>
 						</div>
 						<SecondSection
-							posts={{ recent: recentPosts, recommended: recommendedPosts }}
+							posts={{
+								popular: popularPosts,
+								recent: recentPosts,
+								trending: trendingPosts,
+							}}
 						/>
 					</div>
 				</section>

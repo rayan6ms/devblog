@@ -248,6 +248,7 @@ function mapPostForList(
 		author: resolveAuthorName(post.author),
 		authorSlug: post.author.slug?.trim() || "",
 		date: post.postedAt.toISOString(),
+		updatedAt: (post.lastEditedAt ?? post.updatedAt).toISOString(),
 		views: post.views,
 		bookmarks: post.bookmarks,
 		isBookmarked: false,
@@ -350,42 +351,71 @@ export const getPublishedPostsForFeed = cache(async (): Promise<PostPageData[]> 
 });
 
 function sortRecentPosts(posts: PostListItem[]) {
-	return [...posts].sort((a, b) => b.date.localeCompare(a.date));
+	return [...posts].sort((a, b) => {
+		const aActivityDate = a.updatedAt || a.date;
+		const bActivityDate = b.updatedAt || b.date;
+
+		return (
+			bActivityDate.localeCompare(aActivityDate) ||
+			b.date.localeCompare(a.date)
+		);
+	});
 }
 
-function sortTrendingPosts(posts: PostListItem[], limit?: number) {
+function sortPopularPosts(posts: PostListItem[], limit?: number) {
 	const sorted = [...posts].sort(
 		(a, b) =>
 			b.views - a.views ||
 			b.bookmarks - a.bookmarks ||
 			b.date.localeCompare(a.date),
 	);
+
+	return limit ? sorted.slice(0, limit) : sorted;
+}
+
+async function sortTrendingPosts(posts: PostListItem[], limit?: number) {
+	if (posts.length === 0) {
+		return posts;
+	}
+
 	const recentWindowStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
-	const recentPool = sorted.filter(
-		(post) => Date.parse(post.date) >= recentWindowStart,
+	const recentViews = await prisma.userView.groupBy({
+		by: ["postId"],
+		where: {
+			createdAt: {
+				gte: new Date(recentWindowStart),
+			},
+			postId: {
+				in: posts.map((post) => post.id),
+			},
+		},
+		_count: {
+			postId: true,
+		},
+	});
+	const recentViewCountByPostId = new Map(
+		recentViews.map((view) => [view.postId, view._count.postId]),
 	);
 
-	if (recentPool.length === 0) {
-		return limit ? sorted.slice(0, limit) : sorted;
-	}
-	if (!limit) {
-		return recentPool;
-	}
-	if (recentPool.length >= limit) {
-		return recentPool.slice(0, limit);
+	if (recentViewCountByPostId.size === 0) {
+		return sortPopularPosts(posts, limit);
 	}
 
-	const usedIds = new Set(recentPool.map((post) => post.id));
-	const topUp = sorted.filter((post) => !usedIds.has(post.id));
-	return [...recentPool, ...topUp].slice(0, limit);
+	const sorted = [...posts].sort(
+		(a, b) =>
+			(recentViewCountByPostId.get(b.id) ?? 0) -
+				(recentViewCountByPostId.get(a.id) ?? 0) ||
+			b.views - a.views ||
+			b.bookmarks - a.bookmarks ||
+			b.date.localeCompare(a.date),
+	);
+
+	return limit ? sorted.slice(0, limit) : sorted;
 }
 
 function sortFallbackRecommendedPosts(posts: PostListItem[], limit?: number) {
 	const blended = mergeUniquePostLists(
-		[
-			sortTrendingPosts(posts, Math.max(limit ?? 10, 10)),
-			sortRecentPosts(posts),
-		],
+		[sortPopularPosts(posts, Math.max(limit ?? 10, 10)), sortRecentPosts(posts)],
 		limit,
 	);
 
@@ -489,7 +519,7 @@ export async function getPostCatalog(options?: {
 	limit?: number;
 	query?: string;
 	tagSlugs?: string[];
-	sort?: "recent" | "trending";
+	sort?: "recent" | "trending" | "popular";
 	userId?: string | null;
 	locale?: Locale | null;
 }): Promise<PostCatalogResponse> {
@@ -508,8 +538,10 @@ export async function getPostCatalog(options?: {
 
 	const sorted =
 		options?.sort === "trending"
-			? sortTrendingPosts(filtered)
-			: sortRecentPosts(filtered);
+			? await sortTrendingPosts(filtered)
+			: options?.sort === "popular"
+				? sortPopularPosts(filtered)
+				: sortRecentPosts(filtered);
 	const hydrated = await hydratePostUserState(
 		paginatePosts(sorted, options?.page, options?.limit),
 		options?.userId,
@@ -651,12 +683,15 @@ export async function getRecommendedPostCatalog(options?: {
 	userId?: string | null;
 	limit?: number;
 	locale?: Locale | null;
+	excludeIds?: string[];
 }): Promise<PostCatalogResponse> {
 	const limit = options?.limit ?? 10;
+	const excludedIds = new Set(options?.excludeIds ?? []);
 	const allPosts = await getPublishedPostsWithAuthor(options?.locale);
+	const candidatePosts = allPosts.filter((post) => !excludedIds.has(post.id));
 	const fallbackPosts = await hydratePostUserState(
 		sortFallbackRecommendedPosts(
-			allPosts.map((post) => mapPostForList(post, options?.locale)),
+			candidatePosts.map((post) => mapPostForList(post, options?.locale)),
 			limit,
 		),
 		options?.userId,
@@ -679,6 +714,7 @@ export async function getRecommendedPostCatalog(options?: {
 
 	const scoredPosts = allPosts
 		.filter((post) => !signals.excludedIds.has(post.id))
+		.filter((post) => !excludedIds.has(post.id))
 		.map((post) => ({
 			post,
 			score: scoreRecommendedPost(post, signals),

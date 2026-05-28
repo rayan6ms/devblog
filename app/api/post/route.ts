@@ -56,7 +56,12 @@ export async function GET(request: Request) {
 			limit,
 			query,
 			tagSlugs: tags,
-			sort: sort === "trending" ? "trending" : "recent",
+			sort:
+				sort === "trending"
+					? "trending"
+					: sort === "popular"
+						? "popular"
+						: "recent",
 			userId: session?.user?.id ?? null,
 			locale,
 		});
