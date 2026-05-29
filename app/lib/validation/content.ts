@@ -1,5 +1,6 @@
-import { LOCALES } from "@/lib/i18n";
 import { z } from "zod";
+import { LOCALES } from "@/lib/i18n";
+import { PENDING_IMAGE_PREFIX } from "@/lib/image-upload";
 
 export const MAX_POST_TITLE = 120;
 export const MAX_POST_SLUG = 140;
@@ -111,6 +112,9 @@ export function buildPostSchema(
 				.string()
 				.trim()
 				.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT))
+				.refine((value) => !value.includes(PENDING_IMAGE_PREFIX), {
+					message: messages.imageInvalid,
+				})
 				.optional()
 				.default(""),
 			thumbnail: imageSourceSchema,
@@ -137,7 +141,10 @@ export function buildPostSchema(
 			description: z
 				.string()
 				.trim()
-				.max(MAX_POST_DESCRIPTION, messages.descriptionMax(MAX_POST_DESCRIPTION))
+				.max(
+					MAX_POST_DESCRIPTION,
+					messages.descriptionMax(MAX_POST_DESCRIPTION),
+				)
 				.optional()
 				.default(""),
 			status: z.enum(["draft", "pending_review", "published"]).default("draft"),
@@ -204,7 +211,10 @@ export function buildPostTranslationSchema(
 			.string()
 			.trim()
 			.min(30, messages.contentMin)
-			.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT)),
+			.max(MAX_POST_CONTENT, messages.contentMax(MAX_POST_CONTENT))
+			.refine((value) => !value.includes(PENDING_IMAGE_PREFIX), {
+				message: messages.imageInvalid,
+			}),
 		description: z
 			.string()
 			.trim()

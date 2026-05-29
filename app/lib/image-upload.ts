@@ -57,3 +57,17 @@ export async function uploadImageFile(file: File) {
 
 	return data;
 }
+
+export async function deleteUploadedImageUrls(urls: string[]) {
+	const uniqueUrls = Array.from(new Set(urls.filter(Boolean)));
+	if (uniqueUrls.length === 0) {
+		return;
+	}
+
+	await fetch("/api/upload", {
+		method: "DELETE",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ urls: uniqueUrls }),
+		keepalive: true,
+	}).catch(() => null);
+}

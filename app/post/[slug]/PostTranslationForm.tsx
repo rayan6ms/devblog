@@ -1,22 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
 import { FaFileLines, FaGlobe, FaLanguage } from "react-icons/fa6";
 import type { z } from "zod";
 import { useI18n } from "@/components/LocaleProvider";
+import { getLocaleLabel, type Locale, localeOptions } from "@/lib/i18n-shared";
 import {
 	createPendingImageUrl,
+	deleteUploadedImageUrls,
 	type ImageUploadResponse,
+	PENDING_IMAGE_PREFIX,
 	uploadImageFile,
 	validateImageFile,
 } from "@/lib/image-upload";
-import {
-	getLocaleLabel,
-	localeOptions,
-	type Locale,
-} from "@/lib/i18n-shared";
 import {
 	buildPostTranslationSchema,
 	MAX_POST_CONTENT,
@@ -26,7 +24,9 @@ import {
 } from "@/lib/validation/content";
 import MarkdownEditor from "@/new_post/MarkdownEditor";
 
-type TranslationFormData = z.input<ReturnType<typeof buildPostTranslationSchema>>;
+type TranslationFormData = z.input<
+	ReturnType<typeof buildPostTranslationSchema>
+>;
 
 type TranslationRecord = {
 	locale: Locale;
@@ -59,6 +59,7 @@ type PendingContentImage = {
 	name: string;
 	placeholderUrl: string;
 	previewUrl: string;
+	uploadedUrl?: string;
 };
 
 function getLocaleOptions(originalLocale: Locale) {
@@ -94,6 +95,11 @@ export default function PostTranslationForm({
 	const [pendingContentImages, setPendingContentImages] = useState<
 		Record<string, PendingContentImage>
 	>({});
+	const pendingContentImagesRef = useRef<Record<string, PendingContentImage>>(
+		{},
+	);
+	const unsavedContentImageUrlsRef = useRef<Set<string>>(new Set());
+	const submitInFlightRef = useRef(false);
 	const previousPendingContentImagesRef = useRef<
 		Record<string, PendingContentImage>
 	>({});
@@ -122,13 +128,17 @@ export default function PostTranslationForm({
 	const translationsByLocale = useMemo(
 		() =>
 			new Map(
-				localTranslations.map((translation) => [translation.locale, translation]),
+				localTranslations.map((translation) => [
+					translation.locale,
+					translation,
+				]),
 			),
 		[localTranslations],
 	);
 	const activeTranslation = translationsByLocale.get(selectedLocale);
 	const content = watch("content") || "";
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: selectedLocale must reset the form when switching between languages without existing translations.
 	useEffect(() => {
 		reset({
 			title: activeTranslation?.title || "",
@@ -152,15 +162,32 @@ export default function PostTranslationForm({
 
 	useEffect(
 		() => () => {
-			for (const upload of Object.values(previousPendingContentImagesRef.current)) {
+			for (const upload of Object.values(
+				previousPendingContentImagesRef.current,
+			)) {
 				URL.revokeObjectURL(upload.previewUrl);
 			}
+
+			void deleteUploadedImageUrls([...unsavedContentImageUrlsRef.current]);
+		},
+		[],
+	);
+
+	const updatePendingContentImages = useCallback(
+		(
+			updater: (
+				current: Record<string, PendingContentImage>,
+			) => Record<string, PendingContentImage>,
+		) => {
+			const next = updater(pendingContentImagesRef.current);
+			pendingContentImagesRef.current = next;
+			setPendingContentImages(next);
 		},
 		[],
 	);
 
 	useEffect(() => {
-		setPendingContentImages((current) => {
+		updatePendingContentImages((current) => {
 			let changed = false;
 			const next = { ...current };
 
@@ -175,7 +202,23 @@ export default function PostTranslationForm({
 
 			return changed ? next : current;
 		});
-	}, [content]);
+
+		const unusedUploadedUrls = Array.from(
+			unsavedContentImageUrlsRef.current,
+		).filter(
+			(url) =>
+				!content.includes(url) &&
+				!Object.values(pendingContentImagesRef.current).some(
+					(upload) => upload.uploadedUrl === url,
+				),
+		);
+		if (unusedUploadedUrls.length > 0) {
+			for (const url of unusedUploadedUrls) {
+				unsavedContentImageUrlsRef.current.delete(url);
+			}
+			void deleteUploadedImageUrls(unusedUploadedUrls);
+		}
+	}, [content, updatePendingContentImages]);
 
 	async function uploadImage(file: File): Promise<ImageUploadResponse> {
 		try {
@@ -193,7 +236,9 @@ export default function PostTranslationForm({
 		for (const file of files) {
 			const validationError = validateImageFile(file);
 			if (validationError) {
-				throw new Error(translateTranslationFieldError(validationError, messages));
+				throw new Error(
+					translateTranslationFieldError(validationError, messages),
+				);
 			}
 		}
 
@@ -207,7 +252,7 @@ export default function PostTranslationForm({
 			};
 		});
 
-		setPendingContentImages((current) => {
+		updatePendingContentImages((current) => {
 			const next = { ...current };
 			for (const upload of queuedUploads) {
 				next[upload.placeholderUrl] = upload;
@@ -222,26 +267,58 @@ export default function PostTranslationForm({
 	}
 
 	function resolveEditorImageSrc(src: string) {
-		return pendingContentImages[src]?.previewUrl || src;
+		return pendingContentImagesRef.current[src]?.previewUrl || src;
 	}
 
 	async function resolvePendingContentUploads() {
 		let nextContent = getValues("content") || "";
-		const activeUploads = Object.values(pendingContentImages).filter((upload) =>
-			nextContent.includes(upload.placeholderUrl),
+		const activeUploads = Object.values(pendingContentImagesRef.current).filter(
+			(upload) => nextContent.includes(upload.placeholderUrl),
 		);
 
+		const resolvedUploads: Array<{
+			placeholderUrl: string;
+			url: string;
+		}> = [];
 		for (const upload of activeUploads) {
-			const resolved = await uploadImage(upload.file);
-			nextContent = nextContent.split(upload.placeholderUrl).join(resolved.url);
-			setValue("content", nextContent, { shouldValidate: true });
-			setPendingContentImages((current) => {
-				if (!current[upload.placeholderUrl]) {
-					return current;
-				}
+			if (upload.uploadedUrl) {
+				resolvedUploads.push({
+					placeholderUrl: upload.placeholderUrl,
+					url: upload.uploadedUrl,
+				});
+				continue;
+			}
 
+			const resolved = await uploadImage(upload.file);
+			unsavedContentImageUrlsRef.current.add(resolved.url);
+			updatePendingContentImages((current) => ({
+				...current,
+				[upload.placeholderUrl]: {
+					...upload,
+					uploadedUrl: resolved.url,
+				},
+			}));
+			resolvedUploads.push({
+				placeholderUrl: upload.placeholderUrl,
+				url: resolved.url,
+			});
+		}
+
+		for (const upload of resolvedUploads) {
+			nextContent = nextContent.split(upload.placeholderUrl).join(upload.url);
+		}
+
+		if (nextContent.includes(PENDING_IMAGE_PREFIX)) {
+			throw new Error(messages.newPost.imageUploadError);
+		}
+
+		if (resolvedUploads.length > 0) {
+			setValue("content", nextContent, { shouldValidate: true });
+			updatePendingContentImages((current) => {
 				const next = { ...current };
-				delete next[upload.placeholderUrl];
+				for (const upload of resolvedUploads) {
+					delete next[upload.placeholderUrl];
+				}
 				return next;
 			});
 		}
@@ -249,7 +326,9 @@ export default function PostTranslationForm({
 
 	function applyServerFieldErrors(
 		fields:
-			| Partial<Record<keyof TranslationFormData | "locale", string[] | undefined>>
+			| Partial<
+					Record<keyof TranslationFormData | "locale", string[] | undefined>
+			  >
 			| undefined,
 	) {
 		if (!fields) {
@@ -291,79 +370,92 @@ export default function PostTranslationForm({
 	}
 
 	async function saveTranslation() {
+		if (submitInFlightRef.current) {
+			return;
+		}
+
+		submitInFlightRef.current = true;
 		setSubmitState({ tone: null, message: "" });
 		clearErrors();
 
 		try {
-			setIsResolvingUploads(true);
-			await resolvePendingContentUploads();
-		} catch (error) {
-			setSubmitState({
-				tone: "error",
-				message:
-					error instanceof Error
-						? error.message
-						: messages.newPost.imageUploadError,
-			});
-			return;
-		} finally {
-			setIsResolvingUploads(false);
-		}
-
-		await handleSubmit(async (data) => {
-			const response = await fetch(`/api/post/${postSlug}/translations`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					locale: selectedLocale,
-					...data,
-					content: getValues("content") || data.content,
-				}),
-			});
-
-			const result = (await response.json().catch(() => null)) as
-				| {
-						error?: string;
-						fields?: Partial<
-							Record<keyof TranslationFormData | "locale", string[] | undefined>
-						>;
-					}
-				| null;
-
-			if (!response.ok) {
-				applyServerFieldErrors(result?.fields);
+			try {
+				setIsResolvingUploads(true);
+				await resolvePendingContentUploads();
+			} catch (error) {
 				setSubmitState({
 					tone: "error",
-					message: translateTranslationFieldError(
-						result?.error || messages.newPost.translationSaveError,
-						messages,
-					),
+					message:
+						error instanceof Error
+							? error.message
+							: messages.newPost.imageUploadError,
 				});
 				return;
+			} finally {
+				setIsResolvingUploads(false);
 			}
 
-			setSubmitState({
-				tone: "success",
-				message: messages.newPost.translationSaveSuccess,
-			});
-			setLocalTranslations((current) => {
-				const next = current.filter(
-					(translation) => translation.locale !== selectedLocale,
-				);
-
-				return [
-					...next,
-					{
+			await handleSubmit(async (data) => {
+				const response = await fetch(`/api/post/${postSlug}/translations`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
 						locale: selectedLocale,
-						title: data.title.trim(),
-						description: data.description?.trim() || "",
-						thumbnailAlt: data.thumbnailAlt?.trim() || "",
-						content: (getValues("content") || data.content).trim(),
-						updatedAt: new Date().toISOString(),
-					},
-				].sort((left, right) => left.locale.localeCompare(right.locale));
+						...data,
+						content: getValues("content") || data.content,
+					}),
+				});
+
+				const result = (await response.json().catch(() => null)) as {
+					error?: string;
+					fields?: Partial<
+						Record<keyof TranslationFormData | "locale", string[] | undefined>
+					>;
+				} | null;
+
+				if (!response.ok) {
+					applyServerFieldErrors(result?.fields);
+					setSubmitState({
+						tone: "error",
+						message: translateTranslationFieldError(
+							result?.error || messages.newPost.translationSaveError,
+							messages,
+						),
+					});
+					return;
+				}
+
+				setSubmitState({
+					tone: "success",
+					message: messages.newPost.translationSaveSuccess,
+				});
+				unsavedContentImageUrlsRef.current.clear();
+				setLocalTranslations((current) => {
+					const next = current.filter(
+						(translation) => translation.locale !== selectedLocale,
+					);
+
+					return [
+						...next,
+						{
+							locale: selectedLocale,
+							title: data.title.trim(),
+							description: data.description?.trim() || "",
+							thumbnailAlt: data.thumbnailAlt?.trim() || "",
+							content: (getValues("content") || data.content).trim(),
+							updatedAt: new Date().toISOString(),
+						},
+					].sort((left, right) => left.locale.localeCompare(right.locale));
+				});
+			})();
+		} catch {
+			setSubmitState({
+				tone: "error",
+				message: messages.newPost.translationSaveError,
 			});
-		})();
+		} finally {
+			submitInFlightRef.current = false;
+		}
 	}
 
 	return (
@@ -400,18 +492,6 @@ export default function PostTranslationForm({
 					</p>
 				</div>
 			</div>
-
-			{submitState.message ? (
-				<div
-					className={`mt-5 rounded-[22px] border px-4 py-3 text-sm ${
-						submitState.tone === "error"
-							? "border-red-500/25 bg-red-500/10 text-red-200"
-							: "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
-					}`}
-				>
-					{submitState.message}
-				</div>
-			) : null}
 
 			{availableLocales.length === 0 ? (
 				<p className="mt-5 text-sm text-zinc-400">
@@ -581,6 +661,18 @@ export default function PostTranslationForm({
 								</div>
 							</div>
 						</div>
+
+						{submitState.message ? (
+							<div
+								className={`rounded-[22px] border px-4 py-3 text-sm ${
+									submitState.tone === "error"
+										? "border-red-500/25 bg-red-500/10 text-red-200"
+										: "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
+								}`}
+							>
+								{submitState.message}
+							</div>
+						) : null}
 
 						<button
 							type="button"

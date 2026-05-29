@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
 import {
 	FaArrowsRotate,
@@ -18,14 +18,16 @@ import {
 import type { z } from "zod";
 import { useI18n } from "@/components/LocaleProvider";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
+import { localeOptions } from "@/lib/i18n-shared";
 import {
 	ACCEPTED_IMAGE_TYPES,
 	createPendingImageUrl,
+	deleteUploadedImageUrls,
 	type ImageUploadResponse,
+	PENDING_IMAGE_PREFIX,
 	uploadImageFile,
 	validateImageFile,
 } from "@/lib/image-upload";
-import { localeOptions } from "@/lib/i18n-shared";
 import {
 	generatePostDescription,
 	getReadingTimeMinutes,
@@ -63,6 +65,7 @@ type PendingContentImage = {
 	name: string;
 	placeholderUrl: string;
 	previewUrl: string;
+	uploadedUrl?: string;
 };
 
 type PendingThumbnailImage = {
@@ -100,10 +103,18 @@ export default function Form({
 	>({});
 	const [pendingThumbnail, setPendingThumbnail] =
 		useState<PendingThumbnailImage | null>(null);
+	const pendingContentImagesRef = useRef<Record<string, PendingContentImage>>(
+		{},
+	);
+	const unsavedContentImageUrlsRef = useRef<Set<string>>(new Set());
+	const unsavedThumbnailUrlRef = useRef<string | null>(null);
+	const submitInFlightRef = useRef(false);
 	const previousPendingContentImagesRef = useRef<
 		Record<string, PendingContentImage>
 	>({});
-	const previousPendingThumbnailRef = useRef<PendingThumbnailImage | null>(null);
+	const previousPendingThumbnailRef = useRef<PendingThumbnailImage | null>(
+		null,
+	);
 	const [markdownToolbarPortal, setMarkdownToolbarPortal] =
 		useState<HTMLDivElement | null>(null);
 
@@ -203,19 +214,41 @@ export default function Form({
 
 	useEffect(
 		() => () => {
-			for (const upload of Object.values(previousPendingContentImagesRef.current)) {
+			for (const upload of Object.values(
+				previousPendingContentImagesRef.current,
+			)) {
 				URL.revokeObjectURL(upload.previewUrl);
 			}
 
 			if (previousPendingThumbnailRef.current) {
 				URL.revokeObjectURL(previousPendingThumbnailRef.current.previewUrl);
 			}
+
+			void deleteUploadedImageUrls([
+				...unsavedContentImageUrlsRef.current,
+				...(unsavedThumbnailUrlRef.current
+					? [unsavedThumbnailUrlRef.current]
+					: []),
+			]);
+		},
+		[],
+	);
+
+	const updatePendingContentImages = useCallback(
+		(
+			updater: (
+				current: Record<string, PendingContentImage>,
+			) => Record<string, PendingContentImage>,
+		) => {
+			const next = updater(pendingContentImagesRef.current);
+			pendingContentImagesRef.current = next;
+			setPendingContentImages(next);
 		},
 		[],
 	);
 
 	useEffect(() => {
-		setPendingContentImages((current) => {
+		updatePendingContentImages((current) => {
 			let changed = false;
 			const next = { ...current };
 
@@ -230,7 +263,23 @@ export default function Form({
 
 			return changed ? next : current;
 		});
-	}, [content]);
+
+		const unusedUploadedUrls = Array.from(
+			unsavedContentImageUrlsRef.current,
+		).filter(
+			(url) =>
+				!content.includes(url) &&
+				!Object.values(pendingContentImagesRef.current).some(
+					(upload) => upload.uploadedUrl === url,
+				),
+		);
+		if (unusedUploadedUrls.length > 0) {
+			for (const url of unusedUploadedUrls) {
+				unsavedContentImageUrlsRef.current.delete(url);
+			}
+			void deleteUploadedImageUrls(unusedUploadedUrls);
+		}
+	}, [content, updatePendingContentImages]);
 
 	async function uploadImage(file: File): Promise<ImageUploadResponse> {
 		try {
@@ -262,7 +311,7 @@ export default function Form({
 			};
 		});
 
-		setPendingContentImages((current) => {
+		updatePendingContentImages((current) => {
 			const next = { ...current };
 			for (const upload of queuedUploads) {
 				next[upload.placeholderUrl] = upload;
@@ -277,7 +326,7 @@ export default function Form({
 	}
 
 	function resolveEditorImageSrc(src: string) {
-		return pendingContentImages[src]?.previewUrl || src;
+		return pendingContentImagesRef.current[src]?.previewUrl || src;
 	}
 
 	async function resolvePendingAssets() {
@@ -286,27 +335,60 @@ export default function Form({
 
 		if (pendingThumbnail) {
 			const upload = await uploadImage(pendingThumbnail.file);
+			unsavedThumbnailUrlRef.current = upload.url;
 			nextThumbnail = upload.url;
 			setValue("thumbnail", upload.url, { shouldValidate: true });
 			clearErrors("thumbnail");
 			setPendingThumbnail(null);
 		}
 
-		const activeContentUploads = Object.values(pendingContentImages).filter(
-			(upload) => nextContent.includes(upload.placeholderUrl),
-		);
+		const activeContentUploads = Object.values(
+			pendingContentImagesRef.current,
+		).filter((upload) => nextContent.includes(upload.placeholderUrl));
 
+		const resolvedContentUploads: Array<{
+			placeholderUrl: string;
+			url: string;
+		}> = [];
 		for (const upload of activeContentUploads) {
-			const resolved = await uploadImage(upload.file);
-			nextContent = nextContent.split(upload.placeholderUrl).join(resolved.url);
-			setValue("content", nextContent, { shouldValidate: true });
-			setPendingContentImages((current) => {
-				if (!current[upload.placeholderUrl]) {
-					return current;
-				}
+			if (upload.uploadedUrl) {
+				resolvedContentUploads.push({
+					placeholderUrl: upload.placeholderUrl,
+					url: upload.uploadedUrl,
+				});
+				continue;
+			}
 
+			const resolved = await uploadImage(upload.file);
+			unsavedContentImageUrlsRef.current.add(resolved.url);
+			updatePendingContentImages((current) => ({
+				...current,
+				[upload.placeholderUrl]: {
+					...upload,
+					uploadedUrl: resolved.url,
+				},
+			}));
+			resolvedContentUploads.push({
+				placeholderUrl: upload.placeholderUrl,
+				url: resolved.url,
+			});
+		}
+
+		for (const upload of resolvedContentUploads) {
+			nextContent = nextContent.split(upload.placeholderUrl).join(upload.url);
+		}
+
+		if (nextContent.includes(PENDING_IMAGE_PREFIX)) {
+			throw new Error(messages.newPost.imageUploadError);
+		}
+
+		if (resolvedContentUploads.length > 0) {
+			setValue("content", nextContent, { shouldValidate: true });
+			updatePendingContentImages((current) => {
 				const next = { ...current };
-				delete next[upload.placeholderUrl];
+				for (const upload of resolvedContentUploads) {
+					delete next[upload.placeholderUrl];
+				}
 				return next;
 			});
 		}
@@ -332,6 +414,10 @@ export default function Form({
 			}
 
 			setValue("thumbnail", "", { shouldValidate: false });
+			if (unsavedThumbnailUrlRef.current) {
+				void deleteUploadedImageUrls([unsavedThumbnailUrlRef.current]);
+				unsavedThumbnailUrlRef.current = null;
+			}
 			clearErrors("thumbnail");
 			setPendingThumbnail({
 				file,
@@ -379,80 +465,96 @@ export default function Form({
 	}
 
 	async function submitPost(nextStatus: PostStatus) {
-		setValue("status", nextStatus, { shouldValidate: true });
-		setSubmitState({ tone: null, message: "" });
-		clearErrors();
-
-		try {
-			setIsResolvingUploads(true);
-			await resolvePendingAssets();
-		} catch (error) {
-			setSubmitState({
-				tone: "error",
-				message:
-					error instanceof Error
-						? error.message
-						: messages.newPost.imageUploadError,
-			});
+		if (submitInFlightRef.current) {
 			return;
-		} finally {
-			setIsResolvingUploads(false);
 		}
 
-		await handleSubmit(async (data) => {
-			const response = await fetch(
-				mode === "edit" && existingSlug
-					? `/api/post/${existingSlug}`
-					: "/api/post",
-				{
-					method: mode === "edit" ? "PATCH" : "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						...data,
-						status: nextStatus,
-						content: getValues("content") || data.content,
-						thumbnail: getValues("thumbnail") || data.thumbnail,
-					}),
-				},
-			);
+		submitInFlightRef.current = true;
+		try {
+			setValue("status", nextStatus, { shouldValidate: true });
+			setSubmitState({ tone: null, message: "" });
+			clearErrors();
 
-			const result = (await response.json().catch(() => null)) as {
-				error?: string;
-				fields?: Partial<Record<keyof PostFormData, string[] | undefined>>;
-				slug?: string;
-				status?: PostStatus;
-			} | null;
-
-			if (!response.ok) {
-				applyServerFieldErrors(result?.fields);
+			try {
+				setIsResolvingUploads(true);
+				await resolvePendingAssets();
+			} catch (error) {
 				setSubmitState({
 					tone: "error",
-					message: translatePostFieldError(
-						result?.error || messages.newPost.submitError,
-						messages,
-					),
+					message:
+						error instanceof Error
+							? error.message
+							: messages.newPost.imageUploadError,
 				});
 				return;
+			} finally {
+				setIsResolvingUploads(false);
 			}
 
-			setSubmitState({
-				tone: "success",
-				message:
-					nextStatus === "published"
-						? messages.newPost.submitSuccessPublished
-						: nextStatus === "pending_review"
-							? messages.newPost.submitSuccessReview
-							: messages.newPost.submitSuccessDraft,
-			});
-
-			if (result?.slug) {
-				push(
-					result.status === "published"
-						? `/post/${result.slug}`
-						: `/post/${result.slug}/edit`,
+			await handleSubmit(async (data) => {
+				const response = await fetch(
+					mode === "edit" && existingSlug
+						? `/api/post/${existingSlug}`
+						: "/api/post",
+					{
+						method: mode === "edit" ? "PATCH" : "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							...data,
+							status: nextStatus,
+							content: getValues("content") || data.content,
+							thumbnail: getValues("thumbnail") || data.thumbnail,
+						}),
+					},
 				);
-			}
-		})();
+
+				const result = (await response.json().catch(() => null)) as {
+					error?: string;
+					fields?: Partial<Record<keyof PostFormData, string[] | undefined>>;
+					slug?: string;
+					status?: PostStatus;
+				} | null;
+
+				if (!response.ok) {
+					applyServerFieldErrors(result?.fields);
+					setSubmitState({
+						tone: "error",
+						message: translatePostFieldError(
+							result?.error || messages.newPost.submitError,
+							messages,
+						),
+					});
+					return;
+				}
+
+				setSubmitState({
+					tone: "success",
+					message:
+						nextStatus === "published"
+							? messages.newPost.submitSuccessPublished
+							: nextStatus === "pending_review"
+								? messages.newPost.submitSuccessReview
+								: messages.newPost.submitSuccessDraft,
+				});
+
+				if (result?.slug) {
+					unsavedContentImageUrlsRef.current.clear();
+					unsavedThumbnailUrlRef.current = null;
+					push(
+						result.status === "published"
+							? `/post/${result.slug}`
+							: `/post/${result.slug}/edit`,
+					);
+				}
+			})();
+		} catch {
+			setSubmitState({
+				tone: "error",
+				message: messages.newPost.submitError,
+			});
+		} finally {
+			submitInFlightRef.current = false;
+		}
 	}
 
 	const checklist = [
@@ -941,7 +1043,9 @@ export default function Form({
 							<p className="mt-2">
 								{messages.newPost.currentLanguage(
 									localeOptions.find((option) => option.value === postLocale)
-										?.label || postLocale || "en",
+										?.label ||
+										postLocale ||
+										"en",
 								)}
 							</p>
 						</div>
@@ -996,7 +1100,8 @@ export default function Form({
 									}`}
 								>
 									<p className="text-sm font-semibold text-zinc-100">
-										{(isSubmitting && status === nextStatus) || isResolvingUploads
+										{(isSubmitting && status === nextStatus) ||
+										isResolvingUploads
 											? messages.newPost.saving
 											: details.label}
 									</p>
@@ -1017,6 +1122,15 @@ export default function Form({
 									reset();
 									setSlugTouched(false);
 									setSubmitState({ tone: null, message: "" });
+									void deleteUploadedImageUrls([
+										...unsavedContentImageUrlsRef.current,
+										...(unsavedThumbnailUrlRef.current
+											? [unsavedThumbnailUrlRef.current]
+											: []),
+									]);
+									unsavedContentImageUrlsRef.current.clear();
+									unsavedThumbnailUrlRef.current = null;
+									pendingContentImagesRef.current = {};
 									setPendingContentImages({});
 									setPendingThumbnail(null);
 								}}

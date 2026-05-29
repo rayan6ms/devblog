@@ -1,9 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { Children, isValidElement, type ReactNode } from "react";
-import rehypeHighlight from "rehype-highlight";
 import type { Components } from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import type { PluggableList } from "unified";
+import { PENDING_IMAGE_PREFIX } from "@/lib/image-upload";
 
 export const MARKDOWN_ARTICLE_CLASS =
 	"markdown-article max-w-none text-zinc-300 [&_a]:text-wheat [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:my-6 [&_blockquote]:border-l-2 [&_blockquote]:border-purpleContrast/50 [&_blockquote]:bg-darkBg/35 [&_blockquote]:px-5 [&_blockquote]:py-3 [&_blockquote]:text-zinc-300 [&_h1]:mt-10 [&_h1]:text-3xl [&_h1]:font-somerton [&_h1]:uppercase [&_h1]:text-wheat [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-wheat [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-zinc-100 [&_hr]:my-10 [&_hr]:border-zinc-700/60 [&_li]:my-2 [&_ol]:my-6 [&_ol]:pl-6 [&_p]:my-5 [&_p]:text-base [&_p]:leading-8 [&_strong]:text-zinc-100 [&_table]:my-6 [&_table]:w-full [&_table]:border-collapse [&_tbody_tr]:border-b [&_tbody_tr]:border-zinc-800 [&_td]:border [&_td]:border-zinc-700/50 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-zinc-700/50 [&_th]:bg-darkBg/65 [&_th]:px-3 [&_th]:py-2 [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6";
@@ -101,9 +102,7 @@ export function createMarkdownComponents({
 			return (
 				<div className="code-block" data-language={language || undefined}>
 					<div className="code-block__header">
-						<span className="code-block__language">
-							{language || "code"}
-						</span>
+						<span className="code-block__language">{language || "code"}</span>
 						<img
 							src="/favicon.ico"
 							alt=""
@@ -123,6 +122,24 @@ export function createMarkdownComponents({
 			}
 
 			const resolvedSrc = resolveImageSrc?.(src) || src;
+			if (resolvedSrc.startsWith(PENDING_IMAGE_PREFIX)) {
+				return (
+					<figure className="my-8 flex flex-col items-center gap-3">
+						<div className="w-full max-w-3xl rounded-[24px] border border-red-500/30 bg-red-500/10 px-5 py-6 text-center shadow-lg shadow-zinc-950/15">
+							<p className="text-sm font-semibold text-red-100">
+								Image upload missing
+							</p>
+							{alt ? (
+								<p className="mt-2 text-sm text-red-200/80">{alt}</p>
+							) : null}
+							<code className="mt-3 block break-all rounded-2xl border border-red-500/20 bg-darkBg/60 px-3 py-2 text-xs text-red-100/80">
+								{resolvedSrc}
+							</code>
+						</div>
+					</figure>
+				);
+			}
+
 			return (
 				<figure className="my-8 flex flex-col items-center gap-3">
 					<img

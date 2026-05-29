@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 import { auth } from "@/lib/auth";
@@ -16,6 +16,23 @@ function maskToken(token: string | undefined) {
 	}
 
 	return `${token.slice(0, 12)}...${token.slice(-6)}`;
+}
+
+function isPostBlobUrl(value: unknown): value is string {
+	if (typeof value !== "string") {
+		return false;
+	}
+
+	try {
+		const url = new URL(value);
+		return (
+			url.protocol === "https:" &&
+			url.hostname.endsWith(".public.blob.vercel-storage.com") &&
+			url.pathname.startsWith("/posts/")
+		);
+	} catch {
+		return false;
+	}
 }
 
 export async function POST(request: Request) {
@@ -121,6 +138,55 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(
 			{ error: "Unable to upload image right now." },
+			{ status: 500 },
+		);
+	}
+}
+
+export async function DELETE(request: Request) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
+	if (!canWriteRole(session.user.role)) {
+		return NextResponse.json(
+			{ error: "You do not have permission to delete images." },
+			{ status: 403 },
+		);
+	}
+
+	const payload = (await request.json().catch(() => null)) as {
+		urls?: unknown;
+	} | null;
+	const urls = Array.isArray(payload?.urls)
+		? Array.from(new Set(payload.urls.filter(isPostBlobUrl)))
+		: [];
+
+	if (urls.length === 0) {
+		return NextResponse.json({ deleted: 0 });
+	}
+
+	const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+	if (!blobToken) {
+		return NextResponse.json(
+			{ error: "BLOB_READ_WRITE_TOKEN is not configured." },
+			{ status: 500 },
+		);
+	}
+
+	try {
+		await del(urls, { token: blobToken });
+		return NextResponse.json({ deleted: urls.length });
+	} catch (error) {
+		console.error("[upload] blob delete failed", {
+			error,
+			errorName: error instanceof Error ? error.name : "unknown",
+			errorMessage: error instanceof Error ? error.message : String(error),
+			urlCount: urls.length,
+		});
+
+		return NextResponse.json(
+			{ error: "Unable to delete image right now." },
 			{ status: 500 },
 		);
 	}
