@@ -3,9 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldPath, useForm } from "react-hook-form";
-import { FaFileLines, FaGlobe, FaLanguage } from "react-icons/fa6";
+import { FaArrowLeft, FaFileLines, FaGlobe, FaLanguage } from "react-icons/fa6";
 import type { z } from "zod";
 import { useI18n } from "@/components/LocaleProvider";
+import LocalizedLink from "@/components/LocalizedLink";
 import { getLocaleLabel, type Locale, localeOptions } from "@/lib/i18n-shared";
 import {
 	createPendingImageUrl,
@@ -87,6 +88,7 @@ export default function PostTranslationForm({
 		availableLocales[0]?.value ||
 		"en") as Locale;
 	const [selectedLocale, setSelectedLocale] = useState<Locale>(initialLocale);
+	const previousSelectedLocaleRef = useRef<Locale>(initialLocale);
 	const [submitState, setSubmitState] = useState<SubmitState>({
 		tone: null,
 		message: "",
@@ -137,6 +139,15 @@ export default function PostTranslationForm({
 	);
 	const activeTranslation = translationsByLocale.get(selectedLocale);
 	const content = watch("content") || "";
+
+	useEffect(() => {
+		if (previousSelectedLocaleRef.current === selectedLocale) {
+			return;
+		}
+
+		previousSelectedLocaleRef.current = selectedLocale;
+		setSubmitState({ tone: null, message: "" });
+	}, [selectedLocale]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: selectedLocale must reset the form when switching between languages without existing translations.
 	useEffect(() => {
@@ -674,16 +685,25 @@ export default function PostTranslationForm({
 							</div>
 						) : null}
 
-						<button
-							type="button"
-							onClick={() => void saveTranslation()}
-							disabled={isSubmitting || isResolvingUploads}
-							className="rounded-full border border-purpleContrast/40 bg-purpleContrast/16 px-5 py-3 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/24 disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							{isSubmitting || isResolvingUploads
-								? messages.newPost.translationSaving
-								: messages.newPost.translationSave}
-						</button>
+						<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+							<LocalizedLink
+								href={`/post/${postSlug}`}
+								className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700/60 bg-darkBg/55 px-5 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+							>
+								<FaArrowLeft className="text-xs" />
+								{messages.newPost.translationBackToPost}
+							</LocalizedLink>
+							<button
+								type="button"
+								onClick={() => void saveTranslation()}
+								disabled={isSubmitting || isResolvingUploads}
+								className="rounded-full border border-purpleContrast/40 bg-purpleContrast/16 px-5 py-3 text-sm font-semibold text-wheat transition-colors hover:bg-purpleContrast/24 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{isSubmitting || isResolvingUploads
+									? messages.newPost.translationSaving
+									: messages.newPost.translationSave}
+							</button>
+						</div>
 					</div>
 				</div>
 			)}

@@ -1,4 +1,5 @@
-import { type Locale } from "./i18n-shared";
+import type { Locale } from "./i18n-shared";
+
 export type { Locale } from "./i18n-shared";
 
 export {
@@ -6,10 +7,10 @@ export {
 	getIntlLocale,
 	getLocaleLabel,
 	isExternalHref,
-	LOCALES,
 	LOCALE_COOKIE,
 	LOCALE_HEADER,
 	LOCALE_QUERY_PARAM,
+	LOCALES,
 	localeOptions,
 	resolveLocale,
 	withLocaleQuery,
@@ -639,6 +640,7 @@ const dictionaries = {
 			translationBodyDescription:
 				"Write the translated markdown for this language.",
 			translationSave: "Save translation",
+			translationBackToPost: "Go back to post",
 			translationSaving: "Saving translation...",
 			translationSaveSuccess: "Translation saved.",
 			translationSaveError:
@@ -1362,6 +1364,7 @@ const dictionaries = {
 			translationBodyDescription:
 				"Escreva o markdown traduzido para este idioma.",
 			translationSave: "Salvar tradução",
+			translationBackToPost: "Voltar ao post",
 			translationSaving: "Salvando tradução...",
 			translationSaveSuccess: "Tradução salva.",
 			translationSaveError:
@@ -2093,6 +2096,7 @@ const dictionaries = {
 			translationBodyDescription:
 				"Escribe el markdown traducido para este idioma.",
 			translationSave: "Guardar traducción",
+			translationBackToPost: "Volver a la publicación",
 			translationSaving: "Guardando traducción...",
 			translationSaveSuccess: "Traducción guardada.",
 			translationSaveError:
@@ -2846,6 +2850,7 @@ const germanMessages = {
 		translationBodyDescription:
 			"Schreibe das übersetzte Markdown für diese Sprache.",
 		translationSave: "Übersetzung speichern",
+		translationBackToPost: "Zurück zum Beitrag",
 		translationSaving: "Übersetzung wird gespeichert...",
 		translationSaveSuccess: "Übersetzung gespeichert.",
 		translationSaveError:
@@ -3598,6 +3603,7 @@ const russianMessages = {
 		translationBodyDescription:
 			"Напишите переведённый markdown для этого языка.",
 		translationSave: "Сохранить перевод",
+		translationBackToPost: "Вернуться к посту",
 		translationSaving: "Сохранение перевода...",
 		translationSaveSuccess: "Перевод сохранён.",
 		translationSaveError:
@@ -4347,6 +4353,7 @@ const frenchMessages = {
 		translationBodyDescription:
 			"Rédigez le markdown traduit pour cette langue.",
 		translationSave: "Enregistrer la traduction",
+		translationBackToPost: "Retour au post",
 		translationSaving: "Enregistrement de la traduction...",
 		translationSaveSuccess: "Traduction enregistrée.",
 		translationSaveError:
@@ -5073,6 +5080,7 @@ const japaneseMessages = {
 		translationBodyDescription:
 			"この言語向けの翻訳 markdown を入力してください。",
 		translationSave: "翻訳を保存",
+		translationBackToPost: "投稿に戻る",
 		translationSaving: "翻訳を保存中...",
 		translationSaveSuccess: "翻訳を保存しました。",
 		translationSaveError: "現在翻訳を保存できません。もう一度お試しください。",
