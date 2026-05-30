@@ -31,10 +31,6 @@ function isValidTag(tag: string, allTags: string[]) {
 	);
 }
 
-function formatViews(views: number) {
-	return views >= 1000 ? `${(views / 1000).toFixed(1)}k` : `${views}`;
-}
-
 function matchesTagSearch(tag: TagOption, query: string) {
 	if (!query) {
 		return true;
@@ -70,7 +66,7 @@ function TagPostCard({
 	post: IPost;
 	onSelectTag: (tag: string) => void;
 }) {
-	const { locale, messages } = useI18n();
+	const { locale } = useI18n();
 	const postHref = getPostHref(post);
 	const dateFormatter = useMemo(
 		() =>
@@ -98,7 +94,7 @@ function TagPostCard({
 			</LocalizedLink>
 
 			<div className="flex flex-1 flex-col p-5">
-				<div className="flex items-start justify-between gap-3">
+				<div className="flex items-start">
 					<button
 						type="button"
 						className="rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
@@ -106,9 +102,6 @@ function TagPostCard({
 					>
 						{post.mainTag}
 					</button>
-					<span className="pt-1 text-xs uppercase tracking-[0.18em] text-zinc-500">
-						{messages.tag.viewsSuffix(formatViews(post.views))}
-					</span>
 				</div>
 
 				<LocalizedLink href={postHref} className="mt-4 block">

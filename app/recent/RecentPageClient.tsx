@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
-import { FaArrowLeft, FaArrowRight, FaEye } from "react-icons/fa6";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import slugify from "slugify";
 import Footer from "@/components/Footer";
 import { useI18n } from "@/components/LocaleProvider";
@@ -119,7 +119,7 @@ function RecentPostCard({ post }: { post: IPost }) {
 			</LocalizedLink>
 
 			<div className="flex flex-1 flex-col p-5">
-				<div className="flex items-start justify-between gap-3">
+				<div className="flex items-start">
 					<div>
 						<time
 							dateTime={post.date}
@@ -134,10 +134,6 @@ function RecentPostCard({ post }: { post: IPost }) {
 							{post.mainTag}
 						</LocalizedLink>
 					</div>
-					<span className="flex items-center gap-1 text-sm text-zinc-400">
-						<FaEye />
-						{formatViews(post.views)}
-					</span>
 				</div>
 
 				<LocalizedLink href={postHref} className="mt-4 block">
@@ -315,11 +311,6 @@ export default function RecentPageClient({
 										<time dateTime={newestPost.date}>
 											{dateFormatter.format(new Date(newestPost.date))}
 										</time>
-										<span className="h-1 w-1 rounded-full bg-zinc-700" />
-										<span className="flex items-center gap-1">
-											<FaEye />
-											{formatViews(newestPost.views)}
-										</span>
 									</div>
 								</div>
 							</div>

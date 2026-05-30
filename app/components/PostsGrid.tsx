@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import React from "react";
-import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
@@ -114,7 +113,7 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 								{highlight(post.description, highlightTerm)}
 							</p>
 
-							<div className="flex items-center justify-between my-2">
+							<div className="my-2 flex items-center">
 								<button
 									type="button"
 									onClick={(e) => pushTo("tag", post.mainTag, e)}
@@ -122,9 +121,6 @@ export default function PostsGrid({ posts, heading, highlightTerm }: Props) {
 								>
 									{highlight(post.mainTag, highlightTerm)}
 								</button>
-								<span className="flex items-center gap-1 text-sm text-zinc-400">
-									<FaEye /> <span>{post.views.toLocaleString()}</span>
-								</span>
 							</div>
 
 							<div className="flex items-center justify-between text-zinc-400 text-sm">

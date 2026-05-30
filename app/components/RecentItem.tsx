@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { FaEye } from "react-icons/fa6";
 import slugify from "slugify";
 import { useI18n } from "@/components/LocaleProvider";
 import LocalizedLink from "@/components/LocalizedLink";
@@ -36,7 +35,6 @@ export default function RecentItem({
 		mainTag,
 		title,
 		author,
-		views,
 		date,
 		hasStartedReading,
 		percentRead,
@@ -63,9 +61,6 @@ export default function RecentItem({
 			month: "long",
 			year: "numeric",
 		});
-
-	const formattedViews = (num: number) =>
-		num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
 
 	const radius = cardRadius ?? (compact || isBig ? "lg" : "sm");
 	const cardRadiusClass = radius === "lg" ? "rounded-[24px]" : "rounded-lg";
@@ -195,9 +190,6 @@ export default function RecentItem({
 				<time title={fullFormattedDate(date)} dateTime={date}>
 					{formattedDate}
 				</time>
-				<p className="flex items-center gap-1">
-					<FaEye /> <span>{formattedViews(views)}</span>
-				</p>
 			</div>
 		</LocalizedLink>
 	);
