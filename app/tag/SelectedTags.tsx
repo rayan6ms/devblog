@@ -28,10 +28,7 @@ export default function SelectedTags({
 		<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div>
-					<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-						{messages.common.results}
-					</p>
-					<h2 className="mt-2 text-2xl font-semibold text-wheat">{title}</h2>
+					<h2 className="text-2xl font-semibold text-wheat">{title}</h2>
 					<p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
 						{hasTags
 							? messages.tag.resultsDescription

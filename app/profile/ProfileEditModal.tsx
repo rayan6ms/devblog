@@ -322,12 +322,9 @@ function ProfileEditModalBody({
 					<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(103,79,248,0.34),transparent_42%),linear-gradient(180deg,rgba(103,79,248,0.14),rgba(20,23,26,0.02)_28%,rgba(20,23,26,0.78)_100%)]" />
 					<div className="relative flex items-center justify-between border-b border-zinc-700/50 px-6 py-5 sm:px-8">
 						<div>
-							<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-								{messages.profileEdit.settingsEyebrow}
-							</p>
 							<h3
 								id="edit-profile-title"
-								className="mt-2 text-3xl font-somerton uppercase text-wheat"
+								className="text-3xl font-somerton uppercase text-wheat"
 							>
 								{messages.profileEdit.title}
 							</h3>

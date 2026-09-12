@@ -73,10 +73,7 @@ export default function SecondSection({ posts }: SecondSectionProps) {
 						className="mx-auto flex h-full w-full max-w-[380px] flex-col items-stretch gap-5 rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-5 shadow-lg shadow-zinc-950/10 lg:p-8 xl:max-w-none"
 					>
 						<div className="w-full">
-							<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-								{messages.home.explore}
-							</p>
-							<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
+							<h2 className="text-2xl font-somerton uppercase text-wheat">
 								{section.title}
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">

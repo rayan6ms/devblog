@@ -315,10 +315,7 @@ const GameShelf: React.FC<{
 		<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
 			<div className="flex flex-col gap-4 border-b border-zinc-700/50 pb-6 sm:flex-row sm:items-end sm:justify-between">
 				<div className="max-w-2xl">
-					<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-						{messages.common.playground}
-					</p>
-					<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+					<h2 className="text-3xl font-somerton uppercase text-wheat">
 						{title}
 					</h2>
 					<p className="mt-3 text-sm leading-7 text-zinc-400">
@@ -615,10 +612,7 @@ const Playground: React.FC = () => {
 							<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
 								<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
 									<div className="max-w-2xl">
-										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											{messages.common.playground}
-										</p>
-										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+										<h1 className="text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 											{messages.playgroundPage.title}
 										</h1>
 										<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">

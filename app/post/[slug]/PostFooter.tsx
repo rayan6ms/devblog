@@ -34,11 +34,8 @@ export default async function PostFooter({ post }: { post: PostPageData }) {
 
 	return (
 		<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/85 p-6 shadow-lg shadow-zinc-950/10">
-			<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-				{messages.common.author}
-			</p>
 
-			<div className="mt-5 rounded-[24px] border border-zinc-700/50 bg-darkBg/45 p-5">
+			<div className="rounded-[24px] border border-zinc-700/50 bg-darkBg/45 p-5">
 				<div className="grid gap-5 sm:grid-cols-[80px_minmax(0,1fr)]">
 					{post.author.profilePicture ? (
 						<img
@@ -53,13 +50,10 @@ export default async function PostFooter({ post }: { post: PostPageData }) {
 					)}
 
 					<div className="min-w-0 self-center">
-						<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-							{messages.post.writtenBy}
-						</p>
 						<LocalizedLink
 							href={`/profile/${post.author.slug}`}
 							rel="author"
-							className="mt-2 block text-2xl font-semibold text-zinc-100 transition-colors hover:text-wheat"
+							className="block text-2xl font-semibold text-zinc-100 transition-colors hover:text-wheat"
 						>
 							{post.author.name}
 						</LocalizedLink>

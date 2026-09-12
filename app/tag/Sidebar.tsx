@@ -93,10 +93,7 @@ export default function Sidebar({
 	return (
 		<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
 			<div className="border-b border-zinc-700/50 p-5">
-				<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-					{messages.tag.filterPosts}
-				</p>
-				<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+				<h2 className="text-3xl font-somerton uppercase text-wheat">
 					{messages.tag.findTopic}
 				</h2>
 				<p className="mt-2 text-sm leading-6 text-zinc-400">

@@ -155,19 +155,13 @@ export default function Profile() {
 				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8">
 					{isLoading ? (
 						<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-16 text-center shadow-xl shadow-zinc-950/20 sm:px-8">
-							<p className="text-sm uppercase tracking-[0.22em] text-zinc-500">
-								{messages.common.loadingProfile}
-							</p>
-							<h1 className="mt-4 text-3xl font-somerton uppercase text-wheat">
+							<h1 className="text-3xl font-somerton uppercase text-wheat">
 								{messages.common.preparingPage}
 							</h1>
 						</div>
 					) : error || !user ? (
 						<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-16 text-center shadow-xl shadow-zinc-950/20 sm:px-8">
-							<p className="text-sm uppercase tracking-[0.22em] text-zinc-500">
-								{messages.profile.unavailable}
-							</p>
-							<h1 className="mt-4 text-3xl font-somerton uppercase text-wheat">
+							<h1 className="text-3xl font-somerton uppercase text-wheat">
 								{error || messages.profile.loadError}
 							</h1>
 							{profileId === "me" ? (
@@ -184,10 +178,7 @@ export default function Profile() {
 							<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
 								<div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
 									<div className="max-w-3xl">
-										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											{messages.profile.overview}
-										</p>
-										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+										<h1 className="text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 											{user.isCurrentUser
 												? messages.profile.yourProfile
 												: user.name}

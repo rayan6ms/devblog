@@ -172,10 +172,7 @@ export default function RegisterForm() {
 					noValidate
 				>
 					<div className="mb-6 text-center">
-						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-							{messages.register.eyebrow}
-						</p>
-						<h1 className="mt-3 text-3xl font-somerton uppercase text-wheat">
+						<h1 className="text-3xl font-somerton uppercase text-wheat">
 							{messages.register.title}
 						</h1>
 					</div>

@@ -52,10 +52,7 @@ export default function Main({ posts }: MainProps) {
 				<div className="xl:col-start-2 xxl:col-start-3">
 					<div className="h-fit rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-4 shadow-lg shadow-zinc-950/10 lg:p-5">
 						<div className="mb-6">
-							<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-								{messages.home.recommended}
-							</p>
-							<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
+							<h2 className="text-2xl font-somerton uppercase text-wheat">
 								{messages.home.editorPicks}
 							</h2>
 						</div>

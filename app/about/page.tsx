@@ -279,10 +279,7 @@ export default async function Page() {
 
 								<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
 									<div className="max-w-3xl">
-										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											{messages.about.eyebrow}
-										</p>
-										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+										<h1 className="text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 											{messages.about.title}
 										</h1>
 										<p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
@@ -319,10 +316,7 @@ export default async function Page() {
 
 												<div className="relative flex items-start justify-between gap-4">
 													<div>
-														<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-															{card.label}
-														</p>
-														<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat sm:text-3xl">
+														<h2 className="text-2xl font-somerton uppercase text-wheat sm:text-3xl">
 															{card.title}
 														</h2>
 													</div>

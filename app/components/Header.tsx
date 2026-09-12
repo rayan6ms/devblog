@@ -49,11 +49,8 @@ export default function Header() {
 					<div className="border-b border-zinc-700/50 px-6 py-6 sm:px-8">
 						<div className="grid gap-4 lg:gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
 							<div className="min-w-0">
-								<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-									{messages.header.eyebrow}
-								</p>
 								<LocalizedLink href="/" aria-label={messages.header.homeAria}>
-									<h1 className="mt-2 text-5xl font-somerton text-wheat sm:text-6xl">
+									<h1 className="text-5xl font-somerton text-wheat sm:text-6xl">
 										devblog
 									</h1>
 								</LocalizedLink>

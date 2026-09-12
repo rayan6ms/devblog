@@ -59,10 +59,7 @@ export default function Footer() {
 				<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
 					<div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)] lg:items-start">
 						<div>
-							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								devblog
-							</p>
-							<h2 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
+							<h2 className="text-4xl font-somerton text-wheat sm:text-5xl">
 								{messages.footer.title}
 							</h2>
 							<p className="mt-4 max-w-xl text-sm leading-7 text-zinc-400 sm:text-base">

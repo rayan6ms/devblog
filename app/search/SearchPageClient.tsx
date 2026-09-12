@@ -56,10 +56,7 @@ export default function SearchPageClient({
 					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
 						<div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.15fr)_auto] lg:items-end">
 							<div>
-								<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-									{messages.search.eyebrow}
-								</p>
-								<h1 className="mt-3 text-4xl font-somerton text-wheat sm:text-5xl">
+								<h1 className="text-4xl font-somerton text-wheat sm:text-5xl">
 									{heading}
 								</h1>
 								<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
@@ -91,10 +88,7 @@ export default function SearchPageClient({
 					<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-4 py-5 shadow-xl shadow-zinc-950/20 sm:px-6 sm:py-6">
 						{posts.length === 0 ? (
 							<div className="rounded-[24px] border border-dashed border-zinc-700/60 bg-greyBg/55 px-6 py-12 text-center">
-								<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-									{messages.search.noMatch}
-								</p>
-								<h2 className="mt-3 text-3xl font-somerton text-wheat">
+								<h2 className="text-3xl font-somerton text-wheat">
 									{messages.search.nothingFound(q)}
 								</h2>
 								<p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-zinc-400 sm:text-base">

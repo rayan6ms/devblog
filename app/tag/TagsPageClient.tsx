@@ -244,10 +244,7 @@ export default function TagsPageClient({
 						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
-									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										{messages.tag.eyebrow}
-									</p>
-									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+									<h1 className="text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 										{messages.tag.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
@@ -329,10 +326,7 @@ export default function TagsPageClient({
 
 							{!hasCatalogData ? (
 								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-lessDarkBg/80 px-6 py-10 text-center shadow-lg shadow-zinc-950/10">
-									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										{messages.tag.noPostsYet}
-									</p>
-									<h2 className="mt-3 text-3xl font-somerton uppercase text-wheat">
+									<h2 className="text-3xl font-somerton uppercase text-wheat">
 										{messages.tag.unlockAfterFirstPost}
 									</h2>
 									<p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-400">
@@ -351,10 +345,7 @@ export default function TagsPageClient({
 								</div>
 							) : (
 								<div className="rounded-[26px] border border-dashed border-zinc-700/60 bg-lessDarkBg/80 px-6 py-10 text-center shadow-lg shadow-zinc-950/10">
-									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										{messages.tag.noMatches}
-									</p>
-									<h2 className="mt-3 text-3xl font-somerton uppercase text-wheat">
+									<h2 className="text-3xl font-somerton uppercase text-wheat">
 										{messages.tag.noPostsFit}
 									</h2>
 									<p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-400">

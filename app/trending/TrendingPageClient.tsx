@@ -226,10 +226,7 @@ export default function TrendingPageClient({ posts }: { posts: IPost[] }) {
 						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
-									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										{messages.trending.eyebrow}
-									</p>
-									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+									<h1 className="text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 										{messages.trending.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
@@ -281,10 +278,7 @@ export default function TrendingPageClient({ posts }: { posts: IPost[] }) {
 				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
 					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
 						<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
-							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								{messages.trending.trendSignals}
-							</p>
-							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+							<h2 className="text-3xl font-somerton uppercase text-wheat">
 								{messages.trending.topicRadar}
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">
@@ -339,10 +333,7 @@ export default function TrendingPageClient({ posts }: { posts: IPost[] }) {
 							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
 								<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 									<div>
-										<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-											{messages.trending.ranking}
-										</p>
-										<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+										<h2 className="text-3xl font-somerton uppercase text-wheat">
 											{messages.trending.topMomentum}
 										</h2>
 										<p className="mt-2 text-sm leading-6 text-zinc-400">
@@ -366,10 +357,7 @@ export default function TrendingPageClient({ posts }: { posts: IPost[] }) {
 
 							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
 								<div>
-									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										{messages.trending.moreToWatch}
-									</p>
-									<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+									<h2 className="text-3xl font-somerton uppercase text-wheat">
 										{messages.trending.risingPosts}
 									</h2>
 									<p className="mt-2 text-sm leading-6 text-zinc-400">

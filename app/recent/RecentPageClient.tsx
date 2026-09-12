@@ -226,10 +226,7 @@ export default function RecentPageClient({
 						<div className="border-b border-zinc-700/50 px-6 py-8 sm:px-8">
 							<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 								<div className="max-w-3xl">
-									<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-										{messages.recent.eyebrow}
-									</p>
-									<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
+									<h1 className="text-4xl font-somerton uppercase text-wheat sm:text-5xl">
 										{messages.recent.title}
 									</h1>
 									<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
@@ -282,12 +279,9 @@ export default function RecentPageClient({
 								</LocalizedLink>
 
 								<div className="rounded-[26px] border border-zinc-700/50 bg-greyBg/70 p-5">
-									<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-										{messages.recent.latestArrival}
-									</p>
 									<LocalizedLink
 										href={`/tag?selected=${normalizeValue(newestPost.mainTag)}`}
-										className="mt-3 inline-flex rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
+										className="inline-flex rounded-full border border-zinc-700/60 bg-darkBg px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-wheat"
 									>
 										{newestPost.mainTag}
 									</LocalizedLink>
@@ -327,10 +321,7 @@ export default function RecentPageClient({
 				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
 					<div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
 						<aside className="self-start rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20 xl:sticky xl:top-24">
-							<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-								{messages.recent.readingGuide}
-							</p>
-							<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+							<h2 className="text-3xl font-somerton uppercase text-wheat">
 								{messages.recent.stayOriented}
 							</h2>
 							<p className="mt-2 text-sm leading-6 text-zinc-400">
@@ -393,10 +384,7 @@ export default function RecentPageClient({
 							<section className="rounded-[26px] border border-zinc-700/50 bg-lessDarkBg/90 p-5 shadow-xl shadow-zinc-950/20">
 								<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 									<div>
-										<p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-											{messages.recent.recentPosts}
-										</p>
-										<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
+										<h2 className="text-3xl font-somerton uppercase text-wheat">
 											{messages.recent.recentPostsTitle}
 										</h2>
 										<p className="mt-2 text-sm leading-6 text-zinc-400">
