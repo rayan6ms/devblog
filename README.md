@@ -28,10 +28,10 @@ This project is intentionally simple. It is a hobby project first, but it also w
 
 ## Running Locally
 
-Install dependencies:
+Install dependencies with Bun (Node.js 24+):
 
 ```bash
-npm install
+bun install
 ```
 
 Create an `.env` file with at least:
@@ -50,10 +50,16 @@ OWNER_EMAIL=owner@example.com
 
 If you want to test social login locally, also configure the provider credentials required by Auth.js for the GitHub and Google providers used in `app/api/auth/[...nextauth]/route.ts`.
 
-Start the app:
+Apply database migrations explicitly when deploying:
 
 ```bash
-npm run dev
+bun run prisma:migrate:deploy
+```
+
+Start the app locally:
+
+```bash
+bun run dev
 ```
 
 Then open `http://localhost:3000`.
