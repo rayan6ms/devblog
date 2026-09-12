@@ -37,12 +37,12 @@ function MetaCard({
 	children?: ReactNode;
 }) {
 	return (
-		<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
-			<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+		<div className="surface-panel min-w-0 px-4 py-4">
+			<p className="text-sm text-zinc-400">
 				{label}
 			</p>
 			{value ? (
-				<p className="mt-2 text-sm font-semibold text-zinc-100">{value}</p>
+				<p className="mt-2 break-words text-sm font-semibold text-zinc-100">{value}</p>
 			) : (
 				children
 			)}
@@ -151,10 +151,10 @@ export default function Profile() {
 
 	return (
 		<>
-			<div className="min-h-screen bg-darkBg text-gray">
-				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8">
+			<main className="min-h-screen bg-darkBg text-gray">
+				<section className="site-container page-content pt-8">
 					{isLoading ? (
-						<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-16 text-center shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="surface-panel px-6 py-16 text-center sm:px-8">
 							<p className="text-sm uppercase tracking-[0.22em] text-zinc-500">
 								{messages.common.loadingProfile}
 							</p>
@@ -163,7 +163,7 @@ export default function Profile() {
 							</h1>
 						</div>
 					) : error || !user ? (
-						<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-16 text-center shadow-xl shadow-zinc-950/20 sm:px-8">
+						<div className="surface-panel px-6 py-16 text-center sm:px-8">
 							<p className="text-sm uppercase tracking-[0.22em] text-zinc-500">
 								{messages.profile.unavailable}
 							</p>
@@ -181,46 +181,9 @@ export default function Profile() {
 						</div>
 					) : (
 						<div className="grid gap-6">
-							<div className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
-								<div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-									<div className="max-w-3xl">
-										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											{messages.profile.overview}
-										</p>
-										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-											{user.isCurrentUser
-												? messages.profile.yourProfile
-												: user.name}
-										</h1>
-										<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-											{messages.profile.description}
-										</p>
-									</div>
-									<div className="grid gap-3 sm:grid-cols-3">
-										<MetaCard
-											label={messages.profile.bookmarks}
-											value={`${user.stats.bookmarks}`}
-										/>
-										<MetaCard
-											label={messages.profile.viewedPosts}
-											value={`${user.stats.views}`}
-										/>
-										<MetaCard
-											label={messages.profile.comments}
-											value={`${user.stats.comments}`}
-										/>
-									</div>
-								</div>
+							<Header user={user} onEdit={user.isCurrentUser ? () => setIsEditOpen(true) : undefined} />
 
-								<Header
-									user={user}
-									onEdit={
-										user.isCurrentUser ? () => setIsEditOpen(true) : undefined
-									}
-								/>
-							</div>
-
-							<div
+							{user.isCurrentUser && <div
 								className={`grid gap-4 ${
 									user.isCurrentUser ? "lg:grid-cols-4" : "lg:grid-cols-3"
 								}`}
@@ -266,7 +229,7 @@ export default function Profile() {
 									</div>
 								</MetaCard>
 							</div>
-
+}
 							<div className="grid gap-6 xl:grid-cols-2">
 								<Slider
 									title={messages.profile.bookmarks}
@@ -292,7 +255,7 @@ export default function Profile() {
 						</div>
 					)}
 				</section>
-			</div>
+			</main>
 			{user?.isCurrentUser ? (
 				<ProfileEditModal
 					isOpen={isEditOpen}

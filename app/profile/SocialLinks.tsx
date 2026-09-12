@@ -4,8 +4,6 @@ import { FaGithub, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa6";
 type SocialLink = {
 	provider: string;
 	icon: IconType;
-	bgColor: string;
-	hoverBgColor: string;
 	url: string;
 };
 
@@ -19,7 +17,7 @@ function SocialLinkItem({ link }: { link: SocialLink }) {
 	return (
 		<a
 			href={link.url}
-			className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm text-zinc-100 transition-all duration-300 ${link.bgColor} ${link.hoverBgColor}`}
+			className="ui-button"
 			target="_blank"
 			rel="noopener noreferrer"
 		>
@@ -44,29 +42,21 @@ export default function SocialLinks({ links }: SocialLinksProps) {
 		{
 			provider: "LinkedIn",
 			icon: FaLinkedin,
-			bgColor: "bg-blue-500/15 border-blue-400/30",
-			hoverBgColor: "hover:bg-blue-500/25",
 			url: links.linkedin,
 		},
 		{
 			provider: "GitHub",
 			icon: FaGithub,
-			bgColor: "bg-zinc-800/80 border-zinc-600/40",
-			hoverBgColor: "hover:bg-zinc-700/80",
 			url: links.github,
 		},
 		{
 			provider: "YouTube",
 			icon: FaYoutube,
-			bgColor: "bg-red-500/15 border-red-400/30",
-			hoverBgColor: "hover:bg-red-500/25",
 			url: links.youtube,
 		},
 		{
 			provider: "Twitter",
 			icon: FaTwitter,
-			bgColor: "bg-sky-500/15 border-sky-400/30",
-			hoverBgColor: "hover:bg-sky-500/25",
 			url: links.twitter,
 		},
 	];

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./design.css";
 @config "../tailwind.config.js";
 
 :root {
@@ -10,11 +11,58 @@
 
 html {
 	scroll-behavior: smooth;
+	scroll-padding-top: 5rem;
 }
 
 body {
 	color: rgb(var(--foreground-rgb));
-	background: rgba(20, 23, 26, 0.8);
+	background: var(--surface-0);
+	min-width: 0;
+	-webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+@layer base {
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+		overflow-wrap: anywhere;
+	}
+	a,
+	button {
+		-webkit-tap-highlight-color: transparent;
+	}
+	button:not(:disabled),
+	[role="button"] {
+		cursor: pointer;
+	}
+	:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 3px;
+	}
+}
+
+@layer components {
+	.skip-link {
+		position: fixed;
+		left: 1rem;
+		top: 1rem;
+		z-index: 100;
+		transform: translateY(-200%);
+		border-radius: 0.5rem;
+		background: var(--text-primary);
+		padding: 0.75rem 1rem;
+		color: var(--surface-0);
+	}
+	.skip-link:focus {
+		transform: translateY(0);
+	}
 }
 
 ::-webkit-scrollbar {
@@ -262,6 +310,14 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
 	html {
 		scroll-behavior: auto;
 	}

@@ -13,6 +13,7 @@ import {
 } from "react";
 import { FaXmark } from "react-icons/fa6";
 import Footer from "@/components/Footer";
+import PageIntro from "@/components/PageIntro";
 import { useI18n } from "@/components/LocaleProvider";
 
 type Importer = () => Promise<{ default: React.ComponentType<any> }>;
@@ -164,189 +165,13 @@ const games: Game[] = [
 	},
 ];
 
-function useCardTilt(maxTiltDeg = 16, hoverScale = 1.06) {
-	const containerRef = useRef<HTMLDivElement | null>(null);
-	const innerRef = useRef<HTMLDivElement | null>(null);
-	const boundsRef = useRef<DOMRect | null>(null);
-	const rafRef = useRef<number | null>(null);
-
-	const setTransform = (rx: number, ry: number, scale = hoverScale) => {
-		const el = innerRef.current;
-		if (!el) return;
-		el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) scale(${scale})`;
-	};
-
-	const handlePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
-		if (e.pointerType === "touch") return;
-		boundsRef.current = containerRef.current?.getBoundingClientRect() ?? null;
-	};
-
-	const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-		if (e.pointerType === "touch") return;
-		const container = containerRef.current;
-		const inner = innerRef.current;
-		if (!container || !inner) return;
-
-		const rect = boundsRef.current ?? container.getBoundingClientRect();
-		boundsRef.current = rect;
-		const px = (e.clientX - rect.left) / rect.width;
-		const py = (e.clientY - rect.top) / rect.height;
-
-		const ry = (px - 0.5) * (maxTiltDeg * 2);
-		const rx = (0.5 - py) * (maxTiltDeg * 2);
-
-		if (rafRef.current) cancelAnimationFrame(rafRef.current);
-		rafRef.current = requestAnimationFrame(() => setTransform(rx, ry));
-	};
-
-	const handlePointerLeave = () => {
-		if (rafRef.current) cancelAnimationFrame(rafRef.current);
-		boundsRef.current = null;
-		requestAnimationFrame(() => setTransform(0, 0, 1));
-	};
-
-	useEffect(
-		() => () => {
-			if (rafRef.current) cancelAnimationFrame(rafRef.current);
-		},
-		[],
-	);
-
-	return {
-		containerRef,
-		innerRef,
-		handlePointerEnter,
-		handlePointerMove,
-		handlePointerLeave,
-	};
-}
-
-const GameCard = memo(function GameCard({
-	game,
-	onClick,
-	tiltEnabled,
-}: {
-	game: Game;
-	onClick: (g: Game) => void;
-	tiltEnabled: boolean;
-}) {
-	const { messages } = useI18n();
-	const {
-		containerRef,
-		innerRef,
-		handlePointerEnter,
-		handlePointerMove,
-		handlePointerLeave,
-	} = useCardTilt(16, 1.06);
-	const gameText = messages.playgroundPage.games[game.id];
-
-	const badge =
-		game.mode === "play"
-			? {
-					text: messages.playgroundPage.badges.playable,
-					cls: "bg-emerald-600/80",
-				}
-			: {
-					text: messages.playgroundPage.badges.watchOnly,
-					cls: "bg-sky-600/80",
-				};
-
-	return (
-			<div
-				ref={containerRef}
-				className="group relative h-64 w-full max-w-[240px] cursor-pointer select-none"
-				style={{ perspective: "1200px" }}
-				onPointerEnter={tiltEnabled ? handlePointerEnter : undefined}
-				onPointerMove={tiltEnabled ? handlePointerMove : undefined}
-				onPointerLeave={tiltEnabled ? handlePointerLeave : undefined}
-				onPointerCancel={tiltEnabled ? handlePointerLeave : undefined}
-				onClick={() => onClick(game)}
-			>
-			<div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500/20 via-purpleContrast/25 to-amber-300/15 blur-md will-change-transform" />
-
-			<div
-				ref={innerRef}
-				className={`relative h-full w-full overflow-hidden rounded-[24px] border border-zinc-200/10 bg-zinc-950/70 transition-transform duration-150 ease-out transform-gpu [transform-style:preserve-3d] group-hover:brightness-110 ${tiltEnabled ? "will-change-transform" : ""}`}
-			>
-				<Image
-					src={`/${game.img}`}
-					alt={gameText.name}
-					fill
-					loading="lazy"
-					unoptimized
-					className="absolute inset-0 h-full w-full object-cover"
-					style={{
-						transform: tiltEnabled
-							? "translateZ(30px) scale(1.06)"
-							: "scale(1.04)",
-						transformStyle: "preserve-3d",
-					}}
-					draggable={false}
-				/>
-				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
-				<div className="absolute bottom-0 left-0 right-0 p-4">
-					<h3 className="text-lg font-semibold text-white drop-shadow-sm">
-						{gameText.name}
-					</h3>
-					<p className="mt-1 text-xs leading-5 text-zinc-200/90">
-						{gameText.description}
-					</p>
-				</div>
-				<div
-					className={`absolute right-3 top-3 rounded-full border border-white/15 px-2.5 py-1 text-[10px] uppercase tracking-wide text-white backdrop-blur-sm ${badge.cls}`}
-				>
-					{badge.text}
-				</div>
-			</div>
-		</div>
-	);
+const GameCard = memo(function GameCard({ game, onClick }: { game: Game; onClick: (g: Game) => void }) {
+ const { messages } = useI18n();
+ const copy = messages.playgroundPage.games[game.id];
+ return <button type="button" className="game-card" onClick={() => onClick(game)}><span className="game-card__image"><Image src={`/${game.img}`} alt="" fill sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 300px" /></span><span className="game-card__body"><span className="game-card__title">{copy.name}</span><span className="game-card__description">{copy.description}</span></span></button>;
 });
 
-const GameShelf: React.FC<{
-	title: string;
-	description: string;
-	games: Game[];
-	onOpen: (g: Game) => void;
-	tiltEnabled: boolean;
-}> = ({ title, description, games, onOpen, tiltEnabled }) => {
-	const { messages } = useI18n();
-
-	return (
-		<section className="rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-6 py-8 shadow-xl shadow-zinc-950/20 sm:px-8">
-			<div className="flex flex-col gap-4 border-b border-zinc-700/50 pb-6 sm:flex-row sm:items-end sm:justify-between">
-				<div className="max-w-2xl">
-					<p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
-						{messages.common.playground}
-					</p>
-					<h2 className="mt-2 text-3xl font-somerton uppercase text-wheat">
-						{title}
-					</h2>
-					<p className="mt-3 text-sm leading-7 text-zinc-400">
-						{description}
-					</p>
-				</div>
-				<div className="rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-4">
-					<p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-						{messages.playgroundPage.projects}
-					</p>
-					<p className="mt-2 text-3xl font-semibold text-wheat">
-						{games.length}
-					</p>
-				</div>
-			</div>
-			<div className="mt-8 flex flex-wrap justify-center gap-6 xl:justify-start">
-				{games.map((game) => (
-					<GameCard
-						key={game.id}
-						game={game}
-						onClick={onOpen}
-						tiltEnabled={tiltEnabled}
-					/>
-				))}
-			</div>
-		</section>
-	);
-};
+const GameShelf = ({ title, description, games, onOpen }: { title: string; description: string; games: Game[]; onOpen: (g: Game) => void }) => <section className="content-section"><div className="section-heading"><div><h2 className="section-title">{title}</h2><p className="mt-3 text-sm text-zinc-400">{description}</p></div></div><div className="game-grid">{games.map(game => <GameCard key={game.id} game={game} onClick={onOpen} />)}</div></section>;
 
 const Playground: React.FC = () => {
 	const { messages } = useI18n();
@@ -354,7 +179,6 @@ const Playground: React.FC = () => {
 	const [SelectedComponent, setSelectedComponent] =
 		useState<React.ComponentType | null>(null);
 	const [isMobileViewport, setIsMobileViewport] = useState(false);
-	const [isCardTiltEnabled, setIsCardTiltEnabled] = useState(false);
 	const [isGameMountReady, setIsGameMountReady] = useState(false);
 	const [gameMountVersion, setGameMountVersion] = useState(0);
 	const contentRef = useRef<HTMLDivElement | null>(null);
@@ -399,22 +223,6 @@ const Playground: React.FC = () => {
 			cancelled = true;
 		};
 	}, [selectedGame]);
-
-	useEffect(() => {
-		if (typeof window === "undefined") {
-			return;
-		}
-
-		const motionQuery = window.matchMedia("(prefers-reduced-motion: no-preference)");
-		const syncTilt = () => setIsCardTiltEnabled(motionQuery.matches);
-
-		syncTilt();
-		motionQuery.addEventListener("change", syncTilt);
-
-		return () => {
-			motionQuery.removeEventListener("change", syncTilt);
-		};
-	}, []);
 
 	const openGame = useCallback((g: Game) => {
 		startTransition(() => setSelectedGame(g));
@@ -604,78 +412,8 @@ const Playground: React.FC = () => {
 
 	return (
 		<>
-			{!isOpen && (
-				<div className="min-h-screen bg-darkBg text-gray">
-					<main
-						ref={contentRef}
-						tabIndex={-1}
-						className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-8 sm:px-6 lg:px-8"
-					>
-						<section className="overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
-							<div className="border-b border-zinc-700/50 px-6 py-10 sm:px-8">
-								<div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-									<div className="max-w-2xl">
-										<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-											{messages.common.playground}
-										</p>
-										<h1 className="mt-3 text-4xl font-somerton uppercase text-wheat sm:text-5xl">
-											{messages.playgroundPage.title}
-										</h1>
-										<p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-											{messages.playgroundPage.description}
-										</p>
-									</div>
-									<div className="flex flex-wrap gap-3 lg:justify-end">
-										<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
-											<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-												{messages.playgroundPage.totalProjects}
-											</p>
-											<p className="mt-2 text-2xl font-semibold text-wheat">
-												{games.length}
-											</p>
-										</div>
-										<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
-											<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-												{messages.playgroundPage.badges.playable}
-											</p>
-											<p className="mt-2 text-2xl font-semibold text-wheat">
-												{playable.length}
-											</p>
-										</div>
-										<div className="w-fit rounded-2xl border border-zinc-700/50 bg-greyBg/75 px-4 py-3">
-											<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-												{messages.playgroundPage.badges.watchOnly}
-											</p>
-											<p className="mt-2 text-2xl font-semibold text-wheat">
-												{watchOnly.length}
-											</p>
-										</div>
-									</div>
-								</div>
-							</div>
+   {!isOpen && <main ref={contentRef} tabIndex={-1} className="site-container page-content"><PageIntro title={messages.playgroundPage.title} description={messages.playgroundPage.description} /><GameShelf title={messages.playgroundPage.playableTitle} description={messages.playgroundPage.playableDescription} games={playable} onOpen={openGame} /><GameShelf title={messages.playgroundPage.watchOnlyTitle} description={messages.playgroundPage.watchOnlyDescription} games={watchOnly} onOpen={openGame} /></main>}
 
-							<div className="grid gap-4 px-6 py-8 sm:px-8">
-								<GameShelf
-									title={messages.playgroundPage.playableTitle}
-									description={messages.playgroundPage.playableDescription}
-									games={playable}
-									onOpen={openGame}
-									tiltEnabled={isCardTiltEnabled}
-								/>
-								{watchOnly.length > 0 && (
-									<GameShelf
-										title={messages.playgroundPage.watchOnlyTitle}
-										description={messages.playgroundPage.watchOnlyDescription}
-										games={watchOnly}
-										onOpen={openGame}
-										tiltEnabled={isCardTiltEnabled}
-									/>
-								)}
-							</div>
-						</section>
-					</main>
-				</div>
-			)}
 				{isOpen && (
 					<>
 						<div

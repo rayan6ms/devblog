@@ -1,275 +1,177 @@
 "use client";
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import { FaMagnifyingGlass } from "react-icons/fa6";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { FaMagnifyingGlass, FaXmark } from "react-icons/fa6";
 import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 import { getSearchSuggestions, type IPost } from "@/lib/posts-client";
 import { useI18n } from "./LocaleProvider";
 
-const SEARCH_DEBOUNCE_MS = 250;
-const suggestionCache = new Map<string, IPost[]>();
-
 export default function SearchBar({
-	tabIndex,
-	reserveSpace = false,
 	forceExpanded = false,
-	widthClass,
+	onNavigate,
 }: {
-	tabIndex?: number;
-	reserveSpace?: boolean;
 	forceExpanded?: boolean;
-	widthClass?: string;
+	onNavigate?: () => void;
 }) {
-	const [isSearchOpen, setIsSearchOpen] = useState(false);
-	const [query, setQuery] = useState("");
-	const [suggestions, setSuggestions] = useState<IPost[]>([]);
-	const [activeIndex, setActiveIndex] = useState(-1);
-
-	const searchInput = useRef<HTMLInputElement>(null);
-	const containerRef = useRef<HTMLFormElement>(null);
 	const { messages } = useI18n();
 	const { push } = useLocaleNavigation();
-
-	const trimmedQuery = query.trim();
-	const shouldShowSuggestions = trimmedQuery.length >= 2;
-	const cacheKey = shouldShowSuggestions ? trimmedQuery.toLowerCase() : "";
-	const cachedSuggestions = cacheKey ? suggestionCache.get(cacheKey) : undefined;
-	const visibleSuggestions = shouldShowSuggestions
-		? (cachedSuggestions ?? suggestions)
-		: [];
-	const searchExpanded = forceExpanded || isSearchOpen;
-
-	const clearSuggestions = useCallback(() => {
-		setSuggestions([]);
-		setActiveIndex(-1);
-	}, []);
-
-	const goToResults = useCallback(
-		(nextQuery: string) => {
-			const queryString = encodeURIComponent(nextQuery.trim());
-			if (!queryString) return;
-			clearSuggestions();
-			setIsSearchOpen(false);
-			push(`/search?q=${queryString}&page=1`);
-		},
-		[clearSuggestions, push],
-	);
-
-	const closeSearch = useCallback(() => {
-		clearSuggestions();
-		if (forceExpanded) {
-			return;
-		}
-		setIsSearchOpen(false);
-	}, [clearSuggestions, forceExpanded]);
+	const [open, setOpen] = useState(false);
+	const [query, setQuery] = useState("");
+	const [suggestions, setSuggestions] = useState<IPost[]>([]);
+	const [active, setActive] = useState(-1);
+	const [focused, setFocused] = useState(false);
+	const root = useRef<HTMLFormElement>(null);
+	const input = useRef<HTMLInputElement>(null);
+	const trigger = useRef<HTMLButtonElement>(null);
+	const id = useId();
+	const expanded = forceExpanded || open;
+	const showSuggestions = expanded && focused && query.trim().length >= 2;
 
 	useEffect(() => {
-		if (searchExpanded) {
-			requestAnimationFrame(() => searchInput.current?.focus());
-		}
-	}, [searchExpanded]);
-
-	useEffect(() => {
-		if (!shouldShowSuggestions || cachedSuggestions) {
-			return;
-		}
-
+		if (!showSuggestions) return;
 		const controller = new AbortController();
-		const handle = setTimeout(async () => {
-			try {
-				const result = await getSearchSuggestions(
-					trimmedQuery,
-					controller.signal,
-				);
-				suggestionCache.set(cacheKey, result);
-				setSuggestions(result);
-				setActiveIndex(-1);
-			} catch (error) {
-				if (!(error instanceof Error) || error.name !== "AbortError") {
-					clearSuggestions();
-				}
-			}
-		}, SEARCH_DEBOUNCE_MS);
-
+		const timer = setTimeout(async () => {
+			const posts = await getSearchSuggestions(query, controller.signal);
+			if (!controller.signal.aborted) setSuggestions(posts);
+		}, 250);
 		return () => {
+			clearTimeout(timer);
 			controller.abort();
-			clearTimeout(handle);
 		};
-	}, [
-		cacheKey,
-		cachedSuggestions,
-		clearSuggestions,
-		shouldShowSuggestions,
-		trimmedQuery,
-	]);
-
+	}, [query, showSuggestions]);
 	useEffect(() => {
-		const handleMouseDown = (event: MouseEvent) => {
-			if (!containerRef.current?.contains(event.target as Node)) {
-				if (!trimmedQuery) {
-					closeSearch();
-				} else {
-					clearSuggestions();
-				}
+		if (!open) return;
+		input.current?.focus();
+		const outside = (event: PointerEvent) => {
+			if (!root.current?.contains(event.target as Node)) {
+				setOpen(false);
+				setFocused(false);
 			}
 		};
-
-		document.addEventListener("mousedown", handleMouseDown);
-
-		return () => document.removeEventListener("mousedown", handleMouseDown);
-	}, [clearSuggestions, closeSearch, trimmedQuery]);
-
-	const handleSearch = (event: React.FormEvent) => {
-		event.preventDefault();
-		if (trimmedQuery) goToResults(query);
+		document.addEventListener("pointerdown", outside);
+		return () => document.removeEventListener("pointerdown", outside);
+	}, [open]);
+	const close = () => {
+		setOpen(false);
+		setFocused(false);
+		setActive(-1);
+		trigger.current?.focus();
 	};
-
-	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+	const search = (value = query) => {
+		if (!value.trim()) {
+			input.current?.focus();
+			return;
+		}
+		setOpen(false);
+		setFocused(false);
+		setSuggestions([]);
+		setActive(-1);
+		onNavigate?.();
+		push(`/search?q=${encodeURIComponent(value.trim())}&page=1`);
+	};
+	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === "Escape") {
-			if (trimmedQuery) {
-				clearSuggestions();
-			} else {
-				closeSearch();
-			}
-			return;
-		}
-
-		if (visibleSuggestions.length === 0) {
-			if (event.key === "Enter" && trimmedQuery) {
-				event.preventDefault();
-				goToResults(query);
-			}
-			return;
-		}
-
-		if (event.key === "ArrowDown") {
 			event.preventDefault();
-			setActiveIndex((index) => (index + 1) % visibleSuggestions.length);
-		} else if (event.key === "ArrowUp") {
+			event.stopPropagation();
+			close();
+		}
+		if (
+			suggestions.length &&
+			showSuggestions &&
+			(event.key === "ArrowDown" || event.key === "ArrowUp")
+		) {
 			event.preventDefault();
-			setActiveIndex(
-				(index) => (index - 1 + visibleSuggestions.length) % visibleSuggestions.length,
+			setActive(
+				(index) =>
+					(index + (event.key === "ArrowDown" ? 1 : -1) + suggestions.length) %
+					suggestions.length,
 			);
-		} else if (event.key === "Enter") {
+		}
+		if (
+			event.key === "Enter" &&
+			active >= 0 &&
+			showSuggestions &&
+			suggestions[active]
+		) {
 			event.preventDefault();
-			const chosen =
-				activeIndex >= 0 ? visibleSuggestions[activeIndex].title : query;
-			goToResults(chosen);
+			search(suggestions[active].title);
 		}
 	};
-
-	const handleButtonClick = () => {
-		if (!searchExpanded) {
-			if (forceExpanded) {
-				searchInput.current?.focus();
-				return;
-			}
-			setIsSearchOpen(true);
-			return;
-		}
-
-		if (trimmedQuery) {
-			goToResults(query);
-			return;
-		}
-
-		closeSearch();
-	};
-
 	return (
 		<form
-			ref={containerRef}
-			onSubmit={handleSearch}
-			className={`relative ml-auto h-[50px] ${reserveSpace
-					? `w-full min-w-[50px] ${widthClass || "max-w-[340px]"}`
-					: "w-full"
-				}`}
+			ref={root}
+			className="expand-search"
+			role="search"
+			data-expanded={expanded}
+			onSubmit={(event) => {
+				event.preventDefault();
+				search();
+			}}
 		>
-			<div
-				className={`absolute right-0 top-0 flex h-[50px] overflow-hidden rounded-[18px] border border-zinc-700/60 bg-darkBg/72 shadow-lg shadow-zinc-950/15 transition-[width,border-color] duration-300 focus-within:border-purpleContrast/50 hover:border-zinc-500/70 ${searchExpanded ? "w-full" : "w-[50px]"
-					}`}
-			>
-				<div className="flex min-w-0 flex-1 items-center overflow-hidden">
-					<input
-						ref={searchInput}
-						tabIndex={tabIndex}
-						type="text"
-						value={query}
-						onChange={(event) => {
-							const nextQuery = event.target.value;
-							setQuery(nextQuery);
-							setActiveIndex(-1);
-
-							if (nextQuery.trim().length < 2) {
-								setSuggestions([]);
-							}
-						}}
-						onKeyDown={handleKeyDown}
-						placeholder={messages.searchBar.placeholder}
-						className={`h-full w-full bg-transparent text-sm text-zinc-100 outline-none transition-[opacity,padding,width] duration-300 placeholder:text-zinc-500 ${searchExpanded
-								? "pl-4 pr-3 opacity-100"
-								: "pointer-events-none w-0 px-0 opacity-0"
-							}`}
-						aria-label={messages.searchBar.ariaLabel}
-					/>
-				</div>
-				<div className="flex h-full w-[48px] shrink-0 items-center justify-center">
+			<div className="expand-search__field">
+				<input
+					id={id}
+					ref={input}
+					type="search"
+					value={query}
+					disabled={!expanded}
+					aria-label={messages.searchBar.ariaLabel}
+					placeholder={messages.searchBar.placeholder}
+					autoComplete="off"
+					onFocus={() => setFocused(true)}
+					onKeyDown={onKeyDown}
+					onChange={(event) => {
+						setQuery(event.target.value);
+						setSuggestions([]);
+						setActive(-1);
+					}}
+				/>
+				{expanded && !forceExpanded && (
 					<button
+						className="icon-button"
 						type="button"
-						onClick={handleButtonClick}
-						tabIndex={tabIndex}
-						className="flex h-[38px] w-[38px] items-center justify-center rounded-[14px] border border-purpleContrast/30 bg-purpleContrast/15 text-zinc-100 transition-colors hover:bg-purpleContrast/25"
-						aria-label={
-							searchExpanded
-								? messages.common.search
-								: messages.searchBar.openSearch
-						}
+						onClick={close}
+						aria-label={messages.common.close}
 					>
-						<FaMagnifyingGlass className="text-sm" />
+						<FaXmark aria-hidden="true" />
 					</button>
-				</div>
+				)}
+				<button
+					ref={trigger}
+					className="icon-button"
+					type="button"
+					aria-label={
+						expanded ? messages.common.search : messages.searchBar.openSearch
+					}
+					aria-expanded={expanded}
+					aria-controls={id}
+					onClick={() => (expanded ? search() : setOpen(true))}
+				>
+					<FaMagnifyingGlass aria-hidden="true" />
+				</button>
 			</div>
-
-			{visibleSuggestions.length > 0 ? (
+			{showSuggestions && suggestions.length > 0 && (
 				<ul
-					className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] w-full overflow-hidden rounded-[22px] border border-zinc-700/60 bg-lessDarkBg/98 shadow-2xl shadow-zinc-950/40"
+					className="search-suggestions"
 					aria-label={messages.searchBar.searchSuggestions}
 				>
-					{visibleSuggestions.map((suggestion, index) => {
-						const isActive = index === activeIndex;
-
-						return (
-							<li key={suggestion.id}>
-								<button
-									type="button"
-									onMouseDown={(event) => {
-										event.preventDefault();
-										setQuery(suggestion.title);
-										goToResults(suggestion.title);
-									}}
-									className={`w-full px-4 py-3 text-left text-sm leading-6 text-zinc-200 transition-colors ${isActive ? "bg-purpleContrast/18" : "hover:bg-greyBg/80"
-										}`}
-								>
-									{suggestion.title}
-								</button>
-							</li>
-						);
-					})}
-
-					<li className="border-t border-zinc-700/60 px-4 py-3 text-right">
-						<button
-							type="button"
-							onMouseDown={(event) => {
-								event.preventDefault();
-								goToResults(query);
-							}}
-							className="text-xs uppercase tracking-[0.16em] text-zinc-400 transition-colors hover:text-wheat"
-						>
+					{suggestions.map((post, index) => (
+						<li key={post.id}>
+							<button
+								type="button"
+								data-active={index === active}
+								onClick={() => search(post.title)}
+							>
+								{post.title}
+							</button>
+						</li>
+					))}
+					<li>
+						<button type="button" onClick={() => search()}>
 							{messages.searchBar.viewAllResults}
 						</button>
 					</li>
 				</ul>
-			) : null}
+			)}
 		</form>
 	);
 }

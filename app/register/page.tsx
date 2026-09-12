@@ -19,21 +19,17 @@ import {
 	createRegisterFormSchema,
 	type RegisterFormValues,
 } from "@/lib/validation/auth";
-import PhaserBackground from "@/PhaserBackground";
+import AuthShell from "@/components/AuthShell";
 import SocialAuthButton from "../login/SocialAuthButton";
 
 const SOCIAL_AUTH_OPTIONS = [
 	{
 		provider: "google",
 		icon: FaGoogle,
-		bgColor: "bg-slate-700",
-		hoverBgColor: "hover:bg-slate-800/60 border border-gray-600/60",
 	},
 	{
 		provider: "github",
 		icon: FaGithub,
-		bgColor: "bg-gray-800",
-		hoverBgColor: "hover:bg-gray-900 border border-gray-700",
 	},
 ] as const;
 
@@ -160,26 +156,8 @@ export default function RegisterForm() {
 	}
 
 	return (
-		<div className="relative min-h-screen overflow-hidden bg-darkBg text-gray">
-			<div className="absolute inset-0">
-				<PhaserBackground />
-			</div>
-			<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,23,26,0.22),rgba(20,23,26,0.58))]" />
-			<div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
-				<form
-					onSubmit={handleSubmit(onSubmit)}
-					className="w-full max-w-[420px] rounded-[28px] border border-zinc-200/15 bg-darkBg/58 p-6 shadow-2xl shadow-zinc-950/30 backdrop-blur-md sm:p-7"
-					noValidate
-				>
-					<div className="mb-6 text-center">
-						<p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-							{messages.register.eyebrow}
-						</p>
-						<h1 className="mt-3 text-3xl font-somerton uppercase text-wheat">
-							{messages.register.title}
-						</h1>
-					</div>
-
+		<AuthShell title={messages.register.title}>
+			<form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
 					<div className="space-y-4">
 						<div>
 							<label
@@ -190,7 +168,7 @@ export default function RegisterForm() {
 							</label>
 							<input
 								type="text"
-								id="name"
+								id="name" autoComplete="name"
 								{...register("name")}
 								className="w-full rounded-xl border border-zinc-500/45 bg-darkBg/75 px-4 py-3 text-zinc-200 outline-none transition-colors focus:border-purpleContrast"
 								aria-invalid={errors.name ? "true" : "false"}
@@ -211,7 +189,7 @@ export default function RegisterForm() {
 							</label>
 							<input
 								type="email"
-								id="email"
+								id="email" autoComplete="email"
 								{...register("email")}
 								className="w-full rounded-xl border border-zinc-500/45 bg-darkBg/75 px-4 py-3 text-zinc-200 outline-none transition-colors focus:border-purpleContrast"
 								aria-invalid={errors.email ? "true" : "false"}
@@ -233,7 +211,7 @@ export default function RegisterForm() {
 							<div className="relative flex items-center rounded-xl border border-zinc-500/45 bg-darkBg/75">
 								<input
 									type={showPassword ? "text" : "password"}
-									id="password"
+									id="password" autoComplete="new-password"
 									{...register("password")}
 									className="w-full bg-transparent px-4 py-3 pr-12 text-zinc-200 outline-none"
 									aria-invalid={errors.password ? "true" : "false"}
@@ -241,7 +219,7 @@ export default function RegisterForm() {
 								<button
 									type="button"
 									onClick={() => setShowPassword((value) => !value)}
-									className="absolute right-3 text-zinc-400 transition-colors hover:text-zinc-200"
+									className="icon-button absolute right-1 border-0 bg-transparent"
 									aria-label={
 										showPassword
 											? messages.register.hidePassword
@@ -267,7 +245,7 @@ export default function RegisterForm() {
 							</label>
 							<input
 								type={showPassword ? "text" : "password"}
-								id="confirm-password"
+								id="confirm-password" autoComplete="new-password"
 								{...register("confirmPassword")}
 								className="w-full rounded-xl border border-zinc-500/45 bg-darkBg/75 px-4 py-3 text-zinc-200 outline-none transition-colors focus:border-purpleContrast"
 								aria-invalid={errors.confirmPassword ? "true" : "false"}
@@ -291,8 +269,6 @@ export default function RegisterForm() {
 									key={option.provider}
 									provider={option.provider}
 									icon={option.icon}
-									bgColor={option.bgColor}
-									hoverBgColor={option.hoverBgColor}
 								/>
 							))}
 						</div>
@@ -301,7 +277,7 @@ export default function RegisterForm() {
 					<div className="mt-8 flex flex-col gap-4">
 						<button
 							type="submit"
-							className="flex w-full items-center justify-center gap-3 rounded-2xl border border-zinc-600/70 bg-purpleContrast px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-purpleContrast/85 disabled:cursor-not-allowed disabled:bg-zinc-700/70 disabled:text-zinc-400"
+							className="ui-button ui-button--primary w-full"
 							disabled={isSubmitting}
 						>
 							{isSubmitting ? (
@@ -322,8 +298,7 @@ export default function RegisterForm() {
 							</button>
 						</p>
 					</div>
-				</form>
-			</div>
-		</div>
+			</form>
+		</AuthShell>
 	);
 }

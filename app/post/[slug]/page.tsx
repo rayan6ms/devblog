@@ -48,7 +48,8 @@ export async function generateMetadata({
 
 	const post = mapPostForPage(postRecord, locale);
 	const modifiedTime =
-		postRecord.lastEditedAt?.toISOString() || postRecord.updatedAt.toISOString();
+		postRecord.lastEditedAt?.toISOString() ||
+		postRecord.updatedAt.toISOString();
 
 	return buildPageMetadata({
 		title: post.title,
@@ -90,7 +91,8 @@ export default async function Page({ params }: PostPageProps) {
 		description: post.description,
 		datePublished: post.postedAt,
 		dateModified:
-			postRecord.lastEditedAt?.toISOString() || postRecord.updatedAt.toISOString(),
+			postRecord.lastEditedAt?.toISOString() ||
+			postRecord.updatedAt.toISOString(),
 		inLanguage: post.locale,
 		mainEntityOfPage: buildLocalizedUrl(`/post/${post.slug}`, locale),
 		url: buildLocalizedUrl(`/post/${post.slug}`, locale),
@@ -117,7 +119,7 @@ export default async function Page({ params }: PostPageProps) {
 						__html: serializeJsonLd(articleJsonLd),
 					}}
 				/>
-				<section className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-5 sm:px-6 sm:pt-6 lg:px-8">
+				<section className="site-container page-content pt-6">
 					<div className="grid gap-6">
 						<PostHeader
 							post={post}
@@ -127,9 +129,12 @@ export default async function Page({ params }: PostPageProps) {
 						/>
 
 						<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-							<div className="min-w-0 rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 px-5 py-6 shadow-xl shadow-zinc-950/20 sm:px-7 sm:py-7">
+							<div className="surface-panel min-w-0 px-5 py-6 sm:px-7 sm:py-7">
 								{post.status === "published" ? (
-									<ReadingProgressTracker postId={post.id} postSlug={post.slug} />
+									<ReadingProgressTracker
+										postId={post.id}
+										postSlug={post.slug}
+									/>
 								) : null}
 								<PostBody markdown={post.content} />
 								{post.status === "published" ? (
@@ -141,11 +146,8 @@ export default async function Page({ params }: PostPageProps) {
 								<PostFooter post={post} />
 
 								{relatedPosts.length > 0 ? (
-									<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/85 p-5 shadow-lg shadow-zinc-950/10">
-										<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											{messages.post.relatedReading}
-										</p>
-										<h2 className="mt-2 text-2xl font-somerton uppercase text-wheat">
+									<section className="surface-panel p-5">
+										<h2 className="section-title">
 											{messages.post.moreFromThisLane}
 										</h2>
 
@@ -153,7 +155,7 @@ export default async function Page({ params }: PostPageProps) {
 											{relatedPosts.map((item) => (
 												<article
 													key={item.id}
-													className="overflow-hidden rounded-[24px] border border-zinc-700/50 bg-darkBg/45"
+													className="surface-panel overflow-hidden"
 												>
 													<LocalizedLink
 														href={`/post/${item.slug}`}

@@ -7,16 +7,12 @@ import { useLocaleNavigation } from "@/hooks/useLocaleNavigation";
 type SocialAuthButtonProps = {
 	provider: string;
 	icon: IconType;
-	bgColor: string;
-	hoverBgColor: string;
 	callbackUrl?: string;
 };
 
 export default function SocialAuthButton({
 	provider,
 	icon: Icon,
-	bgColor,
-	hoverBgColor,
 	callbackUrl = "/profile/me",
 }: SocialAuthButtonProps) {
 	const { localizeHref } = useLocaleNavigation();
@@ -27,9 +23,10 @@ export default function SocialAuthButton({
 			onClick={() =>
 				signIn(provider, { callbackUrl: localizeHref(callbackUrl) })
 			}
-			className={`flex h-12 w-full items-center justify-center rounded-2xl shadow-md ${bgColor} ${hoverBgColor} text-white transition-colors duration-300`}
+			className="ui-button w-full"
 		>
-			<Icon />
+			<Icon aria-hidden="true" />
+			{provider === "github" ? "GitHub" : "Google"}
 		</button>
 	);
 }

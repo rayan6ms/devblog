@@ -1,7 +1,6 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
+import Avatar from "@/components/Avatar";
 import { signOut } from "next-auth/react";
 import type { IconType } from "react-icons";
 import {
@@ -83,15 +82,14 @@ export default function Header({
 		localizedRoleLabels[role as keyof typeof defaultRoleLabels] || user.role;
 
 	return (
-		<div className="relative overflow-hidden rounded-[30px] border border-zinc-700/50 bg-lessDarkBg/90 shadow-xl shadow-zinc-950/20">
-			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(155%_155%_at_8%_10%,rgba(103,79,248,0.52)_0%,rgba(103,79,248,0.32)_28%,rgba(84,67,198,0.2)_48%,rgba(51,47,108,0.14)_68%,rgba(34,37,44,0.08)_82%,rgba(34,37,44,0)_100%),linear-gradient(135deg,rgba(34,37,44,0.18),rgba(34,37,44,0.72))]" />
+		<div className="surface-panel relative overflow-hidden">
 			<div className="relative px-6 py-8 sm:px-8">
 				{user.isCurrentUser ? (
-					<div className="absolute right-6 top-6 flex flex-wrap items-center justify-end gap-3">
+					<div className="mb-6 flex flex-wrap items-center justify-end gap-3">
 						<button
 							type="button"
 							onClick={onEdit}
-							className="flex items-center gap-2 rounded-full border border-zinc-500/40 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:bg-greyBg"
+							className="ui-button"
 						>
 							<FaPenToSquare />
 							{messages.profile.editProfile}
@@ -99,7 +97,7 @@ export default function Header({
 						<button
 							type="button"
 							onClick={() => signOut({ callbackUrl: localizeHref("/") })}
-							className="flex items-center gap-2 rounded-full border border-zinc-500/40 bg-greyBg/75 px-4 py-2 text-sm font-semibold text-zinc-100 transition-colors hover:bg-greyBg"
+							className="ui-button"
 						>
 							<FaArrowRightFromBracket />
 							{messages.profile.logout}
@@ -107,21 +105,15 @@ export default function Header({
 					</div>
 				) : null}
 
-				<div className="mt-10 grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end">
-					<div className="mx-auto h-28 w-28 overflow-hidden rounded-[28px] border-2 border-zinc-200/70 shadow-xl shadow-zinc-950/30 sm:h-32 sm:w-32 lg:mx-0">
-						<img
-							className="h-full w-full object-cover"
-							src={user.profilePicture}
-							alt={messages.profile.profileAlt(user.name)}
-						/>
-					</div>
+				<div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end">
+					<Avatar src={user.profilePicture} name={user.name} className="mx-auto h-28 w-28 text-4xl lg:mx-0" />
 					<div className="flex flex-col gap-5">
 						<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 							<div>
 								<div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-									<h2 className="text-center font-europa text-3xl text-zinc-100 lg:text-left">
+									<h1 className="text-center font-somerton text-4xl text-wheat lg:text-left">
 										{user.name}
-									</h2>
+									</h1>
 									<div
 										className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-white ${color}`}
 									>

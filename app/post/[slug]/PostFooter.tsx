@@ -1,3 +1,4 @@
+import Avatar from "@/components/Avatar";
 import type { IconType } from "react-icons";
 import { FaGithub, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa6";
 import LocalizedLink from "@/components/LocalizedLink";
@@ -12,14 +13,6 @@ const SOCIAL_ICON_MAP: Record<string, IconType> = {
 	github: FaGithub,
 };
 
-function getInitials(name: string) {
-	return name
-		.split(" ")
-		.slice(0, 2)
-		.map((part) => part.charAt(0).toUpperCase())
-		.join("");
-}
-
 export default async function PostFooter({ post }: { post: PostPageData }) {
 	const messages = getMessages(await getRequestLocale());
 	const relatedTopics = post.tags.slice(0, 2);
@@ -33,29 +26,13 @@ export default async function PostFooter({ post }: { post: PostPageData }) {
 	);
 
 	return (
-		<section className="rounded-[28px] border border-zinc-700/50 bg-greyBg/85 p-6 shadow-lg shadow-zinc-950/10">
-			<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-				{messages.common.author}
-			</p>
+		<section className="surface-panel p-6">
 
-			<div className="mt-5 rounded-[24px] border border-zinc-700/50 bg-darkBg/45 p-5">
+			<div>
 				<div className="grid gap-5 sm:grid-cols-[80px_minmax(0,1fr)]">
-					{post.author.profilePicture ? (
-						<img
-							src={post.author.profilePicture}
-							alt={post.author.name}
-							className="h-20 w-20 rounded-[24px] border border-zinc-700/60 object-cover"
-						/>
-					) : (
-						<div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[24px] border border-zinc-700/60 bg-greyBg/75 text-lg font-semibold text-wheat">
-							{getInitials(post.author.name)}
-						</div>
-					)}
+					<Avatar src={post.author.profilePicture} name={post.author.name} className="h-20 w-20 text-2xl" />
 
 					<div className="min-w-0 self-center">
-						<p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-							{messages.post.writtenBy}
-						</p>
 						<LocalizedLink
 							href={`/profile/${post.author.slug}`}
 							rel="author"
@@ -72,13 +49,13 @@ export default async function PostFooter({ post }: { post: PostPageData }) {
 
 				<div className="mt-5 flex flex-wrap gap-2">
 					<LocalizedLink
-						className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+						className="ui-button"
 						href={`/profile/${post.author.slug}`}
 					>
 						{messages.post.authorProfile}
 					</LocalizedLink>
 					<LocalizedLink
-						className="rounded-full border border-zinc-700/60 bg-darkBg/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300 transition-colors hover:border-zinc-500/70 hover:text-wheat"
+						className="ui-button"
 						href={`/tag?selected=${slugifyPostValue(post.mainTag)}`}
 					>
 						{messages.post.moreIn(post.mainTag)}
@@ -99,7 +76,8 @@ export default async function PostFooter({ post }: { post: PostPageData }) {
 									href={link}
 									target="_blank"
 									rel="noreferrer"
-									className="group flex rounded-2xl border border-zinc-700/60 bg-darkBg/60 p-3 transition-colors hover:border-zinc-500/70"
+									className="icon-button"
+									aria-label={provider}
 								>
 									<Icon className="text-base text-wheat transition-colors group-hover:text-purpleContrast" />
 								</a>

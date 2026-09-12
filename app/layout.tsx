@@ -96,9 +96,14 @@ export default async function RootLayout({
 			<body className={`${inter.className} ${somerton.variable}`}>
 				<LocaleProvider initialLocale={locale}>
 					<AuthProvider session={session}>
+						<a className="skip-link" href="#main-content">
+							Skip to content
+						</a>
 						<Header />
 						<NavBar />
-						{children}
+						<div id="main-content" tabIndex={-1}>
+							{children}
+						</div>
 					</AuthProvider>
 				</LocaleProvider>
 				<Analytics />
